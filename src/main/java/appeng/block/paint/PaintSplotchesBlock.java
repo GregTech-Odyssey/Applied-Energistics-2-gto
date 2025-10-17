@@ -84,8 +84,8 @@ public class PaintSplotchesBlock extends AEBaseEntityBlock<PaintSplotchesBlockEn
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos,
             boolean isMoving) {
+        super.neighborChanged(state, level, pos, blockIn, fromPos, isMoving);
         final PaintSplotchesBlockEntity tp = this.getBlockEntity(level, pos);
-
         if (tp != null) {
             tp.neighborChanged();
         }

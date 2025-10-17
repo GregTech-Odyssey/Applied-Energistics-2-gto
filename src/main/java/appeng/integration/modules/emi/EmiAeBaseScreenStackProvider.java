@@ -6,6 +6,8 @@ import dev.emi.emi.api.EmiStackProvider;
 import dev.emi.emi.api.stack.EmiStackInteraction;
 
 import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.me.crafting.CraftConfirmScreen;
+import appeng.client.gui.me.crafting.CraftingStatusScreen;
 
 class EmiAeBaseScreenStackProvider implements EmiStackProvider<Screen> {
     @Override
@@ -15,7 +17,11 @@ class EmiAeBaseScreenStackProvider implements EmiStackProvider<Screen> {
             if (stack != null) {
                 var emiStack = EmiStackHelper.toEmiStack(stack.stack());
                 if (emiStack != null) {
-                    return new EmiStackInteraction(emiStack, null, false);
+                    if (emiStack.getAmount() == 0) {
+                        emiStack.setAmount(1);
+                    }
+                    return new EmiStackInteraction(emiStack, null,
+                            screen instanceof CraftConfirmScreen || screen instanceof CraftingStatusScreen);
                 }
             }
         }

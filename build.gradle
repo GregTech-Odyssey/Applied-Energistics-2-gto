@@ -131,6 +131,12 @@ dependencies {
 
     // Annotation Processors
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    modImplementation("curse.maven:glodium-957920:5006780")
+    modImplementation("curse.maven:ex-pattern-provider-892005:7064210")
+
+    modImplementation("curse.maven:merequester-688367:5689932")
+
 }
 archivesBaseName = artifact_basename
 
@@ -139,7 +145,7 @@ allprojects {
 
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(17)
+            languageVersion = JavaLanguageVersion.of(21)
         }
     }
 
@@ -536,3 +542,7 @@ check.dependsOn tasks.register('validateResources', JavaExec) {
     javaLauncher.set(javaToolchains.launcherFor(java.toolchain))
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = "UTF-8"
+    options.compilerArgs << "-Xlint:-deprecation" << "-Xlint:-removal"
+}

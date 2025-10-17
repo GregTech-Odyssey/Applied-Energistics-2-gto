@@ -20,8 +20,7 @@ package appeng.hooks.ticking;
 
 import java.util.Objects;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ObjectSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.me.Grid;
 
@@ -29,9 +28,9 @@ import appeng.me.Grid;
  * A class to hold data related to ticking networks.
  */
 class ServerGridRepo {
-    private final ObjectSet<Grid> networks = new ObjectOpenHashSet<>();
-    private final ObjectSet<Grid> toAdd = new ObjectOpenHashSet<>();
-    private final ObjectSet<Grid> toRemove = new ObjectOpenHashSet<>();
+    private final ReferenceOpenHashSet<Grid> networks = new ReferenceOpenHashSet<>();
+    private final ReferenceOpenHashSet<Grid> toAdd = new ReferenceOpenHashSet<>();
+    private final ReferenceOpenHashSet<Grid> toRemove = new ReferenceOpenHashSet<>();
 
     /**
      * Resets all internal data
@@ -86,7 +85,7 @@ class ServerGridRepo {
     /**
      * Get all registered {@link Grid}s
      */
-    public Iterable<Grid> getNetworks() {
+    public ReferenceOpenHashSet<Grid> getNetworks() {
         return networks;
     }
 

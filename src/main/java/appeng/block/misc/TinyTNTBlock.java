@@ -92,6 +92,7 @@ public class TinyTNTBlock extends AEBaseBlock {
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos,
             boolean isMoving) {
+        super.neighborChanged(state, level, pos, blockIn, fromPos, isMoving);
         if (level.getBestNeighborSignal(pos) > 0) {
             this.startFuse(level, pos, null);
             level.removeBlock(pos, false);

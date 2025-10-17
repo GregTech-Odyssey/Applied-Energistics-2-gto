@@ -83,7 +83,6 @@ import appeng.init.internal.InitP2PAttunements;
 import appeng.init.internal.InitStorageCells;
 import appeng.init.internal.InitUpgrades;
 import appeng.init.worldgen.InitStructures;
-import appeng.integration.Integrations;
 import appeng.items.tools.MemoryCardItem;
 import appeng.recipes.AERecipeTypes;
 import appeng.server.AECommand;
@@ -155,7 +154,6 @@ public abstract class AppEngBase implements AppEng {
         });
 
         modEventBus.addListener(InitCapabilities::init);
-        modEventBus.addListener(Integrations::enqueueIMC);
         modEventBus.addListener(this::commonSetup);
 
         modEventBus.addListener(this::registerTests);

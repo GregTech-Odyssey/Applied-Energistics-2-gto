@@ -70,8 +70,9 @@ public abstract class AbstractCraftingUnitBlock<T extends CraftingBlockEntity> e
     }
 
     @Override
-    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn,
+    public void neighborChanged(BlockState state, Level level, BlockPos pos, Block block,
             BlockPos fromPos, boolean isMoving) {
+        super.neighborChanged(state, level, pos, block, fromPos, isMoving);
         final CraftingBlockEntity cp = this.getBlockEntity(level, pos);
         if (cp != null) {
             cp.updateMultiBlock(fromPos);

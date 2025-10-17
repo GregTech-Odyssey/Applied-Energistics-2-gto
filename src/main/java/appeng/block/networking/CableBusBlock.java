@@ -73,18 +73,16 @@ import net.minecraftforge.client.extensions.common.IClientBlockExtensions;
 import net.minecraftforge.client.model.data.ModelData;
 
 import appeng.api.parts.IFacadeContainer;
-import appeng.api.parts.IFacadePart;
 import appeng.api.util.AEColor;
 import appeng.block.AEBaseEntityBlock;
 import appeng.blockentity.networking.CableBusBlockEntity;
 import appeng.client.render.cablebus.CableBusBakedModel;
 import appeng.client.render.cablebus.CableBusBreakingParticle;
 import appeng.client.render.cablebus.CableBusRenderState;
-import appeng.integration.abstraction.IAEFacade;
 import appeng.parts.ICableBusContainer;
 import appeng.parts.NullCableBusContainer;
 
-public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implements IAEFacade, SimpleWaterloggedBlock {
+public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implements SimpleWaterloggedBlock {
 
     private static final ICableBusContainer NULL_CABLE_BUS = new NullCableBusContainer();
 
@@ -194,6 +192,7 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos,
             boolean isMoving) {
+        super.neighborChanged(state, level, pos, blockIn, fromPos, isMoving);
         if (!level.isClientSide()) {
             this.cb(level, pos).onNeighborChanged(level, pos, fromPos);
         }
@@ -245,20 +244,6 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
 
     public void addToMainCreativeTab(CreativeModeTab.Output output) {
         // do nothing
-    }
-
-    @Override
-    public BlockState getFacadeState(BlockGetter level, BlockPos pos, Direction side) {
-        if (side != null) {
-            IFacadeContainer container = this.fc(level, pos);
-            if (container != null) {
-                IFacadePart facade = container.getFacade(side);
-                if (facade != null) {
-                    return facade.getBlockState();
-                }
-            }
-        }
-        return level.getBlockState(pos);
     }
 
     @Override
@@ -318,11 +303,6 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
         this.cb(level, currentPos).onUpdateShape(level, currentPos, facing);
 
         return super.updateShape(blockState, facing, facingState, level, currentPos, facingPos);
-    }
-
-    @Override
-    public void onNeighborChange(BlockState state, LevelReader level, BlockPos pos, BlockPos neighbor) {
-        this.cb(level, pos).onNeighborChanged(level, pos, neighbor);
     }
 
     @Override

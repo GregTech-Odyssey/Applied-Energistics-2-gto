@@ -1,8 +1,5 @@
 package appeng.integration.modules.emi;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
@@ -15,6 +12,7 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.stack.EmiStack;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import appeng.core.localization.ItemModText;
 import appeng.integration.modules.jeirei.CraftingHelper;
@@ -47,7 +45,7 @@ public class EmiUseCraftingRecipeHandler<T extends CraftingTermMenu> extends Abs
     }
 
     @Override
-    protected Result transferRecipe(T menu, Recipe<?> recipeBase, EmiRecipe emiRecipe, boolean doTransfer) {
+    public Result transferRecipe(T menu, Recipe<?> recipeBase, EmiRecipe emiRecipe, boolean doTransfer) {
 
         // Recipe displays can be based on anything. Not just Recipe<?>
         Recipe<?> recipe = null;
@@ -107,26 +105,28 @@ public class EmiUseCraftingRecipeHandler<T extends CraftingTermMenu> extends Abs
                 CRAFTING_GRID_HEIGHT, ingredients, ItemStack.EMPTY);
     }
 
-    public static Map<Integer, Ingredient> getGuiSlotToIngredientMap(Recipe<?> recipe) {
-        var ingredients = recipe.getIngredients();
-
-        // JEI will align non-shaped recipes smaller than 3x3 in the grid. It'll center them horizontally, and
-        // some will be aligned to the bottom. (i.e. slab recipes).
+    public static Int2ObjectOpenHashMap<Ingredient> getGuiSlotToIngredientMap(Recipe<?> recipe) {
+        NonNullList<Ingredient> ingredients = recipe.getIngredients();
         int width;
+        boolean widthFlag = false, heightFlag = false;
         if (recipe instanceof ShapedRecipe shapedRecipe) {
             width = shapedRecipe.getWidth();
+            widthFlag = width == 1 && shapedRecipe.getHeight() > 1;
+            heightFlag = shapedRecipe.getHeight() == 1 && width > 1;
         } else {
-            width = CRAFTING_GRID_WIDTH;
+            width = 3;
         }
 
-        var result = new HashMap<Integer, Ingredient>(ingredients.size());
-        for (int i = 0; i < ingredients.size(); i++) {
-            var guiSlot = (i / width) * CRAFTING_GRID_WIDTH + (i % width);
-            var ingredient = ingredients.get(i);
+        var result = new Int2ObjectOpenHashMap<Ingredient>(ingredients.size());
+
+        for (int i = 0; i < ingredients.size(); ++i) {
+            int guiSlot = i / (width) * 3 + i % width + (widthFlag ? 1 : 0) + (heightFlag ? 3 : 0);
+            Ingredient ingredient = ingredients.get(i);
             if (!ingredient.isEmpty()) {
                 result.put(guiSlot, ingredient);
             }
         }
+
         return result;
     }
 

@@ -2,15 +2,25 @@ package appeng.integration.modules.jeirei;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import com.almostreliable.merequester.client.RequestSlot;
+import com.almostreliable.merequester.platform.Platform;
 import com.google.common.primitives.Ints;
 
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.WidgetContainer;
+import appeng.client.gui.widgets.AETextField;
+import appeng.core.AELog;
+import appeng.core.sync.network.NetworkHandler;
+import appeng.core.sync.packets.InventoryActionPacket;
+import appeng.helpers.InventoryAction;
 import appeng.menu.slot.FakeSlot;
 
 public final class DropTargets {
@@ -25,6 +35,15 @@ public final class DropTargets {
                 targets.add(new FakeSlotDropTarget(area, fakeSlot));
             }
         }
+
+        for (var widget : reflectGetWidgets(aeScreen).values()) {
+            if (widget instanceof AETextField search) {
+                var area = new Rect2i(search.getX(), search.getY(),
+                        search.getWidth(), search.getHeight());
+                targets.add(new SearchBarDropTarget(area, search));
+            }
+        }
+
         return targets;
     }
 
@@ -40,9 +59,16 @@ public final class DropTargets {
             var itemStack = wrapFilterAsItem(stack);
 
             if (slot.canSetFilterTo(itemStack)) {
-                slot.setFilterTo(itemStack);
+                if (slot instanceof RequestSlot requestSlot) {
+                    Platform.sendDragAndDrop(requestSlot.getRequesterReference().getRequesterId(),
+                            requestSlot.getSlot(), itemStack);
+                } else {
+                    NetworkHandler.instance().sendToServer(new InventoryActionPacket(InventoryAction.SET_FILTER,
+                            slot.index, itemStack));
+                }
                 return true;
             }
+
             return false;
         }
 
@@ -55,5 +81,34 @@ public final class DropTargets {
             }
         }
 
+    }
+
+    private record SearchBarDropTarget(Rect2i area, AETextField search) implements DropTarget {
+
+        @Override
+        public boolean canDrop(GenericStack stack) {
+            return true;
+        }
+
+        @Override
+        public boolean drop(GenericStack stack) {
+            search.setValue(stack.what().getDisplayName().getString());
+            return true;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, AbstractWidget> reflectGetWidgets(AEBaseScreen<?> screen) {
+        try {
+            var fWidgets = AEBaseScreen.class.getDeclaredField("widgets");
+            fWidgets.setAccessible(true);
+            WidgetContainer wc = (WidgetContainer) fWidgets.get(screen);
+            var fWidgets0 = WidgetContainer.class.getDeclaredField("widgets");
+            fWidgets0.setAccessible(true);
+            return (Map<String, AbstractWidget>) fWidgets0.get(wc);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            AELog.error("Failed to reflectively access AEBaseScreen widgets", e);
+            return Map.of();
+        }
     }
 }

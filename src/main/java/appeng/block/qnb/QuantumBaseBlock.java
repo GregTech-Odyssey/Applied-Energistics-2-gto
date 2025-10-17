@@ -82,6 +82,7 @@ public abstract class QuantumBaseBlock extends AEBaseEntityBlock<QuantumBridgeBl
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos,
             boolean isMoving) {
+        super.neighborChanged(state, level, pos, blockIn, fromPos, isMoving);
         final QuantumBridgeBlockEntity bridge = this.getBlockEntity(level, pos);
         if (bridge != null) {
             bridge.neighborUpdate(fromPos);

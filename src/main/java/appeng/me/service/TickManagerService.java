@@ -18,7 +18,6 @@
 
 package appeng.me.service;
 
-import java.util.IdentityHashMap;
 import java.util.LongSummaryStatistics;
 import java.util.Map;
 import java.util.Objects;
@@ -35,6 +34,8 @@ import net.minecraft.ReportedException;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridServiceProvider;
 import appeng.api.networking.ticking.IGridTickable;
@@ -50,10 +51,10 @@ public class TickManagerService implements ITickManager, IGridServiceProvider {
     private static final int TICK_RATE_SPEED_UP_FACTOR = 2;
     private static final int TICK_RATE_SLOW_DOWN_FACTOR = 1;
 
-    private final Map<IGridNode, TickTracker> alertable = new IdentityHashMap<>();
-    private final Map<IGridNode, TickTracker> sleeping = new IdentityHashMap<>();
-    private final Map<IGridNode, TickTracker> awake = new IdentityHashMap<>();
-    private final Map<Level, PriorityQueue<TickTracker>> upcomingTicks = new IdentityHashMap<>();
+    private final Map<IGridNode, TickTracker> alertable = new Reference2ReferenceOpenHashMap<>();
+    private final Map<IGridNode, TickTracker> sleeping = new Reference2ReferenceOpenHashMap<>();
+    private final Map<IGridNode, TickTracker> awake = new Reference2ReferenceOpenHashMap<>();
+    private final Map<Level, PriorityQueue<TickTracker>> upcomingTicks = new Reference2ReferenceOpenHashMap<>();
 
     private PriorityQueue<TickTracker> currentlyTickingQueue = null;
 

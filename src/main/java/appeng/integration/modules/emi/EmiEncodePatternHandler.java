@@ -32,17 +32,11 @@ public class EmiEncodePatternHandler<T extends PatternEncodingTermMenu> extends 
 
     @Override
     public boolean canCraft(EmiRecipe recipe, EmiCraftContext<T> context) {
-        if (context.getType() == EmiCraftContext.Type.FILL_BUTTON) {
-            return transferRecipe(recipe, context, false).canCraft();
-        } else {
-            // Do not unnecessarily check if a recipe can be crafted
-            // when we're only capable of encoding patterns
-            return false;
-        }
+        return true;
     }
 
     @Override
-    protected Result transferRecipe(T menu, @Nullable Recipe<?> recipeBase, EmiRecipe emiRecipe, boolean doTransfer) {
+    public Result transferRecipe(T menu, @Nullable Recipe<?> recipeBase, EmiRecipe emiRecipe, boolean doTransfer) {
 
         // Recipe displays can be based on anything. Not just Recipe<?>
         Recipe<?> recipe = null;

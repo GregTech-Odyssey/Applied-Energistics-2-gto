@@ -18,9 +18,7 @@
 
 package appeng.menu.me.items;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
@@ -37,6 +35,9 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import appeng.api.inventories.ISegmentedInventory;
@@ -195,12 +196,12 @@ public class CraftingTermMenu extends MEStorageMenu implements IMenuCraftingPack
      * @return The keys of the given slot-map for which no stored ingredients could be found, separated in craftable and
      *         missing items.
      */
-    public MissingIngredientSlots findMissingIngredients(Map<Integer, Ingredient> ingredients) {
+    public MissingIngredientSlots findMissingIngredients(Int2ObjectMap<Ingredient> ingredients) {
 
         // Try to figure out if any slots have missing ingredients
         // Find every "slot" (in JEI parlance) that has no equivalent item in the item repo or player inventory
-        Set<Integer> missingSlots = new HashSet<>(); // missing but not craftable
-        Set<Integer> craftableSlots = new HashSet<>(); // missing but craftable
+        IntOpenHashSet missingSlots = new IntOpenHashSet(); // missing but not craftable
+        IntOpenHashSet craftableSlots = new IntOpenHashSet(); // missing but craftable
 
         // We need to track how many of a given item stack we've already used for other slots in the recipe.
         // Otherwise recipes that need 4x<item> will not correctly show missing items if at least 1 of <item> is in
@@ -209,7 +210,7 @@ public class CraftingTermMenu extends MEStorageMenu implements IMenuCraftingPack
         var playerItems = getPlayerInventory().items;
         var reservedPlayerItems = new int[playerItems.size()];
 
-        for (var entry : ingredients.entrySet()) {
+        for (var entry : Int2ObjectMaps.fastIterable(ingredients)) {
             var ingredient = entry.getValue();
 
             boolean found = false;
@@ -241,7 +242,7 @@ public class CraftingTermMenu extends MEStorageMenu implements IMenuCraftingPack
             if (!found) {
                 for (var stack : ingredient.getItems()) {
                     if (isCraftable(stack)) {
-                        craftableSlots.add(entry.getKey());
+                        craftableSlots.add(entry.getIntKey());
                         found = true;
                         break;
                     }
@@ -249,7 +250,7 @@ public class CraftingTermMenu extends MEStorageMenu implements IMenuCraftingPack
             }
 
             if (!found) {
-                missingSlots.add(entry.getKey());
+                missingSlots.add(entry.getIntKey());
             }
         }
 

@@ -212,13 +212,13 @@ public class TickHandler {
         var toDestroy = new ArrayList<GridNode>();
 
         this.grids.updateNetworks();
-        for (Grid g : this.grids.getNetworks()) {
+        this.grids.getNetworks().forEach(g -> {
             for (var n : g.getNodes()) {
                 if (n.getLevel() == level) {
                     toDestroy.add((GridNode) n);
                 }
             }
-        }
+        });
 
         for (var n : toDestroy) {
             n.destroy();
@@ -260,7 +260,7 @@ public class TickHandler {
 
         // tick networks
         this.grids.updateNetworks();
-        for (var g : this.grids.getNetworks()) {
+        this.grids.getNetworks().forEach(g -> {
             try {
                 g.onLevelStartTick(level);
             } catch (Throwable t) {
@@ -269,7 +269,7 @@ public class TickHandler {
                 level.fillReportDetails(crashReport);
                 throw new ReportedException(crashReport);
             }
-        }
+        });
     }
 
     private void onServerLevelTickEnd(ServerLevel level) {
@@ -277,7 +277,7 @@ public class TickHandler {
         this.readyBlockEntities(level);
 
         // tick networks
-        for (var g : this.grids.getNetworks()) {
+        this.grids.getNetworks().forEach(g -> {
             try {
                 g.onLevelEndTick(level);
             } catch (Throwable t) {
@@ -286,7 +286,7 @@ public class TickHandler {
                 level.fillReportDetails(crashReport);
                 throw new ReportedException(crashReport);
             }
-        }
+        });
     }
 
     /**
@@ -307,7 +307,7 @@ public class TickHandler {
         this.stopWatch.reset();
 
         // tick networks
-        for (var g : this.grids.getNetworks()) {
+        this.grids.getNetworks().forEach(g -> {
             try {
                 g.onServerStartTick();
             } catch (Throwable t) {
@@ -315,12 +315,12 @@ public class TickHandler {
                 g.fillCrashReportCategory(crashReport.addCategory("Grid being ticked"));
                 throw new ReportedException(crashReport);
             }
-        }
+        });
     }
 
     private void onServerTickEnd() {
         // tick networks
-        for (var g : this.grids.getNetworks()) {
+        this.grids.getNetworks().forEach(g -> {
             try {
                 g.onServerEndTick();
             } catch (Throwable t) {
@@ -328,7 +328,7 @@ public class TickHandler {
                 g.fillCrashReportCategory(crashReport.addCategory("Grid being ticked"));
                 throw new ReportedException(crashReport);
             }
-        }
+        });
 
         // cross level queue.
         processQueueElementsRemaining += this.processQueue(this.serverQueue, null);

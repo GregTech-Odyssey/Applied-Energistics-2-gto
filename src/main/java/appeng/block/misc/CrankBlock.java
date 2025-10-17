@@ -88,6 +88,7 @@ public class CrankBlock extends AEBaseEntityBlock<CrankBlockEntity> {
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos,
             boolean isMoving) {
+        super.neighborChanged(state, level, pos, blockIn, fromPos, isMoving);
         // Does the change originate from the block we're attached to?
         if (getAttachedToPos(state, pos).equals(fromPos)) {
             if (getCrankable(state, level, pos) == null) {

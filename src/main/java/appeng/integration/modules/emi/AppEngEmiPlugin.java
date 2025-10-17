@@ -24,7 +24,6 @@ import dev.emi.emi.api.stack.EmiStack;
 
 import appeng.api.config.CondenserOutput;
 import appeng.api.features.P2PTunnelAttunementInternal;
-import appeng.api.integrations.emi.EmiStackConverters;
 import appeng.core.AEConfig;
 import appeng.core.AppEng;
 import appeng.core.FacadeCreativeTab;
@@ -51,11 +50,7 @@ public class AppEngEmiPlugin implements EmiPlugin {
 
     @Override
     public void register(EmiRegistry registry) {
-
         ItemListMod.setAdapter(new EmiItemListModAdapter());
-
-        EmiStackConverters.register(new EmiItemStackConverter());
-        EmiStackConverters.register(new EmiFluidStackConverter());
 
         // Screen handling
         registry.addGenericExclusionArea(new EmiAeBaseScreenExclusionZones());

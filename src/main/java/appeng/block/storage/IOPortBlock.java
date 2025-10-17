@@ -54,6 +54,7 @@ public class IOPortBlock extends AEBaseEntityBlock<IOPortBlockEntity> {
     @Override
     public void neighborChanged(BlockState state, Level level, BlockPos pos, Block blockIn, BlockPos fromPos,
             boolean isMoving) {
+        super.neighborChanged(state, level, pos, blockIn, fromPos, isMoving);
         final IOPortBlockEntity te = this.getBlockEntity(level, pos);
         if (te != null) {
             te.updateRedstoneState();
