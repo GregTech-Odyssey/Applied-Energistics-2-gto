@@ -36,7 +36,7 @@ public final class DropTargets {
             }
         }
 
-        for (var widget : reflectGetWidgets(aeScreen).values()) {
+        for (var widget : aeScreen.getWidgets().getWidgets().values()) {
             if (widget instanceof AETextField search) {
                 var area = new Rect2i(search.getX(), search.getY(),
                         search.getWidth(), search.getHeight());
@@ -94,21 +94,6 @@ public final class DropTargets {
         public boolean drop(GenericStack stack) {
             search.setValue(stack.what().getDisplayName().getString());
             return true;
-        }
-    }
-
-    @SuppressWarnings("unchecked")
-    private static Map<String, AbstractWidget> reflectGetWidgets(AEBaseScreen<?> screen) {
-        try {
-            var fWidgets = AEBaseScreen.class.getDeclaredField("widgets");
-            fWidgets.setAccessible(true);
-            WidgetContainer wc = (WidgetContainer) fWidgets.get(screen);
-            var fWidgets0 = WidgetContainer.class.getDeclaredField("widgets");
-            fWidgets0.setAccessible(true);
-            return (Map<String, AbstractWidget>) fWidgets0.get(wc);
-        } catch (NoSuchFieldException | IllegalAccessException e) {
-            AELog.error("Failed to reflectively access AEBaseScreen widgets", e);
-            return Map.of();
         }
     }
 }

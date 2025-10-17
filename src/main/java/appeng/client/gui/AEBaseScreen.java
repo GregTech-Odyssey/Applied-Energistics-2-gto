@@ -1047,4 +1047,9 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         }
         return null;
     }
+
+    public WidgetContainer getWidgets() {
+        return widgets;
+    }
+
 }

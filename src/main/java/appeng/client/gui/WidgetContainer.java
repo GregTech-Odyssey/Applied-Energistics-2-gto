@@ -403,7 +403,16 @@ public class WidgetContainer {
         return searchField;
     }
 
-    private static class ResolvedTooltipArea {
+
+    public Map<String, AbstractWidget> getWidgets() {
+        return widgets;
+    }
+
+    public Map<String, ICompositeWidget> getCompositeWidgets() {
+        return compositeWidgets;
+    }
+
+    public static class ResolvedTooltipArea {
         private final Rect2i area;
         private final Tooltip tooltip;
         private boolean enabled = true;
