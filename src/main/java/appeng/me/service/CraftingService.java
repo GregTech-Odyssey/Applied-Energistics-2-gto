@@ -21,7 +21,6 @@ package appeng.me.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -42,6 +41,10 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -109,17 +112,17 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
                 });
     }
 
-    private final Set<CraftingCPUCluster> craftingCPUClusters = new HashSet<>();
-    private final Map<IGridNode, StackWatcher<ICraftingWatcherNode>> craftingWatchers = new HashMap<>();
+    private final Set<CraftingCPUCluster> craftingCPUClusters = new ReferenceOpenHashSet<>();
+    private final Map<IGridNode, StackWatcher<ICraftingWatcherNode>> craftingWatchers = new Reference2ObjectOpenHashMap<>();
     private final IGrid grid;
     private final NetworkCraftingProviders craftingProviders = new NetworkCraftingProviders();
-    private final Map<UUID, CraftingLinkNexus> craftingLinks = new HashMap<>();
+    private final Map<UUID, CraftingLinkNexus> craftingLinks = new Object2ObjectOpenHashMap<>();
     private final Multimap<AEKey, StackWatcher<ICraftingWatcherNode>> interests = HashMultimap.create();
     private final InterestManager<StackWatcher<ICraftingWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final IEnergyService energyGrid;
-    private final Set<AEKey> currentlyCrafting = new HashSet<>();
-    private final Set<AEKey> currentlyCraftable = new HashSet<>();
+    private final Set<AEKey> currentlyCrafting = new ReferenceOpenHashSet<>();
+    private final Set<AEKey> currentlyCraftable = new ReferenceOpenHashSet<>();
     private long lastProcessedCraftingLogicChangeTick;
     private long lastProcessedCraftableChangeTick;
     private boolean updateList = false;
@@ -165,7 +168,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             // Notify watchers about items no longer being crafted, but only if there can be changes and there are
             // watchers
             if (!interests.isEmpty() && !(previouslyCrafting.isEmpty() && currentlyCrafting.isEmpty())) {
-                var changed = new HashSet<AEKey>();
+                var changed = new ReferenceOpenHashSet<AEKey>();
                 changed.addAll(Sets.difference(previouslyCrafting, currentlyCrafting));
                 changed.addAll(Sets.difference(currentlyCrafting, previouslyCrafting));
                 for (var what : changed) {
@@ -187,14 +190,14 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             if (!currentlyCraftable.isEmpty() || !craftingProviders.getCraftableKeys().isEmpty()
                     || !craftingProviders.getEmittableKeys().isEmpty()) {
                 Set<AEKey> previouslyCraftable = currentlyCraftable.isEmpty() ? Set.of()
-                        : new HashSet<>(currentlyCraftable);
+                        : new ReferenceOpenHashSet<>(currentlyCraftable);
                 this.currentlyCraftable.clear();
                 currentlyCraftable.addAll(craftingProviders.getCraftableKeys());
                 currentlyCraftable.addAll(craftingProviders.getEmittableKeys());
 
                 // Only perform the change tracking if there are watchers
                 if (!interests.isEmpty()) {
-                    var changedCraftable = new HashSet<AEKey>();
+                    var changedCraftable = new ReferenceOpenHashSet<AEKey>();
                     changedCraftable.addAll(Sets.difference(previouslyCraftable, currentlyCraftable));
                     changedCraftable.addAll(Sets.difference(currentlyCraftable, previouslyCraftable));
                     for (var what : changedCraftable) {

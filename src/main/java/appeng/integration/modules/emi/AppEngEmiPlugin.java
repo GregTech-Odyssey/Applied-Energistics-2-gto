@@ -12,7 +12,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 
-import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.EmiEntrypoint;
 import dev.emi.emi.api.EmiPlugin;
 import dev.emi.emi.api.EmiRegistry;
@@ -157,21 +156,6 @@ public class AppEngEmiPlugin implements EmiPlugin {
     }
 
     private void registerP2PAttunements(Consumer<EmiRecipe> recipeConsumer) {
-
-        var all = EmiApi.getIndexStacks();
-        for (var entry : P2PTunnelAttunementInternal.getApiTunnels()) {
-            var inputs = all.stream().filter(stack -> entry.stackPredicate().test(stack.getItemStack()))
-                    .toList();
-            if (inputs.isEmpty()) {
-                continue;
-            }
-            recipeConsumer.accept(
-                    new EmiP2PAttunementRecipe(
-                            EmiIngredient.of(inputs),
-                            EmiStack.of(entry.tunnelType()),
-                            ItemModText.P2P_API_ATTUNEMENT.text().append("\n").append(entry.description())));
-        }
-
         for (var entry : P2PTunnelAttunementInternal.getTagTunnels().entrySet()) {
             var ingredient = EmiIngredient.of(entry.getKey());
             if (ingredient.isEmpty()) {

@@ -324,7 +324,8 @@ public class EnergyService implements IEnergyService, IGridServiceProvider {
     }
 
     public double extractProviderPower(double amt, Actionable mode) {
-        Preconditions.checkArgument(amt >= 0, "amt must be >= 0");
+        if (amt <= 0)
+            return amt;
 
         double extractedPower = 0;
 
@@ -363,7 +364,8 @@ public class EnergyService implements IEnergyService, IGridServiceProvider {
     }
 
     public double injectProviderPower(double amt, Actionable mode) {
-        Preconditions.checkArgument(amt >= 0, "amt must be >= 0");
+        if (amt <= 0)
+            return amt;
 
         final double originalAmount = amt;
 

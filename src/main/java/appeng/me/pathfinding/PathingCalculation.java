@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.IGrid;
@@ -55,7 +56,7 @@ public class PathingCalculation {
     /**
      * Path items that are part of a multiblock that was already granted a channel.
      */
-    private final Set<GridNode> multiblocksWithChannel = new HashSet<>();
+    private final Set<GridNode> multiblocksWithChannel = new ReferenceOpenHashSet<>();
     /**
      * The BFS queues: all the path items that need to be visited on the next tick. Dense queue is prioritized to have
      * the behavior of dense cables extending the controller faces, then cables, then normal devices.

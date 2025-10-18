@@ -18,7 +18,6 @@
 
 package appeng.menu.me.common;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Spliterator;
@@ -30,6 +29,8 @@ import com.google.common.collect.HashBiMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.item.ItemStack;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.stacks.AEKey;
 
@@ -48,7 +49,7 @@ public class IncrementalUpdateHelper implements Iterable<AEKey> {
      */
     private final BiMap<AEKey, Long> mapping;
 
-    private final Set<AEKey> changes = new HashSet<>();
+    private final Set<AEKey> changes = new ReferenceOpenHashSet<>();
 
     private long serial;
 
@@ -95,10 +96,7 @@ public class IncrementalUpdateHelper implements Iterable<AEKey> {
     }
 
     public void addChange(AEKey entry) {
-        if (!changes.add(entry)) {
-            changes.remove(entry);
-            changes.add(entry);
-        }
+        changes.add(entry);
     }
 
     /**

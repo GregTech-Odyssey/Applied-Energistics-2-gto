@@ -239,7 +239,6 @@ public abstract class AppEngBase implements AppEng {
 
     public void registerCreativeTabs(Registry<CreativeModeTab> registry) {
         MainCreativeTab.init(registry);
-        FacadeCreativeTab.init(registry);
     }
 
     @Override

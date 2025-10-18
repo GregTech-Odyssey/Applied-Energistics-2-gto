@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -15,6 +14,11 @@ import java.util.Set;
 import com.google.common.collect.Iterators;
 
 import org.jetbrains.annotations.Nullable;
+
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.crafting.IPatternDetails;
@@ -29,14 +33,14 @@ import appeng.hooks.ticking.TickHandler;
  * Keeps track of the crafting patterns in the network, and related information.
  */
 public class NetworkCraftingProviders {
-    private final Map<IGridNode, ProviderState> craftingProviders = new HashMap<>();
-    private final Map<IPatternDetails, CraftingProviderList> craftingMethods = new HashMap<>();
-    private final Map<AEKey, PatternsForKey> craftableItems = new HashMap<>();
+    private final Map<IGridNode, ProviderState> craftingProviders = new Reference2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<IPatternDetails, CraftingProviderList> craftingMethods = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<AEKey, PatternsForKey> craftableItems = new Object2ObjectOpenHashMap<>();
     /**
      * Used for looking up craftable alternatives using fuzzy search (i.e. ignore NBT).
      */
     private final KeyCounter craftableItemsList = new KeyCounter();
-    private final Map<AEKey, Integer> emitableItems = new HashMap<>();
+    private final Object2IntOpenHashMap<AEKey> emitableItems = new Object2IntOpenHashMap<>();
 
     private final Set<AEKey> craftableKeys = Collections.unmodifiableSet(craftableItems.keySet());
     private final Set<AEKey> emittableKeys = Collections.unmodifiableSet(emitableItems.keySet());
@@ -68,7 +72,7 @@ public class NetworkCraftingProviders {
     }
 
     public Set<AEKey> getCraftables(AEKeyFilter filter) {
-        var result = new HashSet<AEKey>();
+        var result = new ReferenceOpenHashSet<AEKey>();
 
         // add craftable items!
         for (var stack : this.craftableItems.keySet()) {
@@ -153,7 +157,7 @@ public class NetworkCraftingProviders {
 
         private ProviderState(ICraftingProvider provider) {
             this.provider = provider;
-            this.emitableItems = new HashSet<>(provider.getEmitableItems());
+            this.emitableItems = new ReferenceOpenHashSet<>(provider.getEmitableItems());
             this.patterns = new ArrayList<>(provider.getAvailablePatterns());
             this.priority = provider.getPatternPriority();
         }

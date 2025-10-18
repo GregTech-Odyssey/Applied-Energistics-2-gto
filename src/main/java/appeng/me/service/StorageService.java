@@ -95,14 +95,17 @@ public class StorageService implements IStorageService, IGridServiceProvider {
     @Override
     public void onServerEndTick(MinecraftServer server) {
         if (cachedStacksUpdate) {
-            TASK.add(() -> updateCachedStacks(server));
+            TASK.add(this::updateCachedStacks);
+            if (!interestManager.isEmpty() && server.getTickCount() % 10 == 0) {
+                server.execute(this::watcherUpdate);
+            }
         } else {
             // lazily rebuild cache list
             cachedStacksNeedUpdate = true;
         }
     }
 
-    private void updateCachedStacks(MinecraftServer server) {
+    private void updateCachedStacks() {
         cachedStacksNeedUpdate = false;
 
         cachedAvailableStacks.clear();
@@ -110,9 +113,6 @@ public class StorageService implements IStorageService, IGridServiceProvider {
         // clear() only clears the inner maps,
         // so ensure that the outer map gets cleaned up too
         cachedAvailableStacks.removeEmptySubmaps();
-        if (server != null && server.getTickCount() % 10 == 0) {
-            server.execute(this::watcherUpdate);
-        }
     }
 
     private void watcherUpdate() {
@@ -207,7 +207,7 @@ public class StorageService implements IStorageService, IGridServiceProvider {
     @Override
     public KeyCounter getCachedInventory() {
         if (cachedStacksNeedUpdate && !cachedStacksUpdate) {
-            updateCachedStacks(null);
+            updateCachedStacks();
         }
         return cachedAvailableStacks;
     }

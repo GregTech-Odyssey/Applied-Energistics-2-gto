@@ -98,7 +98,7 @@ public class TickHandler {
     }
 
     public void init() {
-        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, this::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(this::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(this::onUnloadChunk);
         // Try to go last for level unloads since we use it to clean-up state
