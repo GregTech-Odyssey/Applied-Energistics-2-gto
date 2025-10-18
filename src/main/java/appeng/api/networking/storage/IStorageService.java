@@ -89,4 +89,11 @@ public interface IStorageService extends IGridService {
      * <strong>THIS IS A PERFORMANCE INTENSIVE OPERATION AND SHOULD BE USED WITH CARE.</strong>
      */
     void invalidateCache();
+
+    interface UpdateRequester {
+
+        default boolean isUpdateRequested(IStorageService service) {
+            return true;
+        }
+    }
 }

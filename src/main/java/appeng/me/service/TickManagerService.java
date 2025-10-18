@@ -32,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
@@ -77,7 +78,7 @@ public class TickManagerService implements ITickManager, IGridServiceProvider {
     }
 
     @Override
-    public void onServerEndTick() {
+    public void onServerEndTick(MinecraftServer server) {
         this.tickLevelQueue(null);
     }
 

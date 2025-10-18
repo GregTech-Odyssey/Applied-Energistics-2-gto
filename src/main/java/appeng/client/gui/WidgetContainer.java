@@ -403,7 +403,6 @@ public class WidgetContainer {
         return searchField;
     }
 
-
     public Map<String, AbstractWidget> getWidgets() {
         return widgets;
     }

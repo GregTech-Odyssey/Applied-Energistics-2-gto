@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
 import appeng.me.helpers.GridServiceContainer;
@@ -170,7 +171,7 @@ public final class GridServices {
                         .getDeclaringClass() != IGridServiceProvider.class;
                 this.hasLevelEndTick = implClass.getMethod("onLevelEndTick", Level.class)
                         .getDeclaringClass() != IGridServiceProvider.class;
-                this.hasServerEndTick = implClass.getMethod("onServerEndTick")
+                this.hasServerEndTick = implClass.getMethod("onServerEndTick", MinecraftServer.class)
                         .getDeclaringClass() != IGridServiceProvider.class;
             } catch (NoSuchMethodException exception) {
                 throw new RuntimeException("Failed to check which methods the grid service implements", exception);

@@ -58,7 +58,7 @@ import appeng.util.prioritylist.DefaultPriorityList;
  * Generalized base class for export buses that move stacks from network storage to an adjacent block using a non-AE
  * API.
  */
-public class ExportBusPart extends IOBusPart implements ICraftingRequester {
+public class ExportBusPart extends IOBusPart implements ICraftingRequester, IStorageService.UpdateRequester {
 
     public static final ResourceLocation MODEL_BASE = new ResourceLocation(AppEng.MOD_ID, "part/export_bus_base");
 

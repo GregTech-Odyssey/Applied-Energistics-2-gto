@@ -400,70 +400,13 @@ jar {
     }
 }
 
-def publicApiIncludePatterns = {
-    exclude "**/*Internal.*"
-    exclude "**/*Internal\$*.*"
-    include "appeng/api/**"
-}
-
-javadoc {
-    source = sourceSets.main.allJava
-    classpath = sourceSets.main.compileClasspath + sourceSets.main.output
-
-    options.addStringOption('Xdoclint:none', '-quiet')
-    options.encoding = 'UTF-8'
-    options.charSet = 'UTF-8'
-}
-javadoc publicApiIncludePatterns
-
-task javadocJar(type: Jar, dependsOn: javadoc, group: "build") {
-    archiveClassifier = "javadoc"
-    from javadoc.destinationDir
-}
-
 task sourcesJar(type: Jar) {
     archiveClassifier = "sources"
     from sourceSets.main.allJava
 }
 
-task apiJar(type: Jar, group: "build") {
-    archiveClassifier = "api"
-    // api jar ist just a development aid and serves as both a binary and source jar simultaneously
-    from sourceSets.main.output
-    from sourceSets.main.allJava
-    manifest {
-        attributes("Fabric-Loom-Remap": true)
-    }
-}
-apiJar publicApiIncludePatterns
-
 artifacts {
-    archives javadocJar
     archives sourcesJar
-    archives apiJar
-}
-
-//////////////////
-// Maven publish
-publishing {
-    publications {
-        maven(MavenPublication) {
-            groupId = project.group
-            artifactId = project.archivesBaseName
-            version = project.version
-
-            artifact jar
-            artifact sourcesJar
-            artifact javadocJar
-            artifact apiJar
-        }
-    }
-    repositories {
-        maven {
-            name = "Local"
-            url = file("build/repo").toURI()
-        }
-    }
 }
 
 /////////////
@@ -479,16 +422,6 @@ spotless {
         toggleOffOn()
         eclipse().configFile 'codeformat/codeformat.xml'
         importOrderFile 'codeformat/ae2.importorder'
-
-        // courtesy of diffplug/spotless#240
-        // https://github.com/diffplug/spotless/issues/240#issuecomment-385206606
-        custom 'noWildcardImports', {
-            if (it.contains('*;\n')) {
-                throw new Error('No wildcard imports allowed')
-            }
-
-            it
-        }
         bumpThisNumberIfACustomStepChanges(1)
     }
 

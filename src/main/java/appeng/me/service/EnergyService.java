@@ -40,6 +40,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.MinecraftServer;
 
 import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
 
@@ -206,7 +207,7 @@ public class EnergyService implements IEnergyService, IGridServiceProvider {
     }
 
     @Override
-    public void onServerEndTick() {
+    public void onServerEndTick(MinecraftServer server) {
         // Inject the passive energy once per overlay grid and do it at the energy service that actually
         // contains the passive generator.
         var currentPassiveGenerator = getOverlayGrid().getCurrentPassiveGenerator();

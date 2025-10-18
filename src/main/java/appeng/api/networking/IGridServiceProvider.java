@@ -26,6 +26,7 @@ package appeng.api.networking;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
 /**
@@ -63,7 +64,7 @@ public interface IGridServiceProvider {
      * <p>
      * Called at the end of a server tick.
      */
-    default void onServerEndTick() {
+    default void onServerEndTick(MinecraftServer server) {
     }
 
     /**

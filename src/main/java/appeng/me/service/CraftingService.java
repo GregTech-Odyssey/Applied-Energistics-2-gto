@@ -40,6 +40,7 @@ import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
 import appeng.api.config.Actionable;
@@ -99,13 +100,8 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     private static final ExecutorService CRAFTING_POOL;
 
     static {
-        final ThreadFactory factory = ar -> {
-            final Thread crafting = new Thread(ar, "AE Crafting Calculator");
-            crafting.setDaemon(true);
-            return crafting;
-        };
-
-        CRAFTING_POOL = Executors.newCachedThreadPool(factory);
+        final ThreadFactory factory = ar -> Thread.ofVirtual().name("AE Crafting Calculator").unstarted(ar);
+        CRAFTING_POOL = Executors.newThreadPerTaskExecutor(factory);
 
         GridHelper.addGridServiceEventHandler(GridCraftingCpuChange.class, ICraftingService.class,
                 (service, event) -> {
@@ -138,7 +134,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     }
 
     @Override
-    public void onServerEndTick() {
+    public void onServerEndTick(MinecraftServer server) {
         if (this.updateList) {
             this.updateList = false;
             this.updateCPUClusters();

@@ -2,10 +2,8 @@ package appeng.api.stacks;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
-import java.lang.ref.WeakReference;
 import java.util.List;
 import java.util.Objects;
-import java.util.WeakHashMap;
 
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -56,9 +54,9 @@ public final class AEItemKey extends AEKey {
 
     private final Item item;
     private final InternedTag internedTag;
-    private final InternedTag internedCaps;
     private final int hashCode;
     private final int cachedDamage;
+    private int fuzzySearchMaxValue = -1;
     /**
      * A lazily initialized itemstack used for display and ingredient testing purposes. This should never be modified
      * and will always have amount 1.
@@ -71,11 +69,10 @@ public final class AEItemKey extends AEKey {
      */
     private int maxStackSize = -1;
 
-    private AEItemKey(Item item, InternedTag internedTag, InternedTag internedCaps) {
+    public AEItemKey(Item item, InternedTag internedTag) {
         this.item = item;
         this.internedTag = internedTag;
-        this.internedCaps = internedCaps;
-        this.hashCode = Objects.hash(item, internedTag, internedCaps);
+        this.hashCode = Objects.hash(item, internedTag);
         if (internedTag.tag != null && internedTag.tag.get("Damage") instanceof NumericTag numericTag) {
             this.cachedDamage = numericTag.getAsInt();
         } else {
@@ -123,7 +120,7 @@ public final class AEItemKey extends AEKey {
         if (o == null || getClass() != o.getClass())
             return false;
         AEItemKey aeItemKey = (AEItemKey) o;
-        return item == aeItemKey.item && internedTag == aeItemKey.internedTag && internedCaps == aeItemKey.internedCaps;
+        return item == aeItemKey.item && internedTag == aeItemKey.internedTag;
     }
 
     @Override
@@ -140,13 +137,12 @@ public final class AEItemKey extends AEKey {
     }
 
     private static AEItemKey of(ItemLike item, @Nullable CompoundTag tag, @Nullable CompoundTag caps) {
-        return new AEItemKey(item.asItem(), InternedTag.of(tag, false), InternedTag.of(caps, false));
+        return new AEItemKey(item.asItem(), InternedTag.of(tag, true));
     }
 
     public boolean matches(ItemStack stack) {
         // TODO: remove or optimize cap check if it becomes too slow >:-(
-        return !stack.isEmpty() && stack.is(item) && Objects.equals(stack.getTag(), internedTag.tag)
-                && Objects.equals(serializeStackCaps(stack), internedCaps.tag);
+        return !stack.isEmpty() && stack.is(item) && Objects.equals(stack.getTag(), internedTag.tag);
     }
 
     public boolean matches(Ingredient ingredient) {
@@ -158,7 +154,7 @@ public final class AEItemKey extends AEKey {
      */
     public ItemStack getReadOnlyStack() {
         if (readOnlyStack == null) {
-            readOnlyStack = new ItemStack(item, 1, internedCaps.tag);
+            readOnlyStack = new ItemStack(item, 1);
             readOnlyStack.setTag(internedTag.tag);
         } else {
             if (readOnlyStack.isEmpty()) {
@@ -179,7 +175,7 @@ public final class AEItemKey extends AEKey {
             return ItemStack.EMPTY;
         }
 
-        var result = new ItemStack(item, count, internedCaps.tag);
+        var result = new ItemStack(item, count);
         result.setTag(copyTag());
         return result;
     }
@@ -210,9 +206,6 @@ public final class AEItemKey extends AEKey {
         if (internedTag.tag != null) {
             result.put("tag", internedTag.tag.copy());
         }
-        if (internedCaps.tag != null) {
-            result.put("caps", internedCaps.tag.copy());
-        }
 
         return result;
     }
@@ -235,7 +228,9 @@ public final class AEItemKey extends AEKey {
      */
     @Override
     public int getFuzzySearchMaxValue() {
-        return getReadOnlyStack().getMaxDamage();
+        if (fuzzySearchMaxValue < 0)
+            fuzzySearchMaxValue = getReadOnlyStack().getMaxDamage();
+        return fuzzySearchMaxValue;
     }
 
     @Override
@@ -324,8 +319,7 @@ public final class AEItemKey extends AEKey {
         var shareTag = data.readNbt();
         var stack = new ItemStack(item);
         stack.readShareTag(shareTag);
-        return new AEItemKey(item, InternedTag.of(stack.getTag(), true),
-                InternedTag.of(serializeStackCaps(stack), true));
+        return new AEItemKey(item, InternedTag.of(stack.getTag(), false));
     }
 
     @Override
@@ -334,62 +328,5 @@ public final class AEItemKey extends AEKey {
         String idString = id != BuiltInRegistries.ITEM.getDefaultKey() ? id.toString()
                 : item.getClass().getName() + "(unregistered)";
         return internedTag.tag == null ? idString : idString + " (+tag)";
-    }
-
-    private static final class InternedTag {
-        private static final InternedTag EMPTY = new InternedTag(null);
-
-        private static final WeakHashMap<InternedTag, WeakReference<InternedTag>> INTERNED = new WeakHashMap<>();
-
-        private final CompoundTag tag;
-        private final int hashCode;
-
-        InternedTag(CompoundTag tag) {
-            this.tag = tag;
-            this.hashCode = Objects.hashCode(tag);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o)
-                return true;
-            if (o == null || getClass() != o.getClass())
-                return false;
-            InternedTag internedTag = (InternedTag) o;
-            return Objects.equals(tag, internedTag.tag);
-        }
-
-        @Override
-        public int hashCode() {
-            return hashCode;
-        }
-
-        public static InternedTag of(@Nullable CompoundTag tag, boolean giveOwnership) {
-            if (tag == null) {
-                return EMPTY;
-            }
-
-            synchronized (AEItemKey.class) {
-                var searchHolder = new InternedTag(tag);
-                var weakRef = INTERNED.get(searchHolder);
-                InternedTag ret = null;
-
-                if (weakRef != null) {
-                    ret = weakRef.get();
-                }
-
-                if (ret == null) {
-                    // Copy the tag if we don't get to have ownership of it
-                    if (giveOwnership) {
-                        ret = searchHolder;
-                    } else {
-                        ret = new InternedTag(tag.copy());
-                    }
-                    INTERNED.put(ret, new WeakReference<>(ret));
-                }
-
-                return ret;
-            }
-        }
     }
 }

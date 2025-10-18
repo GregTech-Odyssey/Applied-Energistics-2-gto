@@ -30,7 +30,7 @@ public final class AEFluidKey extends AEKey {
     private final CompoundTag tag;
     private final int hashCode;
 
-    private AEFluidKey(Fluid fluid, @Nullable CompoundTag tag) {
+    public AEFluidKey(Fluid fluid, @Nullable CompoundTag tag) {
         this.fluid = fluid;
         this.tag = tag;
         this.hashCode = Objects.hash(fluid, tag);

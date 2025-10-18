@@ -84,22 +84,26 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
 
     @Override
     public TickRateModulation onTick() {
-        forceCacheRebuild = false;
-        boolean changed = this.cache.update();
-        if (changed) {
-            return TickRateModulation.URGENT;
-        } else {
-            return TickRateModulation.SLOWER;
+        synchronized (cache) {
+            forceCacheRebuild = false;
+            boolean changed = this.cache.update();
+            if (changed) {
+                return TickRateModulation.URGENT;
+            } else {
+                return TickRateModulation.SLOWER;
+            }
         }
     }
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        if (forceCacheRebuild) {
-            forceCacheRebuild = false;
-            cache.update();
+        synchronized (cache) {
+            if (forceCacheRebuild) {
+                forceCacheRebuild = false;
+                cache.update();
+            }
+            this.cache.getAvailableKeys(out);
         }
-        this.cache.getAvailableKeys(out);
     }
 
     private class InventoryCache {

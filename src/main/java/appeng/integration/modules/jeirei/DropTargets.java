@@ -2,22 +2,18 @@ package appeng.integration.modules.jeirei;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import com.almostreliable.merequester.client.RequestSlot;
 import com.almostreliable.merequester.platform.Platform;
 import com.google.common.primitives.Ints;
 
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
-import appeng.client.gui.WidgetContainer;
 import appeng.client.gui.widgets.AETextField;
-import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.helpers.InventoryAction;

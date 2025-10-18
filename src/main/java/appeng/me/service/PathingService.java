@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.server.MinecraftServer;
 
 import appeng.api.features.IPlayerRegistry;
 import appeng.api.networking.GridFlags;
@@ -89,7 +90,7 @@ public class PathingService implements IPathingService, IGridServiceProvider {
     }
 
     @Override
-    public void onServerEndTick() {
+    public void onServerEndTick(MinecraftServer server) {
         if (this.recalculateControllerNextTick) {
             this.updateControllerState();
         }

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.CrashReportCategory;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
 import appeng.api.networking.GridServicesInternal;
@@ -227,13 +228,13 @@ public class Grid implements IGrid {
         }
     }
 
-    public void onServerEndTick() {
+    public void onServerEndTick(MinecraftServer server) {
         if (this.pivot == null) {
             return;
         }
 
         for (var gc : this.services.serverEndTickServices()) {
-            gc.onServerEndTick();
+            gc.onServerEndTick(server);
         }
     }
 

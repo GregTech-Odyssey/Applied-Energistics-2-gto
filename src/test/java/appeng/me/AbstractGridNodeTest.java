@@ -57,7 +57,7 @@ public abstract class AbstractGridNodeTest {
         var node = makeNode(flags);
         node.addService(IAEPowerStorage.class, new InfinitePowerStorage());
         var grid = node.getInternalGrid();
-        ((EnergyService) grid.getEnergyService()).onServerEndTick();
+        ((EnergyService) grid.getEnergyService()).onServerEndTick(null);
         assertTrue(node.isPowered());
         node.markReady();
         return node;
@@ -96,6 +96,6 @@ public abstract class AbstractGridNodeTest {
         internalGrid.onServerStartTick();
         internalGrid.onLevelStartTick(level);
         internalGrid.onLevelEndTick(level);
-        internalGrid.onServerEndTick();
+        internalGrid.onServerEndTick(level.getServer());
     }
 }

@@ -23,18 +23,14 @@
 
 package appeng.api.stacks;
 
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.Iterators;
 
 import org.jetbrains.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Reference2LongMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
@@ -43,9 +39,9 @@ import appeng.api.config.FuzzyMode;
 /**
  * Associates a generic value of type T with AE keys and makes key/value pairs searchable with fuzzy mode semantics.
  */
-public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
+public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>> {
     // First map contains a mapping from AEKey#primaryKey
-    private final Reference2ObjectMap<Object, VariantCounter> lists = new Reference2ObjectOpenHashMap<>();
+    private Reference2ObjectMap<Object, VariantCounter> lists = new Reference2ObjectOpenHashMap<>();
 
     public Collection<Object2LongMap.Entry<AEKey>> findFuzzy(AEKey key, FuzzyMode fuzzy) {
         Objects.requireNonNull(key, "key");
@@ -54,6 +50,8 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
     }
 
     public void removeZeros() {
+        if (lists == null)
+            return;
         var iterator = lists.entrySet().iterator();
         while (iterator.hasNext()) {
             var entry = iterator.next();
@@ -66,10 +64,14 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
     }
 
     public void removeEmptySubmaps() {
+        if (lists == null)
+            return;
         lists.values().removeIf(VariantCounter::isEmpty);
     }
 
     public void addAll(KeyCounter other) {
+        if (lists == null)
+            lists = new Reference2ObjectOpenHashMap<>();
         for (var entry : other.lists.entrySet()) {
             var ourSubIndex = lists.get(entry.getKey());
             if (ourSubIndex == null) {
@@ -81,6 +83,8 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
     }
 
     public void removeAll(KeyCounter other) {
+        if (lists == null)
+            lists = new Reference2ObjectOpenHashMap<>();
         for (var entry : other.lists.entrySet()) {
             var ourSubIndex = lists.get(entry.getKey());
             if (ourSubIndex == null) {
@@ -95,6 +99,8 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
 
     public void add(AEKey key, long amount) {
         Objects.requireNonNull(key, "key");
+        if (lists == null)
+            lists = new Reference2ObjectOpenHashMap<>();
         getSubIndex(key).add(key, amount);
     }
 
@@ -109,6 +115,8 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
      * Removes the given key from this counter, and returns the old value (or 0).
      */
     public long remove(AEKey key) {
+        if (lists == null)
+            return 0;
         var subIndex = getSubIndex(key);
         var ret = subIndex.remove(key);
         if (subIndex.isEmpty()) {
@@ -118,10 +126,14 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
     }
 
     public void set(AEKey key, long amount) {
+        if (lists == null)
+            lists = new Reference2ObjectOpenHashMap<>();
         getSubIndex(key).set(key, amount);
     }
 
     public long get(AEKey key) {
+        if (lists == null)
+            return 0;
         Objects.requireNonNull(key);
         var subIndex = lists.get(key.getPrimaryKey());
         if (subIndex == null) {
@@ -131,18 +143,24 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
     }
 
     public void reset() {
+        if (lists == null)
+            return;
         for (var list : lists.values()) {
             list.reset();
         }
     }
 
     public void clear() {
+        if (lists == null)
+            return;
         for (var list : lists.values()) {
             list.clear();
         }
     }
 
     public boolean isEmpty() {
+        if (lists == null)
+            return true;
         for (var list : lists.values()) {
             if (!list.isEmpty()) {
                 return false;
@@ -152,6 +170,8 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
     }
 
     public int size() {
+        if (lists == null)
+            return 0;
         int tot = 0;
         for (var list : lists.values()) {
             tot += list.size();
@@ -160,9 +180,28 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
     }
 
     @Override
-    public Iterator<Object2LongMap.Entry<AEKey>> iterator() {
-        return Iterators.concat(
-                Iterators.transform(lists.values().iterator(), VariantCounter::iterator));
+    public Iterator<Reference2LongMap.Entry<AEKey>> iterator() {
+        if (lists == null)
+            return Collections.emptyIterator();
+        return Iterators.transform(Iterators.concat(
+                Iterators.transform(lists.values().iterator(), VariantCounter::iterator)),
+                i -> new Reference2LongMap.Entry<>() {
+
+                    @Override
+                    public AEKey getKey() {
+                        return i.getKey();
+                    }
+
+                    @Override
+                    public long getLongValue() {
+                        return i.getLongValue();
+                    }
+
+                    @Override
+                    public long setValue(long value) {
+                        return i.setValue(value);
+                    }
+                });
     }
 
     private VariantCounter getSubIndex(AEKey key) {
@@ -193,6 +232,8 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
 
     @Nullable
     public Object2LongMap.Entry<AEKey> getFirstEntry() {
+        if (lists == null)
+            return null;
         for (var value : lists.values()) {
             var it = value.iterator();
             if (it.hasNext()) {
@@ -204,6 +245,8 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
 
     @Nullable
     public <T extends AEKey> Object2LongMap.Entry<AEKey> getFirstEntry(Class<T> keyClass) {
+        if (lists == null)
+            return null;
         for (var value : lists.values()) {
             var it = value.iterator();
             if (it.hasNext()) {
@@ -217,6 +260,8 @@ public final class KeyCounter implements Iterable<Object2LongMap.Entry<AEKey>> {
     }
 
     public Set<AEKey> keySet() {
+        if (lists == null)
+            return Collections.emptySet();
         var keys = new HashSet<AEKey>(size());
         for (var list : lists.values()) {
             for (var entry : list) {

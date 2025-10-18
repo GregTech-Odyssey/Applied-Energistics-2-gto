@@ -38,6 +38,8 @@ import com.google.common.collect.Multimap;
 import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -58,6 +60,7 @@ import appeng.core.AELog;
 import appeng.crafting.CraftingCalculation;
 import appeng.me.Grid;
 import appeng.me.GridNode;
+import appeng.me.service.StorageService;
 import appeng.util.ILevelRunnable;
 import appeng.util.Platform;
 
@@ -95,7 +98,7 @@ public class TickHandler {
     }
 
     public void init() {
-        MinecraftForge.EVENT_BUS.addListener(this::onServerTick);
+        MinecraftForge.EVENT_BUS.addListener(EventPriority.HIGH, this::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(this::onLevelTick);
         MinecraftForge.EVENT_BUS.addListener(this::onUnloadChunk);
         // Try to go last for level unloads since we use it to clean-up state
@@ -294,9 +297,14 @@ public class TickHandler {
      */
     public void onServerTick(final ServerTickEvent ev) {
         if (ev.phase == Phase.START) {
-            onServerTickStart();
+            StorageService.LOCK.lock();
+            try {
+                onServerTickStart();
+            } finally {
+                StorageService.LOCK.unlock();
+            }
         } else if (ev.phase == Phase.END) {
-            onServerTickEnd();
+            onServerTickEnd(ev.getServer());
         }
     }
 
@@ -318,11 +326,11 @@ public class TickHandler {
         });
     }
 
-    private void onServerTickEnd() {
+    private void onServerTickEnd(MinecraftServer server) {
         // tick networks
         this.grids.getNetworks().forEach(g -> {
             try {
-                g.onServerEndTick();
+                g.onServerEndTick(server);
             } catch (Throwable t) {
                 CrashReport crashReport = CrashReport.forThrowable(t, "Ticking grid on end of server tick");
                 g.fillCrashReportCategory(crashReport.addCategory("Grid being ticked"));
@@ -340,6 +348,18 @@ public class TickHandler {
         }
 
         tickCounter++;
+
+        if (!StorageService.TASK.isEmpty()) {
+            server.tell(new TickTask(0, () -> Thread.ofVirtual().name("AE Storage Service").start(() -> {
+                StorageService.LOCK.lock();
+                try {
+                    StorageService.TASK.forEach(Runnable::run);
+                    StorageService.TASK.clear();
+                } finally {
+                    StorageService.LOCK.unlock();
+                }
+            })));
+        }
     }
 
     public void registerCraftingSimulation(Level level, CraftingCalculation craftingCalculation) {

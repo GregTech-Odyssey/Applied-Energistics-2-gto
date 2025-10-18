@@ -24,6 +24,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.HashMultimap;
@@ -32,9 +33,12 @@ import com.google.common.collect.SetMultimap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.MinecraftServer;
 
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
 import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridServiceProvider;
@@ -51,14 +55,18 @@ import appeng.me.storage.NetworkStorage;
 
 public class StorageService implements IStorageService, IGridServiceProvider {
 
+    public static final ReentrantLock LOCK = new ReentrantLock();
+    public static final List<Runnable> TASK = new ObjectArrayList<>();
+
     /**
      * Tracks the storage service's state for each grid node that provides storage to the network.
      */
-    private final Map<IGridNode, ProviderState> nodeProviders = new IdentityHashMap<>();
+    private final Map<IGridNode, ProviderState> nodeProviders = new Reference2ReferenceOpenHashMap<>();
     /**
      * Tracks state for storage providers that are provided by other grid services (i.e. crafting).
      */
     private final List<ProviderState> globalProviders = new ArrayList<>();
+    private final Set<UpdateRequester> requesters = new ReferenceOpenHashSet<>();
     private final SetMultimap<AEKey, StackWatcher<IStorageWatcherNode>> interests = HashMultimap.create();
     private final InterestManager<StackWatcher<IStorageWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
@@ -71,8 +79,9 @@ public class StorageService implements IStorageService, IGridServiceProvider {
      * Private cached amounts, to ensure that we send correct change notifications even if
      * {@link #cachedAvailableStacks} is modified by mistake.
      */
-    private final Object2LongMap<AEKey> cachedAvailableAmounts = new Object2LongOpenHashMap<>();
+    private final Object2LongOpenHashMap<AEKey> cachedAvailableAmounts = new Object2LongOpenHashMap<>();
     private boolean cachedStacksNeedUpdate = true;
+    private boolean cachedStacksUpdate = false;
     /**
      * Tracks the stack watcher associated with a given grid node. Needed to clean up watchers when the node leaves the
      * grid.
@@ -84,17 +93,16 @@ public class StorageService implements IStorageService, IGridServiceProvider {
     }
 
     @Override
-    public void onServerEndTick() {
-        if (interestManager.isEmpty()) {
+    public void onServerEndTick(MinecraftServer server) {
+        if (cachedStacksUpdate) {
+            TASK.add(() -> updateCachedStacks(server));
+        } else {
             // lazily rebuild cache list
             cachedStacksNeedUpdate = true;
-        } else {
-            // we need to rebuild the cache every tick to notify listeners
-            updateCachedStacks();
         }
     }
 
-    private void updateCachedStacks() {
+    private void updateCachedStacks(MinecraftServer server) {
         cachedStacksNeedUpdate = false;
 
         cachedAvailableStacks.clear();
@@ -102,27 +110,33 @@ public class StorageService implements IStorageService, IGridServiceProvider {
         // clear() only clears the inner maps,
         // so ensure that the outer map gets cleaned up too
         cachedAvailableStacks.removeEmptySubmaps();
+        if (server != null && server.getTickCount() % 10 == 0) {
+            server.execute(this::watcherUpdate);
+        }
+    }
 
-        // Post watcher update for currently available stacks
+    private void watcherUpdate() {
+        for (var it = cachedAvailableAmounts.object2LongEntrySet().fastIterator(); it.hasNext();) {
+            var entry = it.next();
+            var what = entry.getKey();
+            var newAmount = cachedAvailableStacks.get(what);
+            if (newAmount != entry.getLongValue()) {
+                postWatcherUpdate(what, newAmount);
+                if (newAmount == 0) {
+                    it.remove();
+                } else {
+                    entry.setValue(newAmount);
+                }
+            }
+        }
+
         for (var entry : cachedAvailableStacks) {
             var what = entry.getKey();
             var newAmount = entry.getLongValue();
             if (newAmount != cachedAvailableAmounts.getLong(what)) {
                 postWatcherUpdate(what, newAmount);
+                cachedAvailableAmounts.put(what, newAmount);
             }
-        }
-        // Post watcher update for removed stacks
-        for (var what : cachedAvailableAmounts.keySet()) {
-            var newAmount = cachedAvailableStacks.get(what);
-            if (newAmount == 0) {
-                postWatcherUpdate(what, newAmount);
-            }
-        }
-
-        // Update private amounts
-        cachedAvailableAmounts.clear();
-        for (var entry : cachedAvailableStacks) {
-            cachedAvailableAmounts.put(entry.getKey(), entry.getLongValue());
         }
     }
 
@@ -133,6 +147,10 @@ public class StorageService implements IStorageService, IGridServiceProvider {
         for (var watcher : interestManager.getAllStacksWatchers()) {
             watcher.getHost().onStackChange(what, newAmount);
         }
+    }
+
+    private void requesterUpdate() {
+        cachedStacksUpdate = !interestManager.isEmpty() || !requesters.isEmpty();
     }
 
     /**
@@ -154,6 +172,10 @@ public class StorageService implements IStorageService, IGridServiceProvider {
             this.watchers.put(node, iw);
             watcher.updateWatcher(iw);
         }
+        if (node.getOwner() instanceof UpdateRequester requester && requester.isUpdateRequested(this)) {
+            this.requesters.add(requester);
+        }
+        requesterUpdate();
     }
 
     /**
@@ -171,6 +193,10 @@ public class StorageService implements IStorageService, IGridServiceProvider {
         if (providerState != null) {
             providerState.unmount();
         }
+        if (node.getOwner() instanceof UpdateRequester requester) {
+            this.requesters.remove(requester);
+        }
+        requesterUpdate();
     }
 
     @Override
@@ -180,8 +206,8 @@ public class StorageService implements IStorageService, IGridServiceProvider {
 
     @Override
     public KeyCounter getCachedInventory() {
-        if (cachedStacksNeedUpdate) {
-            updateCachedStacks();
+        if (cachedStacksNeedUpdate && !cachedStacksUpdate) {
+            updateCachedStacks(null);
         }
         return cachedAvailableStacks;
     }

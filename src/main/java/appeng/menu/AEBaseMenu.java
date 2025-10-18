@@ -46,6 +46,8 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+
 import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.config.Actionable;
 import appeng.api.implementations.menuobjects.ItemMenuHost;
@@ -87,7 +89,7 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
     protected final ItemMenuHost itemMenuHost;
     private final DataSynchronization dataSync = new DataSynchronization(this);
     private final Inventory playerInventory;
-    private final Set<Integer> lockedPlayerInventorySlots = new HashSet<>();
+    private final IntOpenHashSet lockedPlayerInventorySlots = new IntOpenHashSet();
     private final Map<Slot, SlotSemantic> semanticBySlot = new HashMap<>();
     private final ArrayListMultimap<SlotSemantic, Slot> slotsBySemantic = ArrayListMultimap.create();
     private final Map<String, ClientAction<?>> clientActions = new HashMap<>();

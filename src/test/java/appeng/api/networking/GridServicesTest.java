@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoSettings;
 
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
 import appeng.util.BootstrapMinecraft;
@@ -220,8 +221,8 @@ class GridServicesTest {
 
     public static class ServerEndTickOnly implements IGridServiceProvider {
         @Override
-        public void onServerEndTick() {
-            IGridServiceProvider.super.onServerEndTick();
+        public void onServerEndTick(MinecraftServer server) {
+            IGridServiceProvider.super.onServerEndTick(server);
         }
     }
 }
