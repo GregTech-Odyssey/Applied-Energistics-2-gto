@@ -1,8 +1,9 @@
 package appeng.me.storage;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -27,7 +28,7 @@ class ExternalInventoryCache {
     }
 
     public Set<AEKey> update() {
-        var changes = new HashSet<AEKey>();
+        var changes = new ReferenceOpenHashSet<AEKey>();
         final int slots = this.facade.getSlots();
 
         // Make room for new slots

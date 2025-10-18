@@ -1,6 +1,5 @@
 package appeng.util;
 
-import java.util.LinkedHashSet;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
@@ -9,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluid;
+
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEFluidKey;
@@ -113,7 +114,7 @@ public class ConfigInventory extends GenericStackInv {
     }
 
     public Set<AEKey> keySet() {
-        var result = new LinkedHashSet<AEKey>();
+        var result = new ReferenceLinkedOpenHashSet<AEKey>();
         for (int i = 0; i < stacks.length; i++) {
             var what = getKey(i);
             if (what != null) {

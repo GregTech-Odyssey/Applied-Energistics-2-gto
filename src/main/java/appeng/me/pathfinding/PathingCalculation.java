@@ -78,7 +78,7 @@ public class PathingCalculation {
     /**
      * Nodes that have been granted a channel during the BFS pass.
      */
-    private final Set<GridNode> channelNodes = new HashSet<>();
+    private final Set<GridNode> channelNodes = new ReferenceOpenHashSet<>();
     /**
      * Tracks the total number of used channels.
      */

@@ -17,7 +17,6 @@
  */
 package appeng.crafting.execution;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -29,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
@@ -69,7 +70,7 @@ public class CraftingCpuLogic {
      * Used crafting operations over the last 3 ticks.
      */
     private final int[] usedOps = new int[3];
-    private final Set<Consumer<AEKey>> listeners = new HashSet<>();
+    private final Set<Consumer<AEKey>> listeners = new ReferenceOpenHashSet<>();
     /**
      * True if the CPU is currently trying to clear its inventory but is not able to.
      */

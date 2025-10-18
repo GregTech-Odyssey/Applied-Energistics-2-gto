@@ -1,6 +1,5 @@
 package appeng.parts.automation;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -24,6 +23,8 @@ import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import appeng.api.behaviors.PlacementStrategy;
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEFluidKey;
@@ -36,7 +37,7 @@ public class FluidPlacementStrategy implements PlacementStrategy {
     /**
      * The fluids that we tried to place unsuccessfully.
      */
-    private final Set<Fluid> blocked = new HashSet<>();
+    private final Set<Fluid> blocked = new ReferenceOpenHashSet<>();
     /**
      * {@link System#currentTimeMillis()} of when the last sound/visual effect was played by this plane.
      */

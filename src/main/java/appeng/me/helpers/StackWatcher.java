@@ -1,8 +1,9 @@
 package appeng.me.helpers;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.networking.IStackWatcher;
 import appeng.api.stacks.AEKey;
@@ -14,7 +15,7 @@ public class StackWatcher<T> implements IStackWatcher {
 
     private final InterestManager<StackWatcher<T>> interestManager;
     private final T myHost;
-    private final Set<AEKey> myInterests = new HashSet<>();
+    private final Set<AEKey> myInterests = new ReferenceOpenHashSet<>();
     private boolean destroyed = false;
 
     public StackWatcher(InterestManager<StackWatcher<T>> interestManager, T host) {

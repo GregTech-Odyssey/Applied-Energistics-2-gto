@@ -21,7 +21,6 @@ package appeng.me.service;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -158,7 +157,8 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
         if (latestChange != lastProcessedCraftingLogicChangeTick) {
             lastProcessedCraftingLogicChangeTick = latestChange;
 
-            Set<AEKey> previouslyCrafting = currentlyCrafting.isEmpty() ? Set.of() : new HashSet<>(currentlyCrafting);
+            Set<AEKey> previouslyCrafting = currentlyCrafting.isEmpty() ? Set.of()
+                    : new ReferenceOpenHashSet<>(currentlyCrafting);
             this.currentlyCrafting.clear();
 
             for (var cpu : this.craftingCPUClusters) {

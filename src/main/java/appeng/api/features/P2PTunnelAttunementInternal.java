@@ -18,7 +18,6 @@
 
 package appeng.api.features;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +29,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.common.capabilities.Capability;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 /**
  * Internal methods that complement {@link P2PTunnelAttunement} and which are not part of the public API.
@@ -45,7 +46,7 @@ public final class P2PTunnelAttunementInternal {
     public static AttunementInfo getAttunementInfo(ItemLike tunnelType) {
         var tunnelItem = tunnelType.asItem();
 
-        Set<Capability<?>> caps = new HashSet<>();
+        Set<Capability<?>> caps = new ReferenceOpenHashSet<>();
 
         for (var entry : P2PTunnelAttunement.apiAttunements) {
             if (entry.tunnelType() == tunnelItem) {

@@ -15,6 +15,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import it.unimi.dsi.fastutil.HashCommon;
+
 import appeng.api.config.FuzzyMode;
 import appeng.core.AELog;
 
@@ -38,6 +40,8 @@ public abstract class AEKey {
      * on the server. Volatile ensures that this cache is thread-safe (but can be initialized multiple times).
      */
     private volatile Component cachedDisplayName;
+    private final int hashCode = System.identityHashCode(this);
+    private final int mix = HashCommon.mix(hashCode);
 
     @Nullable
     public static AEKey fromTagGeneric(CompoundTag tag) {
@@ -280,5 +284,14 @@ public abstract class AEKey {
      */
     public boolean isTagged(TagKey<?> tag) {
         return false;
+    }
+
+    public final int hashMix() {
+        return mix;
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode;
     }
 }

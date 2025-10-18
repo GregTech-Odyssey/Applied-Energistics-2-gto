@@ -54,10 +54,10 @@ public class Grid implements IGrid {
     private static int nextSerial = 0;
 
     private final SetMultimap<Class<?>, IGridNode> machines = MultimapBuilder.hashKeys().hashSetValues().build();
-    private final GridServiceContainer services;
+    public final GridServiceContainer services;
     // Becomes null after the last node has left the grid.
     @Nullable
-    private GridNode pivot;
+    public GridNode pivot;
     private int priority; // how import is this network?
     private final int serialNumber = nextSerial++; // useful to keep track of grids in toString() for debugging purposes
 
@@ -199,40 +199,24 @@ public class Grid implements IGrid {
     }
 
     public void onServerStartTick() {
-        if (this.pivot == null) {
-            return;
-        }
-
         for (var gc : this.services.serverStartTickServices()) {
             gc.onServerStartTick();
         }
     }
 
     public void onLevelStartTick(Level level) {
-        if (this.pivot == null) {
-            return;
-        }
-
         for (var gc : this.services.levelStartTickServices()) {
             gc.onLevelStartTick(level);
         }
     }
 
     public void onLevelEndTick(Level level) {
-        if (this.pivot == null) {
-            return;
-        }
-
         for (var gc : this.services.levelEndtickServices()) {
             gc.onLevelEndTick(level);
         }
     }
 
     public void onServerEndTick(MinecraftServer server) {
-        if (this.pivot == null) {
-            return;
-        }
-
         for (var gc : this.services.serverEndTickServices()) {
             gc.onServerEndTick(server);
         }

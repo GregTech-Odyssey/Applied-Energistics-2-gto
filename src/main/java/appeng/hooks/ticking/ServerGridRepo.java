@@ -28,9 +28,13 @@ import appeng.me.Grid;
  * A class to hold data related to ticking networks.
  */
 class ServerGridRepo {
-    private final ReferenceOpenHashSet<Grid> networks = new ReferenceOpenHashSet<>();
+    final ReferenceOpenHashSet<Grid> networks = new ReferenceOpenHashSet<>();
     private final ReferenceOpenHashSet<Grid> toAdd = new ReferenceOpenHashSet<>();
     private final ReferenceOpenHashSet<Grid> toRemove = new ReferenceOpenHashSet<>();
+    final ReferenceOpenHashSet<Grid> start = new ReferenceOpenHashSet<>();
+    final ReferenceOpenHashSet<Grid> end = new ReferenceOpenHashSet<>();
+    final ReferenceOpenHashSet<Grid> lStart = new ReferenceOpenHashSet<>();
+    final ReferenceOpenHashSet<Grid> lEnd = new ReferenceOpenHashSet<>();
 
     /**
      * Resets all internal data
@@ -80,13 +84,22 @@ class ServerGridRepo {
 
         this.networks.addAll(this.toAdd);
         this.toAdd.clear();
-    }
-
-    /**
-     * Get all registered {@link Grid}s
-     */
-    public ReferenceOpenHashSet<Grid> getNetworks() {
-        return networks;
+        start.clear();
+        end.clear();
+        lStart.clear();
+        lEnd.clear();
+        networks.forEach(g -> {
+            if (g.pivot == null)
+                return;
+            if (g.services.serverStartTickServices().length > 0)
+                start.add(g);
+            if (g.services.serverEndTickServices().length > 0)
+                end.add(g);
+            if (g.services.levelStartTickServices().length > 0)
+                lStart.add(g);
+            if (g.services.levelEndtickServices().length > 0)
+                lEnd.add(g);
+        });
     }
 
 }

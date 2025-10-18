@@ -18,7 +18,6 @@
 
 package appeng.me.service;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.features.IPlayerRegistry;
 import appeng.api.networking.GridFlags;
@@ -63,9 +64,9 @@ public class PathingService implements IPathingService, IGridServiceProvider {
                 });
     }
 
-    private final Set<ControllerBlockEntity> controllers = new HashSet<>();
-    private final Set<IGridNode> nodesNeedingChannels = new HashSet<>();
-    private final Set<IGridNode> cannotCarryCompressedNodes = new HashSet<>();
+    private final Set<ControllerBlockEntity> controllers = new ReferenceOpenHashSet<>();
+    private final Set<IGridNode> nodesNeedingChannels = new ReferenceOpenHashSet<>();
+    private final Set<IGridNode> cannotCarryCompressedNodes = new ReferenceOpenHashSet<>();
     private final Grid grid;
     private int channelsInUse = 0;
     private int channelsByBlocks = 0;
@@ -224,7 +225,7 @@ public class PathingService implements IPathingService, IGridServiceProvider {
     }
 
     private int calculateAdHocChannels() {
-        var ignore = new HashSet<IGridNode>();
+        var ignore = new ReferenceOpenHashSet<IGridNode>();
 
         this.adHocNetworkError = null;
 

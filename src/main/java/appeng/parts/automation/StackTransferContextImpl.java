@@ -1,7 +1,8 @@
 package appeng.parts.automation;
 
-import java.util.HashSet;
 import java.util.Set;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.behaviors.StackTransferContext;
 import appeng.api.config.Actionable;
@@ -36,7 +37,7 @@ class StackTransferContextImpl implements StackTransferContext {
         this.filter = filter;
         this.initialOperations = operationsRemaining;
         this.operationsRemaining = operationsRemaining;
-        this.keyTypes = new HashSet<>();
+        this.keyTypes = new ReferenceOpenHashSet<>();
         for (AEKey item : filter.getItems()) {
             this.keyTypes.add(item.getType());
         }

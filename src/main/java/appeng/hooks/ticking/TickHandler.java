@@ -179,7 +179,7 @@ public class TickHandler {
 
     public Iterable<Grid> getGridList() {
         Platform.assertServerThread();
-        return this.grids.getNetworks();
+        return this.grids.networks;
     }
 
     public void shutdown() {
@@ -215,7 +215,7 @@ public class TickHandler {
         var toDestroy = new ArrayList<GridNode>();
 
         this.grids.updateNetworks();
-        this.grids.getNetworks().forEach(g -> {
+        this.grids.networks.forEach(g -> {
             for (var n : g.getNodes()) {
                 if (n.getLevel() == level) {
                     toDestroy.add((GridNode) n);
@@ -262,8 +262,7 @@ public class TickHandler {
         }
 
         // tick networks
-        this.grids.updateNetworks();
-        this.grids.getNetworks().forEach(g -> {
+        this.grids.lStart.forEach(g -> {
             try {
                 g.onLevelStartTick(level);
             } catch (Throwable t) {
@@ -280,7 +279,7 @@ public class TickHandler {
         this.readyBlockEntities(level);
 
         // tick networks
-        this.grids.getNetworks().forEach(g -> {
+        this.grids.lEnd.forEach(g -> {
             try {
                 g.onLevelEndTick(level);
             } catch (Throwable t) {
@@ -315,7 +314,8 @@ public class TickHandler {
         this.stopWatch.reset();
 
         // tick networks
-        this.grids.getNetworks().forEach(g -> {
+        this.grids.updateNetworks();
+        this.grids.start.forEach(g -> {
             try {
                 g.onServerStartTick();
             } catch (Throwable t) {
@@ -328,7 +328,7 @@ public class TickHandler {
 
     private void onServerTickEnd(MinecraftServer server) {
         // tick networks
-        this.grids.getNetworks().forEach(g -> {
+        this.grids.end.forEach(g -> {
             try {
                 g.onServerEndTick(server);
             } catch (Throwable t) {

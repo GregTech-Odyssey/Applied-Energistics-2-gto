@@ -37,6 +37,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import appeng.core.AEConfig;
 import appeng.core.AELog;
 import appeng.items.AEBaseItem;
@@ -46,7 +48,7 @@ public class EraserItem extends AEBaseItem {
 
     private static final int BOX_SIZE = 48;
     private static final int BLOCK_ERASE_LIMIT = BOX_SIZE * BOX_SIZE * BOX_SIZE;
-    final static Set<Block> COMMON_BLOCKS = new HashSet<>();
+    final static Set<Block> COMMON_BLOCKS = new ReferenceOpenHashSet<>();
 
     public EraserItem(Item.Properties properties) {
         super(properties);

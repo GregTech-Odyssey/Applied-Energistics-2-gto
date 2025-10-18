@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,6 +39,8 @@ import net.minecraft.world.level.block.entity.ChestBlockEntity;
 import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.material.Fluids;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -655,8 +656,8 @@ public final class TestPlots {
             PatternProviderPart current = patternProviders.next();
             var craftingRecipes = node.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING);
 
-            Set<AEItemKey> neededIngredients = new HashSet<>();
-            Set<AEItemKey> providedResults = new HashSet<>();
+            Set<AEItemKey> neededIngredients = new ReferenceOpenHashSet<>();
+            Set<AEItemKey> providedResults = new ReferenceOpenHashSet<>();
 
             for (var recipe : craftingRecipes) {
                 if (recipe.isSpecial()) {

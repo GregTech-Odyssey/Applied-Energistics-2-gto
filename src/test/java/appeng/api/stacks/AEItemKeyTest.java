@@ -190,9 +190,6 @@ class AEItemKeyTest {
                 stack.enchant(Enchantments.SHARPNESS, i + 1);
                 keys[i] = AEItemKey.of(stack);
                 keyCopies[i] = AEItemKey.of(stack);
-
-                // If we ever intern AEKeys, remember to update this test...
-                assertThat(keys[i]).isNotSameAs(keyCopies[i]);
             }
 
             var counter = new KeyCounter();

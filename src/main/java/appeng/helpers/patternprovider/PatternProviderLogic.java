@@ -19,7 +19,6 @@
 package appeng.helpers.patternprovider;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -42,6 +41,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.LockCraftingMode;
@@ -106,7 +107,7 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
      * Keeps track of the inputs of all the patterns. When blocking mode is enabled, if any of these is contained in the
      * target, the pattern won't be pushed. Always contains keys with the secondary component dropped.
      */
-    private final Set<AEKey> patternInputs = new HashSet<>();
+    private final Set<AEKey> patternInputs = new ReferenceOpenHashSet<>();
     // Pattern sending logic
     private final List<GenericStack> sendList = new ArrayList<>();
     private Direction sendDirection;

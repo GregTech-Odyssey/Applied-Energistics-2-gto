@@ -18,11 +18,12 @@
 
 package appeng.me.cells;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -37,7 +38,7 @@ class CreativeCellInventory implements StorageCell {
     private final ItemStack stack;
 
     protected CreativeCellInventory(ItemStack o) {
-        this.configured = new HashSet<>();
+        this.configured = new ReferenceOpenHashSet<>();
         this.stack = o;
 
         var cc = CellConfig.create(o);

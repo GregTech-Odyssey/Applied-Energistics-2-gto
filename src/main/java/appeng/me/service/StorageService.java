@@ -35,16 +35,14 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.*;
 
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridServiceProvider;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.networking.storage.IStorageWatcherNode;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyMap;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
@@ -79,7 +77,7 @@ public class StorageService implements IStorageService, IGridServiceProvider {
      * Private cached amounts, to ensure that we send correct change notifications even if
      * {@link #cachedAvailableStacks} is modified by mistake.
      */
-    private final Object2LongOpenHashMap<AEKey> cachedAvailableAmounts = new Object2LongOpenHashMap<>();
+    private final AEKeyMap<AEKey> cachedAvailableAmounts = new AEKeyMap<>();
     private boolean cachedStacksNeedUpdate = true;
     private boolean cachedStacksUpdate = false;
     /**
@@ -116,7 +114,7 @@ public class StorageService implements IStorageService, IGridServiceProvider {
     }
 
     private void watcherUpdate() {
-        for (var it = cachedAvailableAmounts.object2LongEntrySet().fastIterator(); it.hasNext();) {
+        for (var it = cachedAvailableAmounts.reference2LongEntrySet().fastIterator(); it.hasNext();) {
             var entry = it.next();
             var what = entry.getKey();
             var newAmount = cachedAvailableStacks.get(what);

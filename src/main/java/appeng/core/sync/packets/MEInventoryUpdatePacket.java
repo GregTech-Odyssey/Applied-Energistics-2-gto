@@ -19,7 +19,6 @@
 package appeng.core.sync.packets;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -32,6 +31,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
@@ -116,7 +117,7 @@ public class MEInventoryUpdatePacket extends BasePacket {
                 KeyCounter networkStorage,
                 Set<AEKey> craftables,
                 KeyCounter requestables) {
-            var keys = new HashSet<AEKey>();
+            var keys = new ReferenceOpenHashSet<AEKey>();
             keys.addAll(networkStorage.keySet());
             keys.addAll(craftables);
             keys.addAll(requestables.keySet());

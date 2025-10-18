@@ -1,11 +1,12 @@
 package appeng.server.testplots;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import net.minecraft.core.BlockPos;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.networking.IGridConnection;
 import appeng.api.networking.IGridConnectionVisitor;
@@ -102,8 +103,8 @@ public class ChannelTests {
     private static class ChannelChecker {
         private final PlotBuilder plot;
         private final PlotTestHelper helper;
-        private final Set<IGridNode> nodes = new HashSet<>();
-        private final Set<IGridConnection> connections = new HashSet<>();
+        private final Set<IGridNode> nodes = new ReferenceOpenHashSet<>();
+        private final Set<IGridConnection> connections = new ReferenceOpenHashSet<>();
 
         private ChannelChecker(PlotBuilder plot, PlotTestHelper helper) {
             this.plot = plot;

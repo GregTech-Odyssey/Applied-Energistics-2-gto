@@ -18,7 +18,6 @@
 
 package appeng.debug;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import com.google.common.collect.Iterables;
@@ -37,6 +36,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGridNode;
@@ -165,7 +166,7 @@ public class DebugCardItem extends AEBaseItem {
                 var pg = g.getPathingService();
                 if (pg.getControllerState() == ControllerState.CONTROLLER_ONLINE) {
 
-                    Set<IGridNode> next = new HashSet<>();
+                    Set<IGridNode> next = new ReferenceOpenHashSet<>();
                     next.add(node);
 
                     final int maxLength = 10000;
@@ -173,7 +174,7 @@ public class DebugCardItem extends AEBaseItem {
                     int length = 0;
                     outer: while (!next.isEmpty()) {
                         final Iterable<IGridNode> current = next;
-                        next = new HashSet<>();
+                        next = new ReferenceOpenHashSet<>();
 
                         for (IGridNode n : current) {
                             if (n.getOwner() instanceof ControllerBlockEntity) {

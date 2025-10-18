@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Objects;
 
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -24,11 +22,30 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.capabilities.CapabilityProvider;
 
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
+
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
 
 public final class AEItemKey extends AEKey {
-    private static final Logger LOG = LoggerFactory.getLogger(AEItemKey.class);
+
+    private static final Object2ObjectOpenCustomHashMap<AEItemKey, AEItemKey> VALUES = new Object2ObjectOpenCustomHashMap<>(
+            new Hash.Strategy<>() {
+                @Override
+                public int hashCode(AEItemKey o) {
+                    return Objects.hash(o.item, o.internedTag);
+                }
+
+                @Override
+                public boolean equals(AEItemKey a, AEItemKey b) {
+                    if (a == null)
+                        return b == null;
+                    if (b == null)
+                        return false;
+                    return Objects.equals(a.item, b.item) && Objects.equals(a.internedTag, b.internedTag);
+                }
+            });
 
     private static final MethodHandle SERIALIZE_CAPS_HANDLE;
     static {
@@ -42,7 +59,7 @@ public final class AEItemKey extends AEKey {
     }
 
     @Nullable
-    private static CompoundTag serializeStackCaps(ItemStack stack) {
+    public static CompoundTag serializeStackCaps(ItemStack stack) {
         try {
             var caps = (CompoundTag) SERIALIZE_CAPS_HANDLE.invokeExact((CapabilityProvider) stack);
             // Ensure stacks with no serializable cap providers are treated the same as stacks with no caps!
@@ -54,7 +71,6 @@ public final class AEItemKey extends AEKey {
 
     private final Item item;
     private final InternedTag internedTag;
-    private final int hashCode;
     private final int cachedDamage;
     private int fuzzySearchMaxValue = -1;
     /**
@@ -72,7 +88,6 @@ public final class AEItemKey extends AEKey {
     public AEItemKey(Item item, InternedTag internedTag) {
         this.item = item;
         this.internedTag = internedTag;
-        this.hashCode = Objects.hash(item, internedTag);
         if (internedTag.tag != null && internedTag.tag.get("Damage") instanceof NumericTag numericTag) {
             this.cachedDamage = numericTag.getAsInt();
         } else {
@@ -85,7 +100,7 @@ public final class AEItemKey extends AEKey {
         if (stack.isEmpty()) {
             return null;
         }
-        var ret = of(stack.getItem(), stack.getTag(), serializeStackCaps(stack));
+        var ret = of(stack.getItem(), stack.getTag());
         // Cache max stack size since we already have an ItemStack.
         ret.maxStackSize = stack.getMaxStackSize();
         return ret;
@@ -105,7 +120,7 @@ public final class AEItemKey extends AEKey {
 
     @Override
     public AEKeyType getType() {
-        return AEKeyType.items();
+        return AEItemKeys.INSTANCE;
     }
 
     @Override
@@ -113,31 +128,13 @@ public final class AEItemKey extends AEKey {
         return of(item, null);
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (o == null || getClass() != o.getClass())
-            return false;
-        AEItemKey aeItemKey = (AEItemKey) o;
-        return item == aeItemKey.item && internedTag == aeItemKey.internedTag;
-    }
-
-    @Override
-    public int hashCode() {
-        return hashCode;
-    }
-
     public static AEItemKey of(ItemLike item) {
         return of(item, null);
     }
 
     public static AEItemKey of(ItemLike item, @Nullable CompoundTag tag) {
-        return of(item, tag, null);
-    }
-
-    private static AEItemKey of(ItemLike item, @Nullable CompoundTag tag, @Nullable CompoundTag caps) {
-        return new AEItemKey(item.asItem(), InternedTag.of(tag, true));
+        var key = new AEItemKey(item.asItem(), InternedTag.of(tag, true));
+        return VALUES.computeIfAbsent(key, k -> key);
     }
 
     public boolean matches(ItemStack stack) {
@@ -158,7 +155,7 @@ public final class AEItemKey extends AEKey {
             readOnlyStack.setTag(internedTag.tag);
         } else {
             if (readOnlyStack.isEmpty()) {
-                LOG.error("Something destroyed the read-only itemstack of {}", this);
+                AELog.error("Something destroyed the read-only itemstack of {}", this);
                 readOnlyStack = null;
                 return getReadOnlyStack();
             }
@@ -191,7 +188,7 @@ public final class AEItemKey extends AEKey {
                     .orElseThrow(() -> new IllegalArgumentException("Unknown item id."));
             var extraTag = tag.contains("tag") ? tag.getCompound("tag") : null;
             var extraCaps = tag.contains("caps") ? tag.getCompound("caps") : null;
-            return of(item, extraTag, extraCaps);
+            return of(item, extraTag);
         } catch (Exception e) {
             AELog.debug("Tried to load an invalid item key from NBT: %s", tag, e);
             return null;
@@ -201,7 +198,7 @@ public final class AEItemKey extends AEKey {
     @Override
     public CompoundTag toTag() {
         CompoundTag result = new CompoundTag();
-        result.putString("id", BuiltInRegistries.ITEM.getKey(item).toString());
+        result.putString("id", getId().toString());
 
         if (internedTag.tag != null) {
             result.put("tag", internedTag.tag.copy());
@@ -319,12 +316,12 @@ public final class AEItemKey extends AEKey {
         var shareTag = data.readNbt();
         var stack = new ItemStack(item);
         stack.readShareTag(shareTag);
-        return new AEItemKey(item, InternedTag.of(stack.getTag(), false));
+        return VALUES.computeIfAbsent(new AEItemKey(item, InternedTag.of(stack.getTag(), false)), k -> (AEItemKey) k);
     }
 
     @Override
     public String toString() {
-        var id = BuiltInRegistries.ITEM.getKey(item);
+        var id = getId();
         String idString = id != BuiltInRegistries.ITEM.getDefaultKey() ? id.toString()
                 : item.getClass().getName() + "(unregistered)";
         return internedTag.tag == null ? idString : idString + " (+tag)";

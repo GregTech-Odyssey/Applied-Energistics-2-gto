@@ -29,10 +29,7 @@ import com.google.common.collect.Iterators;
 
 import org.jetbrains.annotations.Nullable;
 
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Reference2LongMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.*;
 
 import appeng.api.config.FuzzyMode;
 
@@ -262,7 +259,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     public Set<AEKey> keySet() {
         if (lists == null)
             return Collections.emptySet();
-        var keys = new HashSet<AEKey>(size());
+        var keys = new ReferenceOpenHashSet<AEKey>(size());
         for (var list : lists.values()) {
             for (var entry : list) {
                 keys.add(entry.getKey());
