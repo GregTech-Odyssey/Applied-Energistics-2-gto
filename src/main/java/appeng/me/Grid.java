@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.MultimapBuilder;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +35,9 @@ import net.minecraft.CrashReportCategory;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.networking.GridServicesInternal;
 import appeng.api.networking.IGrid;
@@ -53,7 +56,8 @@ public class Grid implements IGrid {
     private static final List<IGridNode> ITERATION_BUFFER = new ArrayList<>();
     private static int nextSerial = 0;
 
-    private final SetMultimap<Class<?>, IGridNode> machines = MultimapBuilder.hashKeys().hashSetValues().build();
+    private final SetMultimap<Class<?>, IGridNode> machines = Multimaps
+            .newSetMultimap(new Reference2ReferenceOpenHashMap<>(), ReferenceOpenHashSet::new);;
     public final GridServiceContainer services;
     // Becomes null after the last node has left the grid.
     @Nullable

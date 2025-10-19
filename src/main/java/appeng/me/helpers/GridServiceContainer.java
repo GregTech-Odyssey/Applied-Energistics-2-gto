@@ -10,4 +10,25 @@ public record GridServiceContainer(
         IGridServiceProvider[] levelStartTickServices,
         IGridServiceProvider[] levelEndtickServices,
         IGridServiceProvider[] serverEndTickServices) {
+
+    public boolean hasServerStartTick() {
+        return serverStartTickServices.length > 0;
+    }
+
+    public boolean hasLevelStartTick() {
+        return levelStartTickServices.length > 0;
+    }
+
+    public boolean hasLevelEndTick() {
+        for (IGridServiceProvider service : levelEndtickServices) {
+            if (service.hasLevelEndTick()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasServerEndTick() {
+        return serverEndTickServices.length > 0;
+    }
 }

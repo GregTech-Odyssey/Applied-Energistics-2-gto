@@ -23,7 +23,9 @@ import java.util.Comparator;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.Items;
 
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 
 /**
@@ -69,6 +71,9 @@ public class CraftingStatusEntry implements Comparable<CraftingStatusEntry> {
     }
 
     public AEKey getWhat() {
+        if (what == null) {
+            return AEItemKey.of(Items.BARRIER);
+        }
         return what;
     }
 

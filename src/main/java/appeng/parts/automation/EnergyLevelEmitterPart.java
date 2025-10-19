@@ -105,6 +105,7 @@ public class EnergyLevelEmitterPart extends AbstractLevelEmitterPart {
             this.lastReportedValue = (long) grid.getEnergyService().getStoredPower();
             this.updateState();
         });
+        this.getHost().markForSave();
     }
 
     @Override

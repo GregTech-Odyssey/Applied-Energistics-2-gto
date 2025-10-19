@@ -59,6 +59,10 @@ public interface IGridServiceProvider {
     default void onLevelEndTick(Level level) {
     }
 
+    default boolean hasLevelEndTick() {
+        return true;
+    }
+
     /**
      * Called each tick for the network, allows you to have active network wide behaviors.
      * <p>

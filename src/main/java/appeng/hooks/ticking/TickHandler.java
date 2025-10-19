@@ -39,7 +39,6 @@ import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -350,7 +349,7 @@ public class TickHandler {
         tickCounter++;
 
         if (!StorageService.TASK.isEmpty()) {
-            server.tell(new TickTask(0, () -> Thread.ofVirtual().name("AE Storage Service").start(() -> {
+            Thread.ofVirtual().name("AE Storage Service").start(() -> {
                 StorageService.LOCK.lock();
                 try {
                     StorageService.TASK.forEach(Runnable::run);
@@ -358,7 +357,7 @@ public class TickHandler {
                 } finally {
                     StorageService.LOCK.unlock();
                 }
-            })));
+            });
         }
     }
 

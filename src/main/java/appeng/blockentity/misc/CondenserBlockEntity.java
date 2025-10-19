@@ -109,32 +109,27 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
     }
 
     public void addPower(double rawPower) {
-        this.setStoredPower(this.getStoredPower() + rawPower);
-        this.setStoredPower(Math.max(0.0, Math.min(this.getStorage(), this.getStoredPower())));
+        if (this.cm.getSetting(Settings.CONDENSER_OUTPUT).ordinal() == 0)
+            return;
+        this.setStoredPower(Math.max(0.0, Math.min(this.getStorage(), this.getStoredPower() + rawPower)));
         fillOutput();
     }
 
     private void fillOutput() {
         var requiredPower = this.getRequiredPower();
         while (requiredPower <= this.getStoredPower() && !getOutput().isEmpty() && requiredPower > 0) {
-            if (this.canAddOutput()) {
-                this.setStoredPower(this.getStoredPower() - requiredPower);
-                this.addOutput();
-            } else {
+            this.setStoredPower(this.getStoredPower() - requiredPower);
+            if (!this.addOutput()) {
                 break;
             }
         }
     }
 
-    boolean canAddOutput() {
-        return this.outputSlot.insertItem(0, getOutput(), true).isEmpty();
-    }
-
     /**
      * make sure you validate with canAddOutput prior to this.
      */
-    private void addOutput() {
-        this.outputSlot.insertItem(0, getOutput(), false);
+    private boolean addOutput() {
+        return this.outputSlot.insertItem(0, getOutput(), false).isEmpty();
     }
 
     InternalInventory getOutputSlot() {
@@ -219,7 +214,7 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
 
         @Override
         public boolean isItemValid(int slot, ItemStack stack) {
-            return canAddOutput();
+            return true;
         }
 
         @Override
@@ -231,9 +226,6 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
 
         @Override
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
-            if (!canAddOutput()) {
-                return stack;
-            }
             if (!simulate && !stack.isEmpty()) {
                 CondenserBlockEntity.this.addPower(stack.getCount());
             }

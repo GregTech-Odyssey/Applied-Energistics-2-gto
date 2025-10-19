@@ -82,6 +82,18 @@ public class TickManagerService implements ITickManager, IGridServiceProvider {
         this.tickLevelQueue(null);
     }
 
+    @Override
+    public boolean hasLevelEndTick() {
+        var size = upcomingTicks.size();
+        if (size == 0) {
+            return false;
+        }
+        if (size > 1) {
+            return true;
+        }
+        return !upcomingTicks.containsKey(null);
+    }
+
     private void tickLevelQueue(@Nullable Level level) {
         var queue = this.upcomingTicks.get(level);
 
@@ -316,21 +328,16 @@ public class TickManagerService implements ITickManager, IGridServiceProvider {
         return tt.getStatistics();
     }
 
-    /**
-     * null as level could be used for virtual nodes.
-     */
-    private PriorityQueue<TickTracker> getQueue(@Nullable Level level) {
-        return this.upcomingTicks.computeIfAbsent(level, (key) -> new PriorityQueue<>());
-    }
-
     private void addToQueue(IGridNode node, TickTracker tt) {
-        var queue = getQueue(node.getLevel());
-        queue.add(tt);
+        this.upcomingTicks.computeIfAbsent(node.getLevel(), (key) -> new PriorityQueue<>()).add(tt);
     }
 
     private void removeFromQueue(IGridNode node, TickTracker tt) {
         var level = node.getLevel();
-        var queue = getQueue(level);
+        var queue = upcomingTicks.get(level);
+        if (queue == null) {
+            return;
+        }
         queue.remove(tt);
 
         // Make sure we don't cleanup a queue we are iterating over,

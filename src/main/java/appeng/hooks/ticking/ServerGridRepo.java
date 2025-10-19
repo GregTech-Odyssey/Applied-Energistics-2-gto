@@ -20,6 +20,7 @@ package appeng.hooks.ticking;
 
 import java.util.Objects;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.me.Grid;
@@ -28,13 +29,13 @@ import appeng.me.Grid;
  * A class to hold data related to ticking networks.
  */
 class ServerGridRepo {
-    final ReferenceOpenHashSet<Grid> networks = new ReferenceOpenHashSet<>();
+    final ObjectArrayList<Grid> networks = new ObjectArrayList<>();
     private final ReferenceOpenHashSet<Grid> toAdd = new ReferenceOpenHashSet<>();
     private final ReferenceOpenHashSet<Grid> toRemove = new ReferenceOpenHashSet<>();
-    final ReferenceOpenHashSet<Grid> start = new ReferenceOpenHashSet<>();
-    final ReferenceOpenHashSet<Grid> end = new ReferenceOpenHashSet<>();
-    final ReferenceOpenHashSet<Grid> lStart = new ReferenceOpenHashSet<>();
-    final ReferenceOpenHashSet<Grid> lEnd = new ReferenceOpenHashSet<>();
+    final ObjectArrayList<Grid> start = new ObjectArrayList<>();
+    final ObjectArrayList<Grid> end = new ObjectArrayList<>();
+    final ObjectArrayList<Grid> lStart = new ObjectArrayList<>();
+    final ObjectArrayList<Grid> lEnd = new ObjectArrayList<>();
 
     /**
      * Resets all internal data
@@ -91,13 +92,13 @@ class ServerGridRepo {
         networks.forEach(g -> {
             if (g.pivot == null)
                 return;
-            if (g.services.serverStartTickServices().length > 0)
+            if (g.services.hasServerStartTick())
                 start.add(g);
-            if (g.services.serverEndTickServices().length > 0)
+            if (g.services.hasServerEndTick())
                 end.add(g);
-            if (g.services.levelStartTickServices().length > 0)
+            if (g.services.hasLevelStartTick())
                 lStart.add(g);
-            if (g.services.levelEndtickServices().length > 0)
+            if (g.services.hasLevelEndTick())
                 lEnd.add(g);
         });
     }

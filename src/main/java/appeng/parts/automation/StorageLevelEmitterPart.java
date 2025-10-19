@@ -238,6 +238,7 @@ public class StorageLevelEmitterPart extends AbstractLevelEmitterPart
         }
 
         updateState();
+        this.getHost().markForSave();
     }
 
     private void updateReportingValue(IGrid grid) {
