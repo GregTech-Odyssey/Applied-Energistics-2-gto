@@ -540,7 +540,7 @@
   "gui.tooltips.ae2.CpuSelectionModePlayersOnly": "只接受玩家的请求",
   "gui.tooltips.ae2.CpuStatusCoProcessor": "%s 并行处理单元",
   "gui.tooltips.ae2.CpuStatusCoProcessors": "%s 并行处理单元",
-  "gui.tooltips.ae2.CpuStatusCraftedIn": "已合成 %s 个，用时 %s",
+  "gui.tooltips.ae2.CpuStatusCraftedIn": "已合成 %s，用时 %s",
   "gui.tooltips.ae2.CpuStatusCrafting": "正在合成 %s",
   "gui.tooltips.ae2.CpuStatusStorage": "%s 存储容量",
   "gui.tooltips.ae2.Craft": "合成行为",
