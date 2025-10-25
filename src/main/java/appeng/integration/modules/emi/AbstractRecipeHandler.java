@@ -4,9 +4,7 @@ import static appeng.integration.modules.jeirei.TransferHelper.BLUE_SLOT_HIGHLIG
 import static appeng.integration.modules.jeirei.TransferHelper.RED_SLOT_HIGHLIGHT_COLOR;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +28,8 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.Bounds;
 import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.Widget;
+import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -302,9 +302,9 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
 
         public static class Error extends Result {
             public final Component message;
-            public final Set<Integer> missingSlots;
+            public final IntSet missingSlots;
 
-            public Error(Component message, Set<Integer> missingSlots) {
+            public Error(Component message, IntSet missingSlots) {
                 this.message = message;
                 this.missingSlots = missingSlots;
             }
@@ -323,7 +323,7 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
                     GuiGraphics guiGraphics) {
 
                 renderMissingAndCraftableSlotOverlays(getRecipeInputSlots(recipe, widgets), guiGraphics, missingSlots,
-                        Set.of());
+                        IntSets.emptySet());
             }
         }
 
@@ -336,20 +336,22 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
         }
 
         public static Error createFailed(Component text) {
-            return new Error(text, Set.of());
+            return new Error(text, IntSets.emptySet());
         }
 
-        public static Error createFailed(Component text, Set<Integer> missingSlots) {
+        public static Error createFailed(Component text, IntOpenHashSet missingSlots) {
             return new Error(text, missingSlots);
         }
     }
 
-    public static void renderMissingAndCraftableSlotOverlays(Map<Integer, SlotWidget> inputSlots,
+    public static void renderMissingAndCraftableSlotOverlays(Int2ObjectOpenHashMap<SlotWidget> inputSlots,
             GuiGraphics guiGraphics,
-            Set<Integer> missingSlots, Set<Integer> craftableSlots) {
-        for (var entry : inputSlots.entrySet()) {
-            boolean missing = missingSlots.contains(entry.getKey());
-            boolean craftable = craftableSlots.contains(entry.getKey());
+            IntSet missingSlots, IntSet craftableSlots) {
+        for (ObjectIterator<Int2ObjectMap.Entry<SlotWidget>> it = inputSlots.int2ObjectEntrySet().fastIterator(); it
+                .hasNext();) {
+            var entry = it.next();
+            boolean missing = missingSlots.contains(entry.getIntKey());
+            boolean craftable = craftableSlots.contains(entry.getIntKey());
             if (missing || craftable) {
                 var poseStack = guiGraphics.pose();
                 poseStack.pushPose();
@@ -375,9 +377,9 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
                 bounds.height() - 2);
     }
 
-    public static Map<Integer, SlotWidget> getRecipeInputSlots(EmiRecipe recipe, List<Widget> widgets) {
+    public static Int2ObjectOpenHashMap<SlotWidget> getRecipeInputSlots(EmiRecipe recipe, List<Widget> widgets) {
         // Map ingredient indices to their respective slots
-        var inputSlots = new HashMap<Integer, SlotWidget>(recipe.getInputs().size());
+        var inputSlots = new Int2ObjectOpenHashMap<SlotWidget>(recipe.getInputs().size());
         for (int i = 0; i < recipe.getInputs().size(); i++) {
             for (var widget : widgets) {
                 if (widget instanceof SlotWidget slot && isInputSlot(slot)) {

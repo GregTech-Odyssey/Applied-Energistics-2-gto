@@ -3,7 +3,6 @@ package appeng.client.gui.me.common;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -13,6 +12,8 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 import appeng.api.stacks.AEKey;
 
@@ -25,7 +26,7 @@ public final class PinnedKeys {
     private static final Comparator<Map.Entry<AEKey, PinInfo>> TIME_COMPARATOR = Comparator
             .comparing(e -> e.getValue().since);
 
-    private static final Map<AEKey, PinInfo> pinned = new HashMap<>(MAX_PINNED);
+    private static final Map<AEKey, PinInfo> pinned = new Reference2ObjectOpenHashMap<>(MAX_PINNED);
 
     private PinnedKeys() {
     }

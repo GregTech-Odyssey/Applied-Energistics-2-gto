@@ -75,17 +75,17 @@ public class NetworkCraftingProviders {
         var result = new ReferenceOpenHashSet<AEKey>();
 
         // add craftable items!
-        for (var stack : this.craftableItems.keySet()) {
+        this.craftableItems.keySet().forEach(stack -> {
             if (filter.matches(stack)) {
                 result.add(stack);
             }
-        }
+        });
 
-        for (var stack : this.emitableItems.keySet()) {
+        this.emitableItems.keySet().forEach(stack -> {
             if (filter.matches(stack)) {
                 result.add(stack);
             }
-        }
+        });
 
         return result;
     }

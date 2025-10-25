@@ -19,7 +19,6 @@
 package appeng.menu.me.items;
 
 import java.util.List;
-import java.util.Set;
 
 import com.google.common.base.Preconditions;
 
@@ -257,7 +256,7 @@ public class CraftingTermMenu extends MEStorageMenu implements IMenuCraftingPack
         return new MissingIngredientSlots(missingSlots, craftableSlots);
     }
 
-    public record MissingIngredientSlots(Set<Integer> missingSlots, Set<Integer> craftableSlots) {
+    public record MissingIngredientSlots(IntOpenHashSet missingSlots, IntOpenHashSet craftableSlots) {
         public int totalSize() {
             return missingSlots.size() + craftableSlots.size();
         }

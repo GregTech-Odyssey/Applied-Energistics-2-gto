@@ -2,7 +2,6 @@ package appeng.integration.modules.jeirei;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -17,6 +16,8 @@ import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
+
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -66,7 +67,7 @@ public final class EncodingHelper {
     }
 
     private static void encodeBestMatchingStacksIntoSlots(List<List<GenericStack>> possibleInputsBySlot,
-            Map<AEKey, Integer> ingredientPriorities,
+            Reference2IntOpenHashMap<AEKey> ingredientPriorities,
             FakeSlot[] slots) {
         var encodedInputs = new ArrayList<GenericStack>();
         for (var genericIngredient : possibleInputsBySlot) {
@@ -127,7 +128,7 @@ public final class EncodingHelper {
                 // Due to how some crafting recipes work, the ingredient can match more than just one item in the
                 // network inventory. We'll find all network inventory entries that it matches and sort them
                 // according to their suitability for encoding a pattern
-                var bestNetworkIngredient = prioritizedNetworkInv.entrySet().stream()
+                var bestNetworkIngredient = prioritizedNetworkInv.reference2IntEntrySet().stream()
                         .filter(ni -> ni.getKey() instanceof AEItemKey itemKey && itemKey.matches(ingredient))
                         .max(Comparator.comparingInt(Map.Entry::getValue))
                         .map(entry -> entry.getKey() instanceof AEItemKey itemKey ? itemKey.toStack() : null);
@@ -178,7 +179,7 @@ public final class EncodingHelper {
     }
 
     // Given a set of possible ingredients, find the one that has the highest priority
-    private static GenericStack findBestIngredient(Map<AEKey, Integer> ingredientPriorities,
+    private static GenericStack findBestIngredient(Reference2IntOpenHashMap<AEKey> ingredientPriorities,
             List<GenericStack> possibleIngredients) {
         return possibleIngredients.stream()
                 .map(gi -> Pair.of(gi, ingredientPriorities.getOrDefault(gi.what(), Integer.MIN_VALUE)))
@@ -216,7 +217,7 @@ public final class EncodingHelper {
      * <p/>
      * Higher means higher priority.
      */
-    public static Map<AEKey, Integer> getIngredientPriorities(MEStorageMenu menu,
+    public static Reference2IntOpenHashMap<AEKey> getIngredientPriorities(MEStorageMenu menu,
             Comparator<GridInventoryEntry> comparator) {
         var orderedEntries = menu.getClientRepo().getAllEntries()
                 .stream()
@@ -224,7 +225,7 @@ public final class EncodingHelper {
                 .map(GridInventoryEntry::getWhat)
                 .toList();
 
-        var result = new HashMap<AEKey, Integer>(orderedEntries.size());
+        var result = new Reference2IntOpenHashMap<AEKey>(orderedEntries.size());
         for (int i = 0; i < orderedEntries.size(); i++) {
             result.put(orderedEntries.get(i), i);
         }
