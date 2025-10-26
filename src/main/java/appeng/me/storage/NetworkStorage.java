@@ -60,6 +60,12 @@ public class NetworkStorage implements MEStorage {
     }
 
     public void mount(int priority, MEStorage inventory) {
+        for (var l : priorityInventory.values()) {
+            for (var i : l) {
+                if (i.getOwner() == inventory.getOwner())
+                    return;
+            }
+        }
         if (mountsInUse) {
             if (queuedOperations == null) {
                 queuedOperations = new ArrayList<>();

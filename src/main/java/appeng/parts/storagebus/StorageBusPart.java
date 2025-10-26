@@ -236,6 +236,7 @@ public class StorageBusPart extends UpgradeablePart
 
     @Override
     public final void onNeighborChanged(BlockGetter level, BlockPos pos, BlockPos neighbor) {
+        this.handler.owner = handler;
         if (pos.relative(getSide()).equals(neighbor)) {
             var te = level.getBlockEntity(neighbor);
 
@@ -339,10 +340,15 @@ public class StorageBusPart extends UpgradeablePart
             newInventory = new CompositeStorage(foundExternalApi);
             handlerDescription = newInventory.getDescription();
         } else {
-            newInventory = NullInventory.of();
+            newInventory = NullInventory.INSTANCE;
             handlerDescription = null;
         }
         this.handler.setDelegate(newInventory);
+        if (newInventory != NullInventory.INSTANCE) {
+            this.handler.owner = getLevel().getBlockEntity(getBlockEntity().getBlockPos().relative(getSide()));
+        } else {
+            this.handler.owner = handler;
+        }
 
         // Apply other settings.
         this.handler.setAccessRestriction(this.getConfigManager().getSetting(Settings.ACCESS));
@@ -456,9 +462,16 @@ public class StorageBusPart extends UpgradeablePart
     /**
      * This inventory forwards to the actual external inventory and allows the inventory to be swapped out underneath.
      */
-    private static class StorageBusInventory extends MEInventoryHandler {
+    public static class StorageBusInventory extends MEInventoryHandler {
+
+        public Object owner = this;
+
         public StorageBusInventory(MEStorage inventory) {
             super(inventory);
+        }
+
+        public Object getOwner() {
+            return owner;
         }
 
         @Override

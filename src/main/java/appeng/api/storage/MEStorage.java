@@ -111,6 +111,10 @@ public interface MEStorage {
         return result;
     }
 
+    default Object getOwner() {
+        return this;
+    }
+
     static void checkPreconditions(AEKey what, long amount, Actionable mode, IActionSource source) {
         Objects.requireNonNull(what, "Cannot pass a null key");
         Objects.requireNonNull(mode, "Cannot pass a null mode");

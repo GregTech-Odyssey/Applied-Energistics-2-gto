@@ -27,10 +27,10 @@ import appeng.api.storage.MEStorage;
  * An immutable inventory that is empty.
  */
 public class NullInventory implements MEStorage {
-    private static final NullInventory NULL_INVENTORY = new NullInventory();
+    public static final NullInventory INSTANCE = new NullInventory();
 
     public static MEStorage of() {
-        return NULL_INVENTORY;
+        return INSTANCE;
     }
 
     @Override
