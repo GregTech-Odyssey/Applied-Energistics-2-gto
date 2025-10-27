@@ -41,7 +41,7 @@ public interface ICompositeWidget {
     void setSize(int width, int height);
 
     /**
-     * @return The area occupied by this widget relative to the dialogs origin.
+     * @return The area occupied by this widget relative to the dialogs' origin.
      */
     Rect2i getBounds();
 

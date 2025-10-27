@@ -89,6 +89,8 @@ public class PatternAccessTermMenu extends AEBaseMenu {
      */
     private final Set<PatternContainer> pinnedHosts = Collections.newSetFromMap(new IdentityHashMap<>());
 
+    protected boolean updatePatterns = true;
+
     public PatternAccessTermMenu(int id, Inventory ip, PatternAccessTerminalPart anchor) {
         this(TYPE, id, ip, anchor, true);
     }
@@ -117,26 +119,37 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             this.pinnedHosts.clear();
         }
 
-        IGrid grid = getGrid();
+        if (updatePatterns) {
+            IGrid grid = getGrid();
 
-        var state = new VisitorState();
-        if (grid != null) {
-            for (var machineClass : grid.getMachineClasses()) {
-                if (PatternContainer.class.isAssignableFrom(machineClass)) {
-                    visitPatternProviderHosts(grid, (Class<? extends PatternContainer>) machineClass, state);
+            var state = new VisitorState();
+            if (grid != null) {
+                for (var machineClass : grid.getMachineClasses()) {
+                    if (PatternContainer.class.isAssignableFrom(machineClass)) {
+                        visitPatternProviderHosts(grid, (Class<? extends PatternContainer>) machineClass, state);
+                    }
                 }
+
+                // Ensure we don't keep references to removed hosts
+                pinnedHosts.removeIf(host -> host.getGrid() != grid);
+            } else {
+                pinnedHosts.clear();
             }
 
-            // Ensure we don't keep references to removed hosts
-            pinnedHosts.removeIf(host -> host.getGrid() != grid);
-        } else {
-            pinnedHosts.clear();
+            if (state.total != this.diList.size() || state.forceFullUpdate) {
+                sendFullUpdate(grid);
+            } else {
+                sendIncrementalUpdate();
+            }
         }
+    }
 
-        if (state.total != this.diList.size() || state.forceFullUpdate) {
-            sendFullUpdate(grid);
-        } else {
-            sendIncrementalUpdate();
+    public void broadcastWithoutPatternUpdate() {
+        this.updatePatterns = false;
+        try {
+            broadcastChanges();
+        } finally {
+            this.updatePatterns = true;
         }
     }
 
