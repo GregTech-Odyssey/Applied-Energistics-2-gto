@@ -111,7 +111,7 @@ public interface MEStorage {
         return result;
     }
 
-    default Object getOwner() {
+    default Object getStorageOwner() {
         return this;
     }
 

@@ -1,6 +1,5 @@
 package appeng.recipes.transform;
 
-import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
@@ -123,7 +122,8 @@ public final class TransformLogic {
 
     private static Set<Item> getTransformableItems(Level level, Fluid fluid) {
         return fluidCache.computeIfAbsent(fluid, f -> {
-            Set<Item> ret = Collections.newSetFromMap(new IdentityHashMap<>());
+            Set<Item> ret = new ReferenceOpenHashSet<>();
+            ;
             for (var recipe : level.getRecipeManager().getAllRecipesFor(TransformRecipe.TYPE)) {
                 if (!(recipe.circumstance.isFluid(fluid)))
                     continue;
@@ -141,7 +141,8 @@ public final class TransformLogic {
     private static Set<Item> getTransformableItemsAnyFluid(Level level) {
         Set<Item> ret = anyFluidCache;
         if (ret == null) {
-            ret = Collections.newSetFromMap(new IdentityHashMap<>());
+            ret = new ReferenceOpenHashSet<>();
+            ;
             for (var recipe : level.getRecipeManager().getAllRecipesFor(TransformRecipe.TYPE)) {
                 if (!recipe.circumstance.isFluid())
                     continue;
@@ -160,7 +161,8 @@ public final class TransformLogic {
     private static Set<Item> getTransformableItemsExplosion(Level level) {
         Set<Item> ret = explosionCache;
         if (ret == null) {
-            ret = Collections.newSetFromMap(new IdentityHashMap<>());
+            ret = new ReferenceOpenHashSet<>();
+            ;
             for (var recipe : level.getRecipeManager().getAllRecipesFor(TransformRecipe.TYPE)) {
                 if (!recipe.circumstance.isExplosion())
                     continue;

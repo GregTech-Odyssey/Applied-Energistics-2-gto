@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 
@@ -294,7 +293,7 @@ public class MEStorageMenu extends AEBaseMenu
                 AELog.warn(e, "Failed to send incremental inventory update to client");
             }
 
-            previousCraftables = ImmutableSet.copyOf(craftables);
+            previousCraftables = craftables;
             previousAvailableStacks = availableStacks;
 
             this.updatePowerStatus();
