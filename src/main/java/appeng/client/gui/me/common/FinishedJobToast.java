@@ -22,7 +22,7 @@ public class FinishedJobToast implements Toast {
     private static final int TEXT_COLOR = 0xFF000000;
 
     private final AEKey what;
-    private final List<FormattedCharSequence> lines;
+    protected final List<FormattedCharSequence> lines;
     private final int height;
 
     public FinishedJobToast(AEKey what, long amount) {
