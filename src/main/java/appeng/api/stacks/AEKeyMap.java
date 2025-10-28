@@ -43,7 +43,7 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
             return 0;
         int pos;
         K curr;
-        if ((curr = key[pos = ((AEKey) k).hashMix() & mask]) != null) {
+        if ((curr = key[pos = ((AEKey) k).mix & mask]) != null) {
             do
                 if (curr == k) {
                     final long oldValue = value[pos];
@@ -65,7 +65,7 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
             return 0;
         int pos;
         K curr;
-        if ((curr = key[pos = ((AEKey) k).hashMix() & mask]) != null) {
+        if ((curr = key[pos = ((AEKey) k).mix & mask]) != null) {
             do
                 if (curr == k) {
                     final long oldValue = value[pos];
@@ -92,7 +92,7 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
             return 0;
         K curr;
         int pos;
-        if ((curr = key[pos = ((AEKey) k).hashMix() & mask]) == null)
+        if ((curr = key[pos = ((AEKey) k).mix & mask]) == null)
             return defRetValue;
         if (k == curr)
             return value[pos];

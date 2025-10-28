@@ -41,7 +41,7 @@ public abstract class AEKey {
      */
     private volatile Component cachedDisplayName;
     private final int hashCode = System.identityHashCode(this);
-    private final int mix = HashCommon.mix(hashCode);
+    public final int mix = HashCommon.mix(hashCode);
 
     @Nullable
     public static AEKey fromTagGeneric(CompoundTag tag) {
@@ -117,8 +117,8 @@ public abstract class AEKey {
      * amount is not user-readable (i.e. a bucket of fluid has amount 1000 on Forge and 81000 on Fabric, but we want to
      * show it as 1 bucket, hence this method would return 1000 on Forge and 81000 on Fabric for AEFluidKey).
      */
-    public final int getAmountPerUnit() {
-        return getType().getAmountPerUnit();
+    public int getAmountPerUnit() {
+        return 1;
     }
 
     @Nullable
@@ -284,10 +284,6 @@ public abstract class AEKey {
      */
     public boolean isTagged(TagKey<?> tag) {
         return false;
-    }
-
-    public final int hashMix() {
-        return mix;
     }
 
     @Override

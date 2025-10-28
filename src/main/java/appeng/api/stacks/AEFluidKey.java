@@ -98,6 +98,11 @@ public final class AEFluidKey extends AEKey {
     }
 
     @Override
+    public int getAmountPerUnit() {
+        return AMOUNT_BUCKET;
+    }
+
+    @Override
     public AEFluidKey dropSecondary() {
         return of(fluid, null);
     }

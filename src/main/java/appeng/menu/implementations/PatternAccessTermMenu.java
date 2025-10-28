@@ -23,6 +23,7 @@ import java.util.Set;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
@@ -91,7 +92,8 @@ public class PatternAccessTermMenu extends AEBaseMenu {
      */
     private final Set<PatternContainer> pinnedHosts = new ReferenceOpenHashSet<>();;
 
-    protected boolean updatePatterns = true;
+    protected byte updatePatterns = 1;
+    private boolean broadcastPattern = true;
 
     public PatternAccessTermMenu(int id, Inventory ip, PatternAccessTerminalPart anchor) {
         this(TYPE, id, ip, anchor, true);
@@ -106,7 +108,6 @@ public class PatternAccessTermMenu extends AEBaseMenu {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void broadcastChanges() {
         if (isClientSide()) {
@@ -121,34 +122,42 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             this.pinnedHosts.clear();
         }
 
-        if (showPatternProviders != lastShownProviders) {
-            updatePatterns = true;
+        if (updatePatterns == 0 && showPatternProviders != lastShownProviders) {
+            updatePatterns = 1;
             lastShownProviders = showPatternProviders;
         }
+        broadcastPatternChange();
+    }
 
-        if (updatePatterns) {
-            IGrid grid = getGrid();
+    protected void broadcastPatternChange() {
+        if (broadcastPattern && updatePatterns > 0 && getPlayer() instanceof ServerPlayer serverPlayer) {
+            broadcastPattern = false;
+            updatePatterns--;
+            serverPlayer.server.tell(new TickTask(0, () -> {
+                broadcastPattern = true;
+                IGrid grid = getGrid();
 
-            var state = new VisitorState();
-            if (grid != null) {
-                for (var machineClass : grid.getMachineClasses()) {
-                    if (PatternContainer.class.isAssignableFrom(machineClass)) {
-                        visitPatternProviderHosts(grid, (Class<? extends PatternContainer>) machineClass, state);
+                var state = new VisitorState();
+                if (grid != null) {
+                    for (var machineClass : grid.getMachineClasses()) {
+                        if (PatternContainer.class.isAssignableFrom(machineClass)) {
+                            visitPatternProviderHosts(grid, (Class<? extends PatternContainer>) machineClass,
+                                    state);
+                        }
                     }
+
+                    // Ensure we don't keep references to removed hosts
+                    pinnedHosts.removeIf(host -> host.getGrid() != grid);
+                } else {
+                    pinnedHosts.clear();
                 }
 
-                // Ensure we don't keep references to removed hosts
-                pinnedHosts.removeIf(host -> host.getGrid() != grid);
-            } else {
-                pinnedHosts.clear();
-            }
-
-            if (state.total != this.diList.size() || state.forceFullUpdate) {
-                sendFullUpdate(grid);
-            } else {
-                sendIncrementalUpdate();
-            }
-            updatePatterns = false;
+                if (state.total != this.diList.size() || state.forceFullUpdate) {
+                    sendFullUpdate(grid);
+                } else {
+                    sendIncrementalUpdate();
+                }
+            }));
         }
     }
 
@@ -164,7 +173,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
         return null;
     }
 
-    private static class VisitorState {
+    public static class VisitorState {
         // Total number of pattern provider hosts found
         int total;
         // Set to true if any visited machines were missing from diList, or had a different name
@@ -254,7 +263,8 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                     setCarried(patternSlot.getStackInSlot(0));
                     patternSlot.setItemDirect(0, ItemStack.EMPTY);
                 }
-                updatePatterns = true;
+                updatePatterns = 1;
+                broadcastPatternChange();
             }
             case SPLIT_OR_PLACE_SINGLE -> {
                 if (!carried.isEmpty()) {
@@ -268,7 +278,8 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                 } else if (!is.isEmpty()) {
                     setCarried(patternSlot.extractItem(0, (is.getCount() + 1) / 2, false));
                 }
-                updatePatterns = true;
+                updatePatterns = 1;
+                broadcastPatternChange();
             }
             case SHIFT_CLICK -> {
                 var stack = patternSlot.getStackInSlot(0).copy();
@@ -277,7 +288,8 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                 } else {
                     patternSlot.setItemDirect(0, ItemStack.EMPTY);
                 }
-                updatePatterns = true;
+                updatePatterns = 1;
+                broadcastPatternChange();
             }
             case MOVE_REGION -> {
                 for (int x = 0; x < inv.server.size(); x++) {
@@ -288,7 +300,8 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                         patternSlot.setItemDirect(0, ItemStack.EMPTY);
                     }
                 }
-                updatePatterns = true;
+                updatePatterns = 1;
+                broadcastPatternChange();
             }
             case CREATIVE_DUPLICATE -> {
                 if (player.getAbilities().instabuild && carried.isEmpty()) {
