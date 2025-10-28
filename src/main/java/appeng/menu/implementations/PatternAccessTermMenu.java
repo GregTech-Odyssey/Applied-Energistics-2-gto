@@ -66,6 +66,8 @@ public class PatternAccessTermMenu extends AEBaseMenu {
     @GuiSync(1)
     public ShowPatternProviders showPatternProviders = ShowPatternProviders.VISIBLE;
 
+    private ShowPatternProviders lastShownProviders = showPatternProviders;
+
     public ShowPatternProviders getShownProviders() {
         return showPatternProviders;
     }
@@ -119,6 +121,11 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             this.pinnedHosts.clear();
         }
 
+        if (showPatternProviders != lastShownProviders) {
+            updatePatterns = true;
+            lastShownProviders = showPatternProviders;
+        }
+
         if (updatePatterns) {
             IGrid grid = getGrid();
 
@@ -141,15 +148,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             } else {
                 sendIncrementalUpdate();
             }
-        }
-    }
-
-    public void broadcastWithoutPatternUpdate() {
-        this.updatePatterns = false;
-        try {
-            broadcastChanges();
-        } finally {
-            this.updatePatterns = true;
+            updatePatterns = false;
         }
     }
 
