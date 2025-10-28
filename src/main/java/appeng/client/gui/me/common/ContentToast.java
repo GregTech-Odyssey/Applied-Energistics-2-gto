@@ -28,10 +28,12 @@ public class ContentToast implements Toast {
         this.what = icon;
 
     }
+
     public int slotCount() {
         update();
         return Toast.super.slotCount();
     }
+
     protected Component getTitle() {
         return Component.empty();
     }
