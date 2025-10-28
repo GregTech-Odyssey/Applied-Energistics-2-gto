@@ -92,7 +92,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
      */
     private final Set<PatternContainer> pinnedHosts = new ReferenceOpenHashSet<>();;
 
-    protected byte updatePatterns = 1;
+    protected boolean updatePatterns = true;
     private boolean broadcastPattern = true;
 
     public PatternAccessTermMenu(int id, Inventory ip, PatternAccessTerminalPart anchor) {
@@ -122,40 +122,42 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             this.pinnedHosts.clear();
         }
 
-        if (updatePatterns == 0 && showPatternProviders != lastShownProviders) {
-            updatePatterns = 1;
+        if (!updatePatterns && showPatternProviders != lastShownProviders) {
+            updatePatterns = true;
             lastShownProviders = showPatternProviders;
         }
         broadcastPatternChange();
     }
 
     protected void broadcastPatternChange() {
-        if (broadcastPattern && updatePatterns > 0 && getPlayer() instanceof ServerPlayer serverPlayer) {
+        if (broadcastPattern && getPlayer() instanceof ServerPlayer serverPlayer) {
             broadcastPattern = false;
-            updatePatterns--;
             serverPlayer.server.tell(new TickTask(0, () -> {
                 broadcastPattern = true;
-                IGrid grid = getGrid();
+                if (updatePatterns) {
+                    updatePatterns = false;
+                    IGrid grid = getGrid();
 
-                var state = new VisitorState();
-                if (grid != null) {
-                    for (var machineClass : grid.getMachineClasses()) {
-                        if (PatternContainer.class.isAssignableFrom(machineClass)) {
-                            visitPatternProviderHosts(grid, (Class<? extends PatternContainer>) machineClass,
-                                    state);
+                    var state = new VisitorState();
+                    if (grid != null) {
+                        for (var machineClass : grid.getMachineClasses()) {
+                            if (PatternContainer.class.isAssignableFrom(machineClass)) {
+                                visitPatternProviderHosts(grid, (Class<? extends PatternContainer>) machineClass,
+                                        state);
+                            }
                         }
+
+                        // Ensure we don't keep references to removed hosts
+                        pinnedHosts.removeIf(host -> host.getGrid() != grid);
+                    } else {
+                        pinnedHosts.clear();
                     }
 
-                    // Ensure we don't keep references to removed hosts
-                    pinnedHosts.removeIf(host -> host.getGrid() != grid);
-                } else {
-                    pinnedHosts.clear();
-                }
-
-                if (state.total != this.diList.size() || state.forceFullUpdate) {
-                    sendFullUpdate(grid);
-                } else {
-                    sendIncrementalUpdate();
+                    if (state.total != this.diList.size() || state.forceFullUpdate) {
+                        sendFullUpdate(grid);
+                    } else {
+                        sendIncrementalUpdate();
+                    }
                 }
             }));
         }
@@ -263,7 +265,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                     setCarried(patternSlot.getStackInSlot(0));
                     patternSlot.setItemDirect(0, ItemStack.EMPTY);
                 }
-                updatePatterns = 1;
+                updatePatterns = true;
                 broadcastPatternChange();
             }
             case SPLIT_OR_PLACE_SINGLE -> {
@@ -278,7 +280,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                 } else if (!is.isEmpty()) {
                     setCarried(patternSlot.extractItem(0, (is.getCount() + 1) / 2, false));
                 }
-                updatePatterns = 1;
+                updatePatterns = true;
                 broadcastPatternChange();
             }
             case SHIFT_CLICK -> {
@@ -288,7 +290,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                 } else {
                     patternSlot.setItemDirect(0, ItemStack.EMPTY);
                 }
-                updatePatterns = 1;
+                updatePatterns = true;
                 broadcastPatternChange();
             }
             case MOVE_REGION -> {
@@ -300,7 +302,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                         patternSlot.setItemDirect(0, ItemStack.EMPTY);
                     }
                 }
-                updatePatterns = 1;
+                updatePatterns = true;
                 broadcastPatternChange();
             }
             case CREATIVE_DUPLICATE -> {
