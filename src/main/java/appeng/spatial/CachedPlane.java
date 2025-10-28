@@ -41,7 +41,8 @@ import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.ticks.LevelChunkTicks;
 import net.minecraft.world.ticks.ScheduledTick;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 
 import appeng.api.ids.AETags;
 import appeng.api.movable.BlockEntityMoveStrategies;
@@ -399,17 +400,12 @@ public class CachedPlane {
         return this.level;
     }
 
-    private static class BlockStorageData {
-        public BlockState state;
-    }
-
     private static class Column {
         private final int x;
         private final int z;
 
         private final LevelChunk c;
-        private List<Integer> skipThese = null;
-        private Int2ObjectMap<BlockState> savedBlockStates = null;
+        private IntList skipThese = null;
 
         public Column(LevelChunk chunk, int x, int z) {
             this.x = x;
@@ -428,7 +424,7 @@ public class CachedPlane {
 
         private void setSkip(int y) {
             if (this.skipThese == null) {
-                this.skipThese = new ArrayList<>();
+                this.skipThese = new IntArrayList();
             }
             this.skipThese.add(y);
         }

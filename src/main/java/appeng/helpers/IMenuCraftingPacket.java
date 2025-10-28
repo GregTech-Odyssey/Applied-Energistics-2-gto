@@ -22,6 +22,8 @@ import java.util.List;
 
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.ints.IntList;
+
 import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.security.IActionSource;
@@ -66,6 +68,6 @@ public interface IMenuCraftingPacket {
      */
     boolean isPlayerInventorySlotLocked(int invSlot);
 
-    record AutoCraftEntry(AEItemKey what, List<Integer> slots) {
+    record AutoCraftEntry(AEItemKey what, IntList slots) {
     }
 }

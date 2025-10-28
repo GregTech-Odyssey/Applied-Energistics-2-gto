@@ -114,7 +114,6 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
      */
     @Nullable
     private List<IMenuCraftingPacket.AutoCraftEntry> autoCraftingQueue;
-    private List<Integer> requestedSlots;
 
     public CraftConfirmMenu(int id, Inventory ip, ISubMenuHost te) {
         super(TYPE, id, ip, te);
@@ -138,7 +137,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
             return;
         }
 
-        var firstToCraft = stacksToCraft.get(0);
+        var firstToCraft = stacksToCraft.getFirst();
         var subsequentCrafts = stacksToCraft.subList(1, stacksToCraft.size());
 
         try {
@@ -155,7 +154,6 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
                 }
 
                 ccc.autoCraftingQueue = subsequentCrafts;
-                ccc.requestedSlots = firstToCraft.slots();
                 ccc.broadcastChanges();
             }
         } catch (Throwable e) {
