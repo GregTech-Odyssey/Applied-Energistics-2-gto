@@ -18,8 +18,6 @@
 
 package appeng.menu.implementations;
 
-import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -34,6 +32,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Settings;
 import appeng.api.config.ShowPatternProviders;
@@ -81,13 +81,13 @@ public class PatternAccessTermMenu extends AEBaseMenu {
     // We use this serial number to uniquely identify all inventories we send to the client
     // It is used in packets sent by the client to interact with these inventories
     private static long inventorySerial = Long.MIN_VALUE;
-    private final Map<PatternContainer, ContainerTracker> diList = new IdentityHashMap<>();
+    private final Map<PatternContainer, ContainerTracker> diList = new Reference2ObjectOpenHashMap<>();
     private final Long2ObjectOpenHashMap<ContainerTracker> byId = new Long2ObjectOpenHashMap<>();
     /**
      * Tracks hosts that were visible before, even if they no longer match the filter. For
      * {@link ShowPatternProviders#NOT_FULL}.
      */
-    private final Set<PatternContainer> pinnedHosts = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<PatternContainer> pinnedHosts = new ReferenceOpenHashSet<>();;
 
     protected boolean updatePatterns = true;
 
@@ -255,6 +255,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                     setCarried(patternSlot.getStackInSlot(0));
                     patternSlot.setItemDirect(0, ItemStack.EMPTY);
                 }
+                updatePatterns = true;
             }
             case SPLIT_OR_PLACE_SINGLE -> {
                 if (!carried.isEmpty()) {
@@ -268,6 +269,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                 } else if (!is.isEmpty()) {
                     setCarried(patternSlot.extractItem(0, (is.getCount() + 1) / 2, false));
                 }
+                updatePatterns = true;
             }
             case SHIFT_CLICK -> {
                 var stack = patternSlot.getStackInSlot(0).copy();
@@ -276,6 +278,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                 } else {
                     patternSlot.setItemDirect(0, ItemStack.EMPTY);
                 }
+                updatePatterns = true;
             }
             case MOVE_REGION -> {
                 for (int x = 0; x < inv.server.size(); x++) {
@@ -286,6 +289,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                         patternSlot.setItemDirect(0, ItemStack.EMPTY);
                     }
                 }
+                updatePatterns = true;
             }
             case CREATIVE_DUPLICATE -> {
                 if (player.getAbilities().instabuild && carried.isEmpty()) {
