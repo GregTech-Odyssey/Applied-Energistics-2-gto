@@ -485,7 +485,7 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
     }
 
     private boolean tryMergeItemStackToSlot(Slot sourceSlot, ItemStack toTransfer, Slot destinationSlot) {
-        final ItemStack t = destinationSlot.getItem().copy();
+        ItemStack t = destinationSlot.getItem();
 
         if (ItemStack.isSameItemSameTags(t, toTransfer)) {
             int maxSize = t.getMaxStackSize();
@@ -498,7 +498,7 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
                 if (toTransfer.getCount() < placeable) {
                     placeable = toTransfer.getCount();
                 }
-
+                t = t.copy();
                 t.setCount(t.getCount() + placeable);
                 toTransfer.setCount(toTransfer.getCount() - placeable);
 

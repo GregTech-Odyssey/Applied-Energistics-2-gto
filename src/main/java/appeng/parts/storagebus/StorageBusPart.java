@@ -470,7 +470,8 @@ public class StorageBusPart extends UpgradeablePart
             super(inventory);
         }
 
-        public Object getOwner() {
+        @Override
+        public Object getStorageOwner() {
             return owner;
         }
 
