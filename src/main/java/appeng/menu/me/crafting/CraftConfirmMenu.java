@@ -79,7 +79,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
     private ICraftingCPU selectedCpu;
 
     private AEKey whatToCraft;
-    private int amount;
+    private long amount;
     private Future<ICraftingPlan> job;
     private ICraftingPlan result;
 
@@ -114,7 +114,6 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
      */
     @Nullable
     private List<IMenuCraftingPacket.AutoCraftEntry> autoCraftingQueue;
-    private List<Integer> requestedSlots;
 
     public CraftConfirmMenu(int id, Inventory ip, ISubMenuHost te) {
         super(TYPE, id, ip, te);
@@ -138,7 +137,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
             return;
         }
 
-        var firstToCraft = stacksToCraft.get(0);
+        var firstToCraft = stacksToCraft.getFirst();
         var subsequentCrafts = stacksToCraft.subList(1, stacksToCraft.size());
 
         try {
@@ -155,7 +154,6 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
                 }
 
                 ccc.autoCraftingQueue = subsequentCrafts;
-                ccc.requestedSlots = firstToCraft.slots();
                 ccc.broadcastChanges();
             }
         } catch (Throwable e) {
@@ -163,7 +161,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
         }
     }
 
-    public boolean planJob(AEKey what, int amount, CalculationStrategy strategy) {
+    public boolean planJob(AEKey what, long amount, CalculationStrategy strategy) {
         if (this.job != null) {
             this.job.cancel(true);
         }

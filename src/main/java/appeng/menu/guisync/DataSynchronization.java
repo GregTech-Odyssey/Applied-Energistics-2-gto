@@ -46,8 +46,9 @@ public class DataSynchronization {
     }
 
     private static Short2ObjectOpenHashMap<SynchronizedField.Factory> collectFields(Class<?> clazz) {
-        return CACHE.computeIfAbsent(clazz, k -> {
-            var fields = new Short2ObjectOpenHashMap<SynchronizedField.Factory>();
+        var fields = CACHE.get(clazz);
+        if (fields == null) {
+            fields = new Short2ObjectOpenHashMap<>();
             for (var f : clazz.getDeclaredFields()) {
                 if (f.isAnnotationPresent(GuiSync.class)) {
                     var annotation = f.getAnnotation(GuiSync.class);
@@ -70,7 +71,8 @@ public class DataSynchronization {
                 }
             }
             return fields;
-        });
+        }
+        return fields;
     }
 
     public boolean hasChanges() {

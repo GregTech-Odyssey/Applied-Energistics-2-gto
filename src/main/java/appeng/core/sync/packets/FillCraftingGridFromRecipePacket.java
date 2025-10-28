@@ -19,7 +19,6 @@
 package appeng.core.sync.packets;
 
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -41,6 +40,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceLinkedOpenHashMap;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.networking.crafting.ICraftingService;
@@ -152,7 +152,7 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
 
         // Prepare to autocraft some stuff
         var craftingService = grid.getCraftingService();
-        var toAutoCraft = new LinkedHashMap<AEItemKey, IntList>();
+        var toAutoCraft = new Reference2ReferenceLinkedOpenHashMap<AEItemKey, IntList>();
         boolean touchedGridStorage = false;
 
         // Handle each slot
@@ -231,7 +231,7 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
             }
 
             // This must be the last call since it changes the menu!
-            var stacks = toAutoCraft.entrySet().stream()
+            var stacks = toAutoCraft.reference2ReferenceEntrySet().stream()
                     .map(e -> new IMenuCraftingPacket.AutoCraftEntry(e.getKey(), e.getValue())).toList();
             cct.startAutoCrafting(stacks);
         }
