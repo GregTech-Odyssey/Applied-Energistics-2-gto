@@ -19,10 +19,8 @@
 package appeng.me.service;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NavigableSet;
@@ -43,6 +41,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.MinecraftServer;
 
 import it.unimi.dsi.fastutil.objects.ObjectRBTreeSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
@@ -146,7 +145,7 @@ public class EnergyService implements IEnergyService, IGridServiceProvider {
     /**
      * Passive generators available on this energy grid.
      */
-    private final Set<IPassiveEnergyGenerator> passiveGenerators = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Set<IPassiveEnergyGenerator> passiveGenerators = new ReferenceOpenHashSet<>();
 
     /**
      * The overlay grid containing all the energy services of grids that may be connected by parts like

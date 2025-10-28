@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 
@@ -75,6 +74,7 @@ import appeng.core.sync.packets.ConfigValuePacket;
 import appeng.core.sync.packets.MEInteractionPacket;
 import appeng.core.sync.packets.MEInventoryUpdatePacket;
 import appeng.helpers.InventoryAction;
+import appeng.hooks.ticking.TickHandler;
 import appeng.me.helpers.ChannelPowerSrc;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;
@@ -152,6 +152,8 @@ public class MEStorageMenu extends AEBaseMenu
      */
     private Set<AEKey> previousCraftables = Collections.emptySet();
     private KeyCounter previousAvailableStacks = new KeyCounter();
+
+    private long lastUpdate = 0;
 
     public MEStorageMenu(MenuType<?> menuType, int id, Inventory ip, ITerminalHost host) {
         this(menuType, id, ip, host, true);
@@ -251,54 +253,58 @@ public class MEStorageMenu extends AEBaseMenu
                 return;
             }
 
-            this.updateActiveCraftingJobs();
+            var tick = TickHandler.instance().getCurrentTick();
+            if (lastUpdate != tick) {
+                lastUpdate = tick;
 
-            for (var set : this.serverCM.getSettings()) {
-                var sideLocal = this.serverCM.getSetting(set);
-                var sideRemote = this.clientCM.getSetting(set);
+                this.updateActiveCraftingJobs();
 
-                if (sideLocal != sideRemote) {
-                    set.copy(serverCM, clientCM);
-                    sendPacketToClient(new ConfigValuePacket(set, serverCM));
-                }
-            }
+                for (var set : this.serverCM.getSettings()) {
+                    var sideLocal = this.serverCM.getSetting(set);
+                    var sideRemote = this.clientCM.getSetting(set);
 
-            var craftables = getCraftablesFromGrid();
-            var availableStacks = storage == null ? new KeyCounter() : storage.getAvailableStacks();
-
-            // This is currently not supported/backed by any network service
-            var requestables = new KeyCounter();
-
-            try {
-                // Craftables
-                // Newly craftable
-                Sets.difference(previousCraftables, craftables).forEach(updateHelper::addChange);
-                // No longer craftable
-                Sets.difference(craftables, previousCraftables).forEach(updateHelper::addChange);
-
-                // Available changes
-                previousAvailableStacks.removeAll(availableStacks);
-                previousAvailableStacks.removeZeros();
-                previousAvailableStacks.keySet().forEach(updateHelper::addChange);
-
-                if (updateHelper.hasChanges()) {
-                    var builder = MEInventoryUpdatePacket
-                            .builder(containerId, updateHelper.isFullUpdate());
-                    builder.setFilter(this::isKeyVisible);
-                    builder.addChanges(updateHelper, availableStacks, craftables, requestables);
-                    builder.buildAndSend(this::sendPacketToClient);
-                    updateHelper.commitChanges();
+                    if (sideLocal != sideRemote) {
+                        set.copy(serverCM, clientCM);
+                        sendPacketToClient(new ConfigValuePacket(set, serverCM));
+                    }
                 }
 
-            } catch (Exception e) {
-                AELog.warn(e, "Failed to send incremental inventory update to client");
+                var craftables = getCraftablesFromGrid();
+                var availableStacks = storage == null ? new KeyCounter() : storage.getAvailableStacks();
+
+                // This is currently not supported/backed by any network service
+                var requestables = new KeyCounter();
+
+                try {
+                    // Craftables
+                    // Newly craftable
+                    Sets.difference(previousCraftables, craftables).forEach(updateHelper::addChange);
+                    // No longer craftable
+                    Sets.difference(craftables, previousCraftables).forEach(updateHelper::addChange);
+
+                    // Available changes
+                    previousAvailableStacks.removeAll(availableStacks);
+                    previousAvailableStacks.removeZeros();
+                    previousAvailableStacks.keySet().forEach(updateHelper::addChange);
+
+                    if (updateHelper.hasChanges()) {
+                        var builder = MEInventoryUpdatePacket
+                                .builder(containerId, updateHelper.isFullUpdate());
+                        builder.setFilter(this::isKeyVisible);
+                        builder.addChanges(updateHelper, availableStacks, craftables, requestables);
+                        builder.buildAndSend(this::sendPacketToClient);
+                        updateHelper.commitChanges();
+                    }
+
+                } catch (Exception e) {
+                    AELog.warn(e, "Failed to send incremental inventory update to client");
+                }
+
+                previousCraftables = craftables;
+                previousAvailableStacks = availableStacks;
+
+                this.updatePowerStatus();
             }
-
-            previousCraftables = ImmutableSet.copyOf(craftables);
-            previousAvailableStacks = availableStacks;
-
-            this.updatePowerStatus();
-
             super.broadcastChanges();
         }
 

@@ -18,11 +18,13 @@
 
 package appeng.menu.guisync;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 
 import appeng.core.AELog;
 
@@ -32,30 +34,45 @@ import appeng.core.AELog;
  */
 public class DataSynchronization {
 
-    private final Map<Short, SynchronizedField<?>> fields = new HashMap<>();
+    private static final Map<Class<?>, Short2ObjectOpenHashMap<SynchronizedField.Factory>> CACHE = new ConcurrentHashMap<>();
+
+    private final Short2ObjectOpenHashMap<SynchronizedField<?>> fields;
 
     public DataSynchronization(Object host) {
-        collectFields(host, host.getClass());
+        var map = collectFields(host.getClass());
+        fields = new Short2ObjectOpenHashMap<>(map.size());
+        map.short2ObjectEntrySet().fastForEach(
+                entry -> fields.put(entry.getShortKey(), entry.getValue().create(host)));
     }
 
-    private void collectFields(Object host, Class<?> clazz) {
-        for (var f : clazz.getDeclaredFields()) {
-            if (f.isAnnotationPresent(GuiSync.class)) {
-                var annotation = f.getAnnotation(GuiSync.class);
-                short key = annotation.value();
-                if (this.fields.containsKey(key)) {
-                    throw new IllegalStateException(
-                            "Class " + host.getClass() + " declares the same sync id twice: " + key);
+    private static Short2ObjectOpenHashMap<SynchronizedField.Factory> collectFields(Class<?> clazz) {
+        var fields = CACHE.get(clazz);
+        if (fields == null) {
+            fields = new Short2ObjectOpenHashMap<>();
+            for (var f : clazz.getDeclaredFields()) {
+                if (f.isAnnotationPresent(GuiSync.class)) {
+                    var annotation = f.getAnnotation(GuiSync.class);
+                    short key = annotation.value();
+                    if (fields.containsKey(key)) {
+                        throw new IllegalStateException(
+                                "Class " + clazz + " declares the same sync id twice: " + key);
+                    }
+                    fields.put(key, new SynchronizedField.Factory(f));
                 }
-                this.fields.put(key, SynchronizedField.create(host, f));
             }
-        }
 
-        // Recurse upwards through the class hierarchy
-        Class<?> superclass = clazz.getSuperclass();
-        if (superclass != AbstractContainerMenu.class && superclass != Object.class) {
-            collectFields(host, superclass);
+            // Recurse upwards through the class hierarchy
+            Class<?> superclass = clazz.getSuperclass();
+            if (superclass != AbstractContainerMenu.class && superclass != Object.class) {
+                if (fields.isEmpty()) {
+                    fields = collectFields(superclass);
+                } else {
+                    fields.putAll(collectFields(superclass));
+                }
+            }
+            return fields;
         }
+        return fields;
     }
 
     public boolean hasChanges() {
@@ -82,12 +99,12 @@ public class DataSynchronization {
     }
 
     private void writeFields(FriendlyByteBuf data, boolean includeUnchanged) {
-        for (Map.Entry<Short, SynchronizedField<?>> entry : fields.entrySet()) {
+        fields.short2ObjectEntrySet().fastForEach(entry -> {
             if (includeUnchanged || entry.getValue().hasChanges()) {
-                data.writeShort(entry.getKey());
+                data.writeShort(entry.getShortKey());
                 entry.getValue().write(data);
             }
-        }
+        });
 
         // Terminator
         data.writeVarInt(-1);

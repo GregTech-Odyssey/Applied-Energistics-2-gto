@@ -45,17 +45,11 @@ public abstract class SynchronizedField<T> {
     protected final MethodHandle setter;
     protected T clientVersion;
 
-    private SynchronizedField(Object source, Field field) {
+    private SynchronizedField(Object source, MethodHandle getter, MethodHandle setter) {
+        this.getter = getter;
+        this.setter = setter;
         this.clientVersion = null;
         this.source = source;
-        field.setAccessible(true);
-        try {
-            this.getter = MethodHandles.publicLookup().unreflectGetter(field);
-            this.setter = MethodHandles.publicLookup().unreflectSetter(field);
-        } catch (IllegalAccessException e) {
-            throw new RuntimeException(
-                    "Failed to get accessor for field " + field + ". Did you forget to make it public?");
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -90,41 +84,9 @@ public abstract class SynchronizedField<T> {
 
     protected abstract T readValue(FriendlyByteBuf data);
 
-    public static SynchronizedField<?> create(Object source, Field field) {
-        Class<?> fieldType = field.getType();
-
-        if (PacketWritable.class.isAssignableFrom(fieldType)) {
-            return new CustomField(source, field);
-        } else if (fieldType.isAssignableFrom(Component.class)) {
-            return new TextComponentField(source, field);
-        } else if (fieldType.isAssignableFrom(GenericStack.class)) {
-            return new GenericStackField(source, field);
-        } else if (fieldType.isAssignableFrom(ResourceLocation.class)) {
-            return new ResourceLocationField(source, field);
-        } else if (fieldType == String.class) {
-            return new StringField(source, field);
-        } else if (fieldType == int.class || fieldType == Integer.class) {
-            return new IntegerField(source, field);
-        } else if (fieldType == long.class || fieldType == Long.class) {
-            return new LongField(source, field);
-        } else if (fieldType == double.class) {
-            return new DoubleField(source, field);
-        } else if (fieldType == boolean.class || fieldType == Boolean.class) {
-            return new BooleanField(source, field);
-        } else if (fieldType.isEnum()) {
-            return createEnumField(source, field, fieldType.asSubclass(Enum.class));
-        } else {
-            throw new IllegalArgumentException("Cannot synchronize field " + field);
-        }
-    }
-
-    private static <T extends Enum<T>> EnumField<T> createEnumField(Object source, Field field, Class<T> fieldType) {
-        return new EnumField<>(source, field, fieldType.getEnumConstants());
-    }
-
     private static class StringField extends SynchronizedField<String> {
-        private StringField(Object source, Field field) {
-            super(source, field);
+        private StringField(Object source, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
         }
 
         @Override
@@ -139,8 +101,8 @@ public abstract class SynchronizedField<T> {
     }
 
     private static class IntegerField extends SynchronizedField<Integer> {
-        private IntegerField(Object source, Field field) {
-            super(source, field);
+        private IntegerField(Object source, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
         }
 
         @Override
@@ -155,8 +117,8 @@ public abstract class SynchronizedField<T> {
     }
 
     private static class LongField extends SynchronizedField<Long> {
-        private LongField(Object source, Field field) {
-            super(source, field);
+        private LongField(Object source, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
         }
 
         @Override
@@ -171,8 +133,8 @@ public abstract class SynchronizedField<T> {
     }
 
     private static class DoubleField extends SynchronizedField<Double> {
-        private DoubleField(Object source, Field field) {
-            super(source, field);
+        private DoubleField(Object source, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
         }
 
         @Override
@@ -187,8 +149,8 @@ public abstract class SynchronizedField<T> {
     }
 
     private static class BooleanField extends SynchronizedField<Boolean> {
-        private BooleanField(Object source, Field field) {
-            super(source, field);
+        private BooleanField(Object source, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
         }
 
         @Override
@@ -205,8 +167,8 @@ public abstract class SynchronizedField<T> {
     private static class EnumField<T extends Enum<T>> extends SynchronizedField<T> {
         private final T[] values;
 
-        private EnumField(Object source, Field field, T[] values) {
-            super(source, field);
+        private EnumField(Object source, MethodHandle getter, MethodHandle setter, T[] values) {
+            super(source, getter, setter);
             this.values = values;
         }
 
@@ -231,8 +193,8 @@ public abstract class SynchronizedField<T> {
     }
 
     private static class TextComponentField extends SynchronizedField<Component> {
-        private TextComponentField(Object source, Field field) {
-            super(source, field);
+        private TextComponentField(Object source, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
         }
 
         @Override
@@ -256,8 +218,8 @@ public abstract class SynchronizedField<T> {
     }
 
     private static class GenericStackField extends SynchronizedField<GenericStack> {
-        private GenericStackField(Object source, Field field) {
-            super(source, field);
+        private GenericStackField(Object source, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
         }
 
         @Override
@@ -272,8 +234,8 @@ public abstract class SynchronizedField<T> {
     }
 
     private static class ResourceLocationField extends SynchronizedField<ResourceLocation> {
-        private ResourceLocationField(Object source, Field field) {
-            super(source, field);
+        private ResourceLocationField(Object source, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
         }
 
         @Override
@@ -300,8 +262,8 @@ public abstract class SynchronizedField<T> {
         private static final Map<Class<?>, Function<FriendlyByteBuf, Object>> factories = new HashMap<>();
         private final Class<?> fieldType;
 
-        private CustomField(Object source, Field field) {
-            super(source, field);
+        private CustomField(Object source, Field field, MethodHandle getter, MethodHandle setter) {
+            super(source, getter, setter);
             this.fieldType = field.getType();
             Preconditions.checkArgument(PacketWritable.class.isAssignableFrom(fieldType));
             if (!fieldType.isRecord()) {
@@ -333,6 +295,51 @@ public abstract class SynchronizedField<T> {
                 };
             } catch (NoSuchMethodException e) {
                 throw new RuntimeException("No constructor taking FriendlyByteBuf on " + clazz);
+            }
+        }
+    }
+
+    static class Factory {
+        private final Field field;
+        private final MethodHandle getter;
+        private final MethodHandle setter;
+
+        Factory(Field field) {
+            field.setAccessible(true);
+            try {
+                this.getter = MethodHandles.publicLookup().unreflectGetter(field);
+                this.setter = MethodHandles.publicLookup().unreflectSetter(field);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(
+                        "Failed to get accessor for field " + field + ". Did you forget to make it public?");
+            }
+            this.field = field;
+        }
+
+        SynchronizedField<?> create(Object source) {
+            Class<?> fieldType = field.getType();
+            if (PacketWritable.class.isAssignableFrom(fieldType)) {
+                return new CustomField(source, field, getter, setter);
+            } else if (fieldType.isAssignableFrom(Component.class)) {
+                return new TextComponentField(source, getter, setter);
+            } else if (fieldType.isAssignableFrom(GenericStack.class)) {
+                return new GenericStackField(source, getter, setter);
+            } else if (fieldType.isAssignableFrom(ResourceLocation.class)) {
+                return new ResourceLocationField(source, getter, setter);
+            } else if (fieldType == String.class) {
+                return new StringField(source, getter, setter);
+            } else if (fieldType == int.class || fieldType == Integer.class) {
+                return new IntegerField(source, getter, setter);
+            } else if (fieldType == long.class || fieldType == Long.class) {
+                return new LongField(source, getter, setter);
+            } else if (fieldType == double.class) {
+                return new DoubleField(source, getter, setter);
+            } else if (fieldType == boolean.class || fieldType == Boolean.class) {
+                return new BooleanField(source, getter, setter);
+            } else if (fieldType.isEnum()) {
+                return new EnumField<>(source, getter, setter, fieldType.asSubclass(Enum.class).getEnumConstants());
+            } else {
+                throw new IllegalArgumentException("Cannot synchronize field " + field);
             }
         }
     }

@@ -106,9 +106,20 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
         }
     }
 
-    private class InventoryCache {
-        private KeyCounter frontBuffer = new KeyCounter();
-        private KeyCounter backBuffer = new KeyCounter();
+    @Override
+    public KeyCounter getAvailableStacks() {
+        synchronized (cache) {
+            if (forceCacheRebuild) {
+                forceCacheRebuild = false;
+                cache.update();
+            }
+            return this.cache.frontBuffer;
+        }
+    }
+
+    public class InventoryCache {
+        public KeyCounter frontBuffer = new KeyCounter();
+        public KeyCounter backBuffer = new KeyCounter();
 
         public boolean update() {
             // Flip back & front buffer and start building a new list
