@@ -3,6 +3,7 @@ package appeng.integration.modules.jeirei;
 import java.util.ArrayList;
 import java.util.List;
 
+import appeng.items.misc.WrappedGenericStack;
 import com.almostreliable.merequester.client.RequestSlot;
 import com.almostreliable.merequester.platform.Platform;
 import com.google.common.primitives.Ints;
@@ -88,6 +89,9 @@ public final class DropTargets {
 
         @Override
         public boolean drop(GenericStack stack) {
+            while (stack.what() instanceof AEItemKey aik && GenericStack.unwrapItemStack(aik.toStack()) != null) {
+                stack = GenericStack.unwrapItemStack(aik.toStack());
+            }
             search.setValue(stack.what().getDisplayName().getString());
             return true;
         }
