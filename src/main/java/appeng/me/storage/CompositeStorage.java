@@ -106,17 +106,6 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
         }
     }
 
-    @Override
-    public KeyCounter getAvailableStacks() {
-        synchronized (cache) {
-            if (forceCacheRebuild) {
-                forceCacheRebuild = false;
-                cache.update();
-            }
-            return this.cache.frontBuffer;
-        }
-    }
-
     public class InventoryCache {
         public KeyCounter frontBuffer = new KeyCounter();
         public KeyCounter backBuffer = new KeyCounter();

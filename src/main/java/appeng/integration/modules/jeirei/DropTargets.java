@@ -3,7 +3,6 @@ package appeng.integration.modules.jeirei;
 import java.util.ArrayList;
 import java.util.List;
 
-import appeng.items.misc.WrappedGenericStack;
 import com.almostreliable.merequester.client.RequestSlot;
 import com.almostreliable.merequester.platform.Platform;
 import com.google.common.primitives.Ints;
