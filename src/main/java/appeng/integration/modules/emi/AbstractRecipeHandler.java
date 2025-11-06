@@ -6,6 +6,9 @@ import static appeng.integration.modules.jeirei.TransferHelper.RED_SLOT_HIGHLIGH
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -29,11 +32,10 @@ import dev.emi.emi.api.widget.Bounds;
 import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.Widget;
 import it.unimi.dsi.fastutil.ints.*;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.GenericStack;
-import appeng.core.AEConfig;
 import appeng.integration.modules.jeirei.EncodingHelper;
 import appeng.integration.modules.jeirei.TransferHelper;
 import appeng.menu.AEBaseMenu;
@@ -46,6 +48,9 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
     public static final int CRAFTING_GRID_HEIGHT = 3;
 
     public final Class<T> containerClass;
+    protected static final ExecutorService executorService = Executors.newSingleThreadExecutor();
+    protected static volatile EmiPlayerInventory cachedInventory = null;
+    protected static final AtomicBoolean refreshInProgress = new AtomicBoolean(false);
 
     public AbstractRecipeHandler(Class<T> containerClass) {
         this.containerClass = containerClass;
@@ -75,34 +80,35 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
 
     @Override
     public EmiPlayerInventory getInventory(AbstractContainerScreen<T> screen) {
-        if (!AEConfig.instance().isExposeNetworkInventoryToEmi()) {
-            return StandardRecipeHandler.super.getInventory(screen);
-        }
+        EmiPlayerInventory local = cachedInventory;
 
-        var list = new ArrayList<EmiStack>();
-
-        for (Slot slot : getInputSources(screen.getMenu())) {
-            list.add(EmiStack.of(slot.getItem()));
-        }
-
-        if (screen.getMenu() instanceof MEStorageMenu menu) {
-            var repo = menu.getClientRepo();
-
-            if (repo != null) {
-                for (var entry : repo.getAllEntries()) {
-                    if (entry.getStoredAmount() <= 0) {
-                        continue; // Skip items that are only craftable
+        if (refreshInProgress.compareAndSet(false, true)) {
+            executorService.submit(() -> {
+                try {
+                    List<EmiStack> allStack = new ObjectArrayList<>();
+                    allStack.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_HOTBAR));
+                    allStack.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_INVENTORY));
+                    if (screen.getMenu() instanceof MEStorageMenu menu) {
+                        allStack.addAll(InventoryUtils.getExistingStacks(menu));
                     }
-                    var emiStack = EmiStackHelper
-                            .toEmiStack(new GenericStack(entry.getWhat(), entry.getStoredAmount()));
-                    if (emiStack != null) {
-                        list.add(emiStack);
-                    }
+                    addToEmiInventory(screen, allStack);
+                    cachedInventory = new EmiPlayerInventory(allStack);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    refreshInProgress.set(false);
                 }
-            }
+            });
         }
 
-        return new EmiPlayerInventory(list);
+        if (local != null) {
+            return local;
+        }
+
+        return StandardRecipeHandler.super.getInventory(screen);
+    }
+
+    protected void addToEmiInventory(AbstractContainerScreen<T> screen, List<EmiStack> stacks) {
     }
 
     @Override

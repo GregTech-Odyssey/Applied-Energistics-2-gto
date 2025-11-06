@@ -1,5 +1,7 @@
 package appeng.integration.modules.emi;
 
+import java.util.List;
+
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
@@ -16,6 +18,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import appeng.core.localization.ItemModText;
 import appeng.integration.modules.jeirei.CraftingHelper;
+import appeng.menu.SlotSemantics;
 import appeng.menu.me.items.CraftingTermMenu;
 
 /**
@@ -88,6 +91,13 @@ public class EmiUseCraftingRecipeHandler<T extends CraftingTermMenu> extends Abs
 
         // No error
         return Result.createSuccessful();
+    }
+
+    @Override
+    protected void addToEmiInventory(AbstractContainerScreen<T> screen, List<EmiStack> stacks) {
+        if (screen.getMenu() instanceof CraftingTermMenu) {
+            stacks.addAll(InventoryUtils.getStacks(screen, SlotSemantics.CRAFTING_GRID));
+        }
     }
 
     private Recipe<?> createFakeRecipe(EmiRecipe display) {
