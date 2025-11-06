@@ -32,6 +32,7 @@ import appeng.client.gui.StackWithBounds;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.Scrollbar;
 import appeng.core.localization.GuiText;
+import appeng.integration.modules.emi.IStackInteractionScreen;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummary;
 
@@ -39,7 +40,7 @@ import appeng.menu.me.crafting.CraftingPlanSummary;
  * This screen shows the computed crafting plan and allows the player to select a CPU on which it should be scheduled
  * for crafting.
  */
-public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> {
+public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implements IStackInteractionScreen {
 
     private final CraftConfirmTableRenderer table;
 

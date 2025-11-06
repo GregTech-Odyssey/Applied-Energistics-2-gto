@@ -70,7 +70,7 @@ public class NumberEntryWidget implements ICompositeWidget {
     private final ConfirmableTextField textField;
     private final DecimalFormat decimalFormat;
     private NumberEntryType type;
-    private List<Button> buttons;
+    private List<Button> buttons = List.of();
     private long minValue;
     private long maxValue = Long.MAX_VALUE;
     private ValidationIcon validationIcon;

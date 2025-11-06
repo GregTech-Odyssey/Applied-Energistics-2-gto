@@ -42,6 +42,7 @@ import appeng.client.gui.widgets.Scrollbar;
 import appeng.client.gui.widgets.ServerSettingToggleButton;
 import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.core.localization.GuiText;
+import appeng.integration.modules.emi.IStackInteractionScreen;
 import appeng.menu.me.crafting.CraftingCPUMenu;
 import appeng.menu.me.crafting.CraftingStatus;
 import appeng.menu.me.crafting.CraftingStatusEntry;
@@ -49,7 +50,7 @@ import appeng.menu.me.crafting.CraftingStatusEntry;
 /**
  * This screen shows the current crafting job that a crafting CPU is working on (if any).
  */
-public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T> {
+public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T> implements IStackInteractionScreen {
 
     private final CraftingStatusTableRenderer table;
 
