@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import appeng.core.AEConfig;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.Minecraft;
@@ -80,6 +81,9 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
 
     @Override
     public EmiPlayerInventory getInventory(AbstractContainerScreen<T> screen) {
+        if (!AEConfig.instance().isExposeNetworkInventoryExternal()) {
+            return StandardRecipeHandler.super.getInventory(screen);
+        }
         EmiPlayerInventory local = cachedInventory;
 
         if (refreshInProgress.compareAndSet(false, true)) {

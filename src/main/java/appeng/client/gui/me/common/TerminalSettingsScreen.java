@@ -24,6 +24,7 @@ public class TerminalSettingsScreen<C extends MEStorageMenu> extends AESubScreen
     private final AECheckbox rememberCheckbox;
     private final AECheckbox autoFocusCheckbox;
     private final AECheckbox syncWithExternalCheckbox;
+    private final AECheckbox exposeInventoryExternalCheckbox;
     private final AECheckbox clearExternalCheckbox;
 
     public TerminalSettingsScreen(MEStorageScreen<C> parent) {
@@ -66,6 +67,8 @@ public class TerminalSettingsScreen<C extends MEStorageMenu> extends AESubScreen
                 GuiText.SearchSettingsSyncWithExternal.text(externalSearchMod), this::save);
         clearExternalCheckbox = widgets.addCheckbox("clearExternalCheckbox",
                 GuiText.SearchSettingsClearExternal.text(externalSearchMod), this::save);
+        exposeInventoryExternalCheckbox = widgets.addCheckbox("exposeInventoryExternalCheckbox",
+                GuiText.SearchSettingsExposeInventoryExternal.text(externalSearchMod), this::save);
 
         updateState();
     }
@@ -109,6 +112,7 @@ public class TerminalSettingsScreen<C extends MEStorageMenu> extends AESubScreen
         autoFocusCheckbox.setSelected(config.isAutoFocusSearch());
         syncWithExternalCheckbox.setSelected(config.isSyncWithExternalSearch());
         clearExternalCheckbox.setSelected(config.isClearExternalSearchOnOpen());
+        exposeInventoryExternalCheckbox.setSelected(config.isExposeNetworkInventoryExternal());
 
         rememberCheckbox.visible = useInternalSearchRadio.isSelected();
         autoFocusCheckbox.visible = useInternalSearchRadio.isSelected();
@@ -123,6 +127,7 @@ public class TerminalSettingsScreen<C extends MEStorageMenu> extends AESubScreen
         config.setAutoFocusSearch(autoFocusCheckbox.isSelected());
         config.setSyncWithExternalSearch(syncWithExternalCheckbox.isSelected());
         config.setClearExternalSearchOnOpen(clearExternalCheckbox.isSelected());
+        config.setExposeNetworkInventoryExternal(exposeInventoryExternalCheckbox.isSelected());
         config.setPinAutoCraftedItems(pinAutoCraftedItemsCheckbox.isSelected());
         config.setNotifyForFinishedCraftingJobs(notifyForFinishedCraftingJobsCheckbox.isSelected());
         config.setClearGridOnClose(clearGridOnCloseCheckbox.isSelected());

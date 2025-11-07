@@ -50,7 +50,12 @@ import com.diffplug.gradle.spotless.JsonExtension
 def extraModsDir = "extra-mods-${minecraft_version}"
 file(extraModsDir).mkdir()
 
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
 dependencies {
+    implementation("org.lwjgl:lwjgl:3.3.2")
+    implementation("org.lwjgl:lwjgl-opengl:3.3.2")
+
     modImplementation("org.appliedenergistics:guideme:${guideme_version}")
 
     // Used for the guide export
