@@ -132,6 +132,7 @@ public final class AEConfig {
     private boolean disableColoredCableRecipesInJEI;
     private boolean isEnableFacadesInJEI;
     private boolean isEnableFacadeRecipesInJEI;
+    private boolean isExposeNetworkInventoryExternal;
     private int craftingCalculationTimePerTick;
     private boolean craftingSimulatedExtraction;
     private boolean spatialAnchorEnablesRandomTicks;
@@ -258,6 +259,10 @@ public final class AEConfig {
         CLIENT.clearExternalSearchOnOpen.set(enable);
     }
 
+    public void setExposeNetworkInventoryExternal(boolean enable) {
+        CLIENT.exposeInventoryExternal.set(enable);
+    }
+
     public boolean isRememberLastSearch() {
         return CLIENT.rememberLastSearch.get();
     }
@@ -358,6 +363,10 @@ public final class AEConfig {
 
     public boolean isEnableFacadeRecipesInJEI() {
         return this.isEnableFacadeRecipesInJEI;
+    }
+
+    public boolean isExposeNetworkInventoryExternal() {
+        return CLIENT.exposeInventoryExternal.get();
     }
 
     public int getCraftingCalculationTimePerTick() {
@@ -545,6 +554,7 @@ public final class AEConfig {
         public final BooleanOption disableColoredCableRecipesInJEI;
         public final BooleanOption enableFacadesInJEI;
         public final BooleanOption enableFacadeRecipesInJEI;
+        public final BooleanOption exposeInventoryExternal;
         public final EnumOption<PowerUnits> selectedPowerUnit;
         public final BooleanOption debugGuiOverlays;
         public final BooleanOption showPlacementPreview;
@@ -577,6 +587,8 @@ public final class AEConfig {
                     "Show facades in JEI ingredient list");
             this.enableFacadeRecipesInJEI = client.addBoolean("enableFacadeRecipesInJEI", true,
                     "Show facade recipes in JEI for supported blocks");
+            this.exposeInventoryExternal = client.addBoolean("exposeInventoryToEmi", true,
+                    "Expose the full network inventory to EMI, which might cause performance problems.");
             this.enableEffects = client.addBoolean("enableEffects", true);
             this.useLargeFonts = client.addBoolean("useTerminalUseLargeFont", false);
             this.useColoredCraftingStatus = client.addBoolean("useColoredCraftingStatus", true);

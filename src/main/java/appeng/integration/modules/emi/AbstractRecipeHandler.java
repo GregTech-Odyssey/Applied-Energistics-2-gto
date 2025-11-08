@@ -36,6 +36,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 
 import appeng.api.stacks.AEKey;
+import appeng.core.AEConfig;
 import appeng.integration.modules.jeirei.EncodingHelper;
 import appeng.integration.modules.jeirei.TransferHelper;
 import appeng.menu.AEBaseMenu;
@@ -80,6 +81,9 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
 
     @Override
     public EmiPlayerInventory getInventory(AbstractContainerScreen<T> screen) {
+        if (!AEConfig.instance().isExposeNetworkInventoryExternal()) {
+            return StandardRecipeHandler.super.getInventory(screen);
+        }
         EmiPlayerInventory local = cachedInventory;
 
         if (refreshInProgress.compareAndSet(false, true)) {

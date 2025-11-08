@@ -220,6 +220,7 @@ public enum GuiText implements LocalizationEnum {
     SearchSettingsAutoFocus("Auto-Focus on open"),
     SearchSettingsSyncWithExternal("Sync with %s search"),
     SearchSettingsClearExternal("Clear %s search on open"),
+    SearchSettingsExposeInventoryExternal("Expose Inventory To %s"),
     SearchSettingsReplaceWithExternal("Replace with %s search"),
     SearchTooltip("Search in Name"),
     SearchTooltipModId("Use @ to search by mod (@ae2)"),
