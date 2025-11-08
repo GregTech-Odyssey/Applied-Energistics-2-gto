@@ -102,7 +102,6 @@
     "ae2:debug_phantom_node",
     "ae2:debug_cube_gen",
     "ae2:debug_energy_gen",
-    "ae2:crank",
-    "merequester:requester"
+    "ae2:crank"
   ]
 }

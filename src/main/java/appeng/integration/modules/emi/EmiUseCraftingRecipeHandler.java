@@ -2,7 +2,6 @@ package appeng.integration.modules.emi;
 
 import java.util.List;
 
-import appeng.core.AEConfig;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.NonNullList;
 import net.minecraft.resources.ResourceLocation;
