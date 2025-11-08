@@ -95,7 +95,7 @@ public class StorageService implements IStorageService, IGridServiceProvider {
         if (cachedStacksUpdate) {
             TASK.add(this::updateCachedStacks);
             if (!interestManager.isEmpty() && server.getTickCount() % 10 == 0) {
-                server.execute(this::watcherUpdate);
+                watcherUpdate();
             }
         } else {
             // lazily rebuild cache list
@@ -104,37 +104,47 @@ public class StorageService implements IStorageService, IGridServiceProvider {
     }
 
     private void updateCachedStacks() {
-        cachedStacksNeedUpdate = false;
+        LOCK.lock();
+        try {
+            cachedStacksNeedUpdate = false;
 
-        cachedAvailableStacks.clear();
-        storage.getAvailableStacks(cachedAvailableStacks);
-        // clear() only clears the inner maps,
-        // so ensure that the outer map gets cleaned up too
-        cachedAvailableStacks.removeEmptySubmaps();
+            cachedAvailableStacks.clear();
+            storage.getAvailableStacks(cachedAvailableStacks);
+            // clear() only clears the inner maps,
+            // so ensure that the outer map gets cleaned up too
+            cachedAvailableStacks.removeEmptySubmaps();
+        } finally {
+            LOCK.unlock();
+        }
     }
 
     private void watcherUpdate() {
-        for (var it = cachedAvailableAmounts.reference2LongEntrySet().fastIterator(); it.hasNext();) {
-            var entry = it.next();
-            var what = entry.getKey();
-            var newAmount = cachedAvailableStacks.get(what);
-            if (newAmount != entry.getLongValue()) {
-                postWatcherUpdate(what, newAmount);
-                if (newAmount == 0) {
-                    it.remove();
-                } else {
-                    entry.setValue(newAmount);
+        LOCK.lock();
+        try {
+            for (var it = cachedAvailableAmounts.reference2LongEntrySet().fastIterator(); it.hasNext();) {
+                var entry = it.next();
+                var what = entry.getKey();
+                var newAmount = cachedAvailableStacks.get(what);
+                if (newAmount != entry.getLongValue()) {
+                    postWatcherUpdate(what, newAmount);
+                    if (newAmount == 0) {
+                        it.remove();
+                    } else {
+                        entry.setValue(newAmount);
+                    }
                 }
             }
-        }
 
-        for (var entry : cachedAvailableStacks) {
-            var what = entry.getKey();
-            var newAmount = entry.getLongValue();
-            if (newAmount != cachedAvailableAmounts.getLong(what)) {
-                postWatcherUpdate(what, newAmount);
-                cachedAvailableAmounts.put(what, newAmount);
-            }
+            cachedAvailableStacks.forEach(entry -> {
+                var what = entry.getKey();
+                var newAmount = entry.getLongValue();
+                if (newAmount != cachedAvailableAmounts.getLong(what)) {
+                    postWatcherUpdate(what, newAmount);
+                    cachedAvailableAmounts.put(what, newAmount);
+                }
+            });
+        } finally {
+            LOCK.unlock();
         }
     }
 
