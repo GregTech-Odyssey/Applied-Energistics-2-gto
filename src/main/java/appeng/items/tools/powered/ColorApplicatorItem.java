@@ -45,7 +45,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.animal.Sheep;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -542,13 +541,6 @@ public class ColorApplicatorItem extends AEBasePoweredItem
     @Override
     public void onWheel(ItemStack is, boolean up) {
         this.cycleColors(is, this.getColor(is), up ? 1 : -1);
-    }
-
-    @Override
-    public void addToMainCreativeTab(CreativeModeTab.Output output) {
-        super.addToMainCreativeTab(output);
-
-        output.accept(createFullColorApplicator());
     }
 
     /**
