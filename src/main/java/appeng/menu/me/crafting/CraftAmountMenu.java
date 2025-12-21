@@ -88,6 +88,9 @@ public class CraftAmountMenu extends AEBaseMenu implements ISubMenu {
             cca.broadcastChanges();
         }
     }
+    public static void open(ServerPlayer player, MenuLocator locator, AEKey whatToCraft, int initialAmount) {
+        open(player, locator, whatToCraft, (long) initialAmount);
+    }
 
     public Level getLevel() {
         return this.getPlayerInventory().player.level();
