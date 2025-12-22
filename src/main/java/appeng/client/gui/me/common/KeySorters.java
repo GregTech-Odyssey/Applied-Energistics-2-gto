@@ -19,6 +19,10 @@
 package appeng.client.gui.me.common;
 
 import java.util.Comparator;
+import java.util.Map;
+
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
@@ -31,15 +35,14 @@ final class KeySorters {
 
     // FIXME: Calling .getString() to compare two untranslated strings is a problem, we need to investigate how to do
     // this better
-    public static final Comparator<AEKey> NAME_ASC = Comparator.comparing(
-            is -> is.getDisplayName().getString(),
-            String::compareToIgnoreCase);
+    public static final Comparator<AEKey> NAME_ASC = Comparator.comparingInt(
+            KeySorters::cachedToValue);
 
     public static final Comparator<AEKey> NAME_DESC = NAME_ASC.reversed();
 
     public static final Comparator<AEKey> MOD_ASC = Comparator.comparing(
             AEKey::getModId,
-            String::compareToIgnoreCase).thenComparing(NAME_ASC);
+            KeySorters::cachedCompareToIgnoreCase).thenComparing(NAME_ASC);
 
     public static final Comparator<AEKey> MOD_DESC = MOD_ASC.reversed();
 
@@ -50,5 +53,21 @@ final class KeySorters {
             case AMOUNT -> throw new UnsupportedOperationException();
         };
     }
+
+    private static final String VERY_LONG_STRING = new StringBuilder().repeat(" ", 512).toString();
+
+    private static int cachedCompareToIgnoreCase(String a, String b) {
+        int aValue = cachedStringValues.computeIfAbsent(a, str -> str.compareToIgnoreCase(VERY_LONG_STRING));
+        int bValue = cachedStringValues.computeIfAbsent(b, str -> str.compareToIgnoreCase(VERY_LONG_STRING));
+        return Integer.compare(aValue, bValue);
+    }
+
+    private static int cachedToValue(AEKey a) {
+        return cachedKeyValues.computeIfAbsent(a,
+                key -> key.getDisplayName().getString().compareToIgnoreCase(VERY_LONG_STRING));
+    }
+
+    private static final Map<String, Integer> cachedStringValues = new Object2IntOpenHashMap<>();
+    private static final Map<AEKey, Integer> cachedKeyValues = new Reference2IntOpenHashMap<>();
 
 }

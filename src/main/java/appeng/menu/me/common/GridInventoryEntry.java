@@ -39,6 +39,7 @@ public class GridInventoryEntry {
     private final long requestableAmount;
 
     private final boolean craftable;
+    private int hash;
 
     public GridInventoryEntry(long serial, @Nullable AEKey what, long storedAmount, long requestableAmount,
             boolean craftable) {

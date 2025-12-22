@@ -87,14 +87,15 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
         EmiPlayerInventory local = cachedInventory;
 
         if (refreshInProgress.compareAndSet(false, true)) {
+            List<EmiStack> preCollected = new ObjectArrayList<>();
+            preCollected.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_HOTBAR));
+            preCollected.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_INVENTORY));
+            if (screen.getMenu() instanceof MEStorageMenu menu) {
+                preCollected.addAll(InventoryUtils.getExistingStacks(menu));
+            }
             executorService.submit(() -> {
                 try {
-                    List<EmiStack> allStack = new ObjectArrayList<>();
-                    allStack.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_HOTBAR));
-                    allStack.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_INVENTORY));
-                    if (screen.getMenu() instanceof MEStorageMenu menu) {
-                        allStack.addAll(InventoryUtils.getExistingStacks(menu));
-                    }
+                    List<EmiStack> allStack = new ObjectArrayList<>(preCollected);
                     addToEmiInventory(screen, allStack);
                     cachedInventory = new EmiPlayerInventory(allStack);
                 } catch (Exception e) {
