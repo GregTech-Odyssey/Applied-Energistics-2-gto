@@ -19,9 +19,9 @@
 package appeng.client.gui.me.common;
 
 import java.util.Comparator;
-import java.util.Map;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import com.fast.fastcollection.O2IOpenCacheHashMap;
+
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import appeng.api.config.SortDir;
@@ -57,17 +57,17 @@ final class KeySorters {
     private static final String VERY_LONG_STRING = new StringBuilder().repeat(" ", 512).toString();
 
     private static int cachedCompareToIgnoreCase(String a, String b) {
-        int aValue = cachedStringValues.computeIfAbsent(a, str -> str.compareToIgnoreCase(VERY_LONG_STRING));
-        int bValue = cachedStringValues.computeIfAbsent(b, str -> str.compareToIgnoreCase(VERY_LONG_STRING));
+        int aValue = cachedStringValues.computeIfAbsent(a, str -> a.compareToIgnoreCase(VERY_LONG_STRING));
+        int bValue = cachedStringValues.computeIfAbsent(b, str -> b.compareToIgnoreCase(VERY_LONG_STRING));
         return Integer.compare(aValue, bValue);
     }
 
     private static int cachedToValue(AEKey a) {
         return cachedKeyValues.computeIfAbsent(a,
-                key -> key.getDisplayName().getString().compareToIgnoreCase(VERY_LONG_STRING));
+                key -> a.getDisplayName().getString().compareToIgnoreCase(VERY_LONG_STRING));
     }
 
-    private static final Map<String, Integer> cachedStringValues = new Object2IntOpenHashMap<>();
-    private static final Map<AEKey, Integer> cachedKeyValues = new Reference2IntOpenHashMap<>();
+    private static final O2IOpenCacheHashMap<String> cachedStringValues = new O2IOpenCacheHashMap<>();
+    private static final Reference2IntOpenHashMap<AEKey> cachedKeyValues = new Reference2IntOpenHashMap<>();
 
 }

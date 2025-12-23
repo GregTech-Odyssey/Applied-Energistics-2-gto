@@ -23,6 +23,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import com.fast.fastcollection.O2OOpenCacheHashMap;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -32,7 +34,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 /**
  * A class to hold data related to ticking block entities.
@@ -45,7 +46,7 @@ class ServerBlockEntityRepo {
     }
 
     // Mapping is level -> encoded chunk pos -> block entities waiting to be initialized
-    private final Map<LevelAccessor, Long2ObjectMap<List<FirstTickInfo<?>>>> blockEntities = new Object2ObjectOpenHashMap<>();
+    private final Map<LevelAccessor, Long2ObjectMap<List<FirstTickInfo<?>>>> blockEntities = new O2OOpenCacheHashMap<>();
 
     /**
      * Resets all internal data

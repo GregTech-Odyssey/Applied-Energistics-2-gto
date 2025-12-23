@@ -29,6 +29,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.ThreadFactory;
 
+import com.fast.fastcollection.O2OOpenCacheHashMap;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Multimap;
@@ -41,7 +42,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
@@ -115,7 +115,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     private final Map<IGridNode, StackWatcher<ICraftingWatcherNode>> craftingWatchers = new Reference2ObjectOpenHashMap<>();
     private final IGrid grid;
     private final NetworkCraftingProviders craftingProviders = new NetworkCraftingProviders();
-    private final Map<UUID, CraftingLinkNexus> craftingLinks = new Object2ObjectOpenHashMap<>();
+    private final Map<UUID, CraftingLinkNexus> craftingLinks = new O2OOpenCacheHashMap<>();
     private final Multimap<AEKey, StackWatcher<ICraftingWatcherNode>> interests = HashMultimap.create();
     private final InterestManager<StackWatcher<ICraftingWatcherNode>> interestManager = new InterestManager<>(
             this.interests);

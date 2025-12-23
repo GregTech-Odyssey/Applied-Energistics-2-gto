@@ -20,6 +20,7 @@ package appeng.menu.me.items;
 
 import java.util.List;
 
+import com.fast.fastcollection.O2IOpenCacheHashMap;
 import com.google.common.base.Preconditions;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -205,7 +206,7 @@ public class CraftingTermMenu extends MEStorageMenu implements IMenuCraftingPack
         // We need to track how many of a given item stack we've already used for other slots in the recipe.
         // Otherwise recipes that need 4x<item> will not correctly show missing items if at least 1 of <item> is in
         // the grid.
-        var reservedGridAmounts = new Object2IntOpenHashMap<>();
+        var reservedGridAmounts = new O2IOpenCacheHashMap<>();
         var playerItems = getPlayerInventory().items;
         var reservedPlayerItems = new int[playerItems.size()];
 

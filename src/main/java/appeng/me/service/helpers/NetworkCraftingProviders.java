@@ -11,14 +11,12 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import com.fast.fastcollection.O2OOpenCacheHashMap;
 import com.google.common.collect.Iterators;
 
 import org.jetbrains.annotations.Nullable;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.*;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.crafting.IPatternDetails;
@@ -34,16 +32,16 @@ import appeng.hooks.ticking.TickHandler;
  */
 public class NetworkCraftingProviders {
     private final Map<IGridNode, ProviderState> craftingProviders = new Reference2ObjectOpenHashMap<>();
-    private final Object2ObjectOpenHashMap<IPatternDetails, CraftingProviderList> craftingMethods = new Object2ObjectOpenHashMap<>();
-    private final Object2ObjectOpenHashMap<AEKey, PatternsForKey> craftableItems = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<IPatternDetails, CraftingProviderList> craftingMethods = new O2OOpenCacheHashMap<>();
+    private final Reference2ObjectOpenHashMap<AEKey, PatternsForKey> craftableItems = new Reference2ObjectOpenHashMap<>();
     /**
      * Used for looking up craftable alternatives using fuzzy search (i.e. ignore NBT).
      */
     private final KeyCounter craftableItemsList = new KeyCounter();
-    private final Object2IntOpenHashMap<AEKey> emitableItems = new Object2IntOpenHashMap<>();
+    private final Reference2IntOpenHashMap<AEKey> emitableItems = new Reference2IntOpenHashMap<>();
 
-    private final Set<AEKey> craftableKeys = Collections.unmodifiableSet(craftableItems.keySet());
-    private final Set<AEKey> emittableKeys = Collections.unmodifiableSet(emitableItems.keySet());
+    private final Set<AEKey> craftableKeys = craftableItems.keySet();
+    private final Set<AEKey> emittableKeys = emitableItems.keySet();
 
     private long lastModifiedOnTick = TickHandler.instance().getCurrentTick();
 
