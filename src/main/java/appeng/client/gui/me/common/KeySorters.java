@@ -19,10 +19,9 @@
 package appeng.client.gui.me.common;
 
 import java.util.Comparator;
+import java.util.WeakHashMap;
 
 import com.fast.fastcollection.O2IOpenCacheHashMap;
-
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
@@ -68,6 +67,6 @@ final class KeySorters {
     }
 
     private static final O2IOpenCacheHashMap<String> cachedStringValues = new O2IOpenCacheHashMap<>();
-    private static final Reference2IntOpenHashMap<AEKey> cachedKeyValues = new Reference2IntOpenHashMap<>();
+    private static final WeakHashMap<AEKey, Integer> cachedKeyValues = new WeakHashMap<>();
 
 }

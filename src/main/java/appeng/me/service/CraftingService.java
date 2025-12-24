@@ -137,6 +137,8 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
 
     @Override
     public void onServerEndTick(MinecraftServer server) {
+        if (!TickHandler.instance().playerJoined)
+            return;
         if (this.updateList) {
             this.updateList = false;
             this.updateCPUClusters();

@@ -30,7 +30,6 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import com.google.common.base.Preconditions;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.LinkedListMultimap;
 import com.google.common.collect.Multimap;
@@ -48,6 +47,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent.LevelTickEvent;
 import net.minecraftforge.event.TickEvent.Phase;
 import net.minecraftforge.event.TickEvent.ServerTickEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.level.ChunkEvent;
 import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
@@ -89,6 +89,8 @@ public class TickHandler {
 
     private long tickCounter;
 
+    public boolean playerJoined;
+
     public static TickHandler instance() {
         return INSTANCE;
     }
@@ -102,6 +104,11 @@ public class TickHandler {
         MinecraftForge.EVENT_BUS.addListener(this::onUnloadChunk);
         // Try to go last for level unloads since we use it to clean-up state
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, this::onUnloadLevel);
+        MinecraftForge.EVENT_BUS.addListener(this::onPlayerLogin);
+    }
+
+    private void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        playerJoined = true;
     }
 
     public void addCallable(LevelAccessor level, Runnable c) {
@@ -120,8 +127,6 @@ public class TickHandler {
      * @param c     the callback
      */
     public void addCallable(LevelAccessor level, ILevelRunnable c) {
-        Preconditions.checkArgument(level == null || !level.isClientSide(), "Can only register serverside callbacks");
-
         if (level == null) {
             this.serverQueue.add(c);
         } else {
@@ -158,8 +163,6 @@ public class TickHandler {
      * @param grid the {@link Grid} to add, must be not null
      */
     public void addNetwork(Grid grid) {
-        Platform.assertServerThread();
-
         this.grids.addNetwork(grid);
     }
 
@@ -171,18 +174,16 @@ public class TickHandler {
      * @param grid the {@link Grid} to remove, must be not null
      */
     public void removeNetwork(Grid grid) {
-        Platform.assertServerThread();
-
         this.grids.removeNetwork(grid);
     }
 
     public Iterable<Grid> getGridList() {
-        Platform.assertServerThread();
         return this.grids.networks;
     }
 
     public void shutdown() {
         Platform.assertServerThread();
+        playerJoined = false;
         this.blockEntities.clear();
         this.grids.clear();
     }
@@ -362,8 +363,6 @@ public class TickHandler {
     }
 
     public void registerCraftingSimulation(Level level, CraftingCalculation craftingCalculation) {
-        Preconditions.checkArgument(!level.isClientSide, "Trying to register a crafting job for a client-level");
-
         synchronized (this.craftingJobs) {
             this.craftingJobs.put(level, craftingCalculation);
         }
