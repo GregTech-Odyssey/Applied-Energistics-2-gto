@@ -67,10 +67,8 @@ import appeng.api.networking.events.GridCraftingCpuChange;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.GenericStack;
 import appeng.api.storage.AEKeyFilter;
 import appeng.blockentity.crafting.CraftingBlockEntity;
-import appeng.crafting.CraftingCalculation;
 import appeng.crafting.CraftingLink;
 import appeng.crafting.CraftingLinkNexus;
 import appeng.crafting.execution.CraftingSubmitResult;
@@ -331,14 +329,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     @Override
     public Future<ICraftingPlan> beginCraftingCalculation(Level level, ICraftingSimulationRequester simRequester,
             AEKey what, long amount, CalculationStrategy strategy) {
-        if (level == null || simRequester == null) {
-            throw new IllegalArgumentException("Invalid Crafting Job Request");
-        }
-
-        final CraftingCalculation job = new CraftingCalculation(level, grid, simRequester,
-                new GenericStack(what, amount), strategy);
-
-        return CRAFTING_POOL.submit(job::run);
+        return CRAFTING_POOL.submit(() -> null);
     }
 
     @Override

@@ -1,7 +1,5 @@
 package appeng.api.stacks;
 
-import java.util.Objects;
-
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
@@ -15,9 +13,6 @@ import appeng.items.misc.WrappedGenericStack;
  * Represents some amount of some generic resource that AE can store or handle in crafting.
  */
 public record GenericStack(AEKey what, long amount) {
-    public GenericStack {
-        Objects.requireNonNull(what, "what");
-    }
 
     @Nullable
     public static GenericStack readBuffer(FriendlyByteBuf buffer) {

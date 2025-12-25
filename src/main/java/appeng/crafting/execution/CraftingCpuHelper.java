@@ -115,10 +115,10 @@ public class CraftingCpuHelper {
             long remainingMultiplier = inputs[x].getMultiplier();
             for (var template : getValidItemTemplates(sourceInv, inputs[x], level)) {
                 long extracted = extractTemplates(sourceInv, template, remainingMultiplier);
-                list.add(template.key(), extracted * template.amount());
+                list.add(template.what(), extracted * template.amount());
 
                 // Container items!
-                var containerItem = inputs[x].getRemainingKey(template.key());
+                var containerItem = inputs[x].getRemainingKey(template.what());
                 if (containerItem != null) {
                     expectedContainerItems.add(containerItem, extracted);
                 }
@@ -165,28 +165,28 @@ public class CraftingCpuHelper {
      * Get all potential input templates that count as "1" ingredient according to the given inputs for a pattern slot,
      * and which are available.
      */
-    public static Iterable<InputTemplate> getValidItemTemplates(ICraftingInventory inv,
+    public static Iterable<GenericStack> getValidItemTemplates(ICraftingInventory inv,
             IPatternDetails.IInput input, Level level) {
         var possibleInputs = input.getPossibleInputs();
 
-        var substitutes = new ArrayList<InputTemplate>(possibleInputs.length);
+        var substitutes = new ArrayList<GenericStack>(possibleInputs.length);
 
         for (var stack : possibleInputs) {
             for (var fuzz : inv.findFuzzyTemplates(stack.what())) {
-                substitutes.add(new InputTemplate(fuzz, stack.amount()));
+                substitutes.add(new GenericStack(fuzz, stack.amount()));
             }
         }
 
-        return Iterables.filter(substitutes, stack -> input.isValid(stack.key(), level));
+        return Iterables.filter(substitutes, stack -> input.isValid(stack.what(), level));
     }
 
     /**
      * Extract a whole number of templates, and return how many were extracted.
      */
-    public static long extractTemplates(ICraftingInventory inv, InputTemplate template, long multiplier) {
+    public static long extractTemplates(ICraftingInventory inv, GenericStack template, long multiplier) {
         long maxTotal = template.amount() * multiplier;
         // Extract as much as possible.
-        var extracted = inv.extract(template.key(), maxTotal, Actionable.SIMULATE);
+        var extracted = inv.extract(template.what(), maxTotal, Actionable.SIMULATE);
         if (extracted == 0)
             return 0;
         // Adjust to have a whole number of templates.
@@ -194,7 +194,7 @@ public class CraftingCpuHelper {
         maxTotal = template.amount() * multiplier;
         if (maxTotal == 0)
             return 0;
-        extracted = inv.extract(template.key(), maxTotal, Actionable.MODULATE);
+        extracted = inv.extract(template.what(), maxTotal, Actionable.MODULATE);
         if (extracted == 0 || extracted != maxTotal) {
             throw new IllegalStateException("Failed to correctly extract whole number. Invalid simulation!");
         }

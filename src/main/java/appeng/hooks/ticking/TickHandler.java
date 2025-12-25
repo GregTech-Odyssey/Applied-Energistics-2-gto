@@ -20,9 +20,7 @@ package appeng.hooks.ticking;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,8 +29,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.LinkedListMultimap;
-import com.google.common.collect.Multimap;
 
 import net.minecraft.CrashReport;
 import net.minecraft.ReportedException;
@@ -54,9 +50,7 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.fml.LogicalSide;
 
 import appeng.blockentity.AEBaseBlockEntity;
-import appeng.core.AEConfig;
 import appeng.core.AELog;
-import appeng.crafting.CraftingCalculation;
 import appeng.me.Grid;
 import appeng.me.GridNode;
 import appeng.me.service.StorageService;
@@ -72,7 +66,6 @@ public class TickHandler {
 
     private static final TickHandler INSTANCE = new TickHandler();
     private final Queue<ILevelRunnable> serverQueue = new ArrayDeque<>();
-    private final Multimap<LevelAccessor, CraftingCalculation> craftingJobs = LinkedListMultimap.create();
     private final Map<LevelAccessor, Queue<ILevelRunnable>> callQueue = new HashMap<>();
     private final ServerBlockEntityRepo blockEntities = new ServerBlockEntityRepo();
     private final ServerGridRepo grids = new ServerGridRepo();
@@ -130,13 +123,7 @@ public class TickHandler {
         if (level == null) {
             this.serverQueue.add(c);
         } else {
-            Queue<ILevelRunnable> queue = this.callQueue.get(level);
-
-            if (queue == null) {
-                queue = new ArrayDeque<>();
-                this.callQueue.put(level, queue);
-            }
-
+            var queue = this.callQueue.computeIfAbsent(level, k -> new ArrayDeque<>());
             queue.add(c);
         }
     }
@@ -275,7 +262,6 @@ public class TickHandler {
     }
 
     private void onServerLevelTickEnd(ServerLevel level) {
-        this.simulateCraftingJobs(level);
         this.readyBlockEntities(level);
 
         // tick networks
@@ -359,36 +345,6 @@ public class TickHandler {
                     StorageService.LOCK.unlock();
                 }
             });
-        }
-    }
-
-    public void registerCraftingSimulation(Level level, CraftingCalculation craftingCalculation) {
-        synchronized (this.craftingJobs) {
-            this.craftingJobs.put(level, craftingCalculation);
-        }
-    }
-
-    /**
-     * Simulates the current crafting requests before they user can submit them to be processed.
-     */
-    private void simulateCraftingJobs(LevelAccessor level) {
-        synchronized (this.craftingJobs) {
-            final Collection<CraftingCalculation> jobSet = this.craftingJobs.get(level);
-
-            if (!jobSet.isEmpty()) {
-                final int jobSize = jobSet.size();
-                final int microSecondsPerTick = AEConfig.instance().getCraftingCalculationTimePerTick() * 1000;
-                final int simTime = Math.max(1, microSecondsPerTick / jobSize);
-
-                final Iterator<CraftingCalculation> i = jobSet.iterator();
-
-                while (i.hasNext()) {
-                    final CraftingCalculation cj = i.next();
-                    if (!cj.simulateFor(simTime)) {
-                        i.remove();
-                    }
-                }
-            }
         }
     }
 

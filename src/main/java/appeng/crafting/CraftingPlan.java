@@ -18,7 +18,7 @@
 
 package appeng.crafting;
 
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingPlan;
@@ -32,5 +32,5 @@ public record CraftingPlan(GenericStack finalOutput,
         KeyCounter usedItems,
         KeyCounter emittedItems,
         KeyCounter missingItems,
-        Map<IPatternDetails, Long> patternTimes) implements ICraftingPlan {
+        Object2LongMap<IPatternDetails> patternTimes) implements ICraftingPlan {
 }
