@@ -23,6 +23,8 @@
 
 package appeng.api.networking.storage;
 
+import java.util.Set;
+
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridService;
 import appeng.api.stacks.AEKeyType;
@@ -92,8 +94,12 @@ public interface IStorageService extends IGridService {
 
     interface UpdateRequester {
 
-        default boolean isUpdateRequested(IStorageService service) {
-            return true;
+        boolean isUpdateRequested(IStorageService service);
+
+        Set<Runnable> getListener();
+
+        default void runListener() {
+            getListener().forEach(Runnable::run);
         }
     }
 }

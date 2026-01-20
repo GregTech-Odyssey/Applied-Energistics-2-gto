@@ -18,6 +18,8 @@
 
 package appeng.parts.automation;
 
+import java.util.Set;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
@@ -29,12 +31,11 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.MenuType;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import appeng.api.behaviors.StackExportStrategy;
 import appeng.api.behaviors.StackTransferContext;
-import appeng.api.config.Actionable;
-import appeng.api.config.SchedulingMode;
-import appeng.api.config.Settings;
-import appeng.api.config.YesNo;
+import appeng.api.config.*;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.networking.crafting.ICraftingRequester;
@@ -268,4 +269,23 @@ public class ExportBusPart extends IOBusPart implements ICraftingRequester, ISto
             return MODELS_OFF;
         }
     }
+
+    protected final Set<Runnable> listeners = new ReferenceOpenHashSet<>();
+
+    @Override
+    protected void onUpgradesChanged() {
+        super.onUpgradesChanged();
+        runListener();
+    }
+
+    @Override
+    public boolean isUpdateRequested(IStorageService service) {
+        return isUpgradedWith(AEItems.FUZZY_CARD);
+    }
+
+    @Override
+    public Set<Runnable> getListener() {
+        return listeners;
+    }
+
 }

@@ -6,12 +6,13 @@ import java.util.Set;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.networking.IStackWatcher;
+import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.AEKey;
 
 /**
  * Maintain my interests, and a global watch list, they should always be fully synchronized.
  */
-public class StackWatcher<T> implements IStackWatcher {
+public class StackWatcher<T> implements IStackWatcher, IStorageService.UpdateRequester {
 
     private final InterestManager<StackWatcher<T>> interestManager;
     private final T myHost;
@@ -31,6 +32,7 @@ public class StackWatcher<T> implements IStackWatcher {
     public void setWatchAll(boolean watchAll) {
         if (!destroyed) {
             interestManager.setWatchAll(watchAll, this);
+            runListener();
         }
     }
 
@@ -38,6 +40,7 @@ public class StackWatcher<T> implements IStackWatcher {
     public void add(AEKey e) {
         if (!destroyed && this.myInterests.add(e)) {
             interestManager.put(e, this);
+            runListener();
         }
     }
 
@@ -45,6 +48,7 @@ public class StackWatcher<T> implements IStackWatcher {
     public void remove(AEKey o) {
         if (!destroyed && this.myInterests.remove(o)) {
             interestManager.remove(o, this);
+            runListener();
         }
     }
 
@@ -54,9 +58,12 @@ public class StackWatcher<T> implements IStackWatcher {
 
         final Iterator<AEKey> i = this.myInterests.iterator();
 
-        while (i.hasNext()) {
-            interestManager.remove(i.next(), this);
-            i.remove();
+        if (i.hasNext()) {
+            while (i.hasNext()) {
+                interestManager.remove(i.next(), this);
+                i.remove();
+            }
+            runListener();
         }
     }
 
@@ -68,5 +75,17 @@ public class StackWatcher<T> implements IStackWatcher {
     public void destroy() {
         reset();
         destroyed = true;
+    }
+
+    protected final Set<Runnable> listeners = new ReferenceOpenHashSet<>();
+
+    @Override
+    public boolean isUpdateRequested(IStorageService service) {
+        return true;
+    }
+
+    @Override
+    public Set<Runnable> getListener() {
+        return listeners;
     }
 }

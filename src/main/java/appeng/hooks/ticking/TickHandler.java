@@ -282,18 +282,14 @@ public class TickHandler {
      */
     public void onServerTick(final ServerTickEvent ev) {
         if (ev.phase == Phase.START) {
-            StorageService.LOCK.lock();
-            try {
-                onServerTickStart();
-            } finally {
-                StorageService.LOCK.unlock();
-            }
+            onServerTickStart(ev.getServer());
         } else if (ev.phase == Phase.END) {
             onServerTickEnd(ev.getServer());
         }
     }
 
-    private void onServerTickStart() {
+    private void onServerTickStart(MinecraftServer server) {
+        StorageService.join(server);
         // Reset the stop watch on the start of each server tick.
         this.processQueueElementsProcessed = 0;
         this.processQueueElementsRemaining = 0;
@@ -334,18 +330,7 @@ public class TickHandler {
         }
 
         tickCounter++;
-
-        if (!StorageService.TASK.isEmpty()) {
-            Thread.ofVirtual().name("AE Storage Service").start(() -> {
-                StorageService.LOCK.lock();
-                try {
-                    StorageService.TASK.forEach(Runnable::run);
-                    StorageService.TASK.clear();
-                } finally {
-                    StorageService.LOCK.unlock();
-                }
-            });
-        }
+        StorageService.asyncUpdate();
     }
 
     /**

@@ -55,7 +55,7 @@ public abstract class UpgradeablePart extends AEBasePart implements IConfigurabl
         this.getMainNode().setFlags(GridFlags.REQUIRE_CHANNEL);
     }
 
-    private void onUpgradesChanged() {
+    protected void onUpgradesChanged() {
         getHost().markForSave();
         upgradesChanged();
     }

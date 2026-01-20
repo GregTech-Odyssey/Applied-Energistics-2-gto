@@ -18,12 +18,10 @@
 
 package appeng.me.service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Preconditions;
@@ -34,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 import it.unimi.dsi.fastutil.objects.*;
 
@@ -51,10 +50,10 @@ import appeng.me.helpers.InterestManager;
 import appeng.me.helpers.StackWatcher;
 import appeng.me.storage.NetworkStorage;
 
-public class StorageService implements IStorageService, IGridServiceProvider {
+public class StorageService implements Runnable, IStorageService, IGridServiceProvider {
 
-    public static final ReentrantLock LOCK = new ReentrantLock();
-    public static final List<Runnable> TASK = new ObjectArrayList<>();
+    private static CompletableFuture<Void> FUTURE;
+    private static final Deque<Runnable> TASK = new ConcurrentLinkedDeque<>();
 
     /**
      * Tracks the storage service's state for each grid node that provides storage to the network.
@@ -72,14 +71,15 @@ public class StorageService implements IStorageService, IGridServiceProvider {
     /**
      * Publicly exposed cached available stacks.
      */
-    private final KeyCounter cachedAvailableStacks = new KeyCounter();
+    private KeyCounter cachedAvailableStacks = new KeyCounter();
     /**
      * Private cached amounts, to ensure that we send correct change notifications even if
      * {@link #cachedAvailableStacks} is modified by mistake.
      */
     private final AEKeyMap<AEKey> cachedAvailableAmounts = new AEKeyMap<>();
-    private boolean cachedStacksNeedUpdate = true;
-    private boolean cachedStacksUpdate = false;
+    private volatile boolean cachedStacksNeedUpdate = true;
+    private boolean watcherUpdate = false;
+    private final Lock lock = new ReentrantLock();
     /**
      * Tracks the stack watcher associated with a given grid node. Needed to clean up watchers when the node leaves the
      * grid.
@@ -92,60 +92,93 @@ public class StorageService implements IStorageService, IGridServiceProvider {
 
     @Override
     public void onServerEndTick(MinecraftServer server) {
-        if (cachedStacksUpdate) {
-            TASK.add(this::updateCachedStacks);
+        cachedStacksNeedUpdate = true;
+        if (watcherUpdate) {
+            TASK.add(this::asyncUpdateCachedStacks);
             if (!interestManager.isEmpty() && server.getTickCount() % 10 == 0) {
                 watcherUpdate();
             }
-        } else {
-            // lazily rebuild cache list
-            cachedStacksNeedUpdate = true;
+        }
+    }
+
+    private void asyncUpdateCachedStacks() {
+        lock.lock();
+        try {
+            if (cachedStacksNeedUpdate) {
+                var stacks = new KeyCounter();
+                storage.getAvailableStacks(stacks);
+                cachedAvailableStacks = stacks;
+                cachedStacksNeedUpdate = false;
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
     private void updateCachedStacks() {
-        LOCK.lock();
+        lock.lock();
         try {
-            cachedStacksNeedUpdate = false;
-
-            cachedAvailableStacks.clear();
-            storage.getAvailableStacks(cachedAvailableStacks);
-            // clear() only clears the inner maps,
-            // so ensure that the outer map gets cleaned up too
-            cachedAvailableStacks.removeEmptySubmaps();
+            if (cachedStacksNeedUpdate) {
+                var server = ServerLifecycleHooks.getCurrentServer();
+                if (server == null || server.isSameThread()) {
+                    update();
+                } else {
+                    CompletableFuture.runAsync(this::update, server).join();
+                }
+            }
         } finally {
-            LOCK.unlock();
+            lock.unlock();
         }
     }
 
+    private void update() {
+        cachedAvailableStacks.clear();
+        storage.getAvailableStacks(cachedAvailableStacks);
+        cachedAvailableStacks.removeEmptySubmaps();
+        cachedStacksNeedUpdate = false;
+    }
+
+    public static void join(MinecraftServer server) {
+        if (FUTURE != null) {
+            server.managedBlock(FUTURE::isDone);
+            FUTURE = null;
+        }
+    }
+
+    public static void asyncUpdate() {
+        if (TASK.isEmpty()) {
+            return;
+        }
+        FUTURE = CompletableFuture.runAsync(() -> {
+            while (!TASK.isEmpty()) {
+                TASK.poll().run();
+            }
+        });
+    }
+
     private void watcherUpdate() {
-        LOCK.lock();
-        try {
-            for (var it = cachedAvailableAmounts.reference2LongEntrySet().fastIterator(); it.hasNext();) {
-                var entry = it.next();
-                var what = entry.getKey();
-                var newAmount = cachedAvailableStacks.get(what);
-                if (newAmount != entry.getLongValue()) {
-                    postWatcherUpdate(what, newAmount);
-                    if (newAmount == 0) {
-                        it.remove();
-                    } else {
-                        entry.setValue(newAmount);
-                    }
+        for (var it = cachedAvailableAmounts.reference2LongEntrySet().fastIterator(); it.hasNext();) {
+            var entry = it.next();
+            var what = entry.getKey();
+            var newAmount = cachedAvailableStacks.get(what);
+            if (newAmount != entry.getLongValue()) {
+                postWatcherUpdate(what, newAmount);
+                if (newAmount == 0) {
+                    it.remove();
+                } else {
+                    entry.setValue(newAmount);
                 }
             }
-
-            cachedAvailableStacks.forEach(entry -> {
-                var what = entry.getKey();
-                var newAmount = entry.getLongValue();
-                if (newAmount != cachedAvailableAmounts.getLong(what)) {
-                    postWatcherUpdate(what, newAmount);
-                    cachedAvailableAmounts.put(what, newAmount);
-                }
-            });
-        } finally {
-            LOCK.unlock();
         }
+
+        cachedAvailableStacks.forEach(entry -> {
+            var what = entry.getKey();
+            var newAmount = entry.getLongValue();
+            if (newAmount != cachedAvailableAmounts.getLong(what)) {
+                postWatcherUpdate(what, newAmount);
+                cachedAvailableAmounts.put(what, newAmount);
+            }
+        });
     }
 
     private void postWatcherUpdate(AEKey what, long newAmount) {
@@ -155,10 +188,6 @@ public class StorageService implements IStorageService, IGridServiceProvider {
         for (var watcher : interestManager.getAllStacksWatchers()) {
             watcher.getHost().onStackChange(what, newAmount);
         }
-    }
-
-    private void requesterUpdate() {
-        cachedStacksUpdate = !interestManager.isEmpty() || !requesters.isEmpty();
     }
 
     /**
@@ -179,11 +208,13 @@ public class StorageService implements IStorageService, IGridServiceProvider {
             var iw = new StackWatcher<>(interestManager, watcher);
             this.watchers.put(node, iw);
             watcher.updateWatcher(iw);
+            iw.getListener().add(this);
         }
-        if (node.getOwner() instanceof UpdateRequester requester && requester.isUpdateRequested(this)) {
+        if (node.getOwner() instanceof UpdateRequester requester) {
             this.requesters.add(requester);
+            requester.getListener().add(this);
         }
-        requesterUpdate();
+        run();
     }
 
     /**
@@ -195,6 +226,7 @@ public class StorageService implements IStorageService, IGridServiceProvider {
         var watcher = this.watchers.remove(node);
         if (watcher != null) {
             watcher.destroy();
+            watcher.getListener().remove(this);
         }
 
         var providerState = this.nodeProviders.remove(node);
@@ -203,8 +235,9 @@ public class StorageService implements IStorageService, IGridServiceProvider {
         }
         if (node.getOwner() instanceof UpdateRequester requester) {
             this.requesters.remove(requester);
+            requester.getListener().remove(this);
         }
-        requesterUpdate();
+        run();
     }
 
     @Override
@@ -214,7 +247,7 @@ public class StorageService implements IStorageService, IGridServiceProvider {
 
     @Override
     public KeyCounter getCachedInventory() {
-        if (cachedStacksNeedUpdate && !cachedStacksUpdate) {
+        if (cachedStacksNeedUpdate) {
             updateCachedStacks();
         }
         return cachedAvailableStacks;
@@ -263,6 +296,21 @@ public class StorageService implements IStorageService, IGridServiceProvider {
     @Override
     public void invalidateCache() {
         cachedStacksNeedUpdate = true;
+    }
+
+    @Override
+    public void run() {
+        watcherUpdate = false;
+        if (!interestManager.isEmpty()) {
+            watcherUpdate = true;
+            return;
+        }
+        for (var requester : requesters) {
+            if (requester.isUpdateRequested(this)) {
+                watcherUpdate = true;
+                return;
+            }
+        }
     }
 
     /**

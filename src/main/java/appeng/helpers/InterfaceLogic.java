@@ -21,6 +21,7 @@ package appeng.helpers;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -35,6 +36,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
@@ -46,6 +49,7 @@ import appeng.api.networking.crafting.ICraftingRequester;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.networking.storage.IStorageService;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
@@ -72,7 +76,8 @@ import appeng.util.Platform;
 /**
  * Contains behavior for interface blocks and parts, which is independent of the storage channel.
  */
-public class InterfaceLogic implements ICraftingRequester, IUpgradeableObject, IConfigurableObject {
+public class InterfaceLogic
+        implements ICraftingRequester, IUpgradeableObject, IConfigurableObject, IStorageService.UpdateRequester {
     @Nullable
     private InterfaceInventory localInvHandler;
     @Nullable
@@ -513,6 +518,7 @@ public class InterfaceLogic implements ICraftingRequester, IUpgradeableObject, I
 
         // Update plan in case fuzzy card was inserted or removed
         updatePlan();
+        runListener();
     }
 
     private void onConfigRowChanged() {
@@ -603,5 +609,17 @@ public class InterfaceLogic implements ICraftingRequester, IUpgradeableObject, I
         } else {
             return LazyOptional.empty();
         }
+    }
+
+    protected final Set<Runnable> listeners = new ReferenceOpenHashSet<>();
+
+    @Override
+    public boolean isUpdateRequested(IStorageService service) {
+        return isUpgradedWith(AEItems.FUZZY_CARD);
+    }
+
+    @Override
+    public Set<Runnable> getListener() {
+        return listeners;
     }
 }

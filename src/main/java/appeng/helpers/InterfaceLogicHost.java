@@ -18,9 +18,12 @@
 
 package appeng.helpers;
 
+import java.util.Set;
+
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import appeng.api.networking.storage.IStorageService;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.util.IConfigManager;
@@ -34,7 +37,8 @@ import appeng.menu.locator.MenuLocator;
 /**
  * Interface that must be implemented by machines hosting {@link InterfaceLogic}.
  */
-public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObject, IPriorityHost, IConfigInvHost {
+public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObject, IPriorityHost, IConfigInvHost,
+        IStorageService.UpdateRequester {
     /**
      * @return The block entity that is in-world and hosts the interface.
      */
@@ -81,4 +85,15 @@ public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObj
     default void returnToMainMenu(Player player, ISubMenu subMenu) {
         MenuOpener.returnTo(InterfaceMenu.TYPE, player, subMenu.getLocator());
     }
+
+    @Override
+    default boolean isUpdateRequested(IStorageService service) {
+        return getInterfaceLogic().isUpdateRequested(service);
+    }
+
+    @Override
+    default Set<Runnable> getListener() {
+        return getInterfaceLogic().getListener();
+    }
+
 }
