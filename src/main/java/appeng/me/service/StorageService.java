@@ -30,6 +30,7 @@ import com.google.common.collect.SetMultimap;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.server.ServerLifecycleHooks;
@@ -153,7 +154,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
             while (!TASK.isEmpty()) {
                 TASK.poll().run();
             }
-        });
+        }, Util.backgroundExecutor());
     }
 
     private void watcherUpdate() {

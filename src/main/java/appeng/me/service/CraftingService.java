@@ -24,10 +24,7 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 
 import com.fast.fastcollection.O2OOpenCacheHashMap;
 import com.google.common.collect.HashMultimap;
@@ -38,6 +35,7 @@ import com.google.common.collect.Sets;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
@@ -97,12 +95,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             .comparingInt(CraftingCPUCluster::getCoProcessors)
             .thenComparingLong(CraftingCPUCluster::getAvailableStorage);
 
-    private static final ExecutorService CRAFTING_POOL;
-
     static {
-        final ThreadFactory factory = ar -> Thread.ofVirtual().name("AE Crafting Calculator").unstarted(ar);
-        CRAFTING_POOL = Executors.newThreadPerTaskExecutor(factory);
-
         GridHelper.addGridServiceEventHandler(GridCraftingCpuChange.class, ICraftingService.class,
                 (service, event) -> {
                     ((CraftingService) service).updateList = true;
@@ -329,7 +322,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     @Override
     public Future<ICraftingPlan> beginCraftingCalculation(Level level, ICraftingSimulationRequester simRequester,
             AEKey what, long amount, CalculationStrategy strategy) {
-        return CRAFTING_POOL.submit(() -> null);
+        return CompletableFuture.supplyAsync(() -> null, Util.backgroundExecutor());
     }
 
     @Override
