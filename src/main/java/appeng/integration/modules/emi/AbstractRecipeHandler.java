@@ -10,6 +10,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.google.common.collect.ImmutableSet;
+
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.Minecraft;
@@ -41,6 +43,7 @@ import appeng.integration.modules.jeirei.EncodingHelper;
 import appeng.integration.modules.jeirei.TransferHelper;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;
+import appeng.menu.me.common.GridInventoryEntry;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.items.CraftingTermMenu;
 
@@ -90,11 +93,14 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
             List<EmiStack> preCollected = new ObjectArrayList<>();
             preCollected.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_HOTBAR));
             preCollected.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_INVENTORY));
+            Set<GridInventoryEntry> allStacksFromScreen = Set.of();
             if (screen.getMenu() instanceof MEStorageMenu menu) {
-                preCollected.addAll(InventoryUtils.getExistingStacks(menu));
+                allStacksFromScreen = menu.getClientRepo().getAllEntries();
             }
+            final var allStacksFromScreenFinal = ImmutableSet.copyOf(allStacksFromScreen);
             executorService.submit(() -> {
                 try {
+                    preCollected.addAll(InventoryUtils.getExistingStacks(allStacksFromScreenFinal));
                     List<EmiStack> allStack = new ObjectArrayList<>(preCollected);
                     addToEmiInventory(screen, allStack);
                     cachedInventory = new EmiPlayerInventory(allStack);

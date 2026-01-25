@@ -13,7 +13,6 @@ import appeng.api.stacks.GenericStack;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantic;
 import appeng.menu.me.common.GridInventoryEntry;
-import appeng.menu.me.common.MEStorageMenu;
 
 public class InventoryUtils {
 
@@ -26,9 +25,8 @@ public class InventoryUtils {
                 .toList();
     }
 
-    public static <T extends MEStorageMenu> List<EmiStack> getExistingStacks(T menu) {
-        Set<GridInventoryEntry> allEntries = menu.getClientRepo().getAllEntries();
-        if (allEntries == null) {
+    public static List<EmiStack> getExistingStacks(Set<GridInventoryEntry> allEntries) {
+        if (allEntries == null || allEntries.isEmpty()) {
             return List.of();
         }
 

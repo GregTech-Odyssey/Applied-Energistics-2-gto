@@ -1001,5 +1001,6 @@
   "waila.ae2.Showing": "显示",
   "waila.ae2.Stored": "已存储：%s / %s",
   "waila.ae2.Suppressed": "已抑制",
-  "waila.ae2.Unlocked": "未锁定"
+  "waila.ae2.Unlocked": "未锁定",
+  "gui.ae2.SearchSettingsExposeInventoryExternal": "将ME存储供 %s 使用"
 }
