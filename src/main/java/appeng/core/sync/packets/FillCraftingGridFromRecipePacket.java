@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
@@ -38,10 +39,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntList;
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceLinkedOpenHashMap;
-
 import appeng.api.config.FuzzyMode;
 import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.stacks.AEItemKey;
@@ -50,8 +47,11 @@ import appeng.api.storage.StorageHelper;
 import appeng.core.AELog;
 import appeng.core.sync.BasePacket;
 import appeng.helpers.IMenuCraftingPacket;
+import appeng.helpers.InventoryAction;
 import appeng.items.storage.ViewCellItem;
 import appeng.util.CraftingRecipeUtil;
+import appeng.util.inv.CarriedItemInventory;
+import appeng.util.inv.PlayerInternalInventory;
 import appeng.util.prioritylist.IPartitionList;
 
 /**
@@ -80,6 +80,10 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
      */
     private boolean craftMissing;
 
+    private int resultShouldBeTakenAmount;
+
+    private boolean takeToCursor;
+
     public FillCraftingGridFromRecipePacket(FriendlyByteBuf stream) {
         if (stream.readBoolean()) {
             this.recipeId = stream.readResourceLocation();
@@ -88,10 +92,34 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
         }
 
         ingredientTemplates = NonNullList.withSize(stream.readInt(), ItemStack.EMPTY);
-        for (int i = 0; i < ingredientTemplates.size(); i++) {
-            ingredientTemplates.set(i, stream.readItem());
-        }
+        ingredientTemplates.replaceAll(ignored -> stream.readItem());
         craftMissing = stream.readBoolean();
+        takeToCursor = stream.readBoolean();
+        resultShouldBeTakenAmount = stream.readVarInt();
+    }
+
+    public FillCraftingGridFromRecipePacket(@Nullable ResourceLocation recipeId,
+            NonNullList<ItemStack> ingredientTemplates, boolean craftMissing,
+            InventoryAction action, int resultShouldBeTakenAmount) {
+        var data = new FriendlyByteBuf(Unpooled.buffer());
+
+        data.writeInt(this.getPacketID());
+        if (recipeId != null) {
+            data.writeBoolean(true);
+            data.writeResourceLocation(recipeId);
+        } else {
+            data.writeBoolean(false);
+        }
+        data.writeInt(ingredientTemplates.size());
+        for (var stack : ingredientTemplates) {
+            data.writeItem(stack);
+        }
+        data.writeBoolean(craftMissing);
+
+        data.writeBoolean(action == InventoryAction.CRAFT_ITEM);
+        data.writeVarInt(resultShouldBeTakenAmount);
+
+        configureWrite(data);
     }
 
     public FillCraftingGridFromRecipePacket(@Nullable ResourceLocation recipeId,
@@ -110,6 +138,9 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
             data.writeItem(stack);
         }
         data.writeBoolean(craftMissing);
+
+        data.writeBoolean(false);
+        data.writeVarInt(0);
 
         configureWrite(data);
     }
@@ -152,8 +183,10 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
 
         // Prepare to autocraft some stuff
         var craftingService = grid.getCraftingService();
-        var toAutoCraft = new Reference2ReferenceLinkedOpenHashMap<AEItemKey, IntList>();
+        KeyCounter toAutoCraft = new KeyCounter();
         boolean touchedGridStorage = false;
+
+        boolean takeResultMode = resultShouldBeTakenAmount > 0 && cct.getResultSlot() != null;
 
         // Handle each slot
         for (var x = 0; x < craftMatrix.size(); x++) {
@@ -207,7 +240,9 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
 
             // If still nothing, try taking it from the player inventory
             if (currentItem.isEmpty()) {
-                currentItem = takeIngredientFromPlayer(cct, player, ingredient);
+                currentItem = takeIngredientFromPlayer(cct, player, ingredient,
+                        takeResultMode && resultShouldBeTakenAmount > 1, cachedStorage);
+
             }
 
             craftMatrix.setItemDirect(x, currentItem);
@@ -216,12 +251,17 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
             if (currentItem.isEmpty() && craftMissing) {
                 int slot = x;
                 findCraftableKey(ingredient, craftingService).ifPresent(key -> {
-                    toAutoCraft.computeIfAbsent(key, k -> new IntArrayList()).add(slot);
+                    toAutoCraft.add(key, slot);
                 });
             }
         }
 
         menu.slotsChanged(craftMatrix.toContainer());
+        if (takeResultMode) {
+            cct.getResultSlot().craftSome(player,
+                    takeToCursor ? new CarriedItemInventory(menu) : new PlayerInternalInventory(player.getInventory()),
+                    resultShouldBeTakenAmount);
+        }
 
         if (!toAutoCraft.isEmpty()) {
             // Invalidate the grid storage cache if we modified it. The crafting plan will use
@@ -231,14 +271,32 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
             }
 
             // This must be the last call since it changes the menu!
-            var stacks = toAutoCraft.reference2ReferenceEntrySet().stream()
-                    .map(e -> new IMenuCraftingPacket.AutoCraftEntry(e.getKey(), e.getValue())).toList();
+            var stacks = List.copyOf(toAutoCraft.entrySet());
             cct.startAutoCrafting(stacks);
         }
     }
 
-    private ItemStack takeIngredientFromPlayer(IMenuCraftingPacket cct, ServerPlayer player, Ingredient ingredient) {
+    private ItemStack takeIngredientFromPlayer(IMenuCraftingPacket cct, ServerPlayer player, Ingredient ingredient,
+            boolean putIngsInMEStorage, KeyCounter cachedStorage) {
+        // When using the TakeResult functionality, we should put other same items in player inventory into MEStorage
         var playerInv = player.getInventory();
+        boolean tookFromPlayer = false;
+        var grid = cct.getNetworkNode().getGrid();
+        var storageService = grid.getStorageService();
+        var storage = storageService.getInventory();
+        var energy = grid.getEnergyService();
+        ItemStack resultTaken = ItemStack.EMPTY;
+
+        BiConsumer<ItemStack, Integer> insert = (item, i) -> {
+            var aeItemKey = AEItemKey.of(item);
+            var inserted = StorageHelper.poweredInsert(energy, storage, aeItemKey, item.getCount(),
+                    cct.getActionSource());
+            item.setCount((int) (item.getCount() - inserted));
+            cachedStorage.add(aeItemKey, inserted);
+            if (item.getCount() <= 0)
+                playerInv.setItem(i, ItemStack.EMPTY);
+        };
+
         for (int i = 0; i < playerInv.items.size(); i++) {
             // Do not take ingredients out of locked slots
             if (cct.isPlayerInventorySlotLocked(i)) {
@@ -247,13 +305,26 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
 
             var item = playerInv.getItem(i);
             if (ingredient.test(item)) {
+                if (tookFromPlayer && putIngsInMEStorage) {
+                    // We already took one item for the result, and we're in TakeResult mode
+                    // Put back other items into storage
+                    insert.accept(item, i);
+
+                    continue;
+                }
                 var result = item.split(1);
-                if (!result.isEmpty()) {
+                if (!result.isEmpty() && !putIngsInMEStorage) {
                     return result;
+                } else {
+                    tookFromPlayer = true;
+                    resultTaken = result;
+                    if (!item.isEmpty()) {
+                        insert.accept(item, i);
+                    }
                 }
             }
         }
-        return ItemStack.EMPTY;
+        return resultTaken;
     }
 
     private NonNullList<Ingredient> getDesiredIngredients(Player player) {

@@ -23,6 +23,8 @@ import java.util.List;
 import com.fast.fastcollection.O2IOpenCacheHashMap;
 import com.google.common.base.Preconditions;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
@@ -43,6 +45,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.storage.ITerminalHost;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.InventoryActionPacket;
@@ -152,8 +155,13 @@ public class CraftingTermMenu extends MEStorageMenu implements IMenuCraftingPack
     }
 
     @Override
-    public void startAutoCrafting(List<AutoCraftEntry> toCraft) {
+    public void startAutoCrafting(List<GenericStack> toCraft) {
         CraftConfirmMenu.openWithCraftingList(getActionHost(), (ServerPlayer) getPlayer(), getLocator(), toCraft);
+    }
+
+    @Override
+    public @Nullable CraftingTermSlot getResultSlot() {
+        return outputSlot;
     }
 
     public Recipe<CraftingContainer> getCurrentRecipe() {

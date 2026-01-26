@@ -267,4 +267,16 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         }
         return keys;
     }
+
+    public Set<GenericStack> entrySet() {
+        if (lists == null)
+            return Collections.emptySet();
+        var keys = new HashSet<GenericStack>(size());
+        for (var list : lists.values()) {
+            for (var entry : list) {
+                keys.add(new GenericStack(entry.getKey(), entry.getLongValue()));
+            }
+        }
+        return keys;
+    }
 }

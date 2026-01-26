@@ -49,7 +49,6 @@ import appeng.api.storage.ISubMenuHost;
 import appeng.core.AELog;
 import appeng.core.sync.packets.CraftConfirmPlanPacket;
 import appeng.crafting.execution.CraftingSubmitResult;
-import appeng.helpers.IMenuCraftingPacket;
 import appeng.me.helpers.PlayerSource;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.ISubMenu;
@@ -113,7 +112,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
      * if canceling should return to the craft amount menu.
      */
     @Nullable
-    private List<IMenuCraftingPacket.AutoCraftEntry> autoCraftingQueue;
+    private List<GenericStack> autoCraftingQueue;
 
     public CraftConfirmMenu(int id, Inventory ip, ISubMenuHost te) {
         super(TYPE, id, ip, te);
@@ -132,7 +131,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
      * Open with a list of items to craft, i.e. via REI ctrl+click.
      */
     public static void openWithCraftingList(@Nullable IActionHost terminal, ServerPlayer player,
-            @Nullable MenuLocator locator, List<IMenuCraftingPacket.AutoCraftEntry> stacksToCraft) {
+            @Nullable MenuLocator locator, List<GenericStack> stacksToCraft) {
         if (terminal == null || locator == null || stacksToCraft.isEmpty()) {
             return;
         }
@@ -146,7 +145,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
             if (player.containerMenu instanceof CraftConfirmMenu ccc) {
                 if (!ccc.planJob(
                         firstToCraft.what(),
-                        firstToCraft.slots().size(),
+                        firstToCraft.amount(),
                         // Use CRAFT_LESS to still try to partially craft the ingredients.
                         CalculationStrategy.CRAFT_LESS)) {
                     ccc.setValidMenu(false);

@@ -20,14 +20,15 @@ package appeng.helpers;
 
 import java.util.List;
 
-import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
-import it.unimi.dsi.fastutil.ints.IntList;
+import net.minecraft.world.item.ItemStack;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
+import appeng.menu.slot.CraftingTermSlot;
 
 public interface IMenuCraftingPacket {
     /**
@@ -39,6 +40,13 @@ public interface IMenuCraftingPacket {
      * @return the inventory used for the crafting matrix.
      */
     InternalInventory getCraftingMatrix();
+
+    /**
+     * @return the result slot, or null if it is not functioning as a crafting table.
+     */
+    default @Nullable CraftingTermSlot getResultSlot() {
+        return null;
+    }
 
     /**
      * @return who are we?
@@ -59,7 +67,7 @@ public interface IMenuCraftingPacket {
      * Autocraft the passed keys, in order. Will likely open the craft confirm menu, so this menu should not be used
      * afterwards.
      */
-    default void startAutoCrafting(List<AutoCraftEntry> toCraft) {
+    default void startAutoCrafting(List<GenericStack> toCraft) {
     }
 
     /**
@@ -68,6 +76,4 @@ public interface IMenuCraftingPacket {
      */
     boolean isPlayerInventorySlotLocked(int invSlot);
 
-    record AutoCraftEntry(AEItemKey what, IntList slots) {
-    }
 }

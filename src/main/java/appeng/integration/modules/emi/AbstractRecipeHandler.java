@@ -130,10 +130,20 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
         return StandardRecipeHandler.super.canCraft(recipe, context);
     }
 
-    public abstract Result transferRecipe(T menu,
+    public Result transferRecipe(T menu,
             @Nullable Recipe<?> holder,
             EmiRecipe emiRecipe,
-            boolean doTransfer);
+            boolean doTransfer) {
+        throw new UnsupportedOperationException("Not implemented");
+    }
+
+    public Result transferRecipe(T menu,
+            @Nullable Recipe<?> holder,
+            EmiRecipe emiRecipe,
+            boolean doTransfer,
+            @Nullable EmiCraftContext<T> context) {
+        return transferRecipe(menu, holder, emiRecipe, doTransfer);
+    }
 
     public final Result transferRecipe(EmiRecipe emiRecipe, EmiCraftContext<T> context, boolean doTransfer) {
         if (!containerClass.isInstance(context.getScreenHandler())) {
@@ -144,7 +154,7 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
 
         var holder = getRecipeHolder(context.getScreenHandler().getPlayer().level(), emiRecipe);
 
-        var result = transferRecipe(menu, holder, emiRecipe, doTransfer);
+        var result = transferRecipe(menu, holder, emiRecipe, doTransfer, context);
         if (result instanceof Result.Success && doTransfer) {
             Minecraft.getInstance().setScreen(context.getScreen());
         }

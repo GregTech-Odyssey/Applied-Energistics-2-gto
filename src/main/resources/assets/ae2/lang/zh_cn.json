@@ -442,6 +442,7 @@
   "gui.ae2.SearchPlaceholder": "请输入内容...",
   "gui.ae2.SearchSettingsAutoFocus": "打开时自动聚焦搜索框",
   "gui.ae2.SearchSettingsClearExternal": "打开时清除 %s 搜索框内容",
+  "gui.ae2.SearchSettingsExposeInventoryExternal": "将ME存储供 %s 使用",
   "gui.ae2.SearchSettingsRememberSearch": "记住上次进行的搜索",
   "gui.ae2.SearchSettingsReplaceWithExternal": "用 %s 搜索框内容替换",
   "gui.ae2.SearchSettingsSyncWithExternal": "与 %s 搜索框内容同步",
@@ -950,8 +951,8 @@
   "item.ae2.yellow_smart_cable": "黄色ME智能线缆",
   "item.ae2.yellow_smart_dense_cable": "黄色ME致密线缆",
   "key.ae2.category": "应用能源2",
-  "key.ae2.portable_fluid_cell": "打开便携流体元件",
   "key.ae2.guide": "打开该物品指南",
+  "key.ae2.portable_fluid_cell": "打开便携流体元件",
   "key.ae2.portable_item_cell": "打开便携物品元件",
   "key.ae2.wireless_terminal": "打开无线终端",
   "key.toggle_focus.desc": "开关搜索框自动聚焦",
@@ -1001,6 +1002,5 @@
   "waila.ae2.Showing": "显示",
   "waila.ae2.Stored": "已存储：%s / %s",
   "waila.ae2.Suppressed": "已抑制",
-  "waila.ae2.Unlocked": "未锁定",
-  "gui.ae2.SearchSettingsExposeInventoryExternal": "将ME存储供 %s 使用"
+  "waila.ae2.Unlocked": "未锁定"
 }

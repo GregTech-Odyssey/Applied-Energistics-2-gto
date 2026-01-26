@@ -11,6 +11,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.core.AELog;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.FillCraftingGridFromRecipePacket;
+import appeng.helpers.InventoryAction;
 import appeng.menu.me.common.GridInventoryEntry;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.items.CraftingTermMenu;
@@ -38,6 +39,25 @@ public final class CraftingHelper {
 
         NetworkHandler.instance()
                 .sendToServer(new FillCraftingGridFromRecipePacket(recipeId, templateItems, craftMissing));
+    }
+
+    public static void performCraft(CraftingTermMenu menu, Recipe<?> recipe, boolean craftMissing,
+            InventoryAction action, int craftAmount) {
+
+        // We send the items in the recipe in any case to serve as a fallback in case the recipe is transient
+        var templateItems = findGoodTemplateItems(recipe, menu);
+
+        var recipeId = recipe.getId();
+        // Don't transmit a recipe id to the server in case the recipe is not actually resolvable
+        // this is the case for recipes synthetically generated for JEI
+        if (menu.getPlayer().level().getRecipeManager().byKey(recipe.getId()).isEmpty()) {
+            AELog.debug("Cannot send recipe id %s to server because it's transient", recipeId);
+            recipeId = null;
+        }
+
+        NetworkHandler.instance()
+                .sendToServer(new FillCraftingGridFromRecipePacket(recipeId, templateItems, craftMissing, action,
+                        craftAmount));
     }
 
     private static NonNullList<ItemStack> findGoodTemplateItems(Recipe<?> recipe, MEStorageMenu menu) {

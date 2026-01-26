@@ -95,35 +95,40 @@ public class CraftingTermSlot extends AppEngCraftingSlot {
 
         int maxTimesToCraft;
         InternalInventory target;
-        if (action == InventoryAction.CRAFT_SHIFT || action == InventoryAction.CRAFT_ALL) // craft into player
-                                                                                          // inventory...
-        {
-            target = new PlayerInternalInventory(who.getInventory());
-            if (action == InventoryAction.CRAFT_SHIFT) {
+        switch (action) {
+            case CRAFT_SHIFT -> {
+                target = new PlayerInternalInventory(who.getInventory());
                 maxTimesToCraft = (int) Math
                         .floor((double) this.getItem().getMaxStackSize() / (double) howManyPerCraft);
-            } else {
+            }
+            case CRAFT_ALL -> {
+                target = new PlayerInternalInventory(who.getInventory());
                 maxTimesToCraft = (int) Math.floor((double) this.getItem().getMaxStackSize() / (double) howManyPerCraft
                         * Inventory.INVENTORY_SIZE);
             }
-        } else if (action == InventoryAction.CRAFT_STACK) // craft into hand, full stack
-        {
-            target = new CarriedItemInventory(getMenu());
-            maxTimesToCraft = (int) Math.floor((double) this.getItem().getMaxStackSize() / (double) howManyPerCraft);
-        } else
-        // pick up what was crafted...
-        {
-            // This is a shortcut to ensure that for mods that create recipes with result counts larger than
-            // the max stack size, it remains possible to pick up those items at least _once_.
-            if (getMenu().getCarried().isEmpty()) {
-                getMenu().setCarried(craftItem(who, storage, storage.getAvailableStacks()));
-                return;
+            case CRAFT_STACK -> {
+                target = new CarriedItemInventory(getMenu());
+                maxTimesToCraft = (int) Math
+                        .floor((double) this.getItem().getMaxStackSize() / (double) howManyPerCraft);
             }
+            default -> {
+                // pick up what was crafted...
+                // This is a shortcut to ensure that for mods that create recipes with result counts larger than
+                // the max stack size, it remains possible to pick up those items at least _once_.
+                if (getMenu().getCarried().isEmpty()) {
+                    getMenu().setCarried(craftItem(who, storage, storage.getAvailableStacks()));
+                    return;
+                }
 
-            target = new CarriedItemInventory(getMenu());
-            maxTimesToCraft = 1;
+                target = new CarriedItemInventory(getMenu());
+                maxTimesToCraft = 1;
+            }
         }
 
+        craftSome(who, target, maxTimesToCraft);
+    }
+
+    public void craftSome(Player who, InternalInventory target, int maxTimesToCraft) {
         // Since we may be crafting multiple times, we have to ensure that we keep crafting the same item.
         // This may not be the case if not all crafting grid slots have the same number of items in them,
         // and some ingredients run-out after a few crafts.
@@ -286,7 +291,7 @@ public class CraftingTermSlot extends AppEngCraftingSlot {
             }
         }
 
-        if (drops.size() > 0) {
+        if (!drops.isEmpty()) {
             Platform.spawnDrops(p.level(), new BlockPos((int) p.getX(), (int) p.getY(), (int) p.getZ()), drops);
         }
     }

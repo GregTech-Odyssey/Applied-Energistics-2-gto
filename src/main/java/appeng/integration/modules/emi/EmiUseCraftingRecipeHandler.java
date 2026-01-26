@@ -13,10 +13,12 @@ import net.minecraft.world.item.crafting.ShapedRecipe;
 
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
+import dev.emi.emi.api.recipe.handler.EmiCraftContext;
 import dev.emi.emi.api.stack.EmiStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import appeng.core.localization.ItemModText;
+import appeng.helpers.InventoryAction;
 import appeng.integration.modules.jeirei.CraftingHelper;
 import appeng.menu.SlotSemantics;
 import appeng.menu.me.items.CraftingTermMenu;
@@ -48,7 +50,8 @@ public class EmiUseCraftingRecipeHandler<T extends CraftingTermMenu> extends Abs
     }
 
     @Override
-    public Result transferRecipe(T menu, Recipe<?> recipeBase, EmiRecipe emiRecipe, boolean doTransfer) {
+    public Result transferRecipe(T menu, Recipe<?> recipeBase, EmiRecipe emiRecipe, boolean doTransfer,
+            EmiCraftContext<T> context) {
 
         // Recipe displays can be based on anything. Not just Recipe<?>
         Recipe<?> recipe = null;
@@ -78,15 +81,26 @@ public class EmiUseCraftingRecipeHandler<T extends CraftingTermMenu> extends Abs
             return Result.createFailed(ItemModText.NO_ITEMS.text(), missingSlots.missingSlots());
         }
 
-        if (!doTransfer) {
+        if (doTransfer) {
+            // Thank you RS for pioneering this amazing feature! :)
+            boolean craftMissing = AbstractContainerScreen.hasControlDown();
+            int amount = context.getAmount();
+            switch (context.getDestination()) {
+                case INVENTORY -> {
+                    CraftingHelper.performCraft(menu, recipe, craftMissing, InventoryAction.CRAFT_SHIFT, amount);
+                    return Result.createSuccessful();
+                }
+                case CURSOR -> {
+                    CraftingHelper.performCraft(menu, recipe, craftMissing, InventoryAction.CRAFT_ITEM, amount);
+                    return Result.createSuccessful();
+                }
+                default -> CraftingHelper.performTransfer(menu, recipe, craftMissing);
+            }
+        } else {
             if (missingSlots.anyMissingOrCraftable()) {
                 // Highlight the slots with missing ingredients
                 return new Result.PartiallyCraftable(missingSlots);
             }
-        } else {
-            // Thank you RS for pioneering this amazing feature! :)
-            boolean craftMissing = AbstractContainerScreen.hasControlDown();
-            CraftingHelper.performTransfer(menu, recipe, craftMissing);
         }
 
         // No error
