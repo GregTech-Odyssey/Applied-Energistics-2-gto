@@ -39,6 +39,7 @@ public class PatternContentAccessTerminalPart extends AbstractDisplayPart implem
     }
 
     private void PatternRefresher() {
+        // TODO use AEPatternRefresher
         getHost().markForSave();
     }
 

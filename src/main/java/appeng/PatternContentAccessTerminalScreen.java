@@ -156,7 +156,7 @@ public class PatternContentAccessTerminalScreen<C extends PatternContentAccessTe
 
     @Override
     public void onClose() {
-
+        // TODO use AEPatternRefresher
         super.onClose();
     }
 }
