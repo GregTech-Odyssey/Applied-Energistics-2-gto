@@ -25,6 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.registries.IForgeRegistry;
 
+import appeng.PatternContentAccessTerminalMenu;
 import appeng.menu.implementations.CellWorkbenchMenu;
 import appeng.menu.implementations.ChestMenu;
 import appeng.menu.implementations.CondenserMenu;
@@ -106,7 +107,8 @@ public final class InitMenuTypes {
                 StorageLevelEmitterMenu.TYPE,
                 VibrationChamberMenu.TYPE,
                 WirelessCraftingTermMenu.TYPE,
-                WirelessAccessPointMenu.TYPE);
+                WirelessAccessPointMenu.TYPE,
+                PatternContentAccessTerminalMenu.TYPE);
     }
 
     private static void registerAll(IForgeRegistry<MenuType<?>> registry, MenuType<?>... types) {

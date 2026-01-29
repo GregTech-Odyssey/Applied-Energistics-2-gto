@@ -31,6 +31,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 
+import appeng.PatternContentAccessTerminalMenu;
+import appeng.PatternContentAccessTerminalScreen;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.implementations.CellWorkbenchScreen;
 import appeng.client.gui.implementations.ChestScreen;
@@ -182,6 +184,12 @@ public final class InitScreens {
                 PatternAccessTermMenu.TYPE, PatternAccessTermScreen::new,
                 "/screens/terminals/pattern_access_terminal.json");
         // spotless:on
+
+        InitScreens
+                .<PatternContentAccessTerminalMenu, PatternContentAccessTerminalScreen<PatternContentAccessTerminalMenu>>register(
+                        PatternContentAccessTerminalMenu.TYPE,
+                        PatternContentAccessTerminalScreen::new,
+                        "/screens/terminals/pattern_content_access_terminal.json");
     }
 
     /**

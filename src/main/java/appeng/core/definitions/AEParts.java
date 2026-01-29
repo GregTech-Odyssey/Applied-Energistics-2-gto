@@ -27,6 +27,7 @@ import java.util.function.Function;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
+import appeng.PatternContentAccessTerminalPart;
 import appeng.api.ids.AEPartIds;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartItem;
@@ -115,6 +116,10 @@ public final class AEParts {
     public static final ItemDefinition<PartItem<FEP2PTunnelPart>> FE_P2P_TUNNEL = createPart("Energy P2P Tunnel", AEPartIds.FE_P2P_TUNNEL, FEP2PTunnelPart.class, FEP2PTunnelPart::new);
     public static final ItemDefinition<PartItem<LightP2PTunnelPart>> LIGHT_P2P_TUNNEL = createPart("Light P2P Tunnel", AEPartIds.LIGHT_P2P_TUNNEL, LightP2PTunnelPart.class, LightP2PTunnelPart::new);
     // spotless:on
+
+    public static final ItemDefinition<PartItem<PatternContentAccessTerminalPart>> PATTERN_CONTENT_ACCESS_TERMINAL = createPart(
+            "ME Pattern Content Access Terminal", AppEng.makeId("pattern_content_access_terminal"),
+            PatternContentAccessTerminalPart.class, PatternContentAccessTerminalPart::new);
 
     private static <T extends IPart> ItemDefinition<PartItem<T>> createPart(
             String englishName,
