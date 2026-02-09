@@ -19,6 +19,7 @@
 package appeng.menu.me.items;
 
 import java.util.List;
+import java.util.Set;
 
 import com.fast.fastcollection.O2IOpenCacheHashMap;
 import com.google.common.base.Preconditions;
@@ -266,6 +267,10 @@ public class CraftingTermMenu extends MEStorageMenu implements IMenuCraftingPack
     }
 
     public record MissingIngredientSlots(IntOpenHashSet missingSlots, IntOpenHashSet craftableSlots) {
+        public MissingIngredientSlots(Set<Integer> missingSlots, Set<Integer> craftableSlots) {
+            this(new IntOpenHashSet(missingSlots), new IntOpenHashSet(craftableSlots));
+        }
+
         public int totalSize() {
             return missingSlots.size() + craftableSlots.size();
         }

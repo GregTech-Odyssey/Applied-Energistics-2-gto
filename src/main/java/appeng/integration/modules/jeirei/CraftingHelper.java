@@ -70,7 +70,7 @@ public final class CraftingHelper {
             if (!ingredient.isEmpty()) {
                 // Try to find the best item. In case the ingredient is a tag, it might contain versions the
                 // player doesn't actually have
-                var stack = ingredientPriorities.reference2IntEntrySet()
+                var stack = ingredientPriorities.entrySet()
                         .stream()
                         .filter(e -> e.getKey() instanceof AEItemKey itemKey && itemKey.matches(ingredient))
                         .max(Comparator.comparingInt(Map.Entry::getValue))
