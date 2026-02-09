@@ -117,26 +117,26 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     }
 
     private void updateCachedStacks() {
-        lock.lock();
-        try {
-            if (cachedStacksNeedUpdate) {
-                var server = ServerLifecycleHooks.getCurrentServer();
-                if (server == null || server.isSameThread()) {
-                    update();
-                } else {
-                    CompletableFuture.runAsync(this::update, server).join();
-                }
+        if (cachedStacksNeedUpdate) {
+            var server = ServerLifecycleHooks.getCurrentServer();
+            if (server == null || server.isSameThread()) {
+                update();
+            } else {
+                CompletableFuture.runAsync(this::update, server).join();
             }
-        } finally {
-            lock.unlock();
         }
     }
 
     private void update() {
-        cachedAvailableStacks.clear();
-        storage.getAvailableStacks(cachedAvailableStacks);
-        cachedAvailableStacks.removeEmptySubmaps();
-        cachedStacksNeedUpdate = false;
+        lock.lock();
+        try {
+            cachedAvailableStacks.clear();
+            storage.getAvailableStacks(cachedAvailableStacks);
+            cachedAvailableStacks.removeEmptySubmaps();
+            cachedStacksNeedUpdate = false;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public static void join(MinecraftServer server) {
