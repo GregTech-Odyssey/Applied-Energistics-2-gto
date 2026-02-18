@@ -256,7 +256,8 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
 
         @Override
         public int getCapacity() {
-            return AEFluidKey.AMOUNT_BUCKET;
+            return cm.getSetting(Settings.CONDENSER_OUTPUT) == CondenserOutput.TRASH ? Integer.MAX_VALUE
+                    : AEFluidKey.AMOUNT_BUCKET;
         }
 
         @Override
@@ -266,6 +267,8 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
+            if (cm.getSetting(Settings.CONDENSER_OUTPUT) == CondenserOutput.TRASH)
+                return resource.getAmount();
             int amount = resource.isEmpty() ? 0 : Math.min(resource.getAmount(), AEFluidKey.AMOUNT_BUCKET);
 
             if (action == FluidAction.EXECUTE) {
