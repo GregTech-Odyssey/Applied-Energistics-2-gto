@@ -27,10 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.*;
 
 import com.fast.fastcollection.O2OOpenCacheHashMap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +38,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
@@ -107,7 +105,8 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     private final IGrid grid;
     private final NetworkCraftingProviders craftingProviders = new NetworkCraftingProviders();
     private final Map<UUID, CraftingLinkNexus> craftingLinks = new O2OOpenCacheHashMap<>();
-    private final Multimap<AEKey, StackWatcher<ICraftingWatcherNode>> interests = HashMultimap.create();
+    private final Multimap<AEKey, StackWatcher<ICraftingWatcherNode>> interests = Multimaps
+            .newSetMultimap(new Reference2ReferenceOpenHashMap<>(), ReferenceOpenHashSet::new);
     private final InterestManager<StackWatcher<ICraftingWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final IEnergyService energyGrid;

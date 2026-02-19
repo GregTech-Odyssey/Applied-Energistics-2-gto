@@ -25,7 +25,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +65,8 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
      */
     private final List<ProviderState> globalProviders = new ArrayList<>();
     private final Set<UpdateRequester> requesters = new ReferenceOpenHashSet<>();
-    private final SetMultimap<AEKey, StackWatcher<IStorageWatcherNode>> interests = HashMultimap.create();
+    private final SetMultimap<AEKey, StackWatcher<IStorageWatcherNode>> interests = Multimaps
+            .newSetMultimap(new Reference2ReferenceOpenHashMap<>(), ReferenceOpenHashSet::new);
     private final InterestManager<StackWatcher<IStorageWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final NetworkStorage storage;
@@ -130,10 +131,12 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     private void update() {
         lock.lock();
         try {
-            cachedAvailableStacks.clear();
-            storage.getAvailableStacks(cachedAvailableStacks);
-            cachedAvailableStacks.removeEmptySubmaps();
-            cachedStacksNeedUpdate = false;
+            if (cachedStacksNeedUpdate) {
+                cachedAvailableStacks.clear();
+                storage.getAvailableStacks(cachedAvailableStacks);
+                cachedAvailableStacks.removeEmptySubmaps();
+                cachedStacksNeedUpdate = false;
+            }
         } finally {
             lock.unlock();
         }
