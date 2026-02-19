@@ -44,7 +44,7 @@ import net.minecraftforge.items.IItemHandler;
 import appeng.api.config.FuzzyMode;
 import appeng.util.helpers.ItemComparisonHelper;
 
-public interface InternalInventory extends Iterable<ItemStack>, ItemTransfer {
+public interface InternalInventory extends Iterable<ItemStack>, ItemTransfer, IItemHandler {
 
     @Nullable
     static ItemTransfer wrapExternal(@Nullable BlockEntity be, Direction side) {
@@ -77,7 +77,7 @@ public interface InternalInventory extends Iterable<ItemStack>, ItemTransfer {
     }
 
     default IItemHandler toItemHandler() {
-        return new InternalInventoryItemHandler(this);
+        return this;
     }
 
     default Container toContainer() {
@@ -85,6 +85,10 @@ public interface InternalInventory extends Iterable<ItemStack>, ItemTransfer {
     }
 
     int size();
+
+    default int getSlots() {
+        return size();
+    }
 
     default int getSlotLimit(int slot) {
         return Container.LARGE_MAX_STACK_SIZE;
