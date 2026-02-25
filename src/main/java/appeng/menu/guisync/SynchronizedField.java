@@ -266,10 +266,6 @@ public abstract class SynchronizedField<T> {
             super(source, getter, setter);
             this.fieldType = field.getType();
             Preconditions.checkArgument(PacketWritable.class.isAssignableFrom(fieldType));
-            if (!fieldType.isRecord()) {
-                throw new RuntimeException("Use records to synchronize custom class on " + field
-                        + " to enable easier equals comparisons");
-            }
         }
 
         @Override

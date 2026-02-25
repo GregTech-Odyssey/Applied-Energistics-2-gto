@@ -284,10 +284,8 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             return;
         }
 
-        CraftingLinkNexus nexus = this.craftingLinks.get(link.getCraftingID());
-        if (nexus == null) {
-            this.craftingLinks.put(link.getCraftingID(), nexus = new CraftingLinkNexus(link.getCraftingID()));
-        }
+        CraftingLinkNexus nexus = this.craftingLinks.computeIfAbsent(link.getCraftingID(),
+                k -> new CraftingLinkNexus(link.getCraftingID()));
 
         link.setNexus(nexus);
     }
@@ -403,7 +401,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             }
         });
 
-        return validCpusClusters.get(0);
+        return validCpusClusters.getFirst();
     }
 
     @Override

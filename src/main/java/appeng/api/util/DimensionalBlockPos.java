@@ -26,21 +26,24 @@ package appeng.api.util;
 import java.util.Objects;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 /**
  * Represents a location in the Minecraft Universe
+ * 
+ * @see net.minecraft.core.GlobalPos
  */
 public final class DimensionalBlockPos {
 
-    private final Level level;
+    private final ResourceKey<Level> level;
 
     private final BlockPos pos;
 
     public DimensionalBlockPos(DimensionalBlockPos coordinate) {
-        this(coordinate.getLevel(), coordinate.pos);
+        this(coordinate.level, coordinate.pos);
     }
 
     public DimensionalBlockPos(BlockEntity blockentity) {
@@ -52,8 +55,13 @@ public final class DimensionalBlockPos {
     }
 
     public DimensionalBlockPos(Level level, int x, int y, int z) {
-        this.level = Objects.requireNonNull(level, "level");
+        this.level = Objects.requireNonNull(level.dimension(), "level");
         this.pos = new BlockPos(x, y, z);
+    }
+
+    public DimensionalBlockPos(ResourceKey<Level> level, BlockPos pos) {
+        this.level = Objects.requireNonNull(level, "level");
+        this.pos = Objects.requireNonNull(pos, "pos");
     }
 
     @Override
@@ -63,7 +71,7 @@ public final class DimensionalBlockPos {
         if (o == null || getClass() != o.getClass())
             return false;
         DimensionalBlockPos that = (DimensionalBlockPos) o;
-        return level.equals(that.level) && pos.equals(that.pos);
+        return level == that.level && pos.equals(that.pos);
     }
 
     @Override
@@ -73,15 +81,15 @@ public final class DimensionalBlockPos {
 
     @Override
     public String toString() {
-        return pos.getX() + "," + pos.getY() + "," + pos.getZ() + " in " + getLevel().dimension().location();
+        return pos.getX() + "," + pos.getY() + "," + pos.getZ() + " in " + level.location();
     }
 
-    public boolean isInWorld(LevelAccessor level) {
-        return this.level == level;
+    public boolean isInWorld(Level level) {
+        return this.level == level.dimension();
     }
 
     public Level getLevel() {
-        return this.level;
+        return ServerLifecycleHooks.getCurrentServer().getLevel(level);
     }
 
     public BlockPos getPos() {
