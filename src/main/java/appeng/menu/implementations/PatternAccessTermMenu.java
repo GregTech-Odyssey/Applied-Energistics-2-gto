@@ -378,6 +378,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
                 var stack = server.getStackInSlot(i);
                 if (!stack.isEmpty()) {
                     slots.put(i, stack);
+                    client.setItemDirect(i, stack.copy());
                 }
             }
 
