@@ -41,7 +41,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ComponentRenderUtils;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Rect2i;
@@ -56,12 +58,15 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import gto_ae.hooks.gui.IPopulateScreenWidget;
 import guideme.indices.ItemIndex;
 
 import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.behaviors.EmptyingAction;
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.parts.IPart;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.client.Point;
 import appeng.client.gui.layout.SlotGridLayout;
@@ -156,7 +161,14 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         super.init();
         positionSlots();
 
-        widgets.populateScreen(this::addRenderableWidget, getBounds(true), this);
+        widgets.populateScreen(this::populate, getBounds(true), this);
+    }
+
+    private <W extends GuiEventListener & Renderable & NarratableEntry> void populate(W p_169406_) {
+        addRenderableWidget(p_169406_);
+        if (p_169406_ instanceof IPopulateScreenWidget populateWidget) {
+            populateWidget.populateScreen(this::addRenderableWidget, getBounds(true), this);
+        }
     }
 
     private void positionSlots() {
@@ -815,6 +827,19 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         }
 
         super.renderSlot(guiGraphics, s);
+    }
+
+    protected void renderKeyTooltipThroughItemAPI(GuiGraphics guiGraphics, AEKey key, int x, int y,
+            List<Component> tooltips) {
+        // Special case to support the Item API of visual tooltip components
+        if (key instanceof AEItemKey itemKey) {
+            var stack = itemKey.getReadOnlyStack();
+            // By using the overload of the renderTooltip method that takes an ItemStack, we support the Forge tooltip
+            // event system
+            guiGraphics.renderTooltip(font, tooltips, stack.getTooltipImage(), stack, x, y);
+        } else {
+            guiGraphics.renderComponentTooltip(font, tooltips, x, y);
+        }
     }
 
     @Override

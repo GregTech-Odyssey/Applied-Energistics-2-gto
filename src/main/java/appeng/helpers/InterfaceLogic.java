@@ -18,24 +18,26 @@
 
 package appeng.helpers;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.ImmutableSet;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
+import gto_ae.helpers.facility_management.IStatusTracked;
+import gto_ae.helpers.facility_management.ThroughputCounter;
+import gto_ae.helpers.facility_management.WorkingStatus;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
@@ -60,10 +62,7 @@ import appeng.api.storage.StorageHelper;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.upgrades.UpgradeInventories;
-import appeng.api.util.AECableType;
-import appeng.api.util.DimensionalBlockPos;
-import appeng.api.util.IConfigManager;
-import appeng.api.util.IConfigurableObject;
+import appeng.api.util.*;
 import appeng.capabilities.Capabilities;
 import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
@@ -77,7 +76,11 @@ import appeng.util.Platform;
  * Contains behavior for interface blocks and parts, which is independent of the storage channel.
  */
 public class InterfaceLogic
-        implements ICraftingRequester, IUpgradeableObject, IConfigurableObject, IStorageService.UpdateRequester {
+        implements ICraftingRequester,
+        IUpgradeableObject,
+        IConfigurableObject,
+        IStorageService.UpdateRequester,
+        IStatusTracked {
     @Nullable
     private InterfaceInventory localInvHandler;
     @Nullable
@@ -105,6 +108,8 @@ public class InterfaceLogic
      */
     private boolean hasConfig = false;
     private final ConfigInventory storage;
+    private WorkingStatus status = WorkingStatus.IDLE;
+    private final ThroughputCounter throughputCounter = new ThroughputCounter();
 
     public InterfaceLogic(IManagedGridNode gridNode, InterfaceLogicHost host, Item is) {
         this(gridNode, host, is, 9);
@@ -165,6 +170,21 @@ public class InterfaceLogic
         this.priority = tag.getInt("priority");
     }
 
+    @Override
+    public @NotNull WorkingStatus getStatus() {
+        return status;
+    }
+
+    @Override
+    public void openGui(Player player) {
+        host.openMenu(player, host.getLocator());
+    }
+
+    @Override
+    public @NotNull ThroughputCounter getThroughputCounter() {
+        return throughputCounter;
+    }
+
     private class Ticker implements IGridTickable {
         @Override
         public TickingRequest getTickingRequest(IGridNode node) {
@@ -174,13 +194,21 @@ public class InterfaceLogic
 
         @Override
         public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
+            throughputCounter.tickRefresh();
+
             if (!mainNode.isActive()) {
                 return TickRateModulation.SLEEP;
             }
 
             boolean couldDoWork = updateStorage();
-            return hasWorkToDo() ? couldDoWork ? TickRateModulation.URGENT : TickRateModulation.SLOWER
+            var tickMod = hasWorkToDo() ? couldDoWork ? TickRateModulation.URGENT : TickRateModulation.SLOWER
                     : TickRateModulation.SLEEP;
+            status = switch (tickMod) {
+                case URGENT -> WorkingStatus.BUSY;
+                case SLOWER -> WorkingStatus.WORKING;
+                default -> WorkingStatus.IDLE;
+            };
+            return tickMod;
         }
     }
 
@@ -321,7 +349,9 @@ public class InterfaceLogic
     @Override
     public long insertCraftedItems(ICraftingLink link, AEKey what, long amount, Actionable mode) {
         int slot = this.craftingTracker.getSlot(link);
-        return storage.insert(slot, what, amount, mode);
+        long inserted = storage.insert(slot, what, amount, mode);
+        throughputCounter.add(what, inserted);
+        return inserted;
     }
 
     @Override
@@ -432,6 +462,7 @@ public class InterfaceLogic
                 storage.extract(slot, what, inserted, Actionable.MODULATE);
             }
 
+            this.throughputCounter.add(what, inserted);
             return inserted > 0;
         }
 
@@ -476,6 +507,7 @@ public class InterfaceLogic
             long amount) {
         var acquired = StorageHelper.poweredExtraction(energySrc, networkInv, what, amount,
                 this.interfaceRequestSource);
+        throughputCounter.remove(what, acquired);
         if (acquired > 0) {
             var inserted = storage.insert(slot, what, acquired, Actionable.MODULATE);
             if (inserted < acquired) {
@@ -579,7 +611,9 @@ public class InterfaceLogic
                 return 0;
             }
 
-            return super.insert(what, amount, mode, source);
+            var inserted = super.insert(what, amount, mode, source);
+            throughputCounter.add(what, inserted);
+            return inserted;
         }
 
         @Override
@@ -592,7 +626,9 @@ public class InterfaceLogic
                 return 0;
             }
 
-            return super.extract(what, amount, mode, source);
+            var extracted = super.extract(what, amount, mode, source);
+            throughputCounter.remove(what, extracted);
+            return extracted;
         }
 
         @Override

@@ -54,6 +54,8 @@ import net.minecraftforge.registries.RegisterEvent;
 import net.minecraftforge.registries.RegistryBuilder;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
+import gto_ae.helpers.facility_management.FacilityUidManager;
+
 import appeng.api.parts.CableRenderMode;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
@@ -227,6 +229,7 @@ public abstract class AppEngBase implements AppEng {
 
     private void onServerAboutToStart(final ServerAboutToStartEvent evt) {
         ChunkLoadingService.getInstance().onServerAboutToStart(evt);
+        FacilityUidManager.reset();
     }
 
     private void serverStopping(final ServerStoppingEvent event) {

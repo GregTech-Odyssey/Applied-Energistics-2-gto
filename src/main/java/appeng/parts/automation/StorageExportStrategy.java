@@ -66,6 +66,7 @@ public class StorageExportStrategy<C, S> implements StackExportStrategy {
 
             wasInserted = handlerStrategy.insert(adjacentStorage, what, extracted, Actionable.MODULATE);
 
+            context.getStats().remove(what, extracted);
             if (wasInserted < extracted) {
                 // Be nice and try to give the overflow back
                 long leftover = extracted - wasInserted;

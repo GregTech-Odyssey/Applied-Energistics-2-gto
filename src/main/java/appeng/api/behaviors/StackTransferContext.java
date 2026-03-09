@@ -2,6 +2,8 @@ package appeng.api.behaviors;
 
 import org.jetbrains.annotations.ApiStatus;
 
+import gto_ae.helpers.facility_management.ThroughputCounter;
+
 import appeng.api.networking.energy.IEnergySource;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.storage.IStorageService;
@@ -44,4 +46,6 @@ public interface StackTransferContext {
     boolean canInsert(AEItemKey what, long amount);
 
     void reduceOperationsRemaining(long inserted);
+
+    ThroughputCounter getStats();
 }

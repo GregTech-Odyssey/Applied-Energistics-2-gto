@@ -20,9 +20,20 @@ package appeng.helpers;
 
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import gto_ae.helpers.facility_management.IStatusTracked;
+import gto_ae.helpers.facility_management.ThroughputCounter;
+import gto_ae.helpers.facility_management.WorkingStatus;
+
+import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
@@ -37,8 +48,12 @@ import appeng.menu.locator.MenuLocator;
 /**
  * Interface that must be implemented by machines hosting {@link InterfaceLogic}.
  */
-public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObject, IPriorityHost, IConfigInvHost,
-        IStorageService.UpdateRequester {
+public interface InterfaceLogicHost extends IConfigurableObject,
+        IUpgradeableObject,
+        IPriorityHost,
+        IConfigInvHost,
+        IStorageService.UpdateRequester,
+        IStatusTracked {
     /**
      * @return The block entity that is in-world and hosts the interface.
      */
@@ -47,6 +62,11 @@ public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObj
     void saveChanges();
 
     InterfaceLogic getInterfaceLogic();
+
+    MenuLocator getLocator();
+
+    @Nullable
+    Direction getSide();
 
     @Override
     default IConfigManager getConfigManager() {
@@ -96,4 +116,25 @@ public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObj
         return getInterfaceLogic().getListener();
     }
 
+    @Override
+    default ImmutableSet<ICraftingLink> getRequestedJobs() {
+        return getInterfaceLogic().getRequestedJobs();
+    }
+
+    @Override
+    @NotNull
+    default WorkingStatus getStatus() {
+        return getInterfaceLogic().getStatus();
+    }
+
+    @Override
+    default void openGui(Player player) {
+        getInterfaceLogic().openGui(player);
+    }
+
+    @Override
+    @NotNull
+    default ThroughputCounter getThroughputCounter() {
+        return getInterfaceLogic().getThroughputCounter();
+    }
 }

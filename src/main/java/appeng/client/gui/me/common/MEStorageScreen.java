@@ -49,7 +49,6 @@ import appeng.api.config.SortOrder;
 import appeng.api.config.TypeFilter;
 import appeng.api.config.ViewItems;
 import appeng.api.implementations.blockentities.IMEChest;
-import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.storage.AEKeyFilter;
 import appeng.api.util.IConfigManager;
@@ -664,15 +663,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
                     .add(ButtonToolTips.Serial.text(entry.getSerial()).withStyle(ChatFormatting.DARK_GRAY));
         }
 
-        // Special case to support the Item API of visual tooltip components
-        if (entry.getWhat() instanceof AEItemKey itemKey) {
-            var stack = itemKey.getReadOnlyStack();
-            // By using the overload of the renderTooltip method that takes an ItemStack, we support the Forge tooltip
-            // event system
-            guiGraphics.renderTooltip(font, currentToolTip, stack.getTooltipImage(), stack, x, y);
-        } else {
-            guiGraphics.renderComponentTooltip(font, currentToolTip, x, y);
-        }
+        renderKeyTooltipThroughItemAPI(guiGraphics, entry.getWhat(), x, y, currentToolTip);
     }
 
     @Override

@@ -18,6 +18,9 @@
 
 package appeng.parts.automation;
 
+import com.google.common.collect.ImmutableSet;
+
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -29,12 +32,17 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 
+import gto_ae.helpers.facility_management.IStatusTracked;
+import gto_ae.helpers.facility_management.ThroughputCounter;
+import gto_ae.helpers.facility_management.WorkingStatus;
+
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.RedstoneMode;
 import appeng.api.config.Setting;
 import appeng.api.config.Settings;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
+import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
@@ -57,18 +65,20 @@ import appeng.util.ConfigInventory;
 import appeng.util.Platform;
 import appeng.util.prioritylist.IPartitionList;
 
-public abstract class IOBusPart extends UpgradeablePart implements IGridTickable, IConfigInvHost {
+public abstract class IOBusPart extends UpgradeablePart implements IGridTickable, IConfigInvHost, IStatusTracked {
 
     public static final ResourceLocation MODEL_BASE = new ResourceLocation(AppEng.MOD_ID, "part/import_bus_base");
     @PartModels
     public static final IPartModel MODELS_OFF = new PartModel(MODEL_BASE,
             new ResourceLocation(AppEng.MOD_ID, "part/import_bus_off"));
+
     @PartModels
     public static final IPartModel MODELS_ON = new PartModel(MODEL_BASE,
             new ResourceLocation(AppEng.MOD_ID, "part/import_bus_on"));
     @PartModels
     public static final IPartModel MODELS_HAS_CHANNEL = new PartModel(MODEL_BASE,
             new ResourceLocation(AppEng.MOD_ID, "part/import_bus_has_channel"));
+    protected final ThroughputCounter throughputCounter = new ThroughputCounter();
 
     private final ConfigInventory config;
     // Filter derived from the config
@@ -77,6 +87,7 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
     private final TickRates tickRates;
     protected final IActionSource source;
     private boolean lastRedstone = false;
+    private WorkingStatus lastWorkingStatus = WorkingStatus.IDLE;
     /**
      * Indicates that an I/O bus in redstone pulse mode has observed a low to high redstone transition and is waiting to
      * act on this during its next tick.
@@ -191,7 +202,14 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
     }
 
     @Override
+    public @NotNull ThroughputCounter getThroughputCounter() {
+        return throughputCounter;
+    }
+
+    @Override
     public final TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
+        lastWorkingStatus = WorkingStatus.IDLE;
+        throughputCounter.tickRefresh();
         // Sometimes between being woken up and actually doing work, the config/redstone mode may have changed
         // put us back to sleep if that was the case
         if (isSleeping()) {
@@ -206,6 +224,9 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
         this.pendingPulse = false;
 
         var hasDoneWork = this.doBusWork(node.getGrid());
+        lastWorkingStatus = hasDoneWork
+                ? (ticksSinceLastCall == tickRates.getMin() ? WorkingStatus.BUSY : WorkingStatus.WORKING)
+                : WorkingStatus.IDLE;
 
         // We may be back to sleep (i.e. in pulse mode)
         if (isSleeping()) {
@@ -277,6 +298,11 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
     }
 
     @Override
+    public void openGui(Player player) {
+        MenuOpener.open(getMenuType(), player, MenuLocators.forPart(this));
+    }
+
+    @Override
     public final TickingRequest getTickingRequest(IGridNode node) {
         return new TickingRequest(tickRates.getMin(), tickRates.getMax(), isSleeping(), true);
     }
@@ -304,5 +330,15 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
         if (pendingPulse) {
             getMainNode().ifPresent((grid, node) -> grid.getTickManager().alertDevice(node));
         }
+    }
+
+    @Override
+    public ImmutableSet<ICraftingLink> getRequestedJobs() {
+        return ImmutableSet.of();
+    }
+
+    @Override
+    public @NotNull WorkingStatus getStatus() {
+        return lastWorkingStatus;
     }
 }

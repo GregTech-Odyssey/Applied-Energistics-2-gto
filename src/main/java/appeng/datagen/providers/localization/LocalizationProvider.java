@@ -14,6 +14,8 @@ import net.minecraft.data.DataProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
+import gto_ae.core.localization.ExtendedLangs;
+
 import appeng.api.config.PowerUnits;
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEEntities;
@@ -57,6 +59,9 @@ public class LocalizationProvider implements IAE2DataProvider {
         addEnum(InGameTooltip.class);
         addEnum(ItemModText.class);
         addEnum(EmiText.class);
+
+        addEnum(ExtendedLangs.class);
+
         // Can't implement LocalizationEnum since it's not in the API, but PowerUnits is
         for (var powerUnit : PowerUnits.values()) {
             add(powerUnit.unlocalizedName, powerUnit.symbolName);

@@ -98,7 +98,9 @@ public class WidgetContainer {
 
         // Size the widget, as this doesn't change when the parent is resized
         WidgetStyle widgetStyle = style.getWidget(id);
-        widget.setSize(widgetStyle.getWidth(), widgetStyle.getHeight());
+        if (widgetStyle != null) {
+            widget.setSize(widgetStyle.getWidth(), widgetStyle.getHeight());
+        }
 
         if (compositeWidgets.put(id, widget) != null) {
             throw new IllegalStateException("Duplicate id: " + id);
@@ -184,7 +186,9 @@ public class WidgetContainer {
         for (var entry : compositeWidgets.entrySet()) {
             var widget = entry.getValue();
             var widgetStyle = style.getWidget(entry.getKey());
-            widget.setPosition(widgetStyle.resolve(relativeBounds));
+            if (widgetStyle != null) {
+                widget.setPosition(widgetStyle.resolve(relativeBounds));
+            }
 
             widget.populateScreen(addWidget, bounds, screen);
         }

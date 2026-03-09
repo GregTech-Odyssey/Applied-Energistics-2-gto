@@ -62,14 +62,7 @@ import appeng.parts.p2p.ItemP2PTunnelPart;
 import appeng.parts.p2p.LightP2PTunnelPart;
 import appeng.parts.p2p.MEP2PTunnelPart;
 import appeng.parts.p2p.RedstoneP2PTunnelPart;
-import appeng.parts.reporting.ConversionMonitorPart;
-import appeng.parts.reporting.CraftingTerminalPart;
-import appeng.parts.reporting.DarkPanelPart;
-import appeng.parts.reporting.ItemTerminalPart;
-import appeng.parts.reporting.PanelPart;
-import appeng.parts.reporting.PatternAccessTerminalPart;
-import appeng.parts.reporting.SemiDarkPanelPart;
-import appeng.parts.reporting.StorageMonitorPart;
+import appeng.parts.reporting.*;
 import appeng.parts.storagebus.StorageBusPart;
 
 /**
@@ -107,6 +100,7 @@ public final class AEParts {
     public static final ItemDefinition<PartItem<PatternProviderPart>> PATTERN_PROVIDER = createPart("ME Pattern Provider", AEPartIds.PATTERN_PROVIDER, PatternProviderPart.class, PatternProviderPart::new);
     public static final ItemDefinition<PartItem<InterfacePart>> INTERFACE = createPart("ME Interface", AEPartIds.INTERFACE, InterfacePart.class, InterfacePart::new);
     public static final ItemDefinition<PartItem<PatternAccessTerminalPart>> PATTERN_ACCESS_TERMINAL = createPart("ME Pattern Access Terminal", AEPartIds.PATTERN_ACCESS_TERMINAL, PatternAccessTerminalPart.class, PatternAccessTerminalPart::new);
+    public static final ItemDefinition<PartItem<FacilityManagementPart>> FACILITY_MANAGEMENT = createPart("ME Facility Management", AEPartIds.FACILITY_TERMINAL, FacilityManagementPart.class, FacilityManagementPart::new);
     public static final ItemDefinition<PartItem<EnergyAcceptorPart>> ENERGY_ACCEPTOR = createPart("Energy Acceptor", AEPartIds.ENERGY_ACCEPTOR, EnergyAcceptorPart.class, EnergyAcceptorPart::new);
     public static final ItemDefinition<PartItem<MEP2PTunnelPart>> ME_P2P_TUNNEL = createPart("ME P2P Tunnel", AEPartIds.ME_P2P_TUNNEL, MEP2PTunnelPart.class, MEP2PTunnelPart::new);
     public static final ItemDefinition<PartItem<RedstoneP2PTunnelPart>> REDSTONE_P2P_TUNNEL = createPart("Redstone P2P Tunnel", AEPartIds.REDSTONE_P2P_TUNNEL, RedstoneP2PTunnelPart.class, RedstoneP2PTunnelPart::new);

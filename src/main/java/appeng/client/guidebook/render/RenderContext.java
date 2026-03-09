@@ -22,6 +22,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec2;
 
+import gto_ae.hooks.gui.IIcon;
+
 import appeng.api.stacks.AEFluidKey;
 import appeng.client.gui.Icon;
 import appeng.client.gui.style.BackgroundGenerator;
@@ -76,10 +78,10 @@ public interface RenderContext {
     }
 
     default void drawIcon(int x, int y, Icon icon, ColorValue color) {
-        var u0 = icon.x / (float) Icon.TEXTURE_WIDTH;
-        var v0 = icon.y / (float) Icon.TEXTURE_HEIGHT;
-        var u1 = (icon.x + icon.width) / (float) Icon.TEXTURE_WIDTH;
-        var v1 = (icon.y + icon.height) / (float) Icon.TEXTURE_HEIGHT;
+        var u0 = icon.x / (float) IIcon.TEXTURE_WIDTH;
+        var v0 = icon.y / (float) IIcon.TEXTURE_HEIGHT;
+        var u1 = (icon.x + icon.width) / (float) IIcon.TEXTURE_WIDTH;
+        var v1 = (icon.y + icon.height) / (float) IIcon.TEXTURE_HEIGHT;
 
         var texture = Minecraft.getInstance().getTextureManager().getTexture(Icon.TEXTURE);
         fillTexturedRect(new LytRect(x, y, icon.width, icon.height), texture, color, color, color, color,

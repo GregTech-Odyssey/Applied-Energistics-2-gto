@@ -27,6 +27,8 @@ import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.network.chat.Component;
 
+import gto_ae.hooks.gui.IIcon;
+
 import appeng.client.gui.Icon;
 
 /**
@@ -62,7 +64,7 @@ public class ValidationIcon extends IconButton {
     }
 
     @Override
-    protected Icon getIcon() {
+    protected IIcon getIcon() {
         return Icon.INVALID;
     }
 

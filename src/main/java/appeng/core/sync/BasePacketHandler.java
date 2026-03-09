@@ -24,34 +24,11 @@ import java.util.function.Function;
 
 import net.minecraft.network.FriendlyByteBuf;
 
-import appeng.core.sync.packets.AssemblerAnimationPacket;
-import appeng.core.sync.packets.BlockTransitionEffectPacket;
-import appeng.core.sync.packets.ClearPatternAccessTerminalPacket;
-import appeng.core.sync.packets.ColorApplicatorSelectColorPacket;
-import appeng.core.sync.packets.CompassRequestPacket;
-import appeng.core.sync.packets.CompassResponsePacket;
-import appeng.core.sync.packets.ConfigButtonPacket;
-import appeng.core.sync.packets.ConfigValuePacket;
-import appeng.core.sync.packets.ConfirmAutoCraftPacket;
-import appeng.core.sync.packets.CraftConfirmPlanPacket;
-import appeng.core.sync.packets.CraftingJobStatusPacket;
-import appeng.core.sync.packets.CraftingStatusPacket;
-import appeng.core.sync.packets.FillCraftingGridFromRecipePacket;
-import appeng.core.sync.packets.GuiDataSyncPacket;
-import appeng.core.sync.packets.HotkeyPacket;
-import appeng.core.sync.packets.InventoryActionPacket;
-import appeng.core.sync.packets.ItemTransitionEffectPacket;
-import appeng.core.sync.packets.LightningPacket;
-import appeng.core.sync.packets.MEInteractionPacket;
-import appeng.core.sync.packets.MEInventoryUpdatePacket;
-import appeng.core.sync.packets.MatterCannonPacket;
-import appeng.core.sync.packets.MockExplosionPacket;
-import appeng.core.sync.packets.MouseWheelPacket;
-import appeng.core.sync.packets.NetworkStatusPacket;
-import appeng.core.sync.packets.PartLeftClickPacket;
-import appeng.core.sync.packets.PatternAccessTerminalPacket;
-import appeng.core.sync.packets.SwapSlotsPacket;
-import appeng.core.sync.packets.SwitchGuisPacket;
+import gto_ae.core.sync.packets.ConfigButtonDirectPacket;
+import gto_ae.core.sync.packets.FacilityClearPacket;
+import gto_ae.core.sync.packets.FacilityManagementPacket;
+
+import appeng.core.sync.packets.*;
 
 public class BasePacketHandler {
     private static final Map<Class<? extends BasePacket>, PacketTypes> REVERSE_LOOKUP = new HashMap<>();
@@ -110,7 +87,12 @@ public class BasePacketHandler {
 
         HOTKEY(HotkeyPacket.class, HotkeyPacket::new),
 
-        CRAFTING_JOB_STATUS(CraftingJobStatusPacket.class, CraftingJobStatusPacket::new);
+        CRAFTING_JOB_STATUS(CraftingJobStatusPacket.class, CraftingJobStatusPacket::new),
+
+        FACILITY_CLEAR(FacilityManagementPacket.class, FacilityManagementPacket::new),
+        FACILITY_UPDATE(FacilityClearPacket.class, FacilityClearPacket::new),
+
+        CONFIG_BUTTON_DIRECT(ConfigButtonDirectPacket.class, ConfigButtonDirectPacket::new);
 
         private final Function<FriendlyByteBuf, BasePacket> factory;
 

@@ -4,6 +4,8 @@ import java.util.List;
 
 import net.minecraft.network.chat.Component;
 
+import gto_ae.hooks.gui.IIcon;
+
 import appeng.client.gui.Icon;
 import appeng.core.localization.ButtonToolTips;
 
@@ -20,7 +22,7 @@ public class OpenGuideButton extends IconButton {
     }
 
     @Override
-    protected Icon getIcon() {
+    protected IIcon getIcon() {
         return Icon.HELP;
     }
 }

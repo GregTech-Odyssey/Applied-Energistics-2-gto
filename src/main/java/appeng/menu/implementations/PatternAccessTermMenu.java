@@ -90,7 +90,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
      * Tracks hosts that were visible before, even if they no longer match the filter. For
      * {@link ShowPatternProviders#NOT_FULL}.
      */
-    private final Set<PatternContainer> pinnedHosts = new ReferenceOpenHashSet<>();;
+    private final Set<PatternContainer> pinnedHosts = new ReferenceOpenHashSet<>();
 
     protected boolean updatePatterns = true;
     private boolean broadcastPattern = true;
@@ -129,6 +129,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
         broadcastPatternChange();
     }
 
+    @SuppressWarnings("unchecked")
     protected void broadcastPatternChange() {
         if (broadcastPattern && getPlayer() instanceof ServerPlayer serverPlayer) {
             broadcastPattern = false;

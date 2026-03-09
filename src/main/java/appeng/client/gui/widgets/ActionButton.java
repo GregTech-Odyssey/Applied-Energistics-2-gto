@@ -25,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
 
+import gto_ae.hooks.gui.IIcon;
+
 import appeng.api.config.ActionItems;
 import appeng.client.gui.Icon;
 import appeng.core.localization.ButtonToolTips;
@@ -85,7 +87,7 @@ public class ActionButton extends IconButton {
     }
 
     @Override
-    protected Icon getIcon() {
+    protected IIcon getIcon() {
         return icon;
     }
 

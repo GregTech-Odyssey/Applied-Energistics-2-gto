@@ -31,6 +31,9 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 
+import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
+import gto_ae.menu.implementations.FacilityManagementMenu;
+
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.implementations.CellWorkbenchScreen;
 import appeng.client.gui.implementations.ChestScreen;
@@ -68,30 +71,7 @@ import appeng.client.gui.me.patternaccess.PatternAccessTermScreen;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.style.StyleManager;
 import appeng.menu.AEBaseMenu;
-import appeng.menu.implementations.CellWorkbenchMenu;
-import appeng.menu.implementations.ChestMenu;
-import appeng.menu.implementations.CondenserMenu;
-import appeng.menu.implementations.DriveMenu;
-import appeng.menu.implementations.EnergyLevelEmitterMenu;
-import appeng.menu.implementations.FormationPlaneMenu;
-import appeng.menu.implementations.IOBusMenu;
-import appeng.menu.implementations.IOPortMenu;
-import appeng.menu.implementations.InscriberMenu;
-import appeng.menu.implementations.InterfaceMenu;
-import appeng.menu.implementations.MolecularAssemblerMenu;
-import appeng.menu.implementations.PatternAccessTermMenu;
-import appeng.menu.implementations.PatternProviderMenu;
-import appeng.menu.implementations.PriorityMenu;
-import appeng.menu.implementations.QNBMenu;
-import appeng.menu.implementations.QuartzKnifeMenu;
-import appeng.menu.implementations.SetStockAmountMenu;
-import appeng.menu.implementations.SkyChestMenu;
-import appeng.menu.implementations.SpatialAnchorMenu;
-import appeng.menu.implementations.SpatialIOPortMenu;
-import appeng.menu.implementations.StorageBusMenu;
-import appeng.menu.implementations.StorageLevelEmitterMenu;
-import appeng.menu.implementations.VibrationChamberMenu;
-import appeng.menu.implementations.WirelessAccessPointMenu;
+import appeng.menu.implementations.*;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.crafting.CraftAmountMenu;
 import appeng.menu.me.crafting.CraftConfirmMenu;
@@ -179,8 +159,13 @@ public final class InitScreens {
                 PatternEncodingTermScreen::new,
                 "/screens/terminals/pattern_encoding_terminal.json");
         InitScreens.<PatternAccessTermMenu, PatternAccessTermScreen<PatternAccessTermMenu>>register(
-                PatternAccessTermMenu.TYPE, PatternAccessTermScreen::new,
+                PatternAccessTermMenu.TYPE,
+                PatternAccessTermScreen::new,
                 "/screens/terminals/pattern_access_terminal.json");
+        InitScreens.<FacilityManagementMenu, FacilityManagementScreen<FacilityManagementMenu>>register(
+                FacilityManagementMenu.TYPE,
+                FacilityManagementScreen::new,
+                "/screens/terminals/facility_management_terminal.json");
         // spotless:on
     }
 

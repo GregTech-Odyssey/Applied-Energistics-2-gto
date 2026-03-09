@@ -5,25 +5,29 @@
   "refmap": "ae2.mixins.refmap.json",
   "compatibilityLevel": "JAVA_11",
   "mixins": [
-    "chunkloading.ChunkMapMixin",
-    "spatial.MinecraftServerMixin",
     "AnvilMenuMixin",
     "EarlyStartupMixin",
     "EnchantmentHelperMixin",
     "ItemEntityMixin",
-    "tests.StructureUtilsMixin",
     "StructureTemplateMixin",
-    "UnbreakingMixin"
+    "UnbreakingMixin",
+    "chunkloading.ChunkMapMixin",
+    "gto_ae.extendedae.ModStackTransferContextMixin",
+    "gto_ae.extendedae.PartModExportBusMixin",
+    "gto_ae.extendedae.PartTagExportBusMixin",
+    "gto_ae.extendedae.TagStackTransferContextMixin",
+    "spatial.MinecraftServerMixin",
+    "tests.StructureUtilsMixin"
   ],
   "client": [
     "AbstractContainerScreenMixin",
     "GuiGraphicsMixin",
-    "WrappedGenericStackTooltipModIdMixin",
-    "ResizableSlotHighlightMixin",
-    "PickColorMixin",
-    "TextureAtlasMixin",
     "ModelBakeryMixin",
-    "VariantDeserializerMixin"
+    "PickColorMixin",
+    "ResizableSlotHighlightMixin",
+    "TextureAtlasMixin",
+    "VariantDeserializerMixin",
+    "WrappedGenericStackTooltipModIdMixin"
   ],
   "server": [],
   "injectors": {

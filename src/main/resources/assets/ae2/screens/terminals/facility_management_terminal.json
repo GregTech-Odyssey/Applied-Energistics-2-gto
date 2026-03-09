@@ -1,0 +1,36 @@
+{
+  "$schema": "../schema.json",
+  "includes": ["../common/common.json", "../common/player_inventory.json"],
+  "helpTopic": "items-blocks-machines/terminals.md#pattern-access-terminal-ui",
+  "text": {
+    "dialog_title": {
+      "text": {
+        "translate": "ae2.gto_extension.facility_management_short"
+      },
+      "position": {
+        "left": 8,
+        "top": 6
+      }
+    }
+  },
+  "widgets": {
+    "scrollbar": {
+      "left": 175,
+      "top": 42
+    },
+    "search": {
+      "left": 7,
+      "top": 25,
+      "width": 65,
+      "height": 12
+    },
+    "filter1": {
+      "left": 148,
+      "top": 20
+    },
+    "filter2": {
+      "left": 170,
+      "top": 20
+    }
+  }
+}

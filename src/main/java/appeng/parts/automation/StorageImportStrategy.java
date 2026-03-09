@@ -70,6 +70,7 @@ public class StorageImportStrategy<C, S> implements StackImportStrategy {
             if (amount > 0) {
                 var inserted = inv.getInventory().insert(resource.what(), amount, Actionable.MODULATE,
                         context.getActionSource());
+                context.getStats().add(resource.what(), inserted);
 
                 if (inserted < amount) {
                     // Be nice and try to give the overflow back

@@ -2,6 +2,7 @@ package appeng.parts.automation;
 
 import java.util.Set;
 
+import gto_ae.helpers.facility_management.ThroughputCounter;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.behaviors.StackTransferContext;
@@ -26,11 +27,13 @@ class StackTransferContextImpl implements StackTransferContext {
     private final int initialOperations;
     private int operationsRemaining;
     private boolean isInverted;
+    private final ThroughputCounter stats;
 
     public StackTransferContextImpl(IStorageService internalStorage, IEnergySource energySource,
             IActionSource actionSource,
             int operationsRemaining,
-            IPartitionList filter) {
+            IPartitionList filter,
+            ThroughputCounter stats) {
         this.internalStorage = internalStorage;
         this.energySource = energySource;
         this.actionSource = actionSource;
@@ -41,6 +44,7 @@ class StackTransferContextImpl implements StackTransferContext {
         for (AEKey item : filter.getItems()) {
             this.keyTypes.add(item.getType());
         }
+        this.stats = stats;
     }
 
     @Override
@@ -115,5 +119,10 @@ class StackTransferContextImpl implements StackTransferContext {
     @Override
     public void reduceOperationsRemaining(long inserted) {
         operationsRemaining -= inserted;
+    }
+
+    @Override
+    public ThroughputCounter getStats() {
+        return stats;
     }
 }

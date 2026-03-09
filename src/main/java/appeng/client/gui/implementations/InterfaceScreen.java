@@ -22,9 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Button.OnPress;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+
+import gto_ae.hooks.gui.IIcon;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
@@ -87,7 +88,7 @@ public class InterfaceScreen<C extends InterfaceMenu> extends UpgradeableScreen<
         }
 
         @Override
-        protected Icon getIcon() {
+        protected IIcon getIcon() {
             return isHoveredOrFocused() ? Icon.WRENCH : Icon.WRENCH_DISABLED;
         }
     }

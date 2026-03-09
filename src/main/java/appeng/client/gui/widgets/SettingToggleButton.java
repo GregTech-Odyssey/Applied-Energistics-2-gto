@@ -35,6 +35,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
 
+import gto_ae.hooks.gui.IIcon;
+
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.CondenserOutput;
 import appeng.api.config.CpuSelectionMode;
@@ -60,10 +62,13 @@ import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;
 import appeng.core.definitions.AEParts;
 import appeng.core.localization.ButtonToolTips;
+import appeng.core.localization.LocalizationEnum;
 import appeng.util.EnumCycler;
 
 public class SettingToggleButton<T extends Enum<T>> extends IconButton {
-    private static Map<EnumPair<?>, ButtonAppearance> appearances;
+
+    private static final Map<EnumPair<?>, ButtonAppearance> appearances = new HashMap<>();
+    private static boolean appearancesInitialized = false;
     private final Setting<T> buttonSetting;
     private final IHandler<SettingToggleButton<T>> onPress;
     private final EnumSet<T> validValues;
@@ -93,8 +98,118 @@ public class SettingToggleButton<T extends Enum<T>> extends IconButton {
         this.buttonSetting = setting;
         this.currentValue = val;
 
-        if (appearances == null) {
-            appearances = new HashMap<>();
+    }
+
+    private static void onPress(Button btn) {
+        if (btn instanceof SettingToggleButton) {
+            ((SettingToggleButton<?>) btn).triggerPress();
+        }
+    }
+
+    private void triggerPress() {
+        boolean backwards = false;
+        // This isn't great, but we don't get any information about right-clicks
+        // otherwise
+        Screen currentScreen = Minecraft.getInstance().screen;
+        if (currentScreen instanceof AEBaseScreen) {
+            backwards = ((AEBaseScreen<?>) currentScreen).isHandlingRightClick();
+        }
+        onPress.handle(this, backwards);
+    }
+
+    @Nullable
+    private ButtonAppearance getApperance() {
+        if (this.buttonSetting != null && this.currentValue != null) {
+            return getAppearances().get(new EnumPair<>(this.buttonSetting, this.currentValue));
+        }
+        return null;
+    }
+
+    @Override
+    protected IIcon getIcon() {
+        var app = getApperance();
+        if (app != null && app.icon != null) {
+            return app.icon;
+        }
+        return Icon.TOOLBAR_BUTTON_BACKGROUND;
+    }
+
+    @Override
+    protected Item getItemOverlay() {
+        var app = getApperance();
+        if (app != null && app.item != null) {
+            return app.item;
+        }
+        return null;
+    }
+
+    public Setting<T> getSetting() {
+        return this.buttonSetting;
+    }
+
+    public T getCurrentValue() {
+        return this.currentValue;
+    }
+
+    public void set(T e) {
+        if (this.currentValue != e) {
+            this.currentValue = e;
+        }
+    }
+
+    public T getNextValue(boolean backwards) {
+        return EnumCycler.rotateEnum(currentValue, backwards, validValues);
+    }
+
+    @Override
+    public List<Component> getTooltipMessage() {
+
+        if (this.buttonSetting == null || this.currentValue == null) {
+            return Collections.emptyList();
+        }
+
+        var buttonAppearance = appearances.get(new EnumPair<>(this.buttonSetting, this.currentValue));
+        if (buttonAppearance == null) {
+            return Collections.singletonList(ButtonToolTips.NoSuchMessage.text());
+        }
+
+        return buttonAppearance.tooltipLines;
+    }
+
+    public static final class EnumPair<T extends Enum<T>> {
+
+        final Setting<T> setting;
+        final T value;
+
+        public EnumPair(Setting<T> setting, T value) {
+            this.setting = setting;
+            this.value = value;
+        }
+
+        @Override
+        public int hashCode() {
+            return this.setting.hashCode() ^ this.value.hashCode();
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (obj == null) {
+                return false;
+            }
+            if (this.getClass() != obj.getClass()) {
+                return false;
+            }
+            final EnumPair<?> other = (EnumPair<?>) obj;
+            return other.setting == this.setting && other.value == this.value;
+        }
+    }
+
+    public record ButtonAppearance(@Nullable IIcon icon, @Nullable Item item, List<Component> tooltipLines) {
+    }
+
+    public static Map<EnumPair<?>, ButtonAppearance> getAppearances() {
+        if (!appearancesInitialized) {
+            appearancesInitialized = true;
             registerApp(Icon.CONDENSER_OUTPUT_TRASH, Settings.CONDENSER_OUTPUT, CondenserOutput.TRASH,
                     ButtonToolTips.CondenserOutput,
                     ButtonToolTips.Trash);
@@ -311,27 +426,11 @@ public class SettingToggleButton<T extends Enum<T>> extends IconButton {
                     ButtonToolTips.InscriberBufferSize,
                     ButtonToolTips.InscriberBufferLow);
         }
+        return appearances;
     }
 
-    private static void onPress(Button btn) {
-        if (btn instanceof SettingToggleButton) {
-            ((SettingToggleButton<?>) btn).triggerPress();
-        }
-    }
-
-    private void triggerPress() {
-        boolean backwards = false;
-        // This isn't great, but we don't get any information about right-clicks
-        // otherwise
-        Screen currentScreen = Minecraft.getInstance().screen;
-        if (currentScreen instanceof AEBaseScreen) {
-            backwards = ((AEBaseScreen<?>) currentScreen).isHandlingRightClick();
-        }
-        onPress.handle(this, backwards);
-    }
-
-    private static <T extends Enum<T>> void registerApp(Icon icon, Setting<T> setting, T val,
-            ButtonToolTips title, Component... tooltipLines) {
+    public static <T extends Enum<T>> void registerApp(IIcon icon, Setting<T> setting, T val,
+            LocalizationEnum title, Component... tooltipLines) {
         var lines = new ArrayList<Component>();
         lines.add(title.text());
         Collections.addAll(lines, tooltipLines);
@@ -341,8 +440,8 @@ public class SettingToggleButton<T extends Enum<T>> extends IconButton {
                 new ButtonAppearance(icon, null, lines));
     }
 
-    private static <T extends Enum<T>> void registerApp(ItemLike item, Setting<T> setting, T val,
-            ButtonToolTips title, Component... tooltipLines) {
+    public static <T extends Enum<T>> void registerApp(ItemLike item, Setting<T> setting, T val,
+            LocalizationEnum title, Component... tooltipLines) {
         var lines = new ArrayList<Component>();
         lines.add(title.text());
         Collections.addAll(lines, tooltipLines);
@@ -352,98 +451,8 @@ public class SettingToggleButton<T extends Enum<T>> extends IconButton {
                 new ButtonAppearance(null, item.asItem(), lines));
     }
 
-    private static <T extends Enum<T>> void registerApp(Icon icon, Setting<T> setting, T val,
-            ButtonToolTips title, ButtonToolTips hint) {
+    public static <T extends Enum<T>> void registerApp(IIcon icon, Setting<T> setting, T val,
+            LocalizationEnum title, LocalizationEnum hint) {
         registerApp(icon, setting, val, title, hint.text());
-    }
-
-    @Nullable
-    private ButtonAppearance getApperance() {
-        if (this.buttonSetting != null && this.currentValue != null) {
-            return appearances.get(new EnumPair<>(this.buttonSetting, this.currentValue));
-        }
-        return null;
-    }
-
-    @Override
-    protected Icon getIcon() {
-        var app = getApperance();
-        if (app != null && app.icon != null) {
-            return app.icon;
-        }
-        return Icon.TOOLBAR_BUTTON_BACKGROUND;
-    }
-
-    @Override
-    protected Item getItemOverlay() {
-        var app = getApperance();
-        if (app != null && app.item != null) {
-            return app.item;
-        }
-        return null;
-    }
-
-    public Setting<T> getSetting() {
-        return this.buttonSetting;
-    }
-
-    public T getCurrentValue() {
-        return this.currentValue;
-    }
-
-    public void set(T e) {
-        if (this.currentValue != e) {
-            this.currentValue = e;
-        }
-    }
-
-    public T getNextValue(boolean backwards) {
-        return EnumCycler.rotateEnum(currentValue, backwards, validValues);
-    }
-
-    @Override
-    public List<Component> getTooltipMessage() {
-
-        if (this.buttonSetting == null || this.currentValue == null) {
-            return Collections.emptyList();
-        }
-
-        var buttonAppearance = appearances.get(new EnumPair<>(this.buttonSetting, this.currentValue));
-        if (buttonAppearance == null) {
-            return Collections.singletonList(ButtonToolTips.NoSuchMessage.text());
-        }
-
-        return buttonAppearance.tooltipLines;
-    }
-
-    private static final class EnumPair<T extends Enum<T>> {
-
-        final Setting<T> setting;
-        final T value;
-
-        public EnumPair(Setting<T> setting, T value) {
-            this.setting = setting;
-            this.value = value;
-        }
-
-        @Override
-        public int hashCode() {
-            return this.setting.hashCode() ^ this.value.hashCode();
-        }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (obj == null) {
-                return false;
-            }
-            if (this.getClass() != obj.getClass()) {
-                return false;
-            }
-            final EnumPair<?> other = (EnumPair<?>) obj;
-            return other.setting == this.setting && other.value == this.value;
-        }
-    }
-
-    private record ButtonAppearance(@Nullable Icon icon, @Nullable Item item, List<Component> tooltipLines) {
     }
 }

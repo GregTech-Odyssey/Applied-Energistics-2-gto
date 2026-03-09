@@ -154,10 +154,10 @@ public class NetworkStorage implements MEStorage {
         if (queuedOperations != null) {
             this.queuedOperations = null;
             for (var op : queuedOperations) {
-                if (op instanceof MountOperation mountOp) {
-                    mount(mountOp.priority, mountOp.storage);
-                } else if (op instanceof UnmountOperation unmountOp) {
-                    unmount(unmountOp.storage);
+                if (op instanceof MountOperation(int priority, MEStorage storage1)) {
+                    mount(priority, storage1);
+                } else if (op instanceof UnmountOperation(MEStorage storage)) {
+                    unmount(storage);
                 } else {
                     throw new IllegalStateException("Unknown operation: " + op);
                 }
@@ -168,7 +168,7 @@ public class NetworkStorage implements MEStorage {
     private boolean isQueuedForRemoval(MEStorage inv) {
         if (queuedOperations != null) {
             for (var queuedOperation : queuedOperations) {
-                if (queuedOperation instanceof UnmountOperation unmountOperation && unmountOperation.storage == inv) {
+                if (queuedOperation instanceof UnmountOperation(MEStorage storage) && storage == inv) {
                     return true;
                 }
             }

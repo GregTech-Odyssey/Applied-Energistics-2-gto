@@ -97,9 +97,7 @@ public class MultiCraftingTracker {
                         return true;
                     }
                 }
-            } catch (InterruptedException e) {
-                // :P
-            } catch (ExecutionException e) {
+            } catch (InterruptedException | ExecutionException e) {
                 // :P
             }
         } else if (this.getLink(x) == null) {

@@ -82,6 +82,7 @@ dependencies {
         modImplementation "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
     } else if (project.runtime_itemlist_mod == "emi") {
         modRuntimeOnly "dev.emi:emi-forge:${emi_version}"
+        modCompileOnly "dev.emi:emi-forge:${emi_version}"
 
         compileOnly "me.shedaniel.cloth:basic-math:0.6.1"
         modCompileOnly "dev.architectury:architectury-forge:${project.architectury_version}"
@@ -128,11 +129,11 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter-params")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
     testImplementation("org.junit.platform:junit-platform-launcher")
-    testImplementation("org.assertj:assertj-core:3.19.0")
+    testImplementation('org.assertj:assertj-core:3.27.7')
     testImplementation("com.google.guava:guava-testlib:21.0")
     testImplementation("org.mockito:mockito-junit-jupiter:5.3.1")
 
-    compileOnly 'org.apache.commons:commons-configuration2:2.9.0'
+    compileOnly 'org.apache.commons:commons-configuration2:2.10.1'
     compileOnly 'org.jetbrains:annotations:24.1.0'
     testCompileOnly 'org.jetbrains:annotations:24.1.0'
 
@@ -140,7 +141,7 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     modImplementation("curse.maven:glodium-957920:5006780")
-    modImplementation("curse.maven:ex-pattern-provider-892005:7064210")
+    modImplementation("curse.maven:ex-pattern-provider-892005:7624084")
 
     modImplementation("curse.maven:merequester-688367:5689932")
 
@@ -424,7 +425,7 @@ artifacts {
 spotless {
 
     java {
-        target 'src/*/java/appeng/**/*.java'
+        target('src/*/java/appeng/**/*.java', 'src/*/java/gto_ae/**/*.java')
 
         endWithNewline()
         indentWithSpaces()
