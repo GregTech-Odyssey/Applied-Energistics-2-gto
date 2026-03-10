@@ -39,6 +39,9 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import gto_ae.hooks.gui.menu.IDecoratedSlot;
+import gto_ae.hooks.gui.menu.IRepoSlot;
+
 import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.client.AEKeyRendering;
 import appeng.api.config.ActionItems;
@@ -52,7 +55,6 @@ import appeng.api.implementations.blockentities.IMEChest;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.storage.AEKeyFilter;
 import appeng.api.util.IConfigManager;
-import appeng.api.util.IConfigurableObject;
 import appeng.client.Hotkeys;
 import appeng.client.Point;
 import appeng.client.gui.AEBaseScreen;
@@ -139,7 +141,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
         this.imageWidth = this.style.getScreenWidth();
         this.imageHeight = this.style.getScreenHeight(0);
 
-        this.configSrc = ((IConfigurableObject) this.menu).getConfigManager();
+        this.configSrc = this.menu.getConfigManager();
         this.menu.setGui(this);
 
         List<Slot> viewCellSlots = menu.getSlots(SlotSemantics.VIEW_CELL);
@@ -432,7 +434,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
     private void renderPinnedRowDecorations(GuiGraphics guiGraphics) {
         for (Slot slot : menu.slots) {
-            if (slot instanceof RepoSlot repoSlot) {
+            if (slot instanceof IRepoSlot repoSlot) {
                 var entry = repoSlot.getEntry();
                 if (entry != null && PendingCraftingJobs.hasPendingJob(entry.getWhat())) {
                     var frames = 192 / 16;
@@ -459,7 +461,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
         // handler for middle mouse button crafting in survival mode
         if (Minecraft.getInstance().options.keyPickItem.matchesMouse(btn)) {
             Slot slot = this.findSlot(xCoord, yCoord);
-            if (slot instanceof RepoSlot repoSlot && repoSlot.isCraftable()) {
+            if (slot instanceof IRepoSlot repoSlot && repoSlot.isCraftable()) {
                 handleGridInventoryEntryMouseClick(repoSlot.getEntry(), btn, ClickType.CLONE);
                 return true;
             }
@@ -471,7 +473,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
     @Override
     public boolean mouseScrolled(double x, double y, double wheelDelta) {
         if (wheelDelta != 0 && hasShiftDown()) {
-            if (this.findSlot(x, y) instanceof RepoSlot repoSlot) {
+            if (this.findSlot(x, y) instanceof IRepoSlot repoSlot) {
                 GridInventoryEntry entry = repoSlot.getEntry();
                 long serial = entry != null ? entry.getSerial() : -1;
                 final InventoryAction direction = wheelDelta > 0 ? InventoryAction.ROLL_DOWN
@@ -490,7 +492,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
     @Override
     protected void slotClicked(Slot slot, int slotIdx, int mouseButton, ClickType clickType) {
-        if (slot instanceof RepoSlot repoSlot) {
+        if (slot instanceof IRepoSlot repoSlot) {
             handleGridInventoryEntryMouseClick(repoSlot.getEntry(), mouseButton, clickType);
             return;
         }
@@ -557,7 +559,14 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
     @Override
     public void renderSlot(GuiGraphics guiGraphics, Slot s) {
-        if (s instanceof RepoSlot repoSlot) {
+        if (s instanceof IRepoSlot repoSlot) {
+
+            if (s instanceof IDecoratedSlot iconSlot && iconSlot.getIcon() != null) {
+                iconSlot.getIcon().getBlitter()
+                        .dest(s.x, s.y)
+                        .opacity(iconSlot.getOpacityOfIcon())
+                        .blit(guiGraphics);
+            }
             if (!this.repo.hasPower()) {
                 guiGraphics.fill(s.x, s.y, 16 + s.x, 16 + s.y, 0x66111111);
             } else {
@@ -609,20 +618,27 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
     @Override
     protected void renderTooltip(GuiGraphics guiGraphics, int x, int y) {
-        if (this.hoveredSlot instanceof RepoSlot repoSlot) {
+        if (this.hoveredSlot instanceof IRepoSlot repoSlot) {
+            List<Component> tooltip;
             var carried = menu.getCarried();
-            if (!carried.isEmpty()) {
+            if (repoSlot.getStoredAmount() == 0 && repoSlot instanceof IDecoratedSlot fxRepoSlot
+                    && !fxRepoSlot.getEmptyTooltipMessage().isEmpty())
+                tooltip = fxRepoSlot.getEmptyTooltipMessage();
+            else if (carried.isEmpty()) {
+                tooltip = List.of();
+            } else {
                 var emptyingAction = ContainerItemStrategies.getEmptyingAction(carried);
-                if (emptyingAction != null && menu.isKeyVisible(emptyingAction.what())) {
-                    drawTooltip(
-                            guiGraphics,
-                            x,
-                            y,
-                            Tooltips.getEmptyingTooltip(ButtonToolTips.StoreAction, carried, emptyingAction));
-                    return;
-                }
-
-                // TODO: Fill action same way
+                tooltip = emptyingAction != null && getMenu().isKeyVisible(emptyingAction.what())
+                        ? Tooltips.getEmptyingTooltip(ButtonToolTips.StoreAction, carried, emptyingAction)
+                        : List.of();
+            }
+            if (!tooltip.isEmpty()) {
+                drawTooltip(
+                        guiGraphics,
+                        x,
+                        y,
+                        tooltip);
+                return;
             }
 
             // Vanilla doesn't show item tooltips when the player have something in their hand

@@ -23,6 +23,50 @@
 
 package appeng.api.config;
 
-public enum ActionItems {
-    WRENCH, CLOSE, STASH, STASH_TO_PLAYER_INV, ENCODE, CYCLE_PROCESSING_OUTPUT, TERMINAL_SETTINGS
+import gto_ae.client.gui.IconsExtended;
+import gto_ae.core.localization.ExtendedLangs;
+import gto_ae.hooks.gui.IActionItems;
+import gto_ae.hooks.gui.IIcon;
+
+import appeng.client.gui.Icon;
+import appeng.core.localization.ButtonToolTips;
+import appeng.core.localization.LocalizationEnum;
+
+public enum ActionItems implements IActionItems {
+    WRENCH(Icon.WRENCH, ButtonToolTips.PartitionStorage, ButtonToolTips.PartitionStorageHint),
+    CLOSE(Icon.CLEAR, ButtonToolTips.Clear, ButtonToolTips.ClearSettings),
+    STASH(Icon.ARROW_UP, ButtonToolTips.Stash, ButtonToolTips.StashDesc),
+    STASH_TO_PLAYER_INV(Icon.ARROW_DOWN, ButtonToolTips.StashToPlayer, ButtonToolTips.StashToPlayerDesc),
+    ENCODE(Icon.WHITE_ARROW_DOWN, ButtonToolTips.Encode, ButtonToolTips.EncodeDescription),
+    CYCLE_PROCESSING_OUTPUT(Icon.SCHEDULING_DEFAULT, ButtonToolTips.CycleProcessingOutput,
+            ButtonToolTips.CycleProcessingOutputTooltip),
+    TERMINAL_SETTINGS(Icon.WRENCH, ButtonToolTips.TerminalSettings, null),
+
+    ENCODING_TO_INVENTORY(IconsExtended.ENCODING_TO_INVENTORY, ExtendedLangs.ShiftEncodingDesc,
+            ExtendedLangs.ShiftEncodingClearDesc);
+
+    private final IIcon icon;
+    private final LocalizationEnum displayName;
+    private final LocalizationEnum displayValue;
+
+    ActionItems(IIcon icon, LocalizationEnum displayName, LocalizationEnum displayValue) {
+        this.icon = icon;
+        this.displayName = displayName;
+        this.displayValue = displayValue;
+    }
+
+    @Override
+    public IIcon icon() {
+        return icon;
+    }
+
+    @Override
+    public LocalizationEnum displayName() {
+        return displayName;
+    }
+
+    @Override
+    public LocalizationEnum displayValue() {
+        return displayValue;
+    }
 }

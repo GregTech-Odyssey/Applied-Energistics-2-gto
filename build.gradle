@@ -142,8 +142,12 @@ dependencies {
 
     modImplementation("curse.maven:glodium-957920:5006780")
     modImplementation("curse.maven:ex-pattern-provider-892005:7624084")
-
+    modImplementation("curse.maven:applied-energistics-2-wireless-terminals-459929:7251206")
     modImplementation("curse.maven:merequester-688367:5689932")
+
+    modRuntimeOnly("top.theillusivec4.curios:curios-forge:5.14.1+${project.minecraft_version}")
+    modRuntimeOnly("curse.maven:cloth-config-348521:5729105")
+    modRuntimeOnly("dev.architectury:architectury-forge:9.2.14")
 
 }
 archivesBaseName = artifact_basename
@@ -233,6 +237,9 @@ allprojects {
             }
         }
         maven { url = 'https://repo.spongepowered.org/maven' }
+        maven {
+            url "https://maven.teamresourceful.com/repository/maven-public/"
+        }
     }
 
     // ensure everything uses UTF-8 and not some random codepage chosen by gradle

@@ -44,6 +44,7 @@ import net.minecraft.client.gui.components.ComponentRenderUtils;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Rect2i;
@@ -58,6 +59,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import gto_ae.hooks.gui.INoMouseRedirectionWidget;
 import gto_ae.hooks.gui.IPopulateScreenWidget;
 import guideme.indices.ItemIndex;
 
@@ -126,6 +128,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
     protected final WidgetContainer widgets;
     protected final ScreenStyle style;
     protected final AEConfig config = AEConfig.instance();
+    private boolean lastShiftState = false;
 
     /**
      * The positions of all slots when a subscreen is opened.
@@ -550,7 +553,8 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
             try {
                 for (var widget : this.children()) {
                     if (widget.isMouseOver(xCoord, yCoord)) {
-                        return super.mouseClicked(xCoord, yCoord, 0);
+                        return super.mouseClicked(xCoord, yCoord,
+                                widget instanceof INoMouseRedirectionWidget w && w.shouldHandleRightClick() ? 1 : 0);
                     }
                 }
             } finally {
@@ -852,6 +856,10 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
             if (child instanceof ITickingWidget) {
                 ((ITickingWidget) child).tick();
             }
+        }
+        if (lastShiftState != Screen.hasShiftDown()) {
+            lastShiftState = Screen.hasShiftDown();
+            menu.shiftStateChanged(lastShiftState);
         }
     }
 

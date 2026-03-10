@@ -25,6 +25,7 @@ import java.util.List;
 import com.mojang.datafixers.util.Pair;
 
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.resources.ResourceLocation;
@@ -41,10 +42,12 @@ import net.minecraft.world.item.crafting.StonecutterRecipe;
 import it.unimi.dsi.fastutil.ints.IntArraySet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 
+import appeng.api.config.Actionable;
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
+import appeng.api.storage.MEStorage;
 import appeng.client.gui.Icon;
 import appeng.client.gui.me.items.PatternEncodingTermScreen;
 import appeng.core.definitions.AEItems;
@@ -95,7 +98,6 @@ public class PatternEncodingTermMenu extends MEStorageMenu implements IMenuCraft
     private final FakeSlot smithingTableBaseSlot;
     private final FakeSlot smithingTableAdditionSlot;
     private final PatternTermSlot craftOutputSlot;
-    private final RestrictedInputSlot blankPatternSlot;
     private final RestrictedInputSlot encodedPatternSlot;
     // 9x9 inventory wrapper to feed into the crafting mode slots
 
@@ -178,8 +180,6 @@ public class PatternEncodingTermMenu extends MEStorageMenu implements IMenuCraft
                 SlotSemantics.SMITHING_TABLE_ADDITION);
         this.smithingTableAdditionSlot.setHideAmount(true);
 
-        this.addSlot(this.blankPatternSlot = new RestrictedInputSlot(RestrictedInputSlot.PlacableItemType.BLANK_PATTERN,
-                encodingLogic.getBlankPatternInv(), 0), SlotSemantics.BLANK_PATTERN);
         this.addSlot(
                 this.encodedPatternSlot = new RestrictedInputSlot(RestrictedInputSlot.PlacableItemType.ENCODED_PATTERN,
                         encodingLogic.getEncodedPatternInv(), 0),
@@ -200,7 +200,7 @@ public class PatternEncodingTermMenu extends MEStorageMenu implements IMenuCraft
     }
 
     @Override
-    public void setItem(int slotID, int stateId, ItemStack stack) {
+    public void setItem(int slotID, int stateId, @NotNull ItemStack stack) {
         super.setItem(slotID, stateId, stack);
         this.getAndUpdateOutput();
     }
@@ -279,22 +279,38 @@ public class PatternEncodingTermMenu extends MEStorageMenu implements IMenuCraft
                 return;
             } // if nothing is there we should snag a new pattern.
             else if (encodeOutput.isEmpty()) {
-                var blankPattern = this.blankPatternSlot.getItem();
-                if (!isPattern(blankPattern)) {
-                    return; // no blanks.
-                }
-
-                // remove one, and clear the input slot.
-                blankPattern.shrink(1);
-                if (blankPattern.getCount() <= 0) {
-                    this.blankPatternSlot.set(ItemStack.EMPTY);
+                if (gtolib$operateBlankPattern(true)) {
+                    return; // No pattern to encode onto
                 }
             }
-
+            var player = getPlayer();
+            if (serverShiftState) {
+                var inventory = player.getInventory();
+                if (inventory.add(encodedPattern)) {
+                    encodedPatternSlot.clearStack();
+                }
+            }
             this.encodedPatternSlot.set(encodedPattern);
         } else {
             clearPattern();
         }
+    }
+
+    /// @return true if the operation failed (i.e. there was nothing to extract/insert)
+    private boolean gtolib$operateBlankPattern(boolean extract) {
+        var host = getHost();
+        if (host == null)
+            return true;
+
+        MEStorage inventory = host.getInventory();
+        if (inventory == null)
+            return true;
+
+        AEItemKey blankPattern = AEItemKey.of(AEItems.BLANK_PATTERN);
+
+        var extractedOrInserted = extract ? inventory.extract(blankPattern, 1, Actionable.MODULATE, getActionSource())
+                : inventory.insert(blankPattern, 1, Actionable.MODULATE, getActionSource());
+        return extractedOrInserted <= 0;
     }
 
     /**
@@ -303,8 +319,25 @@ public class PatternEncodingTermMenu extends MEStorageMenu implements IMenuCraft
     private void clearPattern() {
         var encodedPattern = this.encodedPatternSlot.getItem();
         if (PatternDetailsHelper.isEncodedPattern(encodedPattern)) {
-            this.encodedPatternSlot.set(
-                    AEItems.BLANK_PATTERN.stack(encodedPattern.getCount()));
+            if (gtolib$operateBlankPattern(false)) {
+                this.encodedPatternSlot.set(
+                        AEItems.BLANK_PATTERN.stack(encodedPattern.getCount()));
+            } else {
+                this.encodedPatternSlot.set(ItemStack.EMPTY);
+            }
+        }
+        if (serverShiftState) {
+            var inventory = getPlayer().getInventory();
+            for (int i = 0; i < inventory.getContainerSize(); ++i) {
+                ItemStack itemStack = inventory.getItem(i);
+                if (PatternDetailsHelper.isEncodedPattern(itemStack)) {
+                    if (gtolib$operateBlankPattern(false)) {
+                        inventory.setItem(i, AEItems.BLANK_PATTERN.stack(itemStack.getCount()));
+                    } else {
+                        inventory.setItem(i, ItemStack.EMPTY);
+                    }
+                }
+            }
         }
     }
 
@@ -598,14 +631,6 @@ public class PatternEncodingTermMenu extends MEStorageMenu implements IMenuCraft
 
     @Override
     protected ItemStack transferStackToMenu(ItemStack input) {
-        // try refilling the blank pattern slot
-        if (blankPatternSlot.mayPlace(input)) {
-            input = blankPatternSlot.safeInsert(input);
-            if (input.isEmpty()) {
-                return ItemStack.EMPTY;
-            }
-        }
-
         // try refilling the encoded pattern slot
         if (encodedPatternSlot.mayPlace(input)) {
             input = encodedPatternSlot.safeInsert(input);

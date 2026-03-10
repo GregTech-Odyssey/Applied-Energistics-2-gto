@@ -21,14 +21,22 @@ package appeng.menu.implementations;
 import java.util.Map;
 import java.util.Set;
 
+import com.glodblock.github.extendedae.common.EPPItemAndBlock;
+
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
+import gto_ae.api.config.ExtendedSettings;
+import gto_ae.menu.ShowMolecularAssembler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -47,8 +55,10 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.util.IConfigurableObject;
 import appeng.client.gui.me.patternaccess.PatternAccessTermScreen;
 import appeng.core.AELog;
+import appeng.core.definitions.AEBlocks;
 import appeng.core.sync.packets.ClearPatternAccessTerminalPacket;
 import appeng.core.sync.packets.PatternAccessTerminalPacket;
+import appeng.crafting.pattern.CraftingPatternItem;
 import appeng.helpers.InventoryAction;
 import appeng.helpers.patternprovider.PatternContainer;
 import appeng.menu.AEBaseMenu;
@@ -66,6 +76,11 @@ public class PatternAccessTermMenu extends AEBaseMenu {
     private final IConfigurableObject host;
     @GuiSync(1)
     public ShowPatternProviders showPatternProviders = ShowPatternProviders.VISIBLE;
+
+    @GuiSync(2)
+    public ShowMolecularAssembler gtolib$showMolecularAssembler;
+
+    public ShowMolecularAssembler gtolib$lastShownMolecularAssembler;
 
     private ShowPatternProviders lastShownProviders = showPatternProviders;
 
@@ -106,6 +121,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
         if (bindInventory) {
             this.createPlayerInventorySlots(ip);
         }
+        gtolib$showMolecularAssembler = ShowMolecularAssembler.ALL;
     }
 
     @Override
@@ -115,6 +131,8 @@ public class PatternAccessTermMenu extends AEBaseMenu {
         }
 
         showPatternProviders = this.host.getConfigManager().getSetting(Settings.TERMINAL_SHOW_PATTERN_PROVIDERS);
+        gtolib$showMolecularAssembler = this.host.getConfigManager()
+                .getSetting(ExtendedSettings.TERMINAL_SHOW_MOLECULAR_ASSEMBLERS);
 
         super.broadcastChanges();
 
@@ -126,6 +144,12 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             updatePatterns = true;
             lastShownProviders = showPatternProviders;
         }
+
+        if (gtolib$lastShownMolecularAssembler != gtolib$showMolecularAssembler) {
+            gtolib$lastShownMolecularAssembler = gtolib$showMolecularAssembler;
+            updatePatterns = true;
+        }
+
         broadcastPatternChange();
     }
 
@@ -199,7 +223,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             case VISIBLE -> isVisible;
             case NOT_FULL -> isVisible && (pinnedHosts.contains(container) || !isFull(container));
             case ALL -> true;
-        };
+        } && gtolib$isMolecularAssembler(container);
     }
 
     private <T extends PatternContainer> void visitPatternProviderHosts(IGrid grid, Class<T> machineClass,
@@ -427,15 +451,32 @@ public class PatternAccessTermMenu extends AEBaseMenu {
         }
 
         private static boolean isDifferent(ItemStack a, ItemStack b) {
-            if (a.isEmpty() && b.isEmpty()) {
+            if (a == b)
+                return false;
+            if (a.isEmpty() && b.isEmpty())
+                return false;
+            if (a.isEmpty() || b.isEmpty())
+                return true;
+
+            if (a.getItem() == b.getItem()) {
+                var at = a.getTag();
+                var bt = b.getTag();
+                if (at == null && bt == null)
+                    return false;
+                if (at == null || bt == null)
+                    return true;
+                var oa = at.tags.get("out");
+                var ob = bt.tags.get("out");
+                if (oa instanceof ListTag la && la.getFirst() instanceof CompoundTag ca &&
+                        ca.tags.get("id") instanceof StringTag sa &&
+                        ob instanceof ListTag lb &&
+                        lb.getFirst() instanceof CompoundTag cb &&
+                        cb.tags.get("id") instanceof StringTag sb) {
+                    return !sa.equals(sb);
+                }
                 return false;
             }
-
-            if (a.isEmpty() || b.isEmpty()) {
-                return true;
-            }
-
-            return !ItemStack.matches(a, b);
+            return true;
         }
     }
 
@@ -456,5 +497,32 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             return machineClass.asSubclass(PatternContainer.class);
         }
         return null;
+    }
+
+    private static boolean gtolib$isCraftingContainer(PatternContainer container) {
+        Set<Item> MolecularAssemblerItem = Set.of(
+                AEBlocks.MOLECULAR_ASSEMBLER.asItem().asItem(),
+                EPPItemAndBlock.EX_ASSEMBLER.asItem());
+        InternalInventory inventory = container.getTerminalPatternInventory();
+        if (!inventory.isEmpty()) {
+            for (int j = 0; j < inventory.size(); j++) {
+                ItemStack item = inventory.getStackInSlot(j);
+                if (!item.isEmpty()) {
+                    return item.getItem() instanceof CraftingPatternItem;
+                }
+            }
+        }
+        if (container.getTerminalGroup().icon() != null) {
+            return MolecularAssemblerItem.contains(container.getTerminalGroup().icon().getItem());
+        }
+        return false;
+    }
+
+    private boolean gtolib$isMolecularAssembler(PatternContainer container) {
+        return switch (gtolib$showMolecularAssembler) {
+            case ONLY_MOLECULAR_ASSEMBLER -> gtolib$isCraftingContainer(container);
+            case EXPECT_MOLECULAR_ASSEMBLER -> !gtolib$isCraftingContainer(container);
+            default -> true;
+        };
     }
 }

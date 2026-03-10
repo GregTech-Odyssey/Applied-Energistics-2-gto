@@ -31,6 +31,7 @@ import java.util.WeakHashMap;
 
 import com.google.common.collect.HashMultimap;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,9 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import gto_ae.api.config.ExtendedSettings;
+import gto_ae.client.gui.widgets.ExpandableToggleButton;
+import gto_ae.menu.ShowMolecularAssembler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import appeng.api.config.Settings;
@@ -136,6 +140,7 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
     private final Map<String, Set<Object>> cachedSearches = new WeakHashMap<>();
     private final Scrollbar scrollbar;
     private final AETextField searchField;
+    private final ExpandableToggleButton<ShowMolecularAssembler> gtolib$showMolecularAssembler;
 
     private int visibleRows = 0;
 
@@ -160,6 +165,11 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
         this.searchField = widgets.addTextField("search");
         this.searchField.setResponder(str -> this.refreshList());
         this.searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
+        gtolib$showMolecularAssembler = new ExpandableToggleButton<>(
+                ExtendedSettings.TERMINAL_SHOW_MOLECULAR_ASSEMBLERS,
+                ShowMolecularAssembler.ALL,
+                ExpandableToggleButton::sendToServer, ExpandableToggleButton.LayoutDirection.LEFT);
+        this.addToLeftToolbar(gtolib$showMolecularAssembler);
     }
 
     @Override
@@ -192,19 +202,18 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
         for (; i < this.visibleRows; ++i) {
             if (scrollLevel + i < this.rows.size()) {
                 var row = this.rows.get(scrollLevel + i);
-                if (row instanceof SlotsRow slotsRow) {
+                if (row instanceof SlotsRow(PatternContainerRecord container, int offset, int slots)) {
                     // Note: We have to shift everything after the header up by 1 to avoid black line duplication.
-                    var container = slotsRow.container;
-                    for (int col = 0; col < slotsRow.slots; col++) {
+                    for (int col = 0; col < slots; col++) {
                         var slot = new PatternSlot(
                                 container,
-                                slotsRow.offset + col,
+                                offset + col,
                                 col * SLOT_SIZE + GUI_PADDING_X,
                                 (i + 1) * SLOT_SIZE);
                         this.menu.slots.add(slot);
 
                         // Indicate invalid patterns
-                        var pattern = container.getInventory().getStackInSlot(slotsRow.offset + col);
+                        var pattern = container.getInventory().getStackInSlot(offset + col);
                         if (!pattern.isEmpty() && PatternDetailsHelper.decodePattern(pattern, level, false) == null) {
                             guiGraphics.fill(
                                     slot.x,
@@ -214,8 +223,7 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
                                     0x7fff0000);
                         }
                     }
-                } else if (row instanceof GroupHeaderRow headerRow) {
-                    var group = headerRow.group;
+                } else if (row instanceof GroupHeaderRow(PatternContainerGroup group)) {
                     if (group.icon() != null) {
                         var renderContext = new SimpleRenderContext(LytRect.empty(), guiGraphics);
                         renderContext.renderItem(
@@ -248,14 +256,14 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
     }
 
     @Override
-    protected void renderTooltip(GuiGraphics guiGraphics, int x, int y) {
+    protected void renderTooltip(@NotNull GuiGraphics guiGraphics, int x, int y) {
         // Draw line tooltip
         if (hoveredSlot == null) {
             var hoveredLineIndex = getHoveredLineIndex(x, y);
             if (hoveredLineIndex != -1) {
                 var row = rows.get(hoveredLineIndex);
-                if (row instanceof GroupHeaderRow headerRow && !headerRow.group.tooltip().isEmpty()) {
-                    guiGraphics.renderTooltip(font, headerRow.group.tooltip(), Optional.empty(), x, y);
+                if (row instanceof GroupHeaderRow(PatternContainerGroup group) && !group.tooltip().isEmpty()) {
+                    guiGraphics.renderTooltip(font, group.tooltip(), Optional.empty(), x, y);
                     return;
                 }
             }
@@ -292,7 +300,7 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
 
     @Override
     protected void slotClicked(Slot slot, int slotIdx, int mouseButton, ClickType clickType) {
-        if (slot instanceof PatternSlot) {
+        if (slot instanceof PatternSlot machineSlot) {
             InventoryAction action = null;
 
             switch (clickType) {
@@ -316,7 +324,6 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
             }
 
             if (action != null) {
-                PatternSlot machineSlot = (PatternSlot) slot;
                 final InventoryActionPacket p = new InventoryActionPacket(action, machineSlot.slot,
                         machineSlot.getMachineInv().getServerId());
                 NetworkHandler.instance().sendToServer(p);
@@ -431,7 +438,9 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
 
     @Override
     public void updateBeforeRender() {
-        this.showPatternProviders.set(this.menu.getShownProviders());
+        super.updateBeforeRender();
+        this.showPatternProviders.set(menu.getShownProviders());
+        this.gtolib$showMolecularAssembler.set(menu.gtolib$showMolecularAssembler);
     }
 
     /**

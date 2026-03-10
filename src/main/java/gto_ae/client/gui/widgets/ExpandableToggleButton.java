@@ -80,7 +80,7 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
     }
 
     @Override
-    public void populateScreen(Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) {
+    public void populate(Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) {
         for (var b : expandedButtons) {
             addWidget.accept(b);
         }

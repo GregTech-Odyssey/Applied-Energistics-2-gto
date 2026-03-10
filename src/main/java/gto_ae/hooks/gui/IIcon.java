@@ -8,13 +8,13 @@ public interface IIcon {
     int TEXTURE_WIDTH = 256;
     int TEXTURE_HEIGHT = 256;
 
-    ResourceLocation getIconAtlas();
+    ResourceLocation getIconTexture();
 
-    default int getIconAtlasWidth() {
+    default int getIconTextureWidth() {
         return IIcon.TEXTURE_WIDTH;
     }
 
-    default int getIconAtlasHeight() {
+    default int getIconTextureHeight() {
         return IIcon.TEXTURE_HEIGHT;
     }
 
@@ -27,7 +27,7 @@ public interface IIcon {
     int getIconHeight();
 
     default Blitter getBlitter() {
-        return Blitter.texture(getIconAtlas(), getIconAtlasWidth(), getIconAtlasHeight())
+        return Blitter.texture(getIconTexture(), getIconTextureWidth(), getIconTextureHeight())
                 .src(getIconX(), getIconY(), getIconWidth(), getIconHeight());
     }
 

@@ -32,11 +32,6 @@ public class AESlotWidget implements ICompositeWidget {
     }
 
     @Override
-    public void updateBeforeRender() {
-        ICompositeWidget.super.updateBeforeRender();
-    }
-
-    @Override
     public void setPosition(Point position) {
         slot.x = position.getX();
         slot.y = position.getY();

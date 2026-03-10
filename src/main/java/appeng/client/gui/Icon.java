@@ -208,7 +208,7 @@ public enum Icon implements IIcon {
     }
 
     @Override
-    public ResourceLocation getIconAtlas() {
+    public ResourceLocation getIconTexture() {
         return TEXTURE;
     }
 

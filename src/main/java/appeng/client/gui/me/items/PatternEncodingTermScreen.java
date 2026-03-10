@@ -30,16 +30,23 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import gto_ae.client.gui.slot.FixedRepoSlot;
+import gto_ae.core.localization.ExtendedLangs;
+
 import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.behaviors.EmptyingAction;
 import appeng.api.config.ActionItems;
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
+import appeng.client.gui.Icon;
 import appeng.client.gui.me.common.MEStorageScreen;
+import appeng.client.gui.me.common.Repo;
 import appeng.client.gui.me.common.StackSizeRenderer;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.ActionButton;
 import appeng.client.gui.widgets.TabButton;
 import appeng.core.AEConfig;
+import appeng.core.definitions.AEItems;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.Tooltips;
 import appeng.core.sync.network.NetworkHandler;
@@ -52,10 +59,19 @@ import appeng.parts.encoding.EncodingMode;
 public class PatternEncodingTermScreen<C extends PatternEncodingTermMenu> extends MEStorageScreen<C> {
     private final Map<EncodingMode, EncodingModePanel> modePanels = new EnumMap<>(EncodingMode.class);
     private final Map<EncodingMode, TabButton> modeTabButtons = new EnumMap<>(EncodingMode.class);
+    private final ActionButton encodeBtn;
+
+    @SuppressWarnings("FieldCanBeLocal")
+    private final FixedRepoSlot gtolib$fixedSlot;
 
     public PatternEncodingTermScreen(C menu, Inventory playerInventory,
             Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
+        gtolib$fixedSlot = new FixedRepoSlot((Repo) menu.getClientRepo(), AEItemKey.of(AEItems.BLANK_PATTERN), 0, 0);
+        gtolib$fixedSlot.setEmptyTooltipMessage(
+                List.of(ExtendedLangs.NoPatternCurrently.text().withStyle(ChatFormatting.DARK_GRAY)));
+        gtolib$fixedSlot.setIcon(Icon.BACKGROUND_BLANK_PATTERN);
+        menu.addClientSideSlot(gtolib$fixedSlot, SlotSemantics.BLANK_PATTERN);
 
         for (var mode : EncodingMode.values()) {
             var panel = switch (mode) {
@@ -77,7 +93,7 @@ public class PatternEncodingTermScreen<C extends PatternEncodingTermMenu> extend
             modePanels.put(mode, panel);
         }
 
-        var encodeBtn = new ActionButton(ActionItems.ENCODE, act -> menu.encode());
+        encodeBtn = new ActionButton(ActionItems.ENCODE, act -> menu.encode());
         widgets.add("encodePattern", encodeBtn);
     }
 
@@ -90,6 +106,10 @@ public class PatternEncodingTermScreen<C extends PatternEncodingTermMenu> extend
             modeTabButtons.get(mode).setSelected(selected);
             modePanels.get(mode).setVisible(selected);
         }
+        if (hasShiftDown())
+            encodeBtn.setAction(ActionItems.ENCODING_TO_INVENTORY);
+        else
+            encodeBtn.setAction(ActionItems.ENCODE);
     }
 
     @Override

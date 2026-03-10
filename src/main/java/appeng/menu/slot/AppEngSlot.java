@@ -21,6 +21,7 @@ package appeng.menu.slot;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
@@ -30,13 +31,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import gto_ae.hooks.gui.menu.IDecoratedSlot;
+
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.Icon;
 import appeng.core.AELog;
 import appeng.menu.AEBaseMenu;
 
-public class AppEngSlot extends Slot {
+public class AppEngSlot extends Slot implements IDecoratedSlot {
     private static final Container EMPTY_INVENTORY = new SimpleContainer(0);
     private final InternalInventory inventory;
     private final int invSlot;
@@ -227,19 +230,30 @@ public class AppEngSlot extends Slot {
         return is;
     }
 
+    @Override
     public float getOpacityOfIcon() {
         return 0.4f;
+    }
+
+    @Override
+    public @NotNull List<Component> getEmptyTooltipMessage() {
+        var t = emptyTooltip.get();
+        if (t != null) {
+            return t;
+        }
+        return IDecoratedSlot.super.getEmptyTooltipMessage();
     }
 
     public boolean renderIconWithItem() {
         return false;
     }
 
-    public Icon getIcon() {
+    @Override
+    public @Nullable Icon getIcon() {
         return this.icon;
     }
 
-    public void setIcon(Icon icon) {
+    public void setIcon(@Nullable Icon icon) {
         this.icon = icon;
     }
 

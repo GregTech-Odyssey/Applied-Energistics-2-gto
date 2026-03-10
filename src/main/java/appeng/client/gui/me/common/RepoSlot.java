@@ -18,7 +18,11 @@
 
 package appeng.client.gui.me.common;
 
+import org.jetbrains.annotations.NotNull;
+
 import net.minecraft.world.item.ItemStack;
+
+import gto_ae.hooks.gui.menu.IRepoSlot;
 
 import appeng.menu.me.common.GridInventoryEntry;
 
@@ -26,7 +30,7 @@ import appeng.menu.me.common.GridInventoryEntry;
  * This is a virtual slot that has no corresponding slot on the server-side. It displays an item stack from the
  * client-side {@link Repo}.
  */
-public class RepoSlot extends ClientReadOnlySlot {
+public class RepoSlot extends ClientReadOnlySlot implements IRepoSlot {
 
     private final Repo repo;
     private final int offset;
@@ -64,7 +68,7 @@ public class RepoSlot extends ClientReadOnlySlot {
     }
 
     @Override
-    public ItemStack getItem() {
+    public @NotNull ItemStack getItem() {
         GridInventoryEntry entry = getEntry();
         if (entry != null) {
             return entry.getWhat().wrapForDisplayOrFilter();

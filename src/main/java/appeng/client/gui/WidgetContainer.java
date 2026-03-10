@@ -36,6 +36,8 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.network.chat.Component;
 
+import gto_ae.hooks.gui.IPopulateScreenWidget;
+
 import appeng.client.Point;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.style.WidgetStyle;
@@ -73,6 +75,10 @@ public class WidgetContainer {
 
         // Size the widget, as this doesn't change when the parent is resized
         WidgetStyle widgetStyle = style.getWidget(id);
+        if (widgetStyle == null) {
+            add(id, ICompositeWidget.fromWidget(widget));
+            return;
+        }
         int width = widgetStyle.getWidth() != 0 ? widgetStyle.getWidth() : widget.getWidth();
         int height = widgetStyle.getHeight() != 0 ? widgetStyle.getHeight() : widget.getHeight();
         if (widget instanceof IResizableWidget resizableWidget) {
@@ -424,5 +430,9 @@ public class WidgetContainer {
             this.area = area;
             this.tooltip = tooltip;
         }
+    }
+
+    public void add(String gto$addMissing, IPopulateScreenWidget populateScreen) {
+        add(gto$addMissing, (ICompositeWidget) (populateScreen));
     }
 }

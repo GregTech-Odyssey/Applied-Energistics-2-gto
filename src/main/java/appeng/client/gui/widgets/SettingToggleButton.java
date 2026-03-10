@@ -455,4 +455,15 @@ public class SettingToggleButton<T extends Enum<T>> extends IconButton {
             LocalizationEnum title, LocalizationEnum hint) {
         registerApp(icon, setting, val, title, hint.text());
     }
+
+    public static <T extends Enum<T>> void registerApp(IIcon icon, Setting<T> setting, T val, Component title,
+            Component... tooltipLines) {
+        var lines = new ArrayList<Component>();
+        lines.add(title);
+        Collections.addAll(lines, tooltipLines);
+
+        appearances.put(
+                new EnumPair<>(setting, val),
+                new ButtonAppearance(icon, null, lines));
+    }
 }

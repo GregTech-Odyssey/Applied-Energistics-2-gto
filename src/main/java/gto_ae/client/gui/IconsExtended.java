@@ -26,6 +26,8 @@ public enum IconsExtended implements IIcon {
 
     VIEW_LOCKED(64, 16, 16, 16),
     VIEW_UNLOCKED(80, 16, 16, 16),
+
+    ENCODING_TO_INVENTORY(96, 16, 16, 16),
     ;
 
     private final int x, y, width, height;
@@ -40,7 +42,7 @@ public enum IconsExtended implements IIcon {
     }
 
     @Override
-    public ResourceLocation getIconAtlas() {
+    public ResourceLocation getIconTexture() {
         return TEXTURE;
     }
 
