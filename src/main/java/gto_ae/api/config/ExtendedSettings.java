@@ -3,15 +3,15 @@ package gto_ae.api.config;
 import static appeng.api.config.Settings.register;
 import static appeng.client.gui.widgets.SettingToggleButton.registerApp;
 
+import appeng.api.config.*;
+import appeng.client.gui.Icon;
+import appeng.core.localization.ButtonToolTips;
+
 import gto_ae.client.gui.IconsExtended;
 import gto_ae.core.localization.ExtendedLangs;
 import gto_ae.helpers.facility_management.IO;
 import gto_ae.helpers.facility_management.WorkingStatus;
 import gto_ae.menu.ShowMolecularAssembler;
-
-import appeng.api.config.*;
-import appeng.client.gui.Icon;
-import appeng.core.localization.ButtonToolTips;
 
 public final class ExtendedSettings {
     public static final Setting<WorkingStatus> WORKING_STATUS_SETTING = register("fmt_working_status",

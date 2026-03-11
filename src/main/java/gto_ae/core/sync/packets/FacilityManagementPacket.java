@@ -8,15 +8,15 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import appeng.api.implementations.blockentities.PatternContainerGroup;
+import appeng.core.sync.BasePacket;
+
 import gto_ae.api.util.DirectionalGlobalPos;
 import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
 import gto_ae.helpers.facility_management.FrozenMachineStatus;
 import gto_ae.helpers.facility_management.IStatusTracked;
 import gto_ae.helpers.facility_management.ThroughputCounter;
 import gto_ae.helpers.facility_management.WorkingStatus;
-
-import appeng.api.implementations.blockentities.PatternContainerGroup;
-import appeng.core.sync.BasePacket;
 
 public class FacilityManagementPacket extends BasePacket {
 

@@ -29,10 +29,6 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import gto_ae.helpers.facility_management.IStatusTracked;
-import gto_ae.helpers.facility_management.ThroughputCounter;
-import gto_ae.helpers.facility_management.WorkingStatus;
-
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.upgrades.IUpgradeInventory;
@@ -44,6 +40,10 @@ import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
 import appeng.menu.implementations.InterfaceMenu;
 import appeng.menu.locator.MenuLocator;
+
+import gto_ae.helpers.facility_management.IStatusTracked;
+import gto_ae.helpers.facility_management.ThroughputCounter;
+import gto_ae.helpers.facility_management.WorkingStatus;
 
 /**
  * Interface that must be implemented by machines hosting {@link InterfaceLogic}.

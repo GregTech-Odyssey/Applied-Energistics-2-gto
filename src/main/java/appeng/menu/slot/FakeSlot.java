@@ -21,8 +21,6 @@ package appeng.menu.slot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 
-import gto_ae.hooks.gui.menu.IDraggableSlot;
-
 import appeng.api.config.Actionable;
 import appeng.api.inventories.InternalInventory;
 import appeng.core.sync.network.NetworkHandler;
@@ -30,6 +28,8 @@ import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.helpers.InventoryAction;
 import appeng.util.ConfigInventory;
 import appeng.util.ConfigMenuInventory;
+
+import gto_ae.hooks.gui.menu.IDraggableSlot;
 
 public class FakeSlot extends AppEngSlot implements IDraggableSlot {
     public FakeSlot(InternalInventory inv, int invSlot) {

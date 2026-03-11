@@ -11,10 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 
-import gto_ae.api.util.DirectionalGlobalPos;
-import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
-import gto_ae.core.sync.packets.FacilityManagementPacket;
-import gto_ae.helpers.facility_management.*;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -27,6 +23,11 @@ import appeng.menu.AEBaseMenu;
 import appeng.menu.guisync.GuiSync;
 import appeng.menu.implementations.MenuTypeBuilder;
 import appeng.menu.slot.FakeSlot;
+
+import gto_ae.api.util.DirectionalGlobalPos;
+import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
+import gto_ae.core.sync.packets.FacilityManagementPacket;
+import gto_ae.helpers.facility_management.*;
 
 /**
  * 与隔壁样板管理终端的区别在于这个菜单对于ME设备是非即时的，可以保存快照状态

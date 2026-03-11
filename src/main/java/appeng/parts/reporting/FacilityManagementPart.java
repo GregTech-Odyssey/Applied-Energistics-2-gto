@@ -24,13 +24,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
 
-import gto_ae.api.config.ExtendedSettings;
-import gto_ae.helpers.facility_management.FacilityManagement;
-import gto_ae.helpers.facility_management.IFacilityManagementHost;
-import gto_ae.helpers.facility_management.IO;
-import gto_ae.helpers.facility_management.WorkingStatus;
-import gto_ae.menu.implementations.FacilityManagementMenu;
-
 import appeng.api.config.YesNo;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
@@ -41,6 +34,13 @@ import appeng.menu.MenuOpener;
 import appeng.menu.locator.MenuLocators;
 import appeng.parts.PartModel;
 import appeng.util.ConfigManager;
+
+import gto_ae.api.config.ExtendedSettings;
+import gto_ae.helpers.facility_management.FacilityManagement;
+import gto_ae.helpers.facility_management.IFacilityManagementHost;
+import gto_ae.helpers.facility_management.IO;
+import gto_ae.helpers.facility_management.WorkingStatus;
+import gto_ae.menu.implementations.FacilityManagementMenu;
 
 public class FacilityManagementPart extends AbstractDisplayPart
         implements IFacilityManagementHost {

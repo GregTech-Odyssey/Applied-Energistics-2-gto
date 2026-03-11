@@ -35,8 +35,6 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-import gto_ae.api.config.ExtendedSettings;
-import gto_ae.menu.ShowMolecularAssembler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -67,6 +65,9 @@ import appeng.parts.reporting.PatternAccessTerminalPart;
 import appeng.util.inv.AppEngInternalInventory;
 import appeng.util.inv.FilteredInternalInventory;
 import appeng.util.inv.filter.IAEItemFilter;
+
+import gto_ae.api.config.ExtendedSettings;
+import gto_ae.menu.ShowMolecularAssembler;
 
 /**
  * @see PatternAccessTermScreen

@@ -2,9 +2,9 @@ package gto_ae.client.gui;
 
 import net.minecraft.resources.ResourceLocation;
 
-import gto_ae.hooks.gui.IIcon;
-
 import appeng.core.AppEng;
+
+import gto_ae.hooks.gui.IIcon;
 
 public enum IconsExtended implements IIcon {
     WORLING_STATUS_IDLE(0, 0, 16, 16),

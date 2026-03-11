@@ -8,12 +8,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import gto_ae.compat.extendedae.EAEStackTransferContext;
-
 import appeng.api.behaviors.StackTransferContext;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.parts.IPartItem;
+
+import gto_ae.compat.extendedae.EAEStackTransferContext;
 
 @Mixin(PartTagExportBus.class)
 public abstract class PartTagExportBusMixin extends PartSpecialExportBus {

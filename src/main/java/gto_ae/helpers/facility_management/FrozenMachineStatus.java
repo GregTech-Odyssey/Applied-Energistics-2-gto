@@ -10,10 +10,10 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.entity.player.Player;
 
-import gto_ae.api.util.DirectionalGlobalPos;
-
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.networking.crafting.ICraftingLink;
+
+import gto_ae.api.util.DirectionalGlobalPos;
 
 /// A snapshot of a machine's status at the time of packet creation.
 /// This is immutable and can be safely shared across threads and used as a key in maps. It can be created from a live machine status

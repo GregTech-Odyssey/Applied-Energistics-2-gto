@@ -35,9 +35,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
-import gto_ae.helpers.facility_management.IStatusTracked;
-import gto_ae.helpers.facility_management.ThroughputCounter;
-import gto_ae.helpers.facility_management.WorkingStatus;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
@@ -71,6 +68,10 @@ import appeng.me.storage.DelegatingMEInventory;
 import appeng.util.ConfigInventory;
 import appeng.util.ConfigManager;
 import appeng.util.Platform;
+
+import gto_ae.helpers.facility_management.IStatusTracked;
+import gto_ae.helpers.facility_management.ThroughputCounter;
+import gto_ae.helpers.facility_management.WorkingStatus;
 
 /**
  * Contains behavior for interface blocks and parts, which is independent of the storage channel.

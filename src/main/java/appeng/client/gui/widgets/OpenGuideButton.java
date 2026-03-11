@@ -4,10 +4,10 @@ import java.util.List;
 
 import net.minecraft.network.chat.Component;
 
-import gto_ae.hooks.gui.IIcon;
-
 import appeng.client.gui.Icon;
 import appeng.core.localization.ButtonToolTips;
+
+import gto_ae.hooks.gui.IIcon;
 
 public class OpenGuideButton extends IconButton {
     public OpenGuideButton(OnPress onPress) {

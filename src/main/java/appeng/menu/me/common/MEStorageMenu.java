@@ -39,7 +39,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 
-import gto_ae.hooks.gui.menu.IRepoMenu;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import appeng.api.behaviors.ContainerItemStrategies;
@@ -83,6 +82,8 @@ import appeng.menu.slot.RestrictedInputSlot;
 import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerListener;
 import appeng.util.Platform;
+
+import gto_ae.hooks.gui.menu.IRepoMenu;
 
 /**
  * @see MEStorageScreen

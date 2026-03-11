@@ -2,11 +2,11 @@ package gto_ae.helpers.facility_management;
 
 import java.util.Set;
 
-import gto_ae.api.util.DirectionalGlobalPos;
-
 import appeng.api.stacks.AEKey;
 import appeng.util.ConfigInventory;
 import appeng.util.inv.InternalInventoryHost;
+
+import gto_ae.api.util.DirectionalGlobalPos;
 
 public interface IFacilityManagement extends InternalInventoryHost {
     AEKey getFilter();

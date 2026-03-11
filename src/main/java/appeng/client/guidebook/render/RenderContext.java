@@ -22,8 +22,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.phys.Vec2;
 
-import gto_ae.hooks.gui.IIcon;
-
 import appeng.api.stacks.AEFluidKey;
 import appeng.client.gui.Icon;
 import appeng.client.gui.style.BackgroundGenerator;
@@ -33,6 +31,8 @@ import appeng.client.guidebook.color.ConstantColor;
 import appeng.client.guidebook.color.LightDarkMode;
 import appeng.client.guidebook.document.LytRect;
 import appeng.client.guidebook.style.ResolvedTextStyle;
+
+import gto_ae.hooks.gui.IIcon;
 
 public interface RenderContext {
 

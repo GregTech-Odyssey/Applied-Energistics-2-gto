@@ -54,8 +54,6 @@ import net.minecraftforge.registries.RegisterEvent;
 import net.minecraftforge.registries.RegistryBuilder;
 import net.minecraftforge.server.ServerLifecycleHooks;
 
-import gto_ae.helpers.facility_management.FacilityUidManager;
-
 import appeng.api.parts.CableRenderMode;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
@@ -93,6 +91,8 @@ import appeng.server.testworld.GameTestPlotAdapter;
 import appeng.sounds.AppEngSounds;
 import appeng.spatial.SpatialStorageChunkGenerator;
 import appeng.spatial.SpatialStorageDimensionIds;
+
+import gto_ae.helpers.facility_management.FacilityUidManager;
 
 /**
  * Mod functionality that is common to both dedicated server and client.

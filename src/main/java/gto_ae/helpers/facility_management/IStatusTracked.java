@@ -10,14 +10,14 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.entity.player.Player;
 
-import gto_ae.api.util.DirectionalGlobalPos;
-
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.blockentity.AEBaseBlockEntity;
 import appeng.parts.AEBasePart;
+
+import gto_ae.api.util.DirectionalGlobalPos;
 
 public interface IStatusTracked {
 

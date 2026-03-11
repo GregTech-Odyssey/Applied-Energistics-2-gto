@@ -23,14 +23,14 @@
 
 package appeng.api.config;
 
+import appeng.client.gui.Icon;
+import appeng.core.localization.ButtonToolTips;
+import appeng.core.localization.LocalizationEnum;
+
 import gto_ae.client.gui.IconsExtended;
 import gto_ae.core.localization.ExtendedLangs;
 import gto_ae.hooks.gui.IActionItems;
 import gto_ae.hooks.gui.IIcon;
-
-import appeng.client.gui.Icon;
-import appeng.core.localization.ButtonToolTips;
-import appeng.core.localization.LocalizationEnum;
 
 public enum ActionItems implements IActionItems {
     WRENCH(Icon.WRENCH, ButtonToolTips.PartitionStorage, ButtonToolTips.PartitionStorageHint),

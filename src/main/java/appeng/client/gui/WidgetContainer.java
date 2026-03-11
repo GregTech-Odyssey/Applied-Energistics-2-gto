@@ -36,8 +36,6 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.network.chat.Component;
 
-import gto_ae.hooks.gui.IPopulateScreenWidget;
-
 import appeng.client.Point;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.style.WidgetStyle;
@@ -52,6 +50,8 @@ import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.SwitchGuisPacket;
 import appeng.menu.implementations.PriorityMenu;
+
+import gto_ae.hooks.gui.IPopulateScreenWidget;
 
 /**
  * This utility class helps with positioning commonly used Minecraft {@link AbstractWidget} instances on a screen

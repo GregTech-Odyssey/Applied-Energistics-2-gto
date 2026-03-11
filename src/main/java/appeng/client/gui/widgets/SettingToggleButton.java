@@ -35,8 +35,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.ItemLike;
 
-import gto_ae.hooks.gui.IIcon;
-
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.CondenserOutput;
 import appeng.api.config.CpuSelectionMode;
@@ -64,6 +62,8 @@ import appeng.core.definitions.AEParts;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.LocalizationEnum;
 import appeng.util.EnumCycler;
+
+import gto_ae.hooks.gui.IIcon;
 
 public class SettingToggleButton<T extends Enum<T>> extends IconButton {
 

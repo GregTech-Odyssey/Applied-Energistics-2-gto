@@ -8,12 +8,12 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 
-import gto_ae.api.util.DirectionalGlobalPos;
-
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.util.ConfigInventory;
+
+import gto_ae.api.util.DirectionalGlobalPos;
 
 public class FacilityManagement implements IFacilityManagement {
 

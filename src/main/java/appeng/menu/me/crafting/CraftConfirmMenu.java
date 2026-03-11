@@ -33,8 +33,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.Level;
 
-import gto_ae.hooks.gui.menu.IRepoMenu;
-
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.CalculationStrategy;
@@ -66,6 +64,8 @@ import appeng.menu.implementations.MenuTypeBuilder;
 import appeng.menu.locator.MenuLocator;
 import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.common.IncrementalUpdateHelper;
+
+import gto_ae.hooks.gui.menu.IRepoMenu;
 
 /**
  * @see appeng.client.gui.me.crafting.CraftConfirmScreen

@@ -21,14 +21,14 @@ package gto_ae.client.gui.me.facility_management;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
-import gto_ae.core.localization.ExtendedLangs;
-
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AmountFormat;
 import appeng.menu.slot.InaccessibleSlot;
 import appeng.util.ConfigMenuInventory;
 import appeng.util.ReadableNumberConverter;
+
+import gto_ae.core.localization.ExtendedLangs;
 
 public class ThroughputSlot extends InaccessibleSlot {
 

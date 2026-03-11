@@ -27,9 +27,9 @@ import net.minecraft.client.gui.ComponentPath;
 import net.minecraft.client.gui.navigation.FocusNavigationEvent;
 import net.minecraft.network.chat.Component;
 
-import gto_ae.hooks.gui.IIcon;
-
 import appeng.client.gui.Icon;
+
+import gto_ae.hooks.gui.IIcon;
 
 /**
  * Displays a small icon that shows validation errors for some input control.

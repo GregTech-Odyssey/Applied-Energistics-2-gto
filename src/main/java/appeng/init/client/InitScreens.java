@@ -31,9 +31,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
 
-import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
-import gto_ae.menu.implementations.FacilityManagementMenu;
-
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.implementations.CellWorkbenchScreen;
 import appeng.client.gui.implementations.ChestScreen;
@@ -82,6 +79,9 @@ import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.menu.me.items.WirelessCraftingTermMenu;
 import appeng.menu.me.networktool.NetworkStatusMenu;
 import appeng.menu.me.networktool.NetworkToolMenu;
+
+import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
+import gto_ae.menu.implementations.FacilityManagementMenu;
 
 /**
  * The server sends the client a menu identifier, which the client then maps onto a screen using {@link MenuScreens}.

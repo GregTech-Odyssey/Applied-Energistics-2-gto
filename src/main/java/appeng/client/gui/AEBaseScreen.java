@@ -59,8 +59,6 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
-import gto_ae.hooks.gui.INoMouseRedirectionWidget;
-import gto_ae.hooks.gui.IPopulateScreenWidget;
 import guideme.indices.ItemIndex;
 
 import appeng.api.behaviors.ContainerItemStrategies;
@@ -102,6 +100,9 @@ import appeng.menu.slot.FakeSlot;
 import appeng.menu.slot.IOptionalSlot;
 import appeng.menu.slot.ResizableSlot;
 import appeng.util.ConfigMenuInventory;
+
+import gto_ae.hooks.gui.INoMouseRedirectionWidget;
+import gto_ae.hooks.gui.IPopulateScreenWidget;
 
 public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContainerScreen<T> {
     private static final Logger LOG = LoggerFactory.getLogger(AEBaseScreen.class);

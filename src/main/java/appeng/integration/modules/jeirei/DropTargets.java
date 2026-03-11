@@ -10,8 +10,6 @@ import com.google.common.primitives.Ints;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 
-import gto_ae.hooks.gui.menu.IDraggableSlot;
-
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
@@ -19,6 +17,8 @@ import appeng.client.gui.widgets.AETextField;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.helpers.InventoryAction;
+
+import gto_ae.hooks.gui.menu.IDraggableSlot;
 
 public final class DropTargets {
     private DropTargets() {

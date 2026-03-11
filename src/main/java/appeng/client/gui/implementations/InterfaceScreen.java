@@ -25,8 +25,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
-import gto_ae.hooks.gui.IIcon;
-
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
 import appeng.client.gui.Icon;
@@ -38,6 +36,8 @@ import appeng.core.definitions.AEItems;
 import appeng.core.localization.ButtonToolTips;
 import appeng.menu.SlotSemantics;
 import appeng.menu.implementations.InterfaceMenu;
+
+import gto_ae.hooks.gui.IIcon;
 
 public class InterfaceScreen<C extends InterfaceMenu> extends UpgradeableScreen<C> {
 

@@ -26,22 +26,22 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
-import gto_ae.core.localization.ExtendedLangs;
-import gto_ae.hooks.gui.menu.IRepoMenu;
-
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AmountFormat;
-import appeng.api.stacks.KeyCounter;
 import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.me.common.Repo;
 import appeng.core.localization.GuiText;
 import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import appeng.util.ReadableNumberConverter;
 
+import gto_ae.core.localization.ExtendedLangs;
+import gto_ae.hooks.gui.menu.IRepoMenu;
+
 public class CraftConfirmTableRenderer extends AbstractTableRenderer<CraftingPlanSummaryEntry> {
     @Nullable
-    private KeyCounter gto$cachedKeys;
+    private Repo gto$repo;
 
     public CraftConfirmTableRenderer(AEBaseScreen<?> screen, int x, int y) {
         super(screen, x, y, 5);
@@ -49,13 +49,11 @@ public class CraftConfirmTableRenderer extends AbstractTableRenderer<CraftingPla
 
     @Override
     protected void beforeTableRender() {
-        if (gto$cachedKeys != null)
+        if (gto$repo != null)
             return;
         IClientRepo repo = (screen.getMenu()) instanceof IRepoMenu me ? me.getClientRepo() : null;
-        gto$cachedKeys = repo == null ? null : new KeyCounter();
-        if (repo != null) {
-            repo.getAllEntries().stream().filter(e -> e.getWhat() != null && e.getStoredAmount() > 0)
-                    .forEach(e -> gto$cachedKeys.add(e.getWhat(), e.getStoredAmount()));
+        if (repo instanceof Repo repo1) {
+            gto$repo = repo1;
         }
     }
 
@@ -68,9 +66,12 @@ public class CraftConfirmTableRenderer extends AbstractTableRenderer<CraftingPla
         }
 
         storedAmount: {
-            if (gto$cachedKeys == null)
+            if (gto$repo == null)
                 break storedAmount;
-            long storedTotal = gto$cachedKeys.get(entry.getWhat());
+            var e = gto$repo.getByKey(entry.getWhat());
+            if (e == null)
+                break storedAmount;
+            long storedTotal = e.getStoredAmount();
             long storedAmount = entry.getStoredAmount();
             if (storedTotal <= 0 || storedAmount <= 0)
                 break storedAmount;

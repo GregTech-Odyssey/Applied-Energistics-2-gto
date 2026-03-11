@@ -8,9 +8,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
-
 import appeng.core.sync.BasePacket;
+
+import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
 
 public class FacilityClearPacket extends BasePacket {
 

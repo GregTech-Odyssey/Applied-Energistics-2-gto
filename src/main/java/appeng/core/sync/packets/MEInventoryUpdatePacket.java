@@ -32,7 +32,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import gto_ae.hooks.gui.menu.IRepoMenu;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.stacks.AEKey;
@@ -43,6 +42,8 @@ import appeng.core.sync.BasePacket;
 import appeng.core.sync.BasePacketHandler;
 import appeng.menu.me.common.GridInventoryEntry;
 import appeng.menu.me.common.IncrementalUpdateHelper;
+
+import gto_ae.hooks.gui.menu.IRepoMenu;
 
 public class MEInventoryUpdatePacket extends BasePacket {
 

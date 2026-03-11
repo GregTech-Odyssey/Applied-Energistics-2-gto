@@ -31,13 +31,13 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import gto_ae.hooks.gui.menu.IDecoratedSlot;
-
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.Icon;
 import appeng.core.AELog;
 import appeng.menu.AEBaseMenu;
+
+import gto_ae.hooks.gui.menu.IDecoratedSlot;
 
 public class AppEngSlot extends Slot implements IDecoratedSlot {
     private static final Container EMPTY_INVENTORY = new SimpleContainer(0);

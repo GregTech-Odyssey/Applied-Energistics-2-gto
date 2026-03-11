@@ -44,17 +44,6 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import gto_ae.api.config.ExtendedSettings;
-import gto_ae.client.gui.IconsExtended;
-import gto_ae.client.gui.widgets.AESlotWidget;
-import gto_ae.client.gui.widgets.ExpandableToggleButton;
-import gto_ae.client.gui.widgets.expandable.ExpandableGroup;
-import gto_ae.core.localization.ExtendedLangs;
-import gto_ae.helpers.facility_management.FrozenMachineStatus;
-import gto_ae.helpers.facility_management.IO;
-import gto_ae.helpers.facility_management.ThroughputCounter;
-import gto_ae.helpers.facility_management.WorkingStatus;
-import gto_ae.menu.implementations.FacilityManagementMenu;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
@@ -80,6 +69,18 @@ import appeng.core.AppEng;
 import appeng.core.localization.GuiText;
 import appeng.util.ConfigInventory;
 import appeng.util.ReadableNumberConverter;
+
+import gto_ae.api.config.ExtendedSettings;
+import gto_ae.client.gui.IconsExtended;
+import gto_ae.client.gui.widgets.AESlotWidget;
+import gto_ae.client.gui.widgets.ExpandableToggleButton;
+import gto_ae.client.gui.widgets.expandable.ExpandableGroup;
+import gto_ae.core.localization.ExtendedLangs;
+import gto_ae.helpers.facility_management.FrozenMachineStatus;
+import gto_ae.helpers.facility_management.IO;
+import gto_ae.helpers.facility_management.ThroughputCounter;
+import gto_ae.helpers.facility_management.WorkingStatus;
+import gto_ae.menu.implementations.FacilityManagementMenu;
 
 public class FacilityManagementScreen<C extends FacilityManagementMenu> extends AEBaseScreen<C> {
     private final Int2ObjectOpenHashMap<FrozenMachineStatus> byFacilityUniqueId = new Int2ObjectOpenHashMap<>();

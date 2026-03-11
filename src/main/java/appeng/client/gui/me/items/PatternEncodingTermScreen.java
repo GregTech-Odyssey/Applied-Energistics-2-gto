@@ -23,15 +23,14 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
+import org.jetbrains.annotations.NotNull;
+
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-
-import gto_ae.client.gui.slot.FixedRepoSlot;
-import gto_ae.core.localization.ExtendedLangs;
 
 import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.behaviors.EmptyingAction;
@@ -55,6 +54,9 @@ import appeng.helpers.InventoryAction;
 import appeng.menu.SlotSemantics;
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.parts.encoding.EncodingMode;
+
+import gto_ae.client.gui.slot.FixedRepoSlot;
+import gto_ae.core.localization.ExtendedLangs;
 
 public class PatternEncodingTermScreen<C extends PatternEncodingTermMenu> extends MEStorageScreen<C> {
     private final Map<EncodingMode, EncodingModePanel> modePanels = new EnumMap<>(EncodingMode.class);
@@ -139,7 +141,7 @@ public class PatternEncodingTermScreen<C extends PatternEncodingTermMenu> extend
      * When in processing mode, show a hint in the tooltip that middle-click will open the amount entry dialog.
      */
     @Override
-    protected void renderTooltip(GuiGraphics guiGraphics, int x, int y) {
+    protected void renderTooltip(@NotNull GuiGraphics guiGraphics, int x, int y) {
         if (this.menu.getCarried().isEmpty() && menu.canModifyAmountForSlot(this.hoveredSlot)) {
             var itemTooltip = new ArrayList<>(getTooltipFromContainerItem(this.hoveredSlot.getItem()));
             var unwrapped = GenericStack.fromItemStack(this.hoveredSlot.getItem());

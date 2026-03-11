@@ -2,7 +2,6 @@ package appeng.parts.automation;
 
 import java.util.Set;
 
-import gto_ae.helpers.facility_management.ThroughputCounter;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.behaviors.StackTransferContext;
@@ -14,6 +13,8 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.util.prioritylist.IPartitionList;
+
+import gto_ae.helpers.facility_management.ThroughputCounter;
 
 /**
  * Context for stack transfer operations, regardless of whether they occur in or out of the network.

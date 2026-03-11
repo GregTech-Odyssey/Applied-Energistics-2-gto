@@ -7,11 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-
-import gto_ae.hooks.gui.menu.IDecoratedSlot;
-import gto_ae.hooks.gui.menu.IDraggableSlot;
-import gto_ae.hooks.gui.menu.IRepoSlot;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -19,6 +16,10 @@ import appeng.client.gui.Icon;
 import appeng.client.gui.me.common.ClientReadOnlySlot;
 import appeng.client.gui.me.common.Repo;
 import appeng.menu.me.common.GridInventoryEntry;
+
+import gto_ae.hooks.gui.menu.IDecoratedSlot;
+import gto_ae.hooks.gui.menu.IDraggableSlot;
+import gto_ae.hooks.gui.menu.IRepoSlot;
 
 public class FixedRepoSlot extends ClientReadOnlySlot implements IRepoSlot, IDecoratedSlot, IDraggableSlot {
 
@@ -40,16 +41,17 @@ public class FixedRepoSlot extends ClientReadOnlySlot implements IRepoSlot, IDec
     }
 
     @Override
+    public Slot self() {
+        return this;
+    }
+
+    @Override
     public GridInventoryEntry getEntry() {
         if (this.what == null || repo == null) {
             return null;
         }
         if (this.repo.hasPower()) {
-            return this.repo.getAllEntries().stream()
-                    .filter(entry -> entry.getWhat() != null)
-                    .filter(entry -> entry.getWhat().equals(this.what))
-                    .findFirst()
-                    .orElse(null);
+            return this.repo.getByKey(what);
         }
         return null;
     }

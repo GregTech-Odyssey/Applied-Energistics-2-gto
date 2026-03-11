@@ -20,9 +20,9 @@ package appeng.client.gui;
 
 import net.minecraft.resources.ResourceLocation;
 
-import gto_ae.hooks.gui.IIcon;
-
 import appeng.core.AppEng;
+
+import gto_ae.hooks.gui.IIcon;
 
 /**
  * Edit in {@code assets/ae2/textures/guis/states.png}.

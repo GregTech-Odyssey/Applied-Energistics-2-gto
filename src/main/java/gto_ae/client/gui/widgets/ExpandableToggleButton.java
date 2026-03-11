@@ -30,13 +30,6 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 
-import gto_ae.client.gui.widgets.expandable.ExpandableGroup;
-import gto_ae.client.gui.widgets.expandable.IExpandable;
-import gto_ae.core.localization.ExtendedLangs;
-import gto_ae.core.sync.packets.ConfigButtonDirectPacket;
-import gto_ae.hooks.gui.IIcon;
-import gto_ae.hooks.gui.IPopulateScreenWidget;
-
 import appeng.api.config.*;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.Icon;
@@ -44,6 +37,13 @@ import appeng.client.gui.widgets.IconButton;
 import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.sync.network.NetworkHandler;
+
+import gto_ae.client.gui.widgets.expandable.ExpandableGroup;
+import gto_ae.client.gui.widgets.expandable.IExpandable;
+import gto_ae.core.localization.ExtendedLangs;
+import gto_ae.core.sync.packets.ConfigButtonDirectPacket;
+import gto_ae.hooks.gui.IIcon;
+import gto_ae.hooks.gui.IPopulateScreenWidget;
 
 public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
         implements IExpandable, IPopulateScreenWidget {

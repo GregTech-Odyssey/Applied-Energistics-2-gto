@@ -34,7 +34,6 @@ import net.minecraft.world.entity.player.Inventory;
 import dev.emi.emi.config.SidebarType;
 import dev.emi.emi.runtime.EmiFavorites;
 import dev.emi.emi.screen.EmiScreenManager;
-import gto_ae.core.localization.ExtendedLangs;
 
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
@@ -46,6 +45,8 @@ import appeng.integration.modules.emi.EmiStackHelper;
 import appeng.integration.modules.emi.IStackInteractionScreen;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummary;
+
+import gto_ae.core.localization.ExtendedLangs;
 
 /**
  * This screen shows the computed crafting plan and allows the player to select a CPU on which it should be scheduled

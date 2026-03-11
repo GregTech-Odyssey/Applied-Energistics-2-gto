@@ -25,12 +25,12 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
 
+import appeng.api.config.ActionItems;
+import appeng.core.localization.LocalizationEnum;
+
 import gto_ae.hooks.gui.IActionItems;
 import gto_ae.hooks.gui.IIcon;
 import gto_ae.hooks.gui.INoMouseRedirectionWidget;
-
-import appeng.api.config.ActionItems;
-import appeng.core.localization.LocalizationEnum;
 
 public class ActionButton extends IconButton implements INoMouseRedirectionWidget {
     private static final Pattern PATTERN_NEW_LINE = Pattern.compile("\\n", Pattern.LITERAL);

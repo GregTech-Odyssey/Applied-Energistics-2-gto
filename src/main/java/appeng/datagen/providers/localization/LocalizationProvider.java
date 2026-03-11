@@ -14,8 +14,6 @@ import net.minecraft.data.DataProvider;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
-import gto_ae.core.localization.ExtendedLangs;
-
 import appeng.api.config.PowerUnits;
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEEntities;
@@ -29,6 +27,8 @@ import appeng.core.localization.PlayerMessages;
 import appeng.datagen.providers.IAE2DataProvider;
 import appeng.integration.modules.emi.EmiText;
 import appeng.integration.modules.igtooltip.TooltipIds;
+
+import gto_ae.core.localization.ExtendedLangs;
 
 public class LocalizationProvider implements IAE2DataProvider {
     private final Map<String, String> localizations = new HashMap<>();

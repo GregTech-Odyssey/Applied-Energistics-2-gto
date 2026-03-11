@@ -49,9 +49,6 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
-import gto_ae.api.config.ExtendedSettings;
-import gto_ae.client.gui.widgets.ExpandableToggleButton;
-import gto_ae.menu.ShowMolecularAssembler;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
 import appeng.api.config.Settings;
@@ -76,6 +73,10 @@ import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.helpers.InventoryAction;
 import appeng.menu.implementations.PatternAccessTermMenu;
+
+import gto_ae.api.config.ExtendedSettings;
+import gto_ae.client.gui.widgets.ExpandableToggleButton;
+import gto_ae.menu.ShowMolecularAssembler;
 
 public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AEBaseScreen<C> {
     private static final Logger LOGGER = LoggerFactory.getLogger(PatternAccessTermScreen.class);
