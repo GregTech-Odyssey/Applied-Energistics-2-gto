@@ -126,7 +126,7 @@ public class SettingToggleButton<T extends Enum<T>> extends IconButton {
     }
 
     @Override
-    protected IIcon getIcon() {
+    protected @Nullable IIcon getIcon() {
         var app = getApperance();
         if (app != null && app.icon != null) {
             return app.icon;

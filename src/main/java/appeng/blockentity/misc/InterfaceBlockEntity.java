@@ -47,8 +47,6 @@ import appeng.helpers.IPriorityHost;
 import appeng.helpers.InterfaceLogic;
 import appeng.helpers.InterfaceLogicHost;
 import appeng.me.helpers.BlockEntityNodeListener;
-import appeng.menu.locator.MenuLocator;
-import appeng.menu.locator.MenuLocators;
 
 public class InterfaceBlockEntity extends AENetworkBlockEntity
         implements IPriorityHost, IUpgradeableObject, IConfigurableObject, InterfaceLogicHost {
@@ -114,16 +112,6 @@ public class InterfaceBlockEntity extends AENetworkBlockEntity
     @Override
     public InterfaceLogic getInterfaceLogic() {
         return this.logic;
-    }
-
-    @Override
-    public MenuLocator getLocator() {
-        return MenuLocators.forBlockEntity(this);
-    }
-
-    @Override
-    public @Nullable Direction getSide() {
-        return null;
     }
 
     @Override

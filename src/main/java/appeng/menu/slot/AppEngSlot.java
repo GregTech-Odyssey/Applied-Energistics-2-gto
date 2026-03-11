@@ -37,6 +37,7 @@ import appeng.client.gui.Icon;
 import appeng.core.AELog;
 import appeng.menu.AEBaseMenu;
 
+import gto_ae.hooks.gui.IIcon;
 import gto_ae.hooks.gui.menu.IDecoratedSlot;
 
 public class AppEngSlot extends Slot implements IDecoratedSlot {
@@ -58,7 +59,7 @@ public class AppEngSlot extends Slot implements IDecoratedSlot {
      * Shows an icon from the icon sprite-sheet in the background of this slot.
      */
     @Nullable
-    private Icon icon;
+    private IIcon icon;
     /**
      * Caches if the item stack currently contained in this slot is "valid" or not for UI purposes.
      */
@@ -249,12 +250,16 @@ public class AppEngSlot extends Slot implements IDecoratedSlot {
     }
 
     @Override
-    public @Nullable Icon getIcon() {
+    public @Nullable IIcon getIcon() {
         return this.icon;
     }
 
-    public void setIcon(@Nullable Icon icon) {
+    public void setIcon(@Nullable IIcon icon) {
         this.icon = icon;
+    }
+
+    public void setIcon(@Nullable Icon icon) {
+        setIcon((IIcon) icon);
     }
 
     public boolean isDraggable() {

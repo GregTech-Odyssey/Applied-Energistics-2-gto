@@ -25,6 +25,7 @@ import appeng.menu.implementations.MenuTypeBuilder;
 import appeng.menu.slot.FakeSlot;
 
 import gto_ae.api.util.DirectionalGlobalPos;
+import gto_ae.client.gui.IconsExtended;
 import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
 import gto_ae.core.sync.packets.FacilityManagementPacket;
 import gto_ae.helpers.facility_management.*;
@@ -78,6 +79,8 @@ public class FacilityManagementMenu extends AEBaseMenu {
         this.createPlayerInventorySlots(playerInventory);
         ioFilterSlot = new FakeSlot(host.getLogic().getIoFilterInv().createMenuWrapper(), 0);
         iconFilterSlot = new FakeSlot(host.getLogic().getFacilityIconFilterInv().createMenuWrapper(), 0);
+        ioFilterSlot.setIcon(IconsExtended.SLOT_BG_FILTER_SEARCH);
+        iconFilterSlot.setIcon(IconsExtended.SLOT_BG_FILTER_SEARCH);
         addSlot(ioFilterSlot);
         addSlot(iconFilterSlot);
 

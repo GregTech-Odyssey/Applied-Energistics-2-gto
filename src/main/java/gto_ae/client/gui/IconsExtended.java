@@ -28,6 +28,13 @@ public enum IconsExtended implements IIcon {
     VIEW_UNLOCKED(80, 16, 16, 16),
 
     ENCODING_TO_INVENTORY(96, 16, 16, 16),
+
+    BLOCKING_MODE_CONTAIN(144, 0, 16, 16),
+    BLOCKING_MODE_NON_CONTAIN(160, 0, 16, 16),
+    BLOCKING_MODE_ALL(176, 0, 16, 16),
+    BLOCKING_MODE_PARALLEL(192, 0, 16, 16),
+
+    SLOT_BG_FILTER_SEARCH(240, 0, 16, 16),
     ;
 
     private final int x, y, width, height;

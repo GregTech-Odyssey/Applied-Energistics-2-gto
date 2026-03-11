@@ -21,6 +21,8 @@ package appeng.client.gui.widgets;
 import java.util.Collections;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.network.chat.Component;
 
 import appeng.client.gui.Icon;
@@ -79,7 +81,7 @@ public class ToggleButton extends IconButton implements ITooltip {
         this.state = isOn;
     }
 
-    protected IIcon getIcon() {
+    protected @Nullable IIcon getIcon() {
         return this.state ? this.iconOn : this.iconOff;
     }
 

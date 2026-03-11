@@ -40,6 +40,7 @@ import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.StackWithBounds;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.Scrollbar;
+import appeng.core.AEConfig;
 import appeng.core.localization.GuiText;
 import appeng.integration.modules.emi.EmiStackHelper;
 import appeng.integration.modules.emi.IStackInteractionScreen;
@@ -78,7 +79,7 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
 
         gto$addMissing = Button.builder(ExtendedLangs.CraftAddMissingToEmi.text(), this::gto$addMissing)
                 .bounds(82, 181, 50, 20)
-                .tooltip(Tooltip.create(ExtendedLangs.CraftEncodeSendDesc.text()))
+                .tooltip(Tooltip.create(ExtendedLangs.CraftAddMissingToEmiDesc.text()))
                 .build();
         widgets.add("gto$addMissing", (Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) -> {
             gto$addMissing.setPosition(82 + bounds.getX(), 181 + bounds.getY());
@@ -99,9 +100,20 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
         this.selectCPU.setMessage(getNextCpuButtonLabel());
 
         CraftingPlanSummary plan = menu.getPlan();
-        boolean planIsStartable = plan != null && !plan.isSimulation();
+        boolean planIsStartable;
+        if (plan == null) {
+            planIsStartable = false;
+        } else {
+            boolean simulationButAllowMissing = AEConfig.instance().isAllowMissingCraftingJobs() && plan.isSimulation();
+            start.setMessage(simulationButAllowMissing ? ExtendedLangs.CraftMissingStart.text() : GuiText.Start.text());
+            start.setTooltip(Tooltip.create(
+                    simulationButAllowMissing ? ExtendedLangs.CraftMissingStartDesc.text() : GuiText.Start.text()));
+
+            planIsStartable = !plan.isSimulation() || simulationButAllowMissing;
+        }
         this.start.active = !this.menu.hasNoCPU() && planIsStartable;
         this.selectCPU.active = planIsStartable;
+        this.gto$addMissing.visible = plan != null && plan.isSimulation();
 
         // Show additional status about the selected CPU and plan when the planning is done
         Component planDetails = GuiText.CalculatingWait.text();

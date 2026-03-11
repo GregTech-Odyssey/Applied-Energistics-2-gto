@@ -64,7 +64,7 @@ public class ValidationIcon extends IconButton {
     }
 
     @Override
-    protected IIcon getIcon() {
+    protected @Nullable IIcon getIcon() {
         return Icon.INVALID;
     }
 

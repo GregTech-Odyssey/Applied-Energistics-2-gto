@@ -5,9 +5,10 @@ import net.minecraft.network.FriendlyByteBuf;
 import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
 
 import appeng.api.stacks.AEKey;
+import appeng.core.AEConfig;
 
 /**
- * 10秒统计一次，记录最近10秒内工作过的物品
+ * x秒统计一次，记录最近x秒内工作过的物品
  * <p>
  * 从网络移除物品时使用{@link ThroughputCounter#remove(AEKey, long)}，从网络添加物品时使用{@link ThroughputCounter#add(AEKey, long)}
  * </p>
@@ -34,19 +35,23 @@ public class ThroughputCounter extends Reference2LongOpenHashMap<AEKey> {
     private boolean hasPositiveValues = false;
     private boolean hasNegativeValues = false;
 
-    public int refreshRate = 5 * 1000;
-
     private long lastRefreshTime = 0;
     private long lastRefreshInterval = 0;
     private ThroughputCounter immutableView = null;
 
     public void add(AEKey key, long count) {
+        if (count == 0) {
+            return;
+        }
         this.addTo(key, count);
         hasPositiveValues |= count > 0;
         hasNegativeValues |= count < 0;
     }
 
     public void remove(AEKey key, long count) {
+        if (count == 0) {
+            return;
+        }
         this.addTo(key, -count);
         hasPositiveValues |= count < 0;
         hasNegativeValues |= count > 0;
@@ -69,7 +74,7 @@ public class ThroughputCounter extends Reference2LongOpenHashMap<AEKey> {
 
     public void tickRefresh() {
         var now = System.currentTimeMillis();
-        if (now - lastRefreshTime >= refreshRate) {
+        if (now - lastRefreshTime >= AEConfig.instance().getThroughputCounterRefreshRate()) {
             lastRefreshInterval = lastRefreshTime == 0 ? 0 : now - lastRefreshTime;
             lastRefreshTime = now;
             this.captureImmutableView();

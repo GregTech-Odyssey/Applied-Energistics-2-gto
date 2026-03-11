@@ -24,6 +24,7 @@ import java.util.function.Predicate;
 
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.Rect2i;
@@ -121,6 +122,12 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
 
     }
 
+    @Override
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partial) {
+        relayout();
+        super.renderWidget(guiGraphics, mouseX, mouseY, partial);
+    }
+
     public void setCurrentValue(T currentValue) {
         this.currentValue = currentValue;
         ExpandableToggleButton.this.currentSubButtonTooltip = SettingToggleButton.getAppearances()
@@ -138,42 +145,49 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
             return;
         }
         btnExpandable.collapsed = !btnExpandable.collapsed;
+        btnExpandable.relayout();
         if (btnExpandable.collapsed) {
-            for (var b : btnExpandable.expandedButtons) {
-                b.visible = false;
-            }
             btnExpandable.onCollapse();
             return;
         }
-        var candidateCount = btnExpandable.expandedButtons.size();
+        btnExpandable.onExpand();
+    }
+
+    public void relayout() {
+        if (this.collapsed) {
+            for (var b : this.expandedButtons) {
+                b.visible = false;
+            }
+            return;
+        }
+        var candidateCount = this.expandedButtons.size();
         var halfDistance = (candidateCount * 16 + (candidateCount - 1) * LAYOUT_SPACING) / 2 - 8;
         for (int i = 0; i < candidateCount; i++) {
-            var b = btnExpandable.expandedButtons.get(i);
-            switch (btnExpandable.layoutDirection) {
+            var b = this.expandedButtons.get(i);
+            switch (this.layoutDirection) {
                 case LEFT -> {
-                    b.setX(btnExpandable.getX() - LAYOUT_SPACING - b.getWidth());
-                    b.setY(btnExpandable.getY() + btnExpandable.getHeight() / 2 - halfDistance
+                    b.setX(this.getX() - LAYOUT_SPACING - b.getWidth());
+                    b.setY(this.getY() + this.getHeight() / 2 - halfDistance
                             + i * (b.getHeight() + LAYOUT_SPACING));
                 }
                 case RIGHT -> {
-                    b.setX(btnExpandable.getX() + btnExpandable.getWidth() + LAYOUT_SPACING);
-                    b.setY(btnExpandable.getY() + btnExpandable.getHeight() / 2 - halfDistance
+                    b.setX(this.getX() + this.getWidth() + LAYOUT_SPACING);
+                    b.setY(this.getY() + this.getHeight() / 2 - halfDistance
                             + i * (b.getHeight() + LAYOUT_SPACING));
                 }
                 case UP -> {
-                    b.setY(btnExpandable.getY() - LAYOUT_SPACING - b.getHeight());
-                    b.setX(btnExpandable.getX() + btnExpandable.getWidth() / 2 - halfDistance
+                    b.setY(this.getY() - LAYOUT_SPACING - b.getHeight());
+                    b.setX(this.getX() + this.getWidth() / 2 - halfDistance
                             + i * (b.getWidth() + LAYOUT_SPACING));
                 }
                 case DOWN -> {
-                    b.setY(btnExpandable.getY() + btnExpandable.getHeight() + LAYOUT_SPACING);
-                    b.setX(btnExpandable.getX() + btnExpandable.getWidth() / 2 - halfDistance
+                    b.setY(this.getY() + this.getHeight() + LAYOUT_SPACING);
+                    b.setX(this.getX() + this.getWidth() / 2 - halfDistance
                             + i * (b.getWidth() + LAYOUT_SPACING));
                 }
             }
             b.visible = true;
         }
-        btnExpandable.onExpand();
     }
 
     @Nullable
@@ -186,7 +200,7 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
     }
 
     @Override
-    protected IIcon getIcon() {
+    protected @Nullable IIcon getIcon() {
         var app = getAppearance();
         if (app != null && app.icon() != null) {
             return app.icon();
@@ -235,7 +249,7 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
         }
 
         @Override
-        protected IIcon getIcon() {
+        protected @Nullable IIcon getIcon() {
             if (app != null && app.icon() != null) {
                 return app.icon();
             }

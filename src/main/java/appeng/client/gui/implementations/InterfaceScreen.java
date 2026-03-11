@@ -21,6 +21,8 @@ package appeng.client.gui.implementations;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -88,7 +90,7 @@ public class InterfaceScreen<C extends InterfaceMenu> extends UpgradeableScreen<
         }
 
         @Override
-        protected IIcon getIcon() {
+        protected @Nullable IIcon getIcon() {
             return isHoveredOrFocused() ? Icon.WRENCH : Icon.WRENCH_DISABLED;
         }
     }

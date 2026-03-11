@@ -65,8 +65,8 @@ public abstract class IconButton extends Button implements ITooltip {
     @Override
     public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partial) {
 
-        if (this.visible) {
-            var icon = this.getIcon();
+        var icon = this.getIcon();
+        if (this.visible && icon != null) {
 
             Blitter blitter = icon.getBlitter();
             if (!this.active) {
@@ -119,7 +119,10 @@ public abstract class IconButton extends Button implements ITooltip {
         }
     }
 
-    protected abstract IIcon getIcon();
+    @Nullable
+    protected IIcon getIcon() {
+        return null;
+    }
 
     /**
      * Prioritized over {@link #getIcon()} if not null.
@@ -176,7 +179,7 @@ public abstract class IconButton extends Button implements ITooltip {
         return new IconButton(onPress) {
 
             @Override
-            protected IIcon getIcon() {
+            protected @Nullable IIcon getIcon() {
                 return icon;
             }
         };

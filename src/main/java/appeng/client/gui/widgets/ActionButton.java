@@ -69,7 +69,7 @@ public class ActionButton extends IconButton implements INoMouseRedirectionWidge
     }
 
     @Override
-    protected IIcon getIcon() {
+    protected @Nullable IIcon getIcon() {
         return icon;
     }
 

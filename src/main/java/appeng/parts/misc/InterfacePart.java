@@ -45,7 +45,6 @@ import appeng.core.AppEng;
 import appeng.helpers.InterfaceLogic;
 import appeng.helpers.InterfaceLogicHost;
 import appeng.items.parts.PartModels;
-import appeng.menu.locator.MenuLocator;
 import appeng.menu.locator.MenuLocators;
 import appeng.parts.AEBasePart;
 import appeng.parts.PartModel;
@@ -174,11 +173,6 @@ public class InterfacePart extends AEBasePart implements InterfaceLogicHost {
         } else {
             return MODELS_OFF;
         }
-    }
-
-    @Override
-    public MenuLocator getLocator() {
-        return MenuLocators.forPart(this);
     }
 
     @Nullable

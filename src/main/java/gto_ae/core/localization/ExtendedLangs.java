@@ -16,7 +16,7 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
             "Open the GUI of this facility to view its details or interact with it"),
     ThroughputImportPerSeconds("向网络输入：%s/(%d秒)", "Import throughput: %s/(%d seconds)"),
     ThroughputExportPerSeconds("从网络流出：%s/(%d秒)", "Export throughput: %s/(%d seconds)"),
-    ThroughputPerSecondEstimated("[约每秒%s/%s]", "[%s/s estimated]"),
+    ThroughputPerSecondEstimated("[约每秒%s/s]", "[%s/s estimated]"),
     HighlightFacilityPosAt("该设施位于坐标%s(维度[%s])（距离约%d格）", "The facility is at %s in dimension[%s](about %d blocks away)"),
     HighlightFacilityPos("在世界中高亮显示该设施的位置", "Highlight the facility position in the world"),
 

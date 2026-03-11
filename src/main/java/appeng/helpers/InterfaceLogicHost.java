@@ -23,9 +23,7 @@ import java.util.Set;
 import com.google.common.collect.ImmutableSet;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
@@ -40,6 +38,8 @@ import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
 import appeng.menu.implementations.InterfaceMenu;
 import appeng.menu.locator.MenuLocator;
+import appeng.menu.locator.MenuLocators;
+import appeng.parts.AEBasePart;
 
 import gto_ae.helpers.facility_management.IStatusTracked;
 import gto_ae.helpers.facility_management.ThroughputCounter;
@@ -63,10 +63,17 @@ public interface InterfaceLogicHost extends IConfigurableObject,
 
     InterfaceLogic getInterfaceLogic();
 
-    MenuLocator getLocator();
-
-    @Nullable
-    Direction getSide();
+    default MenuLocator getLocator() {
+        switch (this) {
+            case BlockEntity blockEntity -> {
+                return MenuLocators.forBlockEntity(blockEntity);
+            }
+            case AEBasePart part -> {
+                return MenuLocators.forPart(part);
+            }
+            default -> throw new IllegalStateException("Unknown host type: " + this.getClass());
+        }
+    }
 
     @Override
     default IConfigManager getConfigManager() {
