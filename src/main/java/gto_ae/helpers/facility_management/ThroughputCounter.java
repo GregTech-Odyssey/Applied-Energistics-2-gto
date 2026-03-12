@@ -35,6 +35,8 @@ public class ThroughputCounter extends Reference2LongOpenHashMap<AEKey> {
     private boolean hasPositiveValues = false;
     private boolean hasNegativeValues = false;
 
+    private boolean disableShowingInTerminal = false;
+
     private long lastRefreshTime = 0;
     private long lastRefreshInterval = 0;
     private ThroughputCounter immutableView = null;
@@ -104,6 +106,7 @@ public class ThroughputCounter extends Reference2LongOpenHashMap<AEKey> {
         }
         buf.writeVarLong(k.getLastRefreshInterval());
         buf.writeVarLong(k.getLastRefreshTime());
+        buf.writeBoolean(k.isDisableShowingInTerminal());
     }
 
     public static ThroughputCounter readFromBuffer(FriendlyByteBuf buf) {
@@ -119,6 +122,7 @@ public class ThroughputCounter extends Reference2LongOpenHashMap<AEKey> {
         }
         ret.lastRefreshInterval = buf.readVarLong();
         ret.lastRefreshTime = buf.readVarLong();
+        ret.disableShowingInTerminal = buf.readBoolean();
         return ret;
     }
 
@@ -128,5 +132,13 @@ public class ThroughputCounter extends Reference2LongOpenHashMap<AEKey> {
 
     public long getLastRefreshInterval() {
         return lastRefreshInterval;
+    }
+
+    public boolean isDisableShowingInTerminal() {
+        return disableShowingInTerminal;
+    }
+
+    public void setDisableShowingInTerminal(boolean disableShowingInTerminal) {
+        this.disableShowingInTerminal = disableShowingInTerminal;
     }
 }

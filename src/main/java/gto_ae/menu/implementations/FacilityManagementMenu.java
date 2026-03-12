@@ -32,7 +32,7 @@ import gto_ae.helpers.facility_management.*;
 
 /**
  * 与隔壁样板管理终端的区别在于这个菜单对于ME设备是非即时的，可以保存快照状态
- * 
+ *
  * @see FacilityManagementScreen
  */
 public class FacilityManagementMenu extends AEBaseMenu {
@@ -140,7 +140,7 @@ public class FacilityManagementMenu extends AEBaseMenu {
             if (grid != null) {
                 for (var machineClass : grid.getMachineClasses()) {
                     if (IStatusTracked.class.isAssignableFrom(machineClass)) {
-                        visitPatternProviderHosts(grid, (Class<? extends IStatusTracked>) machineClass,
+                        visit(grid, (Class<? extends IStatusTracked>) machineClass,
                                 currentSeen, savingViews);
                     }
                 }
@@ -220,8 +220,11 @@ public class FacilityManagementMenu extends AEBaseMenu {
                 return true;
             }
 
-            var contentCheck = manager.getFilter() != null && !ioStatistics.containsKey(manager.getFilter());
-            if (contentCheck) {
+            var ioFilter = manager.getFilter();
+            var contentMatch = ioFilter == null ||
+                    ioStatistics.containsKey(ioFilter) ||
+                    machine.getConfiguredSetting().containsKey(ioFilter);
+            if (!contentMatch) {
                 return true;
             }
 
@@ -229,7 +232,7 @@ public class FacilityManagementMenu extends AEBaseMenu {
         return false;
     }
 
-    private <T extends IStatusTracked> void visitPatternProviderHosts(
+    private <T extends IStatusTracked> void visit(
             IGrid grid, Class<T> machineClass, IntSet currentSeen, @Nullable Set<DirectionalGlobalPos> positions) {
         for (T machine : grid.getActiveMachines(machineClass)) {
             if (isInvalid(machine)) {
@@ -242,13 +245,13 @@ public class FacilityManagementMenu extends AEBaseMenu {
 
             var t = this.id2MachineSnapshot.get(machine.getFacilityUid());
             if ((t == null || !t.serverEquals(machine))) {
-                var status = new FrozenMachineStatus(
+                var status = new FrozenMachineStatus(pos,
                         machine.getStatus(),
                         machine.getRequestedJobs().size(),
                         machine.getThroughputCounter(),
                         machine.getTerminalGroup(),
                         machine.getFacilityUid(),
-                        pos);
+                        machine.getConfiguredSetting());
                 status.setOpenGuiAction(machine::openGui);
                 this.id2MachineSnapshot.put(machine.getFacilityUid(), status);
                 sendPacketToClient(FacilityManagementPacket.forUpdate(machine));

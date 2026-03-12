@@ -8,7 +8,10 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
+
 import appeng.api.implementations.blockentities.PatternContainerGroup;
+import appeng.api.stacks.AEKey;
 import appeng.core.sync.BasePacket;
 
 import gto_ae.api.util.DirectionalGlobalPos;
@@ -36,13 +39,21 @@ public class FacilityManagementPacket extends BasePacket {
             var throughputCounter = ThroughputCounter.readFromBuffer(stream);
             var group = PatternContainerGroup.readFromPacket(stream);
 
+            Reference2LongOpenHashMap<AEKey> configuredSetting = new Reference2LongOpenHashMap<>();
+            int settingSize = stream.readInt();
+            for (int i = 0; i < settingSize; i++) {
+                var key = AEKey.readKey(stream);
+                var value = stream.readLong();
+                configuredSetting.put(key, value);
+            }
+
             this.status = new FrozenMachineStatus(
-                    status,
+                    pos, status,
                     jobCount,
                     throughputCounter,
                     group,
                     facilityUid,
-                    pos);
+                    configuredSetting);
         } else {
             this.facilityUid = facilityUid;
         }
@@ -66,6 +77,12 @@ public class FacilityManagementPacket extends BasePacket {
         data.writeVarInt(tracked.getRequestedJobs().size());
         ThroughputCounter.writeToBuffer(data, tracked.getThroughputCounter());
         tracked.getTerminalGroup().writeToPacket(data);
+
+        data.writeInt(tracked.getConfiguredSetting().size());
+        for (var setting : tracked.getConfiguredSetting().reference2LongEntrySet()) {
+            AEKey.writeKey(data, setting.getKey());
+            data.writeLong(setting.getLongValue());
+        }
 
         packet.configureWrite(data);
         return packet;

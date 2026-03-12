@@ -402,8 +402,20 @@ public class WidgetContainer {
     }
 
     public AETextField addTextField(String id) {
+        return addTextField(id, false);
+    }
+
+    public AETextField addTextField(String id, boolean rightClickClear) {
         var searchField = new AETextField(style, Minecraft.getInstance().font,
-                0, 0, 0, 0);
+                0, 0, 0, 0) {
+            @Override
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                if (rightClickClear && button == 1 && this.isMouseOver(mouseX, mouseY)) {
+                    this.setValue("");
+                }
+                return super.mouseClicked(mouseX, mouseY, 0);
+            }
+        };
         searchField.setBordered(false);
         searchField.setMaxLength(25);
         searchField.setTextColor(0xFFFFFF);

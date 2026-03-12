@@ -35,6 +35,7 @@ public enum IconsExtended implements IIcon {
     BLOCKING_MODE_PARALLEL(192, 0, 16, 16),
 
     SLOT_BG_FILTER_SEARCH(240, 0, 16, 16),
+    SLOT_BG_CONFIG(240, 16, 16, 16),
     ;
 
     private final int x, y, width, height;

@@ -10,8 +10,11 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.entity.player.Player;
 
+import it.unimi.dsi.fastutil.objects.Reference2LongMap;
+
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.networking.crafting.ICraftingLink;
+import appeng.api.stacks.AEKey;
 
 import gto_ae.api.util.DirectionalGlobalPos;
 
@@ -26,12 +29,14 @@ public final class FrozenMachineStatus implements IStatusTracked {
     private final int facilityUid;
     @NotNull
     private final DirectionalGlobalPos directionalGlobalPos;
+    private Reference2LongMap<AEKey> machineConfiguration;
 
     @Nullable
     private Consumer<Player> openGuiAction;
 
-    public FrozenMachineStatus(WorkingStatus value, int jobCount, ThroughputCounter entries,
-            PatternContainerGroup group, int facilityUid, @NotNull DirectionalGlobalPos directionalGlobalPos) {
+    public FrozenMachineStatus(@NotNull DirectionalGlobalPos directionalGlobalPos, WorkingStatus value, int jobCount,
+            ThroughputCounter entries,
+            PatternContainerGroup group, int facilityUid, Reference2LongMap<AEKey> machineConfiguration) {
         this.status = value;
         this.relatedJobsCount = jobCount;
         this.throughputCounter = entries;
@@ -39,6 +44,7 @@ public final class FrozenMachineStatus implements IStatusTracked {
         this.facilityUid = facilityUid;
         this.terminalGroup = group;
         this.directionalGlobalPos = directionalGlobalPos;
+        this.machineConfiguration = machineConfiguration;
     }
 
     /// used by client to update the status of an existing machine.
@@ -49,6 +55,7 @@ public final class FrozenMachineStatus implements IStatusTracked {
         this.relatedJobsCount = other.relatedJobsCount;
         this.throughputCounter = other.throughputCounter;
         this.lastRefreshTime = other.lastRefreshTime;
+        this.machineConfiguration = other.machineConfiguration;
         if (!Objects.equals(this.terminalGroup, other.terminalGroup)) {
             this.terminalGroup = other.terminalGroup;
             return true;
@@ -56,12 +63,21 @@ public final class FrozenMachineStatus implements IStatusTracked {
         return false;
     }
 
+    @Override
+    public Reference2LongMap<AEKey> getConfiguredSetting() {
+        return machineConfiguration;
+    }
+
     public boolean serverEquals(IStatusTracked other) {
         var lastRefresh = other.getThroughputCounter().getLastRefreshTime() == this.lastRefreshTime;
+        var otherConfig = other.getConfiguredSetting().keySet();
+        var thisConfig = this.getConfiguredSetting().keySet();
         return this.status == other.getStatus()
                 && this.relatedJobsCount == other.getRequestedJobs().size()
                 && lastRefresh
-                && Objects.equals(this.terminalGroup, other.getTerminalGroup());
+                && Objects.equals(this.terminalGroup, other.getTerminalGroup())
+                && Objects.equals(otherConfig, thisConfig);
+
     }
 
     @Override
@@ -93,10 +109,6 @@ public final class FrozenMachineStatus implements IStatusTracked {
 
     public String getSearchName() {
         return terminalGroup.name().getString();
-    }
-
-    public boolean noThroughputStats() {
-        return throughputCounter == ThroughputCounter.EMPTY;
     }
 
     @Override

@@ -875,7 +875,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
      * Adds a button to the vertical toolbar to the left of the screen and returns that button to the caller. The button
      * will automatically be positioned. This button will automatically be re-added to the screen when it's resized.
      */
-    protected final <B extends Button> B addToLeftToolbar(B button) {
+    public final <B extends Button> B addToLeftToolbar(B button) {
         verticalToolbar.add(button);
         return button;
     }
@@ -993,7 +993,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         guiGraphics.fillGradient(RenderType.guiOverlay(), x, y, x + w, y + h, 0x80ffffff, 0x80ffffff, z);
     }
 
-    protected final void switchToScreen(AEBaseScreen<?> screen) {
+    public final void switchToScreen(AEBaseScreen<?> screen) {
         savedSlotInfos.clear();
         for (var slot : menu.slots) {
             savedSlotInfos.add(new SavedSlotInfo(slot));

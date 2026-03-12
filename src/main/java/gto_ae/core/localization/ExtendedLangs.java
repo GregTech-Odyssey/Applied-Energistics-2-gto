@@ -9,7 +9,7 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
     WorkingStatusIdleTooltip("该设施当前处于空闲状态。", "This facility is currently idle."),
     WorkingStatusWorkingTooltip("该设施当前正在处理任务。", "This facility is currently working on tasks."),
     WorkingStatusBusyTooltip("该设施当前处于满负荷状态。", "This facility is currently in a full workload."),
-    RecentThroughput("近期吞吐量（最近%d秒）", "Recent Throughput (Last %d seconds)"),
+    RecentThroughput("近期统计（最近%d秒）", "Recent Throughput (last %d seconds)"),
     TasksNumInCPU("CPU中的任务数量：%d", "Tasks in CPU: %d"),
     OpenGuiOfThisFacility("打开该设施的GUI界面", "Open GUI of this facility"),
     OpenGuiOfThisFacilityTooltip("打开该设施的GUI界面以查看其详细信息或进行交互",
@@ -46,6 +46,12 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
     CpuFilterModeOnlyOneOrMoreTooltip("仅显示CPU中有一个或以上任务的设施", "Only show facilities with one or more tasks in CPU"),
     CpuFilterModeNoneTooltip("显示所有设施", "Show all facilities"),
 
+    DisplayMachineConfig("机器配置", "Config Display"),
+    UseToDisplayMachineConfig("此行用于展示机器配置", "This line is used to display machine configuration"),
+    DisplayMachineThroughput("吞吐量显示", "Display Throughput"),
+    UseToDisplayMachineThroughput("此行用于展示机器吞吐量", "This line is used to display machine throughput"),
+    HoldShiftToScrollThisRow("按住Shift可使用鼠标滚轮水平滚动该行", "Hold Shift to scroll this row horizontally with mouse wheel"),
+
     FreezeView("冻结视图", "Freeze View"),
     FreezeViewTooltip("冻结当前设施列表的视图，防止其随设施状态的变化而改变",
             "Freeze the current view of the facility list to prevent it from changing with the facility status"),
@@ -57,6 +63,8 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
     ShiftEncodingDesc("[Shift + 左击] 将样板编码后存入背包", "[Shift + Click] Encode pattern and put it into inventory"),
     ShiftEncodingClearDesc("特殊情况：当编码的样板没有有效输出时，清空背包所有已经编码的样板",
             "Special Case: When the encoded pattern has no valid output, clear all encoded patterns in inventory"),
+
+    FilterByCpuNameOrProductName("按CPU名称或主产物名称过滤", "Filter by CPU name or main product name"),
 
     CraftingCycleErrorMain("检测到循环依赖，自动合成无法进行", "Cyclic dependency detected, automatic crafting cannot proceed"),
     CraftingCycleErrorCount("\n发现 %s 个环:", "\nFound %s cycles:"),

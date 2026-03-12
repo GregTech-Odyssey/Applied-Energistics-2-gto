@@ -86,10 +86,7 @@ public class AppEngSlot extends Slot implements IDecoratedSlot {
     @Nullable
     public List<Component> getCustomTooltip(ItemStack carriedItem) {
         if (getDisplayStack().isEmpty()) {
-            var tooltip = emptyTooltip.get();
-            if (tooltip != null) {
-                return tooltip;
-            }
+            return emptyTooltip.get();
         }
         return null;
     }

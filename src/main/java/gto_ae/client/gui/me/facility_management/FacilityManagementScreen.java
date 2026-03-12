@@ -31,19 +31,18 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.core.BlockPos;
 import net.minecraft.locale.Language;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
@@ -54,6 +53,7 @@ import appeng.api.config.TerminalStyle;
 import appeng.api.config.YesNo;
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
@@ -67,6 +67,7 @@ import appeng.core.AEConfig;
 import appeng.core.AELog;
 import appeng.core.AppEng;
 import appeng.core.localization.GuiText;
+import appeng.menu.slot.InaccessibleSlot;
 import appeng.util.ConfigInventory;
 import appeng.util.ReadableNumberConverter;
 
@@ -91,8 +92,9 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
     private final ArrayList<Row> rows = new ArrayList<>();
     private final Int2ObjectOpenHashMap<HighlightButton> highlightBtns = new Int2ObjectOpenHashMap<>();
     private final Int2ObjectOpenHashMap<IconButton> openGuiBtns = new Int2ObjectOpenHashMap<>();
+    private final Int2IntOpenHashMap statsRowScrollLevels = new Int2IntOpenHashMap();
+    private final Int2IntOpenHashMap configScrollLevels = new Int2IntOpenHashMap();
 
-    private final Map<String, Set<Object>> cachedSearches = new WeakHashMap<>();
     private final Scrollbar scrollbar;
     private final AETextField searchField;
     private final ToggleButton freezeViewBtn;
@@ -173,12 +175,13 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
         freezeViewBtn.setState(menu.viewFrozen);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void drawFG(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX,
             int mouseY) {
         this.highlightBtns.forEach((key, value) -> value.setVisibility(false));
         this.openGuiBtns.forEach((key, value) -> value.setVisibility(false));
-        this.menu.slots.removeIf(slot -> slot instanceof ThroughputSlot);
+        this.menu.slots.removeIf(slot -> slot instanceof InaccessibleSlot);
 
         int textColor = style.getColor(PaletteColor.DEFAULT_TEXT_COLOR).toARGB();
 
@@ -233,28 +236,68 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
                 }
                 case StatRow(FrozenMachineStatus container) -> {
                     var throughput = container.getThroughputCounter();
-                    var counter = new AtomicInteger();
+                    var offset = statsRowScrollLevels.getOrDefault(container.getFacilityUid(), 0);
+                    var counter = new AtomicInteger(-offset);
                     var aeKeyInv = ConfigInventory.configStacks(null, 9, () -> {
                     }, true);
                     var vanillaInv = aeKeyInv.createMenuWrapper();
                     throughput.reference2LongEntrySet().stream()
-                            .sorted(Comparator.comparingLong(Reference2LongMap.Entry::getLongValue))
+                            .sorted(Comparator.<Reference2LongMap.Entry<AEKey>>comparingLong(
+                                    Reference2LongMap.Entry::getLongValue).reversed())
                             .forEach(entry -> {
-                                int slotIdx;
-                                if ((slotIdx = counter.getAndIncrement()) >= 9) {
+                                if (counter.get() < 0) {
+                                    counter.getAndIncrement();
+                                    return;
+                                }
+                                int throughputIndex;
+                                if ((throughputIndex = counter.getAndIncrement()) >= 9) {
                                     return;
                                 }
 
                                 var key = entry.getKey();
                                 long value = entry.getLongValue();
 
-                                aeKeyInv.setStack(slotIdx, new GenericStack(key, Math.abs(value)));
-                                var slot = new ThroughputSlot(vanillaInv, slotIdx, value,
+                                aeKeyInv.setStack(throughputIndex, new GenericStack(key, Math.abs(value)));
+                                var slot = new ThroughputSlot(vanillaInv, throughputIndex, value,
                                         container.getThroughputCounter().getLastRefreshInterval());
-                                slot.x = slotIdx * SLOT_SIZE + GUI_PADDING_X;
+                                slot.x = throughputIndex * SLOT_SIZE + GUI_PADDING_X;
                                 slot.y = (finalI - 1) * SLOT_SIZE + 36 + V_SHIFT;
                                 this.menu.slots.add(slot);
                             });
+                    while (counter.get() < 9) {
+                        int idx = counter.getAndIncrement();
+                        InaccessibleSlot slot = new InaccessibleSlot(vanillaInv, idx);
+                        slot.setEmptyTooltip(() -> List.of(ExtendedLangs.DisplayMachineConfig.text(),
+                                ExtendedLangs.UseToDisplayMachineThroughput.text().withStyle(ChatFormatting.GRAY)));
+                        slot.x = idx * SLOT_SIZE + GUI_PADDING_X;
+                        slot.y = (finalI - 1) * SLOT_SIZE + 36 + V_SHIFT;
+                        this.menu.slots.add(slot);
+                    }
+                }
+                case ConfigDisplayRow(FrozenMachineStatus container) -> {
+                    var offset = configScrollLevels.getOrDefault(container.getFacilityUid(), 0);
+                    var aeKeyInv = ConfigInventory.configStacks(null, 9, () -> {
+                    }, true);
+                    var vanillaInv = aeKeyInv.createMenuWrapper();
+                    var entries = container.getConfiguredSetting().reference2LongEntrySet().toArray();
+                    Arrays.sort(entries, Comparator
+                            .comparingLong(e -> Math.abs(((Reference2LongMap.Entry<AEKey>) e).getLongValue()))
+                            .reversed());
+                    for (int idx = 0; idx < 9; idx++) {
+                        if (idx + offset < entries.length) {
+                            var entry = (Reference2LongMap.Entry<AEKey>) entries[idx + offset];
+                            AEKey key = entry.getKey();
+                            long value = entry.getLongValue();
+                            aeKeyInv.setStack(idx, new GenericStack(key, value));
+                        }
+                        InaccessibleSlot slot = new InaccessibleSlot(vanillaInv, idx);
+                        slot.setIcon(IconsExtended.SLOT_BG_CONFIG);
+                        slot.setEmptyTooltip(() -> List.of(ExtendedLangs.DisplayMachineConfig.text(),
+                                ExtendedLangs.UseToDisplayMachineConfig.text().withStyle(ChatFormatting.GRAY)));
+                        slot.x = idx * SLOT_SIZE + GUI_PADDING_X;
+                        slot.y = (finalI - 1) * SLOT_SIZE + 36 + V_SHIFT;
+                        this.menu.slots.add(slot);
+                    }
                 }
                 case GroupHeaderRow(PatternContainerGroup group) -> {
                     if (group.icon() != null) {
@@ -291,6 +334,12 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
     @Override
     public void renderSlot(GuiGraphics guiGraphics, Slot s) {
         if (s instanceof ThroughputSlot slot) {
+            if (slot.getIcon() != null) {
+                slot.getIcon().getBlitter()
+                        .dest(s.x, s.y)
+                        .opacity(slot.getOpacityOfIcon())
+                        .blit(guiGraphics);
+            }
             try {
                 AEKeyRendering.drawInGui(
                         minecraft,
@@ -315,36 +364,80 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
     }
 
     @Override
+    public boolean mouseScrolled(double x, double y, double wheelDelta) {
+        var hoveredLineIndex = getHoveredLineIndex((int) x, (int) y);
+        if (Screen.hasShiftDown() && hoveredLineIndex != -1) {
+            var row = rows.get(hoveredLineIndex);
+            FrozenMachineStatus group;
+            Int2IntOpenHashMap scrollLevels;
+            Reference2LongMap<AEKey> groupCollection;
+            if (row instanceof StatRow(FrozenMachineStatus group0)) {
+                group = group0;
+                scrollLevels = statsRowScrollLevels;
+                groupCollection = group.getThroughputCounter();
+            } else if (row instanceof ConfigDisplayRow(FrozenMachineStatus group0)) {
+                group = group0;
+                scrollLevels = configScrollLevels;
+                groupCollection = group.getConfiguredSetting();
+            } else {
+                return super.mouseScrolled(x, y, wheelDelta);
+            }
+
+            int currentScroll = scrollLevels.getOrDefault(group.getFacilityUid(), 0);
+            int maxScroll = Math.max(0, groupCollection.size() - 9);
+            int newScroll = Math.max(0, Math.min(maxScroll, currentScroll + (int) -wheelDelta));
+            if (newScroll != currentScroll) {
+                scrollLevels.put(group.getFacilityUid(), newScroll);
+            }
+            return true;
+        }
+        return super.mouseScrolled(x, y, wheelDelta);
+    }
+
+    @Override
     protected void renderTooltip(@NotNull GuiGraphics guiGraphics, int x, int y) {
         // Draw line tooltip
-        if (hoveredSlot == null) {
-            var hoveredLineIndex = getHoveredLineIndex(x, y);
-            if (hoveredLineIndex != -1) {
-                var row = rows.get(hoveredLineIndex);
+        var hoveredLineIndex = getHoveredLineIndex(x, y);
+        if (hoveredLineIndex != -1) {
+            Row row = rows.get(hoveredLineIndex);
+            if (hoveredSlot == null) {
                 if (row instanceof GroupHeaderRow(PatternContainerGroup group) && !group.tooltip().isEmpty()) {
                     guiGraphics.renderTooltip(font, group.tooltip(), Optional.empty(), x, y);
                     return;
                 }
             }
-        }
-        if (hoveredSlot instanceof ThroughputSlot slot) {
-            var carried = menu.getCarried();
-            if (carried.isEmpty()) {
-                var currentToolTip = AEKeyRendering.getTooltip(slot.getKey());
-                currentToolTip.add(slot.formatThroughput());
+            if (hoveredSlot instanceof InaccessibleSlot slot && !slot.getDisplayStack().isEmpty()) {
+                List<Component> currentToolTip;
+
+                if (slot instanceof ThroughputSlot t) {
+                    currentToolTip = AEKeyRendering.getTooltip(t.getKey());
+                    currentToolTip.add(t.formatThroughput());
+                } else {
+                    currentToolTip = getTooltipFromContainerItem(slot.getItem());
+                }
+
+                boolean hasMoreThan9Items = switch (row) {
+                    case StatRow(FrozenMachineStatus container) -> container.getThroughputCounter().size() > 9;
+                    case ConfigDisplayRow(FrozenMachineStatus container) -> container.getConfiguredSetting().size() > 9;
+                    default -> false;
+                };
+                if (hasMoreThan9Items) {
+                    currentToolTip.add(ExtendedLangs.HoldShiftToScrollThisRow.text().withStyle(ChatFormatting.GRAY));
+                }
+
                 renderKeyTooltipThroughItemAPI(
                         guiGraphics,
-                        slot.getKey(),
+                        slot instanceof ThroughputSlot t ? t.getKey() : AEItemKey.of(slot.getItem()),
                         x, y, currentToolTip);
+                return;
             }
-            return;
         }
         super.renderTooltip(guiGraphics, x, y);
     }
 
     @Override
     protected void slotClicked(@Nullable Slot slot, int slotIdx, int mouseButton, ClickType clickType) {
-        if (slot instanceof ThroughputSlot) {
+        if (slot instanceof InaccessibleSlot) {
             return;
         }
         super.slotClicked(slot, slotIdx, mouseButton, clickType);
@@ -422,7 +515,16 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
                     return ROW_INFO_MIDDLE_BBOX;
                 }
             }
-            case StatRow ignored -> {
+            case StatRow ignored1 -> {
+                if (firstLine) {
+                    return ROW_INVENTORY_TOP_BBOX;
+                } else if (lastLine) {
+                    return ROW_INVENTORY_BOTTOM_BBOX;
+                } else {
+                    return ROW_INVENTORY_MIDDLE_BBOX;
+                }
+            }
+            case ConfigDisplayRow ignored -> {
                 if (firstLine) {
                     return ROW_INVENTORY_TOP_BBOX;
                 } else if (lastLine) {
@@ -491,7 +593,6 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
      * <strong>耗时操作。</strong>
      */
     private void refreshList() {
-        this.cachedSearches.clear();
         this.byGroup.clear();
         this.highlightBtns.forEach((k, v) -> this.removeWidget(v));
         this.highlightBtns.clear();
@@ -512,6 +613,8 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
             // if found, filter skipped or machine name matching the search term, add it
             if (found || entry.getSearchName().toLowerCase().contains(searchFilterLowerCase)
                     || entry.getThroughputCounter().keySet().stream().anyMatch(
+                            key -> key.getDisplayName().getString().toLowerCase().contains(searchFilterLowerCase))
+                    || entry.getConfiguredSetting().keySet().stream().anyMatch(
                             key -> key.getDisplayName().getString().toLowerCase().contains(searchFilterLowerCase))) {
                 this.byGroup.put(entry.getTerminalGroup(), entry);
             }
@@ -557,7 +660,11 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
                 guiBtn.setVisibility(true);
                 this.openGuiBtns.put(container.getFacilityUid(), this.addRenderableWidget(guiBtn));
 
-                if (container.getThroughputCounter() != ThroughputCounter.EMPTY) {
+                if (!container.getConfiguredSetting().isEmpty()) {
+                    this.rows.add(new ConfigDisplayRow(container));
+                }
+                if (container.getThroughputCounter() != ThroughputCounter.EMPTY &&
+                        !container.getThroughputCounter().isDisableShowingInTerminal()) {
                     this.rows.add(new StatRow(container));
                 }
 
@@ -586,58 +693,6 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
         scrollbar.setRange(0, this.rows.size() - this.visibleRows, 2);
     }
 
-    private boolean itemStackMatchesSearchTerm(ItemStack itemStack, String searchTerm) {
-        if (itemStack.isEmpty()) {
-            return false;
-        }
-
-        final CompoundTag encodedValue = itemStack.getTag();
-
-        if (encodedValue == null) {
-            return false;
-        }
-
-        // Potential later use to filter by input
-        // ListNBT inTag = encodedValue.getTagList( "in", 10 );
-        final ListTag outTag = encodedValue.getList("out", 10);
-
-        for (int i = 0; i < outTag.size(); i++) {
-
-            var parsedItemStack = ItemStack.of(outTag.getCompound(i));
-            var itemKey = AEItemKey.of(parsedItemStack);
-            if (itemKey != null) {
-                var displayName = itemKey.getDisplayName().getString().toLowerCase();
-                if (displayName.contains(searchTerm)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Tries to retrieve a cache for a with search term as keyword.
-     * <p>
-     * If this cache should be empty, it will populate it with an earlier cache if available or at least the cache for
-     * the empty string.
-     *
-     * @param searchTerm the corresponding search
-     * @return a Set matching a superset of the search term
-     */
-    private Set<Object> getCacheForSearchTerm(String searchTerm) {
-        if (!this.cachedSearches.containsKey(searchTerm)) {
-            this.cachedSearches.put(searchTerm, new HashSet<>());
-        }
-
-        final Set<Object> cache = this.cachedSearches.get(searchTerm);
-
-        if (cache.isEmpty() && searchTerm.length() > 1) {
-            cache.addAll(this.getCacheForSearchTerm(searchTerm.substring(0, searchTerm.length() - 1)));
-        }
-
-        return cache;
-    }
-
     private void reinitialize() {
         this.children().removeAll(this.renderables);
         this.renderables.clear();
@@ -657,8 +712,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
      * @return max amount of unique names and each inv row
      */
     private int getMaxRows() {
-        return this.groups.size() + this.shownIds.size() * 2; // Each machine has a info row and maybe a stat row, and
-                                                              // each group has a header row
+        return this.groups.size() + this.shownIds.size() * 3;
     }
 
     /**
@@ -693,6 +747,9 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
     }
 
     record InfoRow(FrozenMachineStatus container) implements Row {
+    }
+
+    record ConfigDisplayRow(FrozenMachineStatus container) implements Row {
     }
 
     // =====================================================

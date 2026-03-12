@@ -10,11 +10,16 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.Nameable;
 import net.minecraft.world.entity.player.Player;
 
+import it.unimi.dsi.fastutil.objects.Reference2LongMap;
+import it.unimi.dsi.fastutil.objects.Reference2LongMaps;
+import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
+
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.blockentity.AEBaseBlockEntity;
+import appeng.helpers.IConfigInvHost;
 import appeng.parts.AEBasePart;
 
 import gto_ae.api.util.DirectionalGlobalPos;
@@ -44,6 +49,17 @@ public interface IStatusTracked {
                 IStatusTracked.makeGroup(this, AEItemKey.of(aeBaseBlockEntity.getItemFromBlockEntity()));
             default -> throw new IllegalStateException("Unknown IStatusTracked type: " + this.getClass());
         };
+    }
+
+    default Reference2LongMap<AEKey> getConfiguredSetting() {
+        if (this instanceof IConfigInvHost configHolder) {
+            var map = new Reference2LongOpenHashMap<AEKey>();
+            for (var e : configHolder.getConfig().getAvailableStacks()) {
+                map.put(e.getKey(), e.getLongValue());
+            }
+            return map;
+        }
+        return Reference2LongMaps.emptyMap();
     }
 
     default int getFacilityUid() {
