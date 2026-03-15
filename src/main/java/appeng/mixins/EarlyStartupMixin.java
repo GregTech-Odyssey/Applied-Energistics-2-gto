@@ -31,7 +31,7 @@ import appeng.core.AppEngBootstrap;
  * Very early, but controlled initialization of AE2's internal registries. This allows other mods to freely use them
  * within their mod constructors.
  */
-@Mixin(value = Bootstrap.class, remap = false)
+@Mixin(Bootstrap.class)
 public abstract class EarlyStartupMixin {
 
     // Don't inject at TAIL because Citadel (possibly other mods too) cause bootStrap() to invoke itself,
