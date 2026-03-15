@@ -92,7 +92,6 @@ import appeng.sounds.AppEngSounds;
 import appeng.spatial.SpatialStorageChunkGenerator;
 import appeng.spatial.SpatialStorageDimensionIds;
 
-import gto_ae.forge.EventHandler;
 import gto_ae.helpers.facility_management.FacilityUidManager;
 
 /**
@@ -172,7 +171,6 @@ public abstract class AppEngBase implements AppEng {
         MinecraftForge.EVENT_BUS.addListener(SkyStoneBreakSpeed::handleBreakFaster);
         MinecraftForge.EVENT_BUS.addGenericListener(BlockEntity.class, InitCapabilities::registerGenericInvWrapper);
 
-        EventHandler.init(MinecraftForge.EVENT_BUS);
         // Workaround for https://github.com/MinecraftForge/MinecraftForge/issues/9158.
         // Can be removed once it's fixed in Forge.
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (PlayerInteractEvent.RightClickBlock event) -> {
