@@ -193,4 +193,29 @@ public interface ICompositeWidget {
         return null;
     }
 
+    static ICompositeWidget fromWidget(AbstractWidget widget) {
+        return new ICompositeWidget() {
+            @Override
+            public void setPosition(Point position) {
+                widget.setX(position.getX());
+                widget.setY(position.getY());
+            }
+
+            @Override
+            public void setSize(int width, int height) {
+                widget.setWidth(width);
+                widget.setHeight(height);
+            }
+
+            @Override
+            public Rect2i getBounds() {
+                return new Rect2i(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight());
+            }
+
+            @Override
+            public void populateScreen(Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) {
+                addWidget.accept(widget);
+            }
+        };
+    }
 }

@@ -22,12 +22,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -40,14 +42,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import appeng.api.behaviors.ContainerItemStrategies;
-import appeng.api.config.Actionable;
-import appeng.api.config.PowerMultiplier;
-import appeng.api.config.Setting;
-import appeng.api.config.Settings;
-import appeng.api.config.SortDir;
-import appeng.api.config.SortOrder;
-import appeng.api.config.TypeFilter;
-import appeng.api.config.ViewItems;
+import appeng.api.config.*;
 import appeng.api.implementations.blockentities.IMEChest;
 import appeng.api.implementations.blockentities.IViewCellStorage;
 import appeng.api.implementations.menuobjects.IPortableTerminal;
@@ -88,11 +83,14 @@ import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerListener;
 import appeng.util.Platform;
 
+import gto_ae.hooks.gui.menu.IRepoMenu;
+
 /**
  * @see MEStorageScreen
  */
 public class MEStorageMenu extends AEBaseMenu
-        implements IConfigManagerListener, IConfigurableObject, IMEInteractionHandler {
+        implements IConfigManagerListener, IConfigurableObject, IMEInteractionHandler,
+        IRepoMenu {
 
     public static final MenuType<MEStorageMenu> TYPE = MenuTypeBuilder
             .<MEStorageMenu, ITerminalHost>create(MEStorageMenu::new, ITerminalHost.class)
@@ -110,7 +108,7 @@ public class MEStorageMenu extends AEBaseMenu
             .build("wirelessterm");
 
     private final List<RestrictedInputSlot> viewCellSlots;
-    private final IConfigManager clientCM;
+    private IConfigManager clientCM;
     private final ToolboxMenu toolboxMenu;
     private final ITerminalHost host;
     @GuiSync(98)
@@ -159,20 +157,23 @@ public class MEStorageMenu extends AEBaseMenu
         this(menuType, id, ip, host, true);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected MEStorageMenu(MenuType<?> menuType, int id, Inventory ip, ITerminalHost host, boolean bindInventory) {
         super(menuType, id, ip, host);
 
         this.host = host;
         this.clientCM = new ConfigManager(this);
 
-        this.clientCM.registerSetting(Settings.SORT_BY, SortOrder.NAME);
-        this.clientCM.registerSetting(Settings.VIEW_MODE, ViewItems.ALL);
-        this.clientCM.registerSetting(Settings.TYPE_FILTER, TypeFilter.ALL);
-        this.clientCM.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
+        this.registerSettings((s, d) -> clientCM.<Enum>registerSetting((Setting) s, d));
 
         IEnergySource powerSource = null;
         if (isServerSide()) {
             this.serverCM = host.getConfigManager();
+            var cm = serverCM.copy(this);
+            for (var set : clientCM.getSettings()) {
+                set.copy(clientCM, cm);
+            }
+            this.clientCM = cm;
 
             this.storage = host.getInventory();
             if (this.storage != null) {
@@ -231,6 +232,7 @@ public class MEStorageMenu extends AEBaseMenu
         return this.networkNode;
     }
 
+    @Override
     public boolean isKeyVisible(AEKey key) {
         // If the host is a basic item cell with a limited key space, account for this
         if (host instanceof ItemMenuHost itemMenuHost) {
@@ -691,8 +693,8 @@ public class MEStorageMenu extends AEBaseMenu
         this.gui = gui;
     }
 
-    @Nullable
-    public IClientRepo getClientRepo() {
+    @Override
+    public @Nullable IClientRepo getClientRepo() {
         return clientRepo;
     }
 
@@ -757,5 +759,14 @@ public class MEStorageMenu extends AEBaseMenu
 
     public ITerminalHost getHost() {
         return host;
+    }
+
+    /// Override this to register settings that should be synced between the client and server.
+    @MustBeInvokedByOverriders
+    protected void registerSettings(BiConsumer<Setting<?>, Enum<?>> registrar) {
+        registrar.accept(Settings.SORT_BY, SortOrder.NAME);
+        registrar.accept(Settings.VIEW_MODE, ViewItems.ALL);
+        registrar.accept(Settings.TYPE_FILTER, TypeFilter.ALL);
+        registrar.accept(Settings.SORT_DIRECTION, SortDir.ASCENDING);
     }
 }

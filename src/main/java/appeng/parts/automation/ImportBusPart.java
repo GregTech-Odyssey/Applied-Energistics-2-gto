@@ -51,7 +51,8 @@ public class ImportBusPart extends IOBusPart {
                 grid.getEnergyService(),
                 this.source,
                 getOperationsPerTick(),
-                getFilter());
+                getFilter(),
+                throughputCounter);
 
         context.setInverted(this.isUpgradedWith(AEItems.INVERTER_CARD));
         importStrategy.transfer(context);

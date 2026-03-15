@@ -18,13 +18,22 @@
 
 package appeng.client.gui.me.crafting;
 
+import java.util.Collections;
+
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
 import appeng.client.gui.implementations.AESubScreen;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.CPUSelectionList;
+import appeng.core.localization.GuiText;
 import appeng.menu.me.crafting.CraftingStatusMenu;
+
+import gto_ae.api.config.ExtendedSettings;
+import gto_ae.client.gui.widgets.ExpandableToggleButton;
+import gto_ae.core.localization.ExtendedLangs;
+import gto_ae.helpers.facility_management.WorkingStatus;
 
 /**
  * This specialized version of the {@link CraftingCPUScreen} allows a player to cycle through the CPUs that are
@@ -41,6 +50,17 @@ public class CraftingStatusScreen extends CraftingCPUScreen<CraftingStatusMenu> 
 
         var scrollbar = widgets.addScrollBar("selectCpuScrollbar");
         widgets.add("selectCpuList", new CPUSelectionList(menu, scrollbar, style));
+        var f = widgets.addTextField("search", true);
+        f.setPlaceholder(GuiText.SearchPlaceholder.text());
+        f.setTooltipMessage(Collections.singletonList(ExtendedLangs.FilterByCpuNameOrProductName.text()));
+        f.setResponder(menu::updateSearchTerm);
+        f.setFocused(false);
+        widgets.add("filter", (AbstractWidget) new ExpandableToggleButton<>(
+                ExtendedSettings.CPU_WORKING_STATUS_SETTING,
+                WorkingStatus.NONE,
+                (b, e) -> menu.updateFilter(e),
+                ExpandableToggleButton.LayoutDirection.DOWN));
+
     }
 
     @Override

@@ -25,30 +25,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraftforge.registries.IForgeRegistry;
 
-import appeng.menu.implementations.CellWorkbenchMenu;
-import appeng.menu.implementations.ChestMenu;
-import appeng.menu.implementations.CondenserMenu;
-import appeng.menu.implementations.DriveMenu;
-import appeng.menu.implementations.EnergyLevelEmitterMenu;
-import appeng.menu.implementations.FormationPlaneMenu;
-import appeng.menu.implementations.IOBusMenu;
-import appeng.menu.implementations.IOPortMenu;
-import appeng.menu.implementations.InscriberMenu;
-import appeng.menu.implementations.InterfaceMenu;
-import appeng.menu.implementations.MolecularAssemblerMenu;
-import appeng.menu.implementations.PatternAccessTermMenu;
-import appeng.menu.implementations.PatternProviderMenu;
-import appeng.menu.implementations.PriorityMenu;
-import appeng.menu.implementations.QNBMenu;
-import appeng.menu.implementations.QuartzKnifeMenu;
-import appeng.menu.implementations.SetStockAmountMenu;
-import appeng.menu.implementations.SkyChestMenu;
-import appeng.menu.implementations.SpatialAnchorMenu;
-import appeng.menu.implementations.SpatialIOPortMenu;
-import appeng.menu.implementations.StorageBusMenu;
-import appeng.menu.implementations.StorageLevelEmitterMenu;
-import appeng.menu.implementations.VibrationChamberMenu;
-import appeng.menu.implementations.WirelessAccessPointMenu;
+import appeng.menu.implementations.*;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.crafting.CraftAmountMenu;
 import appeng.menu.me.crafting.CraftConfirmMenu;
@@ -59,6 +36,8 @@ import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.menu.me.items.WirelessCraftingTermMenu;
 import appeng.menu.me.networktool.NetworkStatusMenu;
 import appeng.menu.me.networktool.NetworkToolMenu;
+
+import gto_ae.menu.implementations.FacilityManagementMenu;
 
 public final class InitMenuTypes {
     private static final Map<ResourceLocation, MenuType<?>> REGISTRATION_QUEUE = new HashMap<>();
@@ -93,6 +72,7 @@ public final class InitMenuTypes {
                 NetworkStatusMenu.CONTROLLER_TYPE,
                 NetworkToolMenu.TYPE,
                 PatternAccessTermMenu.TYPE,
+                FacilityManagementMenu.TYPE,
                 PatternProviderMenu.TYPE,
                 PatternEncodingTermMenu.TYPE,
                 PriorityMenu.TYPE,

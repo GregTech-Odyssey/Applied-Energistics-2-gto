@@ -51,6 +51,8 @@ import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.SwitchGuisPacket;
 import appeng.menu.implementations.PriorityMenu;
 
+import gto_ae.hooks.gui.IPopulateScreenWidget;
+
 /**
  * This utility class helps with positioning commonly used Minecraft {@link AbstractWidget} instances on a screen
  * without having to recreate them everytime the screen resizes in the <code>init</code> method.
@@ -73,6 +75,10 @@ public class WidgetContainer {
 
         // Size the widget, as this doesn't change when the parent is resized
         WidgetStyle widgetStyle = style.getWidget(id);
+        if (widgetStyle == null) {
+            add(id, ICompositeWidget.fromWidget(widget));
+            return;
+        }
         int width = widgetStyle.getWidth() != 0 ? widgetStyle.getWidth() : widget.getWidth();
         int height = widgetStyle.getHeight() != 0 ? widgetStyle.getHeight() : widget.getHeight();
         if (widget instanceof IResizableWidget resizableWidget) {
@@ -98,7 +104,9 @@ public class WidgetContainer {
 
         // Size the widget, as this doesn't change when the parent is resized
         WidgetStyle widgetStyle = style.getWidget(id);
-        widget.setSize(widgetStyle.getWidth(), widgetStyle.getHeight());
+        if (widgetStyle != null) {
+            widget.setSize(widgetStyle.getWidth(), widgetStyle.getHeight());
+        }
 
         if (compositeWidgets.put(id, widget) != null) {
             throw new IllegalStateException("Duplicate id: " + id);
@@ -184,7 +192,9 @@ public class WidgetContainer {
         for (var entry : compositeWidgets.entrySet()) {
             var widget = entry.getValue();
             var widgetStyle = style.getWidget(entry.getKey());
-            widget.setPosition(widgetStyle.resolve(relativeBounds));
+            if (widgetStyle != null) {
+                widget.setPosition(widgetStyle.resolve(relativeBounds));
+            }
 
             widget.populateScreen(addWidget, bounds, screen);
         }
@@ -392,8 +402,20 @@ public class WidgetContainer {
     }
 
     public AETextField addTextField(String id) {
+        return addTextField(id, false);
+    }
+
+    public AETextField addTextField(String id, boolean rightClickClear) {
         var searchField = new AETextField(style, Minecraft.getInstance().font,
-                0, 0, 0, 0);
+                0, 0, 0, 0) {
+            @Override
+            public boolean mouseClicked(double mouseX, double mouseY, int button) {
+                if (rightClickClear && button == 1 && this.isMouseOver(mouseX, mouseY)) {
+                    this.setValue("");
+                }
+                return super.mouseClicked(mouseX, mouseY, 0);
+            }
+        };
         searchField.setBordered(false);
         searchField.setMaxLength(25);
         searchField.setTextColor(0xFFFFFF);
@@ -420,5 +442,9 @@ public class WidgetContainer {
             this.area = area;
             this.tooltip = tooltip;
         }
+    }
+
+    public void add(String gto$addMissing, IPopulateScreenWidget populateScreen) {
+        add(gto$addMissing, (ICompositeWidget) (populateScreen));
     }
 }

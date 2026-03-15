@@ -69,7 +69,7 @@ public class CraftingBlockEntity extends AENetworkBlockEntity
     }
 
     @Override
-    protected Item getItemFromBlockEntity() {
+    public Item getItemFromBlockEntity() {
         return getUnitBlock().type.getItemFromType();
     }
 

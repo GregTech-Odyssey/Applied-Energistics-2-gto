@@ -10,6 +10,8 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.util.prioritylist.IPartitionList;
 
+import gto_ae.helpers.facility_management.ThroughputCounter;
+
 /**
  * Context for import and export bus transfer operations.
  */
@@ -44,4 +46,6 @@ public interface StackTransferContext {
     boolean canInsert(AEItemKey what, long amount);
 
     void reduceOperationsRemaining(long inserted);
+
+    ThroughputCounter getStats();
 }

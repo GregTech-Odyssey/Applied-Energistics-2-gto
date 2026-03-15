@@ -28,6 +28,8 @@ import appeng.datagen.providers.IAE2DataProvider;
 import appeng.integration.modules.emi.EmiText;
 import appeng.integration.modules.igtooltip.TooltipIds;
 
+import gto_ae.core.localization.ExtendedLangs;
+
 public class LocalizationProvider implements IAE2DataProvider {
     private final Map<String, String> localizations = new HashMap<>();
 
@@ -57,6 +59,9 @@ public class LocalizationProvider implements IAE2DataProvider {
         addEnum(InGameTooltip.class);
         addEnum(ItemModText.class);
         addEnum(EmiText.class);
+
+        addEnum(ExtendedLangs.class);
+
         // Can't implement LocalizationEnum since it's not in the API, but PowerUnits is
         for (var powerUnit : PowerUnits.values()) {
             add(powerUnit.unlocalizedName, powerUnit.symbolName);

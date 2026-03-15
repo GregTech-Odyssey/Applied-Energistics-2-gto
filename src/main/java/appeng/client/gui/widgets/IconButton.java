@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Button.OnPress;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.network.chat.Component;
@@ -36,6 +35,8 @@ import net.minecraft.world.item.ItemStack;
 
 import appeng.client.gui.Icon;
 import appeng.client.gui.style.Blitter;
+
+import gto_ae.hooks.gui.IIcon;
 
 public abstract class IconButton extends Button implements ITooltip {
 
@@ -64,8 +65,8 @@ public abstract class IconButton extends Button implements ITooltip {
     @Override
     public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partial) {
 
-        if (this.visible) {
-            var icon = this.getIcon();
+        var icon = this.getIcon();
+        if (this.visible && icon != null) {
 
             Blitter blitter = icon.getBlitter();
             if (!this.active) {
@@ -118,7 +119,10 @@ public abstract class IconButton extends Button implements ITooltip {
         }
     }
 
-    protected abstract Icon getIcon();
+    @Nullable
+    protected IIcon getIcon() {
+        return null;
+    }
 
     /**
      * Prioritized over {@link #getIcon()} if not null.
@@ -171,4 +175,13 @@ public abstract class IconButton extends Button implements ITooltip {
         this.disableBackground = disableBackground;
     }
 
+    public static IconButton simple(IIcon icon, OnPress onPress) {
+        return new IconButton(onPress) {
+
+            @Override
+            protected @Nullable IIcon getIcon() {
+                return icon;
+            }
+        };
+    }
 }

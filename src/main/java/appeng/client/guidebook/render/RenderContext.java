@@ -32,6 +32,8 @@ import appeng.client.guidebook.color.LightDarkMode;
 import appeng.client.guidebook.document.LytRect;
 import appeng.client.guidebook.style.ResolvedTextStyle;
 
+import gto_ae.hooks.gui.IIcon;
+
 public interface RenderContext {
 
     LightDarkMode lightDarkMode();
@@ -76,10 +78,10 @@ public interface RenderContext {
     }
 
     default void drawIcon(int x, int y, Icon icon, ColorValue color) {
-        var u0 = icon.x / (float) Icon.TEXTURE_WIDTH;
-        var v0 = icon.y / (float) Icon.TEXTURE_HEIGHT;
-        var u1 = (icon.x + icon.width) / (float) Icon.TEXTURE_WIDTH;
-        var v1 = (icon.y + icon.height) / (float) Icon.TEXTURE_HEIGHT;
+        var u0 = icon.x / (float) IIcon.TEXTURE_WIDTH;
+        var v0 = icon.y / (float) IIcon.TEXTURE_HEIGHT;
+        var u1 = (icon.x + icon.width) / (float) IIcon.TEXTURE_WIDTH;
+        var v1 = (icon.y + icon.height) / (float) IIcon.TEXTURE_HEIGHT;
 
         var texture = Minecraft.getInstance().getTextureManager().getTexture(Icon.TEXTURE);
         fillTexturedRect(new LytRect(x, y, icon.width, icon.height), texture, color, color, color, color,

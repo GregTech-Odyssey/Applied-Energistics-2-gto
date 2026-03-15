@@ -69,6 +69,7 @@ import appeng.client.commands.ClientCommands;
 import appeng.client.gui.me.common.PendingCraftingJobs;
 import appeng.client.gui.me.common.PinnedKeys;
 import appeng.client.gui.style.StyleManager;
+import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.client.guidebook.ConfigValueTagExtension;
 import appeng.client.guidebook.PageAnchor;
 import appeng.client.guidebook.PartAnnotationStrategy;
@@ -101,6 +102,8 @@ import appeng.spatial.SpatialStorageDimensionIds;
 import appeng.spatial.SpatialStorageSkyProperties;
 import appeng.util.InteractionUtil;
 import appeng.util.Platform;
+
+import gto_ae.api.config.ButtonAppearance;
 
 /**
  * Client-specific functionality.
@@ -162,6 +165,8 @@ public class AppEngClient extends AppEngBase {
                 Hotkeys.checkHotkeys();
             }
         });
+
+        SettingToggleButton.deferAppearanceRegistration(ButtonAppearance::init);
     }
 
     private void registerDimensionSpecialEffects(RegisterDimensionSpecialEffectsEvent event) {

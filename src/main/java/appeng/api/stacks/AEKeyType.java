@@ -220,8 +220,12 @@ public abstract class AEKeyType {
     }
 
     private String formatShortAmount(long amount, int maxWidth) {
-        if (getAmountPerUnit() > 1) {
-            var units = amount / (double) getAmountPerUnit();
+        return formatAmountFor(this, amount, maxWidth);
+    }
+
+    public static String formatAmountFor(AEKeyType type, double amount, int maxWidth) {
+        if (type.getAmountPerUnit() > 1) {
+            var units = amount / (double) type.getAmountPerUnit();
             return ReadableNumberConverter.format(units, maxWidth);
         } else {
             return ReadableNumberConverter.format(amount, maxWidth);

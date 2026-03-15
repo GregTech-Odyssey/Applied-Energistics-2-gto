@@ -28,6 +28,7 @@ import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 
 import appeng.api.config.Setting;
+import appeng.util.IConfigManagerListener;
 
 /**
  * Used to adjust settings on an object,
@@ -75,6 +76,8 @@ public interface IConfigManager {
      * @throws UnsupportedSettingException if setting has not been registered before
      */
     <T extends Enum<T>> void putSetting(Setting<T> setting, T newValue);
+
+    IConfigManager copy(IConfigManagerListener listener);
 
     /**
      * write all settings to the NBT Tag so they can be read later.

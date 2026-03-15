@@ -17,7 +17,8 @@ import appeng.client.gui.widgets.AETextField;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.helpers.InventoryAction;
-import appeng.menu.slot.FakeSlot;
+
+import gto_ae.hooks.gui.menu.IDraggableSlot;
 
 public final class DropTargets {
     private DropTargets() {
@@ -26,7 +27,7 @@ public final class DropTargets {
     public static List<DropTarget> getTargets(AEBaseScreen<?> aeScreen) {
         List<DropTarget> targets = new ArrayList<>();
         for (var slot : aeScreen.getMenu().slots) {
-            if (slot.isActive() && slot instanceof FakeSlot fakeSlot) {
+            if (slot.isActive() && slot instanceof IDraggableSlot fakeSlot) {
                 var area = new Rect2i(aeScreen.getGuiLeft() + slot.x, aeScreen.getGuiTop() + slot.y, 16, 16);
                 targets.add(new FakeSlotDropTarget(area, fakeSlot));
             }
@@ -43,7 +44,7 @@ public final class DropTargets {
         return targets;
     }
 
-    private record FakeSlotDropTarget(Rect2i area, FakeSlot slot) implements DropTarget {
+    private record FakeSlotDropTarget(Rect2i area, IDraggableSlot slot) implements DropTarget {
         @Override
         public boolean canDrop(GenericStack stack) {
             // Use the standard inventory function to test if the dragged stack would in theory be accepted
@@ -58,9 +59,11 @@ public final class DropTargets {
                 if (slot instanceof RequestSlot requestSlot) {
                     Platform.sendDragAndDrop(requestSlot.getRequesterReference().getRequesterId(),
                             requestSlot.getSlot(), itemStack);
+                } else if (slot.customDragging()) {
+                    slot.onXEIDragged(itemStack);
                 } else {
                     NetworkHandler.instance().sendToServer(new InventoryActionPacket(InventoryAction.SET_FILTER,
-                            slot.index, itemStack));
+                            slot.getIndex(), itemStack));
                 }
                 return true;
             }

@@ -26,70 +26,54 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.network.chat.Component;
 
 import appeng.api.config.ActionItems;
-import appeng.client.gui.Icon;
-import appeng.core.localization.ButtonToolTips;
+import appeng.core.localization.LocalizationEnum;
 
-public class ActionButton extends IconButton {
+import gto_ae.hooks.gui.IActionItems;
+import gto_ae.hooks.gui.IIcon;
+import gto_ae.hooks.gui.INoMouseRedirectionWidget;
+
+public class ActionButton extends IconButton implements INoMouseRedirectionWidget {
     private static final Pattern PATTERN_NEW_LINE = Pattern.compile("\\n", Pattern.LITERAL);
-    private final Icon icon;
+    private IIcon icon;
+
+    private IActionItems lAction;
 
     public ActionButton(ActionItems action, Runnable onPress) {
+        this((IActionItems) action, onPress);
+    }
+
+    public ActionButton(ActionItems action, Consumer<IActionItems> onPress) {
+        this((IActionItems) action, onPress);
+    }
+
+    public ActionButton(IActionItems action, Runnable onPress) {
         this(action, a -> onPress.run());
     }
 
-    public ActionButton(ActionItems action, Consumer<ActionItems> onPress) {
+    public ActionButton(IActionItems action, Consumer<IActionItems> onPress) {
         super(btn -> onPress.accept(action));
 
-        ButtonToolTips displayName;
-        ButtonToolTips displayValue;
-        switch (action) {
-            case WRENCH -> {
-                icon = Icon.WRENCH;
-                displayName = ButtonToolTips.PartitionStorage;
-                displayValue = ButtonToolTips.PartitionStorageHint;
-            }
-            case CLOSE -> {
-                icon = Icon.CLEAR;
-                displayName = ButtonToolTips.Clear;
-                displayValue = ButtonToolTips.ClearSettings;
-            }
-            case STASH -> {
-                icon = Icon.ARROW_UP;
-                displayName = ButtonToolTips.Stash;
-                displayValue = ButtonToolTips.StashDesc;
-            }
-            case STASH_TO_PLAYER_INV -> {
-                icon = Icon.ARROW_DOWN;
-                displayName = ButtonToolTips.StashToPlayer;
-                displayValue = ButtonToolTips.StashToPlayerDesc;
-            }
-            case ENCODE -> {
-                icon = Icon.WHITE_ARROW_DOWN;
-                displayName = ButtonToolTips.Encode;
-                displayValue = ButtonToolTips.EncodeDescription;
-            }
-            case CYCLE_PROCESSING_OUTPUT -> {
-                icon = Icon.SCHEDULING_DEFAULT;
-                displayName = ButtonToolTips.CycleProcessingOutput;
-                displayValue = ButtonToolTips.CycleProcessingOutputTooltip;
-            }
-            case TERMINAL_SETTINGS -> {
-                icon = Icon.WRENCH;
-                displayName = ButtonToolTips.TerminalSettings;
-                displayValue = null;
-            }
-            default -> throw new IllegalArgumentException("Unknown ActionItem: " + action);
-        }
+        setAction(action);
+    }
 
-        setMessage(buildMessage(displayName, displayValue));
+    public void setAction(IActionItems action) {
+        if (action == lAction) {
+            return;
+        }
+        icon = action.icon();
+        setMessage(buildMessage(action.displayName(), action.displayValue()));
+    }
+
+    public IActionItems getAction() {
+        return lAction;
     }
 
     @Override
-    protected Icon getIcon() {
+    protected @Nullable IIcon getIcon() {
         return icon;
     }
 
-    private Component buildMessage(ButtonToolTips displayName, @Nullable ButtonToolTips displayValue) {
+    private Component buildMessage(LocalizationEnum displayName, @Nullable LocalizationEnum displayValue) {
         String name = displayName.text().getString();
         if (displayValue == null) {
             return Component.literal(name);

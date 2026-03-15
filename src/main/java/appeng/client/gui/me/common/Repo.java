@@ -19,14 +19,7 @@
 package appeng.client.gui.me.common;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
@@ -41,6 +34,10 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceSet;
 
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
@@ -77,6 +74,8 @@ public class Repo implements IClientRepo {
     private boolean hasPower;
 
     private final BiMap<Long, GridInventoryEntry> entries = HashBiMap.create();
+    private final Reference2ObjectMap<AEKey, GridInventoryEntry> byKey = new Reference2ObjectOpenHashMap<>();
+    private final ReferenceSet<AEKey> craftableKeys = new ReferenceOpenHashSet<>();
     private final ArrayList<GridInventoryEntry> view = new ArrayList<>();
     private final ArrayList<GridInventoryEntry> pinnedRow = new ArrayList<>();
     /**
@@ -129,6 +128,8 @@ public class Repo implements IClientRepo {
             }
             if (serverEntry.isMeaningful()) {
                 entries.put(serverEntry.getSerial(), serverEntry);
+                byKey.put(serverEntry.getWhat(), serverEntry);
+                putCraftable(serverEntry);
             }
             return;
         }
@@ -136,6 +137,8 @@ public class Repo implements IClientRepo {
         // Update the local entry
         if (!serverEntry.isMeaningful()) {
             entries.remove(serverEntry.getSerial());
+            byKey.remove(localEntry.getWhat());
+            craftableKeys.remove(localEntry.getWhat());
         } else if (serverEntry.getWhat() == null) {
             entries.put(serverEntry.getSerial(), new GridInventoryEntry(
                     serverEntry.getSerial(),
@@ -143,8 +146,20 @@ public class Repo implements IClientRepo {
                     serverEntry.getStoredAmount(),
                     serverEntry.getRequestableAmount(),
                     serverEntry.isCraftable()));
+            byKey.put(localEntry.getWhat(), entries.get(serverEntry.getSerial()));
+            putCraftable(serverEntry);
         } else {
             entries.put(serverEntry.getSerial(), serverEntry);
+            byKey.put(serverEntry.getWhat(), serverEntry);
+            putCraftable(serverEntry);
+        }
+    }
+
+    private void putCraftable(GridInventoryEntry entry) {
+        if (entry.isCraftable()) {
+            craftableKeys.add(entry.getWhat());
+        } else {
+            craftableKeys.remove(entry.getWhat());
         }
     }
 
@@ -355,6 +370,7 @@ public class Repo implements IClientRepo {
 
     public final void clear() {
         this.entries.clear();
+        this.byKey.clear();
         this.view.clear();
         this.pinnedRow.clear();
         this.entriesByItemId.clear();
@@ -466,11 +482,16 @@ public class Repo implements IClientRepo {
      * Checks if the repo knows that the given key can be crafted.
      */
     public boolean isCraftable(AEKey what) {
-        for (var entry : entries.values()) {
-            if (entry.isCraftable() && what.equals(entry.getWhat())) {
-                return true;
-            }
-        }
-        return false;
+        return craftableKeys.contains(what);
+    }
+
+    @Override
+    public Set<AEKey> getCraftableKeys() {
+        return Collections.unmodifiableSet(craftableKeys);
+    }
+
+    @Override
+    public GridInventoryEntry getByKey(AEKey key) {
+        return byKey.get(key);
     }
 }

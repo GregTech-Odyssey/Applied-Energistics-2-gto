@@ -35,7 +35,7 @@ public final class Settings {
     private Settings() {
     }
 
-    private synchronized static <T extends Enum<T>> Setting<T> register(String name, Class<T> enumClass) {
+    public synchronized static <T extends Enum<T>> Setting<T> register(String name, Class<T> enumClass) {
         Preconditions.checkState(!SETTINGS.containsKey(name));
         var setting = new Setting<>(name, enumClass);
         SETTINGS.put(name, setting);
@@ -43,7 +43,7 @@ public final class Settings {
     }
 
     @SafeVarargs
-    private synchronized static <T extends Enum<T>> Setting<T> register(String name, T firstOption, T... moreOptions) {
+    public synchronized static <T extends Enum<T>> Setting<T> register(String name, T firstOption, T... moreOptions) {
         Preconditions.checkState(!SETTINGS.containsKey(name));
         var setting = new Setting<T>(name, firstOption.getDeclaringClass(), EnumSet.of(firstOption, moreOptions));
         SETTINGS.put(name, setting);

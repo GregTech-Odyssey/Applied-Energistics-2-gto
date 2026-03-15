@@ -76,9 +76,11 @@ import appeng.menu.slot.RestrictedInputSlot;
 import appeng.parts.AEBasePart;
 import appeng.util.ConfigMenuInventory;
 
+/// @see appeng.client.gui.AEBaseScreen
 public abstract class AEBaseMenu extends AbstractContainerMenu {
     private static final int MAX_STRING_LENGTH = 32767;
     private static final String HIDE_SLOT = "HideSlot";
+    private static final String SERVER_SHIFT_STATE = "ServerShiftState";
 
     private final IActionSource mySrc;
     @Nullable
@@ -103,6 +105,8 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
      */
     private boolean returnedFromSubScreen;
 
+    protected boolean serverShiftState;
+
     public AEBaseMenu(MenuType<?> menuType, int id, Inventory playerInventory,
             Object host) {
         super(menuType, id);
@@ -121,6 +125,7 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
 
         this.mySrc = new PlayerSource(getPlayer(), this.getActionHost());
         registerClientAction(HIDE_SLOT, String.class, this::hideSlot);
+        registerClientAction(SERVER_SHIFT_STATE, Boolean.class, state -> this.serverShiftState = state);
     }
 
     protected final IActionHost getActionHost() {
@@ -362,6 +367,12 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
                     slot.setSlotEnabled(false);
                 }
             }
+        }
+    }
+
+    public void shiftStateChanged(boolean shiftDown) {
+        if (isClientSide()) {
+            sendClientAction(SERVER_SHIFT_STATE, shiftDown);
         }
     }
 

@@ -78,6 +78,7 @@ public abstract class AbstractTableRenderer<T> {
 
         var pose = guiGraphics.pose();
 
+        this.beforeTableRender();
         for (int row = 0; row < this.rows; row++) {
             for (int col = 0; col < COLS; col++) {
                 int i = (row + scrollOffset) * COLS + col;
@@ -143,6 +144,7 @@ public abstract class AbstractTableRenderer<T> {
         if (tooltipLines != null) {
             screen.drawTooltipWithHeader(guiGraphics, mouseX, mouseY, tooltipLines);
         }
+        this.afterTableRender();
     }
 
     public StackWithBounds getHoveredStack() {
@@ -187,6 +189,13 @@ public abstract class AbstractTableRenderer<T> {
      */
     protected int getEntryOverlayColor(T entry) {
         return 0;
+    }
+
+    protected void beforeTableRender() {
+    }
+
+    protected void afterTableRender() {
+
     }
 
 }

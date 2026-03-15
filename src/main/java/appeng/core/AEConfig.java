@@ -136,6 +136,8 @@ public final class AEConfig {
     private int craftingCalculationTimePerTick;
     private boolean craftingSimulatedExtraction;
     private boolean spatialAnchorEnablesRandomTicks;
+    private int throughputCounterRefreshRate;
+    private boolean allowMissingCraftingJobs;
 
     // Spatial IO/Dimension
     private double spatialPowerExponent;
@@ -211,6 +213,8 @@ public final class AEConfig {
         this.craftingCalculationTimePerTick = COMMON.craftingCalculationTimePerTick.get();
         this.craftingSimulatedExtraction = COMMON.craftingSimulatedExtraction.get();
         this.spatialAnchorEnablesRandomTicks = COMMON.spatialAnchorEnableRandomTicks.get();
+        this.throughputCounterRefreshRate = COMMON.throughputCounterRefreshRate.get();
+        this.allowMissingCraftingJobs = COMMON.allowMissingCraftingJobs.get();
 
         AELog.setCraftingLogEnabled(COMMON.craftingLog.get());
         AELog.setDebugLogEnabled(COMMON.debugLog.get());
@@ -379,6 +383,14 @@ public final class AEConfig {
 
     public boolean isSpatialAnchorEnablesRandomTicks() {
         return this.spatialAnchorEnablesRandomTicks;
+    }
+
+    public int getThroughputCounterRefreshRate() {
+        return this.throughputCounterRefreshRate;
+    }
+
+    public boolean isAllowMissingCraftingJobs() {
+        return this.allowMissingCraftingJobs;
     }
 
     public double getSpatialPowerExponent() {
@@ -648,6 +660,8 @@ public final class AEConfig {
         public final BooleanOption tinyTntBlockDamage;
         public final EnumOption<ChannelMode> channels;
         public final BooleanOption spatialAnchorEnableRandomTicks;
+        public final IntegerOption throughputCounterRefreshRate;
+        public final BooleanOption allowMissingCraftingJobs;
 
         public final BooleanOption disassemblyCrafting;
         public final IntegerOption growthAcceleratorSpeed;
@@ -721,6 +735,10 @@ public final class AEConfig {
                     "Changes the channel capacity that cables provide in AE2.");
             spatialAnchorEnableRandomTicks = general.addBoolean("spatialAnchorEnableRandomTicks", true,
                     "Whether Spatial Anchors should force random chunk ticks and entity spawning.");
+            throughputCounterRefreshRate = general.addInt("throughputCounterRefreshRate", 1000, 250, 1000 * 30,
+                    "Milliseconds between two updates of the throughput counter. Lower values increase CPU usage but make the counter more responsive.");
+            allowMissingCraftingJobs = general.addBoolean("allowMissingCraftingJobs", true,
+                    "Allow planning jobs for auto-crafting that are missing ingredients in AE2. Missing ingredients will be in a 'crafting' state waiting to be received. Only affects player-sourced crafting jobs, not system-sourced ones.");
 
             ConfigSection automation = root.subsection("automation");
             formationPlaneEntityLimit = automation.addInt("formationPlaneEntityLimit", 128);

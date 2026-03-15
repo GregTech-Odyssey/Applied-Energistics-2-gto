@@ -31,4 +31,27 @@ public interface ISortSource {
     ViewItems getSortDisplay();
 
     TypeFilter getTypeFilter();
+
+    ISortSource DEFAULT = new ISortSource() {
+
+        @Override
+        public SortOrder getSortBy() {
+            return SortOrder.AMOUNT;
+        }
+
+        @Override
+        public SortDir getSortDir() {
+            return SortDir.DESCENDING;
+        }
+
+        @Override
+        public ViewItems getSortDisplay() {
+            return ViewItems.ALL;
+        }
+
+        @Override
+        public TypeFilter getTypeFilter() {
+            return TypeFilter.ALL;
+        }
+    };
 }

@@ -20,8 +20,7 @@ package appeng.parts.automation;
 
 import java.util.Set;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.*;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -122,7 +121,7 @@ public class ExportBusPart extends IOBusPart implements ICraftingRequester, ISto
 
         var context = createTransferContext(storageService, grid.getEnergyService());
 
-        int x = 0;
+        int x;
         for (x = 0; x < this.availableSlots() && context.hasOperationsLeft(); x++) {
             final int slotToExport = this.getStartingSlot(schedulingMode, x);
             var what = getConfig().getKey(slotToExport);
@@ -194,7 +193,9 @@ public class ExportBusPart extends IOBusPart implements ICraftingRequester, ISto
     public long insertCraftedItems(ICraftingLink link, AEKey what, long amount, Actionable mode) {
         var grid = getMainNode().getGrid();
         if (grid != null && getMainNode().isActive()) {
-            return getExportStrategy().push(what, amount, mode);
+            var pushed = getExportStrategy().push(what, amount, mode);
+            throughputCounter.remove(what, pushed);
+            return pushed;
         }
 
         return 0;
@@ -207,7 +208,8 @@ public class ExportBusPart extends IOBusPart implements ICraftingRequester, ISto
                 energyService,
                 this.source,
                 getOperationsPerTick(),
-                DefaultPriorityList.INSTANCE);
+                DefaultPriorityList.INSTANCE,
+                throughputCounter);
     }
 
     @Override

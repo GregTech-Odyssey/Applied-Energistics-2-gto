@@ -21,16 +21,20 @@ package appeng.client.gui.widgets;
 import java.util.Collections;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.network.chat.Component;
 
 import appeng.client.gui.Icon;
+
+import gto_ae.hooks.gui.IIcon;
 
 public class ToggleButton extends IconButton implements ITooltip {
 
     private final Listener listener;
 
-    private final Icon iconOn;
-    private final Icon iconOff;
+    private final IIcon iconOn;
+    private final IIcon iconOff;
 
     private List<Component> tooltipOn = Collections.emptyList();
     private List<Component> tooltipOff = Collections.emptyList();
@@ -39,12 +43,21 @@ public class ToggleButton extends IconButton implements ITooltip {
 
     public ToggleButton(Icon on, Icon off, Component displayName,
             Component displayHint, Listener listener) {
+        this(on, (IIcon) off, displayName, displayHint, listener);
+    }
+
+    public ToggleButton(Icon on, Icon off, Listener listener) {
+        this(on, (IIcon) off, listener);
+    }
+
+    public ToggleButton(IIcon on, IIcon off, Component displayName,
+            Component displayHint, Listener listener) {
         this(on, off, listener);
         setTooltipOn(List.of(displayName, displayHint));
         setTooltipOff(List.of(displayName, displayHint));
     }
 
-    public ToggleButton(Icon on, Icon off, Listener listener) {
+    public ToggleButton(IIcon on, IIcon off, Listener listener) {
         super(null);
         this.iconOn = on;
         this.iconOff = off;
@@ -68,7 +81,7 @@ public class ToggleButton extends IconButton implements ITooltip {
         this.state = isOn;
     }
 
-    protected Icon getIcon() {
+    protected @Nullable IIcon getIcon() {
         return this.state ? this.iconOn : this.iconOff;
     }
 

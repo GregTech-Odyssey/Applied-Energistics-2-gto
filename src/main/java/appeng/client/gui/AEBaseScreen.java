@@ -41,7 +41,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ComponentRenderUtils;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.narration.NarratableEntry;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Rect2i;
@@ -62,6 +65,8 @@ import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.behaviors.EmptyingAction;
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.parts.IPart;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.client.Point;
 import appeng.client.gui.layout.SlotGridLayout;
@@ -96,6 +101,9 @@ import appeng.menu.slot.IOptionalSlot;
 import appeng.menu.slot.ResizableSlot;
 import appeng.util.ConfigMenuInventory;
 
+import gto_ae.hooks.gui.INoMouseRedirectionWidget;
+import gto_ae.hooks.gui.IPopulateScreenWidget;
+
 public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContainerScreen<T> {
     private static final Logger LOG = LoggerFactory.getLogger(AEBaseScreen.class);
 
@@ -121,6 +129,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
     protected final WidgetContainer widgets;
     protected final ScreenStyle style;
     protected final AEConfig config = AEConfig.instance();
+    private boolean lastShiftState = false;
 
     /**
      * The positions of all slots when a subscreen is opened.
@@ -156,7 +165,14 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         super.init();
         positionSlots();
 
-        widgets.populateScreen(this::addRenderableWidget, getBounds(true), this);
+        widgets.populateScreen(this::populate, getBounds(true), this);
+    }
+
+    private <W extends GuiEventListener & Renderable & NarratableEntry> void populate(W p_169406_) {
+        addRenderableWidget(p_169406_);
+        if (p_169406_ instanceof IPopulateScreenWidget populateWidget) {
+            populateWidget.populateScreen(this::addRenderableWidget, getBounds(true), this);
+        }
     }
 
     private void positionSlots() {
@@ -538,7 +554,8 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
             try {
                 for (var widget : this.children()) {
                     if (widget.isMouseOver(xCoord, yCoord)) {
-                        return super.mouseClicked(xCoord, yCoord, 0);
+                        return super.mouseClicked(xCoord, yCoord,
+                                widget instanceof INoMouseRedirectionWidget w && w.shouldHandleRightClick() ? 1 : 0);
                     }
                 }
             } finally {
@@ -817,6 +834,19 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         super.renderSlot(guiGraphics, s);
     }
 
+    protected void renderKeyTooltipThroughItemAPI(GuiGraphics guiGraphics, AEKey key, int x, int y,
+            List<Component> tooltips) {
+        // Special case to support the Item API of visual tooltip components
+        if (key instanceof AEItemKey itemKey) {
+            var stack = itemKey.getReadOnlyStack();
+            // By using the overload of the renderTooltip method that takes an ItemStack, we support the Forge tooltip
+            // event system
+            guiGraphics.renderTooltip(font, tooltips, stack.getTooltipImage(), stack, x, y);
+        } else {
+            guiGraphics.renderComponentTooltip(font, tooltips, x, y);
+        }
+    }
+
     @Override
     public void containerTick() {
         super.containerTick();
@@ -827,6 +857,10 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
             if (child instanceof ITickingWidget) {
                 ((ITickingWidget) child).tick();
             }
+        }
+        if (lastShiftState != Screen.hasShiftDown()) {
+            lastShiftState = Screen.hasShiftDown();
+            menu.shiftStateChanged(lastShiftState);
         }
     }
 
@@ -841,7 +875,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
      * Adds a button to the vertical toolbar to the left of the screen and returns that button to the caller. The button
      * will automatically be positioned. This button will automatically be re-added to the screen when it's resized.
      */
-    protected final <B extends Button> B addToLeftToolbar(B button) {
+    public final <B extends Button> B addToLeftToolbar(B button) {
         verticalToolbar.add(button);
         return button;
     }
@@ -959,7 +993,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         guiGraphics.fillGradient(RenderType.guiOverlay(), x, y, x + w, y + h, 0x80ffffff, 0x80ffffff, z);
     }
 
-    protected final void switchToScreen(AEBaseScreen<?> screen) {
+    public final void switchToScreen(AEBaseScreen<?> screen) {
         savedSlotInfos.clear();
         for (var slot : menu.slots) {
             savedSlotInfos.add(new SavedSlotInfo(slot));

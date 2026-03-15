@@ -42,7 +42,8 @@ import appeng.core.sync.BasePacket;
 import appeng.core.sync.BasePacketHandler;
 import appeng.menu.me.common.GridInventoryEntry;
 import appeng.menu.me.common.IncrementalUpdateHelper;
-import appeng.menu.me.common.MEStorageMenu;
+
+import gto_ae.hooks.gui.menu.IRepoMenu;
 
 public class MEInventoryUpdatePacket extends BasePacket {
 
@@ -278,7 +279,7 @@ public class MEInventoryUpdatePacket extends BasePacket {
     @OnlyIn(Dist.CLIENT)
     public void clientPacketData(Player player) {
         if (player.containerMenu.containerId == containerId
-                && player.containerMenu instanceof MEStorageMenu meMenu) {
+                && player.containerMenu instanceof IRepoMenu meMenu) {
             var clientRepo = meMenu.getClientRepo();
             if (clientRepo == null) {
                 AELog.info("Ignoring ME inventory update packet because no client repo is available.");

@@ -32,6 +32,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
 
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.networking.IGrid;
@@ -43,6 +45,8 @@ import appeng.menu.guisync.GuiSync;
 import appeng.menu.guisync.PacketWritable;
 import appeng.menu.implementations.MenuTypeBuilder;
 
+import gto_ae.helpers.facility_management.WorkingStatus;
+
 /**
  * @see appeng.client.gui.me.crafting.CraftingStatusScreen
  */
@@ -50,7 +54,7 @@ public class CraftingStatusMenu extends CraftingCPUMenu implements ISubMenu {
 
     private static final CraftingCpuList EMPTY_CPU_LIST = new CraftingCpuList(Collections.emptyList());
 
-    private static final Comparator<CraftingCpuListEntry> CPU_COMPARATOR = Comparator
+    public static final Comparator<CraftingCpuListEntry> CPU_COMPARATOR = Comparator
             .comparing((CraftingCpuListEntry e) -> e.name() == null)
             .thenComparing(e -> e.name() != null ? e.name().getString() : "")
             .thenComparingInt(CraftingCpuListEntry::serial);
@@ -71,6 +75,11 @@ public class CraftingStatusMenu extends CraftingCPUMenu implements ISubMenu {
 
     @GuiSync(8)
     public CraftingCpuList cpuList = EMPTY_CPU_LIST;
+
+    // filter works in client
+    public CraftingCpuList filteredCpuList = EMPTY_CPU_LIST;
+    public WorkingStatus filter = WorkingStatus.NONE;
+    public String searchTerm = "";
 
     private final ITerminalHost host;
 
@@ -134,7 +143,7 @@ public class CraftingStatusMenu extends CraftingCPUMenu implements ISubMenu {
             }
             // If we couldn't find a busy one, just select the first
             if (selectedCpuSerial == -1 && !cpuList.cpus().isEmpty()) {
-                selectCpu(cpuList.cpus().get(0).serial());
+                selectCpu(cpuList.cpus().getFirst().serial());
             }
         }
 
@@ -171,6 +180,54 @@ public class CraftingStatusMenu extends CraftingCPUMenu implements ISubMenu {
     @Override
     public boolean allowConfiguration() {
         return false;
+    }
+
+    @Override
+    public void onServerDataSync() {
+        super.onServerDataSync();
+        refresh();
+    }
+
+    @OnlyIn(Dist.CLIENT)
+    private void refresh() {
+        this.filteredCpuList = new CraftingCpuList(cpuList.cpus().stream()
+                .filter(this::filterEntry)
+                .toList());
+    }
+
+    private boolean filterEntry(CraftingCpuListEntry entry) {
+        switch (filter) {
+            case WORKING -> {
+                if (entry.currentJob() == null)
+                    return false;
+            }
+            case IDLE -> {
+                if (entry.currentJob() != null)
+                    return false;
+            }
+            case null, default -> {
+            }
+        }
+        if (!searchTerm.isEmpty()) {
+            var searchFlag = entry.name() != null &&
+                    entry.name().getString().toLowerCase().contains(searchTerm.toLowerCase());
+            searchFlag |= entry.currentJob() != null &&
+                    entry.currentJob().what() != null &&
+                    entry.currentJob().what().getDisplayName().getString().toLowerCase()
+                            .contains(searchTerm.toLowerCase());
+            return searchFlag;
+        }
+        return true;
+    }
+
+    public void updateSearchTerm(String searchTerm) {
+        this.searchTerm = searchTerm;
+        refresh();
+    }
+
+    public void updateFilter(WorkingStatus filter) {
+        this.filter = filter;
+        refresh();
     }
 
     public void selectCpu(int serial) {
