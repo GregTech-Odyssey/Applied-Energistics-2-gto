@@ -22,14 +22,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 
-import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.server.level.ServerPlayer;
@@ -152,6 +150,7 @@ public class MEStorageMenu extends AEBaseMenu
     private KeyCounter previousAvailableStacks = new KeyCounter();
 
     private long lastUpdate = 0;
+    private boolean firstOpen = true;
 
     public MEStorageMenu(MenuType<?> menuType, int id, Inventory ip, ITerminalHost host) {
         this(menuType, id, ip, host, true);
@@ -164,16 +163,12 @@ public class MEStorageMenu extends AEBaseMenu
         this.host = host;
         this.clientCM = new ConfigManager(this);
 
-        this.registerSettings((s, d) -> clientCM.<Enum>registerSetting((Setting) s, d));
-
         IEnergySource powerSource = null;
         if (isServerSide()) {
             this.serverCM = host.getConfigManager();
-            var cm = serverCM.copy(this);
-            for (var set : clientCM.getSettings()) {
-                set.copy(clientCM, cm);
+            for (var set : serverCM.getSettings()) {
+                clientCM.<Enum>registerSetting((Setting) set, set.getValues().iterator().next());
             }
-            this.clientCM = cm;
 
             this.storage = host.getInventory();
             if (this.storage != null) {
@@ -193,6 +188,9 @@ public class MEStorageMenu extends AEBaseMenu
             }
         } else {
             this.storage = null;
+            for (var set : host.getConfigManager().getSettings()) {
+                clientCM.<Enum>registerSetting((Setting) set, set.getValues().iterator().next());
+            }
         }
         this.powerSource = powerSource;
 
@@ -265,11 +263,12 @@ public class MEStorageMenu extends AEBaseMenu
                     var sideLocal = this.serverCM.getSetting(set);
                     var sideRemote = this.clientCM.getSetting(set);
 
-                    if (sideLocal != sideRemote) {
+                    if (sideLocal != sideRemote || firstOpen) {
                         set.copy(serverCM, clientCM);
                         sendPacketToClient(new ConfigValuePacket(set, serverCM));
                     }
                 }
+                firstOpen = false;
 
                 var craftables = getCraftablesFromGrid();
                 var availableStacks = storage == null ? new KeyCounter() : storage.getAvailableStacks();
@@ -761,12 +760,4 @@ public class MEStorageMenu extends AEBaseMenu
         return host;
     }
 
-    /// Override this to register settings that should be synced between the client and server.
-    @MustBeInvokedByOverriders
-    protected void registerSettings(BiConsumer<Setting<?>, Enum<?>> registrar) {
-        registrar.accept(Settings.SORT_BY, SortOrder.NAME);
-        registrar.accept(Settings.VIEW_MODE, ViewItems.ALL);
-        registrar.accept(Settings.TYPE_FILTER, TypeFilter.ALL);
-        registrar.accept(Settings.SORT_DIRECTION, SortDir.ASCENDING);
-    }
 }
