@@ -46,7 +46,7 @@ public class FixedRepoSlot extends ClientReadOnlySlot implements IRepoSlot, IDec
     }
 
     @Override
-    public GridInventoryEntry getEntry() {
+    public @Nullable GridInventoryEntry getEntry() {
         if (this.what == null || repo == null) {
             return null;
         }

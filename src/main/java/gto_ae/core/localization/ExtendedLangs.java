@@ -65,6 +65,7 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
             "Special Case: When the encoded pattern has no valid output, clear all encoded patterns in inventory"),
 
     FilterByCpuNameOrProductName("按CPU名称或主产物名称过滤", "Filter by CPU name or main product name"),
+    CpuStateLastUpdated("CPU状态最后更新：%s前", "CPU status last updated: %s ago"),
 
     CraftingCycleErrorMain("检测到循环依赖，自动合成无法进行", "Cyclic dependency detected, automatic crafting cannot proceed"),
     CraftingCycleErrorCount("\n发现 %s 个环:", "\nFound %s cycles:"),

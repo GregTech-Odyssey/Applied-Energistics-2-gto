@@ -19,6 +19,7 @@
 package appeng.client.gui.me.common;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -51,7 +52,7 @@ public class RepoSlot extends ClientReadOnlySlot implements IRepoSlot {
         return this;
     }
 
-    public GridInventoryEntry getEntry() {
+    public @Nullable GridInventoryEntry getEntry() {
         if (this.repo.hasPower()) {
             return this.repo.get(this.offset);
         }

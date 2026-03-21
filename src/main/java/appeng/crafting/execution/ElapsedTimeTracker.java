@@ -124,12 +124,10 @@ public class ElapsedTimeTracker {
         return Mth.clamp((float) (completedUnits / startedUnits), 0, 1);
     }
 
-    @Deprecated(forRemoval = true)
     public long getRemainingItemCount() {
         return (int) (Integer.MAX_VALUE - (double) getProgress() * Integer.MAX_VALUE);
     }
 
-    @Deprecated(forRemoval = true)
     public long getStartItemCount() {
         return Integer.MAX_VALUE;
     }

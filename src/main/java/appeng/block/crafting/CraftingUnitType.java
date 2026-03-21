@@ -27,7 +27,7 @@ public enum CraftingUnitType implements ICraftingUnitType {
 
     @Override
     public int getAcceleratorThreads() {
-        return this == ACCELERATOR ? 1 : 0;
+        return this == ACCELERATOR ? 16 : 1;
     }
 
     @Override

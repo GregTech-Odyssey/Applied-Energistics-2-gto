@@ -5,6 +5,7 @@ import java.util.List;
 import com.mojang.blaze3d.platform.InputConstants;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.ChatFormatting;
@@ -36,6 +37,7 @@ public interface IRepoSlot {
 
     Slot self();
 
+    @Nullable
     GridInventoryEntry getEntry();
 
     long getStoredAmount();
