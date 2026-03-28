@@ -7,12 +7,14 @@ import com.almostreliable.merequester.client.RequestSlot;
 import com.almostreliable.merequester.platform.Platform;
 import com.google.common.primitives.Ints;
 
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.world.item.ItemStack;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.ICompositeWidget;
 import appeng.client.gui.widgets.AETextField;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.InventoryActionPacket;
@@ -35,6 +37,14 @@ public final class DropTargets {
 
         for (var widget : aeScreen.getWidgets().getWidgets().values()) {
             if (widget instanceof AETextField search) {
+                var area = new Rect2i(search.getX(), search.getY(),
+                        search.getWidth(), search.getHeight());
+                targets.add(new SearchBarDropTarget(area, search));
+            }
+        }
+        for (var widget : aeScreen.getWidgets().getCompositeWidgets().values()) {
+            if (widget instanceof ICompositeWidget.WrappedCompositeWidget(AbstractWidget c)
+                    && c instanceof AETextField search) {
                 var area = new Rect2i(search.getX(), search.getY(),
                         search.getWidth(), search.getHeight());
                 targets.add(new SearchBarDropTarget(area, search));
