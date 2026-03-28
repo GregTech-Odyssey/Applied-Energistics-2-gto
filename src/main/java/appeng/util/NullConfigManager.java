@@ -32,6 +32,11 @@ public final class NullConfigManager implements IConfigManager {
     }
 
     @Override
+    public IConfigManager copy(IConfigManagerListener l) {
+        return this;
+    }
+
+    @Override
     public void writeToNBT(CompoundTag destination) {
     }
 

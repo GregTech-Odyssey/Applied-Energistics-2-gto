@@ -38,7 +38,10 @@ import appeng.api.config.Settings;
 import appeng.api.implementations.items.IStorageComponent;
 import appeng.api.inventories.BaseInternalInventory;
 import appeng.api.inventories.InternalInventory;
+import appeng.api.inventories.TrashFluidHandler;
+import appeng.api.inventories.TrashItemHandler;
 import appeng.api.stacks.AEFluidKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.storage.MEStorage;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
@@ -109,8 +112,6 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
     }
 
     public void addPower(double rawPower) {
-        if (this.cm.getSetting(Settings.CONDENSER_OUTPUT).ordinal() == 0)
-            return;
         this.setStoredPower(Math.max(0.0, Math.min(this.getStorage(), this.getStoredPower() + rawPower)));
         fillOutput();
     }
@@ -137,7 +138,6 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
     }
 
     private ItemStack getOutput() {
-
         return switch (this.cm.getSetting(Settings.CONDENSER_OUTPUT)) {
             case MATTER_BALLS -> AEItems.MATTER_BALL.stack();
             case SINGULARITY -> AEItems.SINGULARITY.stack();
@@ -174,14 +174,6 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
         this.setChanged();
     }
 
-    public InternalInventory getExternalInv() {
-        return externalInv;
-    }
-
-    public IFluidHandler getFluidHandler() {
-        return fluidHandler;
-    }
-
     public MEStorage getMEStorage() {
         return meStorage;
     }
@@ -190,11 +182,17 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
     @Override
     public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction facing) {
         if (capability == ForgeCapabilities.ITEM_HANDLER) {
-            return (LazyOptional<T>) LazyOptional.of(this.externalInv::toItemHandler);
+            return (LazyOptional<T>) LazyOptional
+                    .of(cm.getSetting(Settings.CONDENSER_OUTPUT) == CondenserOutput.TRASH ? TrashItemHandler.SUPPLIER
+                            : this.externalInv::toItemHandler);
         } else if (capability == ForgeCapabilities.FLUID_HANDLER) {
-            return (LazyOptional<T>) LazyOptional.of(() -> this.fluidHandler);
+            return (LazyOptional<T>) LazyOptional.of(
+                    () -> cm.getSetting(Settings.CONDENSER_OUTPUT) == CondenserOutput.TRASH ? TrashFluidHandler.INSTANCE
+                            : this.fluidHandler);
         } else if (capability == Capabilities.STORAGE) {
-            return (LazyOptional<T>) LazyOptional.of(() -> this.meStorage);
+            return (LazyOptional<T>) LazyOptional
+                    .of(() -> cm.getSetting(Settings.CONDENSER_OUTPUT) == CondenserOutput.TRASH ? MEStorage.TRASH
+                            : this.meStorage);
         }
         return super.getCapability(capability, facing);
     }
@@ -267,15 +265,10 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
         @Override
         public int fill(FluidStack resource, FluidAction action) {
             int amount = resource.isEmpty() ? 0 : Math.min(resource.getAmount(), AEFluidKey.AMOUNT_BUCKET);
-
-            if (action == FluidAction.EXECUTE) {
-                var what = AEFluidKey.of(resource);
-                if (what != null) {
-                    var transferFactor = (double) what.getAmountPerOperation();
-                    CondenserBlockEntity.this.addPower(amount / transferFactor);
-                }
+            if (amount > 0 && action == FluidAction.EXECUTE) {
+                var transferFactor = (double) AEKeyType.fluids().getAmountPerOperation();
+                CondenserBlockEntity.this.addPower(amount / transferFactor);
             }
-
             return amount;
         }
 

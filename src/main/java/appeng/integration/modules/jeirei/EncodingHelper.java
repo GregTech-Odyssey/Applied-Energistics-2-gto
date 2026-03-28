@@ -67,7 +67,7 @@ public final class EncodingHelper {
     }
 
     private static void encodeBestMatchingStacksIntoSlots(List<List<GenericStack>> possibleInputsBySlot,
-            Reference2IntOpenHashMap<AEKey> ingredientPriorities,
+            Map<AEKey, Integer> ingredientPriorities,
             FakeSlot[] slots) {
         var encodedInputs = new ArrayList<GenericStack>();
         for (var genericIngredient : possibleInputsBySlot) {
@@ -128,7 +128,7 @@ public final class EncodingHelper {
                 // Due to how some crafting recipes work, the ingredient can match more than just one item in the
                 // network inventory. We'll find all network inventory entries that it matches and sort them
                 // according to their suitability for encoding a pattern
-                var bestNetworkIngredient = prioritizedNetworkInv.reference2IntEntrySet().stream()
+                var bestNetworkIngredient = prioritizedNetworkInv.entrySet().stream()
                         .filter(ni -> ni.getKey() instanceof AEItemKey itemKey && itemKey.matches(ingredient))
                         .max(Comparator.comparingInt(Map.Entry::getValue))
                         .map(entry -> entry.getKey() instanceof AEItemKey itemKey ? itemKey.toStack() : null);
@@ -179,7 +179,7 @@ public final class EncodingHelper {
     }
 
     // Given a set of possible ingredients, find the one that has the highest priority
-    private static GenericStack findBestIngredient(Reference2IntOpenHashMap<AEKey> ingredientPriorities,
+    private static GenericStack findBestIngredient(Map<AEKey, Integer> ingredientPriorities,
             List<GenericStack> possibleIngredients) {
         return possibleIngredients.stream()
                 .map(gi -> Pair.of(gi, ingredientPriorities.getOrDefault(gi.what(), Integer.MIN_VALUE)))
@@ -217,7 +217,7 @@ public final class EncodingHelper {
      * <p/>
      * Higher means higher priority.
      */
-    public static Reference2IntOpenHashMap<AEKey> getIngredientPriorities(MEStorageMenu menu,
+    public static Map<AEKey, Integer> getIngredientPriorities(MEStorageMenu menu,
             Comparator<GridInventoryEntry> comparator) {
         var orderedEntries = menu.getClientRepo().getAllEntries()
                 .stream()

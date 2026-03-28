@@ -29,7 +29,9 @@ import appeng.helpers.InventoryAction;
 import appeng.util.ConfigInventory;
 import appeng.util.ConfigMenuInventory;
 
-public class FakeSlot extends AppEngSlot {
+import gto_ae.hooks.gui.menu.IDraggableSlot;
+
+public class FakeSlot extends AppEngSlot implements IDraggableSlot {
     public FakeSlot(InternalInventory inv, int invSlot) {
         super(inv, invSlot);
     }
@@ -65,6 +67,11 @@ public class FakeSlot extends AppEngSlot {
     // Used by REI/JEI dragging ghost items to determine if this is a valid destination
     public boolean canSetFilterTo(ItemStack stack) {
         return slot < getInventory().size() && getInventory().isItemValid(slot, stack);
+    }
+
+    @Override
+    public int getIndex() {
+        return index;
     }
 
     // Used by the item list mod dropping ghost ingredients on this slot

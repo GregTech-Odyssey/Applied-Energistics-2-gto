@@ -50,6 +50,25 @@ import appeng.api.stacks.KeyCounter;
  * want to control their {@code MEStorage}.
  */
 public interface MEStorage {
+
+    MEStorage TRASH = new MEStorage() {
+
+        @Override
+        public boolean isPreferredStorageFor(AEKey what, IActionSource source) {
+            return true;
+        }
+
+        @Override
+        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+            return amount;
+        }
+
+        @Override
+        public Component getDescription() {
+            return Component.empty();
+        }
+    };
+
     /**
      * Returns whether this inventory is the preferred storage location for the given stack when being compared to other
      * inventories of the same overall priority.

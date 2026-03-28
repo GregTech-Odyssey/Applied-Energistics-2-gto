@@ -21,6 +21,7 @@ package appeng.menu.slot;
 import java.util.List;
 import java.util.function.Supplier;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
@@ -36,7 +37,10 @@ import appeng.client.gui.Icon;
 import appeng.core.AELog;
 import appeng.menu.AEBaseMenu;
 
-public class AppEngSlot extends Slot {
+import gto_ae.hooks.gui.IIcon;
+import gto_ae.hooks.gui.menu.IDecoratedSlot;
+
+public class AppEngSlot extends Slot implements IDecoratedSlot {
     private static final Container EMPTY_INVENTORY = new SimpleContainer(0);
     private final InternalInventory inventory;
     private final int invSlot;
@@ -55,7 +59,7 @@ public class AppEngSlot extends Slot {
      * Shows an icon from the icon sprite-sheet in the background of this slot.
      */
     @Nullable
-    private Icon icon;
+    private IIcon icon;
     /**
      * Caches if the item stack currently contained in this slot is "valid" or not for UI purposes.
      */
@@ -82,10 +86,7 @@ public class AppEngSlot extends Slot {
     @Nullable
     public List<Component> getCustomTooltip(ItemStack carriedItem) {
         if (getDisplayStack().isEmpty()) {
-            var tooltip = emptyTooltip.get();
-            if (tooltip != null) {
-                return tooltip;
-            }
+            return emptyTooltip.get();
         }
         return null;
     }
@@ -227,20 +228,35 @@ public class AppEngSlot extends Slot {
         return is;
     }
 
+    @Override
     public float getOpacityOfIcon() {
         return 0.4f;
+    }
+
+    @Override
+    public @NotNull List<Component> getEmptyTooltipMessage() {
+        var t = emptyTooltip.get();
+        if (t != null) {
+            return t;
+        }
+        return IDecoratedSlot.super.getEmptyTooltipMessage();
     }
 
     public boolean renderIconWithItem() {
         return false;
     }
 
-    public Icon getIcon() {
+    @Override
+    public @Nullable IIcon getIcon() {
         return this.icon;
     }
 
-    public void setIcon(Icon icon) {
+    public void setIcon(@Nullable IIcon icon) {
         this.icon = icon;
+    }
+
+    public void setIcon(@Nullable Icon icon) {
+        setIcon((IIcon) icon);
     }
 
     public boolean isDraggable() {

@@ -42,13 +42,15 @@ import appeng.client.gui.style.Blitter;
 import appeng.client.gui.style.PaletteColor;
 import appeng.client.gui.style.ScreenStyle;
 
+import gto_ae.hooks.gui.INoMouseRedirectionWidget;
+
 /**
  * A modified version of the Minecraft text field. You can initialize it over the full element span. The mouse click
  * area is increased to the full element subtracted with the defined padding.
  * <p>
  * The rendering does pay attention to the size of the '_' caret.
  */
-public class AETextField extends EditBox implements IResizableWidget, ITooltip {
+public class AETextField extends EditBox implements IResizableWidget, ITooltip, INoMouseRedirectionWidget {
     private static final Blitter BLITTER = Blitter.texture("guis/text_field.png", 128, 128);
 
     private static final int PADDING = 2;

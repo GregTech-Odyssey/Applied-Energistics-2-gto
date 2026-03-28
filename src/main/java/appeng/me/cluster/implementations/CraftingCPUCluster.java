@@ -69,9 +69,11 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
     private MachineSource machineSrc = null;
     private int accelerator = 0;
     /**
-     * crafting job info
+     * crafting job info <a href=
+     * "https://github.com/GregTech-Odyssey/GTOCore/blob/6c0eed6778ba35040d5a08f2626d9e31be7ed415/src/main/java/com/gtocore/mixin/ae2/crafting/CraftingCPUClusterMixin.java#L71">see
+     * here</a>
      */
-    public final CraftingCpuLogic craftingLogic = new CraftingCpuLogic(this);
+    public CraftingCpuLogic craftingLogic;
 
     public CraftingCPUCluster(BlockPos boundsMin, BlockPos boundsMax) {
         this.boundsMin = boundsMin.immutable();
@@ -144,7 +146,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
 
         te.setCoreBlock(false);
         te.saveChanges();
-        this.blockEntities.add(0, te);
+        this.blockEntities.addFirst(te);
 
         if (te instanceof CraftingMonitorBlockEntity) {
             this.status.add((CraftingMonitorBlockEntity) te);
@@ -153,11 +155,7 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             this.storage += te.getStorageBytes();
         }
         if (te.getAcceleratorThreads() > 0) {
-            if (te.getAcceleratorThreads() <= 16) {
-                this.accelerator += te.getAcceleratorThreads();
-            } else {
-                throw new IllegalArgumentException("Co-processor threads may not exceed 16 per single unit block.");
-            }
+            this.accelerator += te.getAcceleratorThreads();
         }
     }
 
@@ -335,5 +333,25 @@ public final class CraftingCPUCluster implements IAECluster, ICraftingCPU {
             case PLAYER_ONLY -> source.player().isPresent();
             case MACHINE_ONLY -> source.player().isEmpty();
         };
+    }
+
+    public void setName(Component myName) {
+        this.myName = myName;
+    }
+
+    public void setDestroyed(boolean destroyed) {
+        isDestroyed = destroyed;
+    }
+
+    public void setStorage(long storage) {
+        this.storage = storage;
+    }
+
+    public void setMachineSrc(MachineSource machineSrc) {
+        this.machineSrc = machineSrc;
+    }
+
+    public void setAccelerator(int accelerator) {
+        this.accelerator = accelerator;
     }
 }

@@ -18,6 +18,9 @@
 
 package appeng.parts.automation;
 
+import com.google.common.collect.ImmutableSet;
+
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -26,32 +29,45 @@ import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.objects.Reference2LongMap;
+import it.unimi.dsi.fastutil.objects.Reference2LongMaps;
 
 import appeng.api.config.RedstoneMode;
 import appeng.api.config.Setting;
 import appeng.api.config.Settings;
 import appeng.api.networking.IGridNodeListener;
+import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartItem;
+import appeng.api.stacks.AEKey;
 import appeng.api.util.AECableType;
 import appeng.api.util.IConfigManager;
+import appeng.helpers.IConfigInvHost;
 import appeng.util.Platform;
 import appeng.util.SettingsFrom;
 
-public abstract class AbstractLevelEmitterPart extends UpgradeablePart {
+import gto_ae.helpers.facility_management.IStatusTracked;
+import gto_ae.helpers.facility_management.ThroughputCounter;
+import gto_ae.helpers.facility_management.WorkingStatus;
+
+public abstract class AbstractLevelEmitterPart extends UpgradeablePart implements IStatusTracked {
     private boolean prevState;
     protected long lastReportedValue;
     private long reportingValue;
 
     private boolean clientSideOn;
+    private final ThroughputCounter throughputCounter = new ThroughputCounter();
 
     public AbstractLevelEmitterPart(IPartItem<?> partItem) {
         super(partItem);
 
         // Level emitters do not require a channel to function
         getMainNode().setFlags();
+        throughputCounter.setDisableShowingInTerminal(true);
 
         this.getConfigManager().registerSetting(Settings.REDSTONE_EMITTER, RedstoneMode.HIGH_SIGNAL);
     }
@@ -162,8 +178,7 @@ public abstract class AbstractLevelEmitterPart extends UpgradeablePart {
 
         final boolean flipState = this.getConfigManager()
                 .getSetting(Settings.REDSTONE_EMITTER) == RedstoneMode.LOW_SIGNAL;
-        return flipState ? this.reportingValue >= this.lastReportedValue + 1
-                : this.reportingValue < this.lastReportedValue + 1;
+        return flipState == (this.reportingValue >= this.lastReportedValue + 1);
     }
 
     @Override
@@ -223,6 +238,17 @@ public abstract class AbstractLevelEmitterPart extends UpgradeablePart {
     }
 
     @Override
+    public Reference2LongMap<AEKey> getConfiguredSetting() {
+        if (this instanceof IConfigInvHost host) {
+            var key = host.getConfig().getKey(0);
+            if (key != null) {
+                return Reference2LongMaps.singleton(key, reportingValue);
+            }
+        }
+        return IStatusTracked.super.getConfiguredSetting();
+    }
+
+    @Override
     protected boolean shouldSendPowerStateToClient() {
         return false; // We handle this completely in our enabled flag
     }
@@ -230,5 +256,25 @@ public abstract class AbstractLevelEmitterPart extends UpgradeablePart {
     @Override
     protected boolean shouldSendMissingChannelStateToClient() {
         return false; // We handle this completely in our enabled flag
+    }
+
+    @Override
+    public ImmutableSet<ICraftingLink> getRequestedJobs() {
+        return ImmutableSet.of();
+    }
+
+    @Override
+    public @NotNull WorkingStatus getStatus() {
+        return lastReportedValue > 0 ? WorkingStatus.WORKING : WorkingStatus.IDLE;
+    }
+
+    @Override
+    public void openGui(Player player) {
+        this.onPartActivate(player, InteractionHand.MAIN_HAND, getBlockEntity().getBlockPos().getCenter());
+    }
+
+    @Override
+    public @NotNull ThroughputCounter getThroughputCounter() {
+        return throughputCounter;
     }
 }

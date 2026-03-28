@@ -20,6 +20,7 @@ package appeng.menu.me.crafting;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.Future;
 
 import org.jetbrains.annotations.Nullable;
@@ -45,9 +46,13 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
+import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.ISubMenuHost;
+import appeng.client.gui.me.common.Repo;
+import appeng.client.gui.widgets.ISortSource;
 import appeng.core.AELog;
 import appeng.core.sync.packets.CraftConfirmPlanPacket;
+import appeng.core.sync.packets.MEInventoryUpdatePacket;
 import appeng.crafting.execution.CraftingSubmitResult;
 import appeng.me.helpers.PlayerSource;
 import appeng.menu.AEBaseMenu;
@@ -57,11 +62,15 @@ import appeng.menu.guisync.GuiSync;
 import appeng.menu.guisync.PacketWritable;
 import appeng.menu.implementations.MenuTypeBuilder;
 import appeng.menu.locator.MenuLocator;
+import appeng.menu.me.common.IClientRepo;
+import appeng.menu.me.common.IncrementalUpdateHelper;
+
+import gto_ae.hooks.gui.menu.IRepoMenu;
 
 /**
  * @see appeng.client.gui.me.crafting.CraftConfirmScreen
  */
-public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
+public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu, IRepoMenu {
 
     private static final String ACTION_BACK = "back";
     private static final String ACTION_CYCLE_CPU = "cycleCpu";
@@ -114,6 +123,9 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
     @Nullable
     private List<GenericStack> autoCraftingQueue;
 
+    private boolean gto$sent = false;
+    private final IClientRepo gto$repo;
+
     public CraftConfirmMenu(int id, Inventory ip, ISubMenuHost te) {
         super(TYPE, id, ip, te);
         this.host = te;
@@ -125,6 +137,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
         registerClientAction(ACTION_CYCLE_CPU, Boolean.class, this::cycleSelectedCPU);
         registerClientAction(ACTION_START_JOB, this::startJob);
         registerClientAction(ACTION_REPLAN, this::replan);
+        this.gto$repo = new Repo(() -> 0, ISortSource.DEFAULT);
     }
 
     /**
@@ -209,6 +222,13 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
             this.setValidMenu(false);
             return;
         }
+        if (!gto$sent) {
+            var builder = MEInventoryUpdatePacket.builder(containerId, true);
+            builder.addFull(new IncrementalUpdateHelper(), grid.getStorageService().getInventory().getAvailableStacks(),
+                    Set.of(), new KeyCounter());
+            builder.buildAndSend(this::sendPacketToClient);
+            gto$sent = true;
+        }
 
         this.cpuCycler.detectAndSendChanges(grid);
 
@@ -258,7 +278,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
             return;
         }
 
-        if (this.result != null && !this.result.simulation()) {
+        if (this.result != null) {
             final ICraftingService cc = this.getGrid().getCraftingService();
             var submitResult = cc.submitJob(this.result, null, this.selectedCpu, true, this.getActionSrc());
             this.setAutoStart(false);
@@ -399,6 +419,11 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu {
 
     public void clearError() {
         this.submitError = NO_ERROR;
+    }
+
+    @Override
+    public @Nullable IClientRepo getClientRepo() {
+        return gto$repo;
     }
 
     // Helper to sync the crafting result error

@@ -142,17 +142,22 @@ public class CPUSelectionList implements ICompositeWidget {
         }
 
         relY -= 19;
-        var buttonIdx = scrollbar.getCurrentScroll() + relY / (buttonBg.getSrcHeight() + 1);
+        var relIdx = relY / (buttonBg.getSrcHeight() + 1);
+        if (relIdx < 0 || relIdx >= ROWS) {
+            // Clicked above first or below last button
+            return null;
+        }
+        var buttonIdx = scrollbar.getCurrentScroll() + relIdx;
         if (relY % (buttonBg.getSrcHeight() + 1) == buttonBg.getSrcHeight()) {
             // Clicked right between two buttons
             return null;
         }
-        if (relY < 0 || buttonIdx >= menu.cpuList.cpus().size()) {
+        if (relY < 0 || buttonIdx >= menu.filteredCpuList.cpus().size()) {
             // Clicked above first or below last button
             return null;
         }
 
-        var cpus = menu.cpuList.cpus();
+        var cpus = menu.filteredCpuList.cpus();
         if (buttonIdx >= 0 && buttonIdx < cpus.size()) {
             return cpus.get(buttonIdx);
         }
@@ -183,9 +188,9 @@ public class CPUSelectionList implements ICompositeWidget {
         var pose = guiGraphics.pose();
 
         var font = Minecraft.getInstance().font;
-        var cpus = menu.cpuList.cpus().subList(
-                Mth.clamp(scrollbar.getCurrentScroll(), 0, menu.cpuList.cpus().size()),
-                Mth.clamp(scrollbar.getCurrentScroll() + ROWS, 0, menu.cpuList.cpus().size()));
+        var cpus = menu.filteredCpuList.cpus().subList(
+                Mth.clamp(scrollbar.getCurrentScroll(), 0, menu.filteredCpuList.cpus().size()),
+                Mth.clamp(scrollbar.getCurrentScroll() + ROWS, 0, menu.filteredCpuList.cpus().size()));
         for (var cpu : cpus) {
             int color = -1;
             if (cpu.serial() == menu.getSelectedCpuSerial()) {

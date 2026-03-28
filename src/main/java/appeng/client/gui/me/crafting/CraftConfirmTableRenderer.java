@@ -21,19 +21,40 @@ package appeng.client.gui.me.crafting;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.me.common.Repo;
 import appeng.core.localization.GuiText;
+import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
+import appeng.util.ReadableNumberConverter;
+
+import gto_ae.core.localization.ExtendedLangs;
+import gto_ae.hooks.gui.menu.IRepoMenu;
 
 public class CraftConfirmTableRenderer extends AbstractTableRenderer<CraftingPlanSummaryEntry> {
+    @Nullable
+    private Repo gto$repo;
 
     public CraftConfirmTableRenderer(AEBaseScreen<?> screen, int x, int y) {
         super(screen, x, y, 5);
+    }
+
+    @Override
+    protected void beforeTableRender() {
+        if (gto$repo != null)
+            return;
+        IClientRepo repo = (screen.getMenu()) instanceof IRepoMenu me ? me.getClientRepo() : null;
+        if (repo instanceof Repo repo1) {
+            gto$repo = repo1;
+        }
     }
 
     @Override
@@ -42,6 +63,24 @@ public class CraftConfirmTableRenderer extends AbstractTableRenderer<CraftingPla
         if (entry.getStoredAmount() > 0) {
             String amount = entry.getWhat().formatAmount(entry.getStoredAmount(), AmountFormat.SLOT);
             lines.add(GuiText.FromStorage.text(amount));
+        }
+
+        storedAmount: {
+            if (gto$repo == null)
+                break storedAmount;
+            var e = gto$repo.getByKey(entry.getWhat());
+            if (e == null)
+                break storedAmount;
+            long storedTotal = e.getStoredAmount();
+            long storedAmount = entry.getStoredAmount();
+            if (storedTotal <= 0 || storedAmount <= 0)
+                break storedAmount;
+            float storedPercent = Math.min((float) storedAmount / storedTotal, 1.0f);
+            ChatFormatting color = storedPercent < 0.25f ? ChatFormatting.DARK_GREEN
+                    : storedPercent < 0.5f ? ChatFormatting.GOLD
+                            : storedPercent < 0.75f ? ChatFormatting.RED : ChatFormatting.DARK_RED;
+            lines.add(ExtendedLangs.CraftUsedPercent.text(ReadableNumberConverter.format(storedPercent * 100, 5))
+                    .withStyle(color));
         }
 
         if (entry.getMissingAmount() > 0) {

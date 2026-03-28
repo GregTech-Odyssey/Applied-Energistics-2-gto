@@ -22,9 +22,7 @@ import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Function;
 
 import com.google.common.base.Preconditions;
@@ -266,10 +264,6 @@ public abstract class SynchronizedField<T> {
             super(source, getter, setter);
             this.fieldType = field.getType();
             Preconditions.checkArgument(PacketWritable.class.isAssignableFrom(fieldType));
-            if (!fieldType.isRecord()) {
-                throw new RuntimeException("Use records to synchronize custom class on " + field
-                        + " to enable easier equals comparisons");
-            }
         }
 
         @Override

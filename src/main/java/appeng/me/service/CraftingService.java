@@ -27,10 +27,7 @@ import java.util.UUID;
 import java.util.concurrent.*;
 
 import com.fast.fastcollection.O2OOpenCacheHashMap;
-import com.google.common.collect.HashMultimap;
-import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+import com.google.common.collect.*;
 
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
@@ -39,12 +36,15 @@ import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
 
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
+import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
@@ -64,9 +64,13 @@ import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.events.GridCraftingCpuChange;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.storage.IStorageService;
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
+import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.AEKeyFilter;
 import appeng.blockentity.crafting.CraftingBlockEntity;
+import appeng.core.definitions.AEItems;
 import appeng.crafting.CraftingLink;
 import appeng.crafting.CraftingLinkNexus;
 import appeng.crafting.execution.CraftingSubmitResult;
@@ -107,7 +111,8 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     private final IGrid grid;
     private final NetworkCraftingProviders craftingProviders = new NetworkCraftingProviders();
     private final Map<UUID, CraftingLinkNexus> craftingLinks = new O2OOpenCacheHashMap<>();
-    private final Multimap<AEKey, StackWatcher<ICraftingWatcherNode>> interests = HashMultimap.create();
+    private final Multimap<AEKey, StackWatcher<ICraftingWatcherNode>> interests = Multimaps
+            .newSetMultimap(new Reference2ReferenceOpenHashMap<>(), ReferenceOpenHashSet::new);
     private final InterestManager<StackWatcher<ICraftingWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final IEnergyService energyGrid;
@@ -285,10 +290,8 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             return;
         }
 
-        CraftingLinkNexus nexus = this.craftingLinks.get(link.getCraftingID());
-        if (nexus == null) {
-            this.craftingLinks.put(link.getCraftingID(), nexus = new CraftingLinkNexus(link.getCraftingID()));
-        }
+        CraftingLinkNexus nexus = this.craftingLinks.computeIfAbsent(link.getCraftingID(),
+                k -> new CraftingLinkNexus(link.getCraftingID()));
 
         link.setNexus(nexus);
     }
@@ -322,13 +325,60 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     @Override
     public Future<ICraftingPlan> beginCraftingCalculation(Level level, ICraftingSimulationRequester simRequester,
             AEKey what, long amount, CalculationStrategy strategy) {
-        return CompletableFuture.supplyAsync(() -> null, Util.backgroundExecutor());
+        return CompletableFuture.supplyAsync(() -> new ICraftingPlan() {
+            @Override
+            public GenericStack finalOutput() {
+                return new GenericStack(what, amount);
+            }
+
+            @Override
+            public long bytes() {
+                return amount;
+            }
+
+            @Override
+            public boolean simulation() {
+                return true;
+            }
+
+            @Override
+            public boolean multiplePaths() {
+                return false;
+            }
+
+            @Override
+            public KeyCounter usedItems() {
+                var keyCounter = new KeyCounter();
+                keyCounter.add(AEItemKey.of(Blocks.DIRT), amount);
+                return keyCounter;
+            }
+
+            @Override
+            public KeyCounter emittedItems() {
+                return new KeyCounter();
+            }
+
+            @Override
+            public KeyCounter missingItems() {
+                var keyCounter = new KeyCounter();
+                keyCounter.add(AEItemKey.of(Blocks.BARRIER), amount);
+                return keyCounter;
+            }
+
+            @Override
+            public Map<IPatternDetails, Long> patternTimes() {
+                return Map.of(AEItems.PROCESSING_PATTERN.asItem().decode(PatternDetailsHelper.encodeProcessingPattern(
+                        new GenericStack[] { new GenericStack(AEItemKey.of(Blocks.DIRT), 1) },
+                        new GenericStack[] { new GenericStack(what, 1) }),
+                        grid.getPivot().getLevel(), false), amount);
+            }
+        }, Util.backgroundExecutor());
     }
 
     @Override
     public ICraftingSubmitResult submitJob(ICraftingPlan job, ICraftingRequester requestingMachine, ICraftingCPU target,
             boolean prioritizePower, IActionSource src) {
-        if (job.simulation()) {
+        if (src.player().isEmpty() && job.simulation()) {
             return CraftingSubmitResult.INCOMPLETE_PLAN;
         }
 
@@ -404,7 +454,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             }
         });
 
-        return validCpusClusters.get(0);
+        return validCpusClusters.getFirst();
     }
 
     @Override

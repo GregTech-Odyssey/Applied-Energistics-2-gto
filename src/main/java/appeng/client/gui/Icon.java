@@ -20,13 +20,14 @@ package appeng.client.gui;
 
 import net.minecraft.resources.ResourceLocation;
 
-import appeng.client.gui.style.Blitter;
 import appeng.core.AppEng;
+
+import gto_ae.hooks.gui.IIcon;
 
 /**
  * Edit in {@code assets/ae2/textures/guis/states.png}.
  */
-public enum Icon {
+public enum Icon implements IIcon {
 
     // ROW 0
     REDSTONE_LOW(0, 0),
@@ -194,8 +195,6 @@ public enum Icon {
     public final int height;
 
     public static final ResourceLocation TEXTURE = new ResourceLocation(AppEng.MOD_ID, "textures/guis/states.png");
-    public static final int TEXTURE_WIDTH = 256;
-    public static final int TEXTURE_HEIGHT = 256;
 
     Icon(int x, int y) {
         this(x, y, 16, 16);
@@ -208,9 +207,28 @@ public enum Icon {
         this.height = height;
     }
 
-    public Blitter getBlitter() {
-        return Blitter.texture(TEXTURE, TEXTURE_WIDTH, TEXTURE_HEIGHT)
-                .src(x, y, width, height);
+    @Override
+    public ResourceLocation getIconTexture() {
+        return TEXTURE;
     }
 
+    @Override
+    public int getIconX() {
+        return x;
+    }
+
+    @Override
+    public int getIconY() {
+        return y;
+    }
+
+    @Override
+    public int getIconWidth() {
+        return width;
+    }
+
+    @Override
+    public int getIconHeight() {
+        return height;
+    }
 }

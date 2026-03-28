@@ -121,7 +121,7 @@ public class AEBaseBlockEntity extends BlockEntity
         return this;
     }
 
-    protected Item getItemFromBlockEntity() {
+    public Item getItemFromBlockEntity() {
         return REPRESENTATIVE_ITEMS.getOrDefault(getType(), Items.AIR);
     }
 

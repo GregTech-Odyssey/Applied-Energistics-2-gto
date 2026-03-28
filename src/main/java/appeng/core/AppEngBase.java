@@ -92,6 +92,8 @@ import appeng.sounds.AppEngSounds;
 import appeng.spatial.SpatialStorageChunkGenerator;
 import appeng.spatial.SpatialStorageDimensionIds;
 
+import gto_ae.helpers.facility_management.FacilityUidManager;
+
 /**
  * Mod functionality that is common to both dedicated server and client.
  * <p>
@@ -168,6 +170,7 @@ public abstract class AppEngBase implements AppEng {
         MinecraftForge.EVENT_BUS.addListener(WrenchHook::onPlayerUseBlockEvent);
         MinecraftForge.EVENT_BUS.addListener(SkyStoneBreakSpeed::handleBreakFaster);
         MinecraftForge.EVENT_BUS.addGenericListener(BlockEntity.class, InitCapabilities::registerGenericInvWrapper);
+
         // Workaround for https://github.com/MinecraftForge/MinecraftForge/issues/9158.
         // Can be removed once it's fixed in Forge.
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (PlayerInteractEvent.RightClickBlock event) -> {
@@ -227,6 +230,7 @@ public abstract class AppEngBase implements AppEng {
 
     private void onServerAboutToStart(final ServerAboutToStartEvent evt) {
         ChunkLoadingService.getInstance().onServerAboutToStart(evt);
+        FacilityUidManager.reset();
     }
 
     private void serverStopping(final ServerStoppingEvent event) {

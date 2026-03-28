@@ -123,11 +123,7 @@ public class ScreenStyle {
     }
 
     public WidgetStyle getWidget(String id) {
-        WidgetStyle widget = widgets.get(id);
-        if (widget == null) {
-            throw new IllegalStateException("Screen is missing required widget: " + id);
-        }
-        return widget;
+        return widgets.get(id);
     }
 
     public Blitter getImage(String id) {

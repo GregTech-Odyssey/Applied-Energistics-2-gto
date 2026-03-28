@@ -19,22 +19,35 @@
 package appeng.client.gui.me.crafting;
 
 import java.text.NumberFormat;
+import java.util.function.Consumer;
 
 import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
+import dev.emi.emi.config.SidebarType;
+import dev.emi.emi.runtime.EmiFavorites;
+import dev.emi.emi.screen.EmiScreenManager;
+
+import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.StackWithBounds;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.Scrollbar;
+import appeng.core.AEConfig;
 import appeng.core.localization.GuiText;
+import appeng.integration.modules.emi.EmiStackHelper;
 import appeng.integration.modules.emi.IStackInteractionScreen;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummary;
+
+import gto_ae.core.localization.ExtendedLangs;
 
 /**
  * This screen shows the computed crafting plan and allows the player to select a CPU on which it should be scheduled
@@ -46,6 +59,7 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
 
     private final Button start;
     private final Button selectCPU;
+    private final Button gto$addMissing;
     private final Scrollbar scrollbar;
 
     public CraftConfirmScreen(CraftConfirmMenu menu, Inventory playerInventory, Component title,
@@ -62,6 +76,15 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
         this.selectCPU.active = false;
 
         widgets.addButton("cancel", GuiText.Cancel.text(), menu::goBack);
+
+        gto$addMissing = Button.builder(ExtendedLangs.CraftAddMissingToEmi.text(), this::gto$addMissing)
+                .bounds(82, 181, 50, 20)
+                .tooltip(Tooltip.create(ExtendedLangs.CraftAddMissingToEmiDesc.text()))
+                .build();
+        widgets.add("gto$addMissing", (Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) -> {
+            gto$addMissing.setPosition(82 + bounds.getX(), 181 + bounds.getY());
+            addWidget.accept(gto$addMissing);
+        });
     }
 
     @Override
@@ -77,9 +100,20 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
         this.selectCPU.setMessage(getNextCpuButtonLabel());
 
         CraftingPlanSummary plan = menu.getPlan();
-        boolean planIsStartable = plan != null && !plan.isSimulation();
+        boolean planIsStartable;
+        if (plan == null) {
+            planIsStartable = false;
+        } else {
+            boolean simulationButAllowMissing = AEConfig.instance().isAllowMissingCraftingJobs() && plan.isSimulation();
+            start.setMessage(simulationButAllowMissing ? ExtendedLangs.CraftMissingStart.text() : GuiText.Start.text());
+            start.setTooltip(Tooltip.create(
+                    simulationButAllowMissing ? ExtendedLangs.CraftMissingStartDesc.text() : GuiText.Start.text()));
+
+            planIsStartable = !plan.isSimulation() || simulationButAllowMissing;
+        }
         this.start.active = !this.menu.hasNoCPU() && planIsStartable;
         this.selectCPU.active = planIsStartable;
+        this.gto$addMissing.visible = plan != null && plan.isSimulation();
 
         // Show additional status about the selected CPU and plan when the planning is done
         Component planDetails = GuiText.CalculatingWait.text();
@@ -160,4 +194,18 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
         getMenu().startJob();
     }
 
+    private void gto$addMissing(Button button) {
+        var plan = menu.getPlan();
+        if (plan == null) {
+            return;
+        }
+        plan.getEntries().forEach(entry -> {
+            if (entry.getMissingAmount() > 0) {
+                EmiFavorites.addFavorite(
+                        EmiStackHelper.toEmiStack(
+                                new GenericStack(entry.getWhat(), entry.getWhat().getAmountPerUnit())));
+                EmiScreenManager.repopulatePanels(SidebarType.FAVORITES);
+            }
+        });
+    }
 }

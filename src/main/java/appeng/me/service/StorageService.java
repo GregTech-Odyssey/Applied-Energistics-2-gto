@@ -25,7 +25,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.HashMultimap;
+import com.google.common.collect.Multimaps;
 import com.google.common.collect.SetMultimap;
 
 import org.jetbrains.annotations.Nullable;
@@ -65,7 +65,8 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
      */
     private final List<ProviderState> globalProviders = new ArrayList<>();
     private final Set<UpdateRequester> requesters = new ReferenceOpenHashSet<>();
-    private final SetMultimap<AEKey, StackWatcher<IStorageWatcherNode>> interests = HashMultimap.create();
+    private final SetMultimap<AEKey, StackWatcher<IStorageWatcherNode>> interests = Multimaps
+            .newSetMultimap(new Reference2ReferenceOpenHashMap<>(), ReferenceOpenHashSet::new);
     private final InterestManager<StackWatcher<IStorageWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final NetworkStorage storage;
@@ -117,26 +118,28 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     }
 
     private void updateCachedStacks() {
-        lock.lock();
-        try {
-            if (cachedStacksNeedUpdate) {
-                var server = ServerLifecycleHooks.getCurrentServer();
-                if (server == null || server.isSameThread()) {
-                    update();
-                } else {
-                    CompletableFuture.runAsync(this::update, server).join();
-                }
+        if (cachedStacksNeedUpdate) {
+            var server = ServerLifecycleHooks.getCurrentServer();
+            if (server == null || server.isSameThread()) {
+                update();
+            } else {
+                CompletableFuture.runAsync(this::update, server).join();
             }
-        } finally {
-            lock.unlock();
         }
     }
 
     private void update() {
-        cachedAvailableStacks.clear();
-        storage.getAvailableStacks(cachedAvailableStacks);
-        cachedAvailableStacks.removeEmptySubmaps();
-        cachedStacksNeedUpdate = false;
+        lock.lock();
+        try {
+            if (cachedStacksNeedUpdate) {
+                cachedAvailableStacks.clear();
+                storage.getAvailableStacks(cachedAvailableStacks);
+                cachedAvailableStacks.removeEmptySubmaps();
+                cachedStacksNeedUpdate = false;
+            }
+        } finally {
+            lock.unlock();
+        }
     }
 
     public static void join(MinecraftServer server) {

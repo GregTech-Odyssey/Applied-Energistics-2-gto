@@ -80,6 +80,13 @@ public final class ConfigManager implements IConfigManager {
         }
     }
 
+    @Override
+    public IConfigManager copy(IConfigManagerListener listener) {
+        ConfigManager copy = new ConfigManager(listener);
+        copy.settings.putAll(this.settings);
+        return copy;
+    }
+
     /**
      * save all settings using config manager.
      *

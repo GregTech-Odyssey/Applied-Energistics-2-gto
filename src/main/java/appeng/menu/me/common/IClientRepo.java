@@ -22,7 +22,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.world.item.crafting.Ingredient;
+
+import appeng.api.stacks.AEKey;
 
 /**
  * Represents a client-side only repository of {@link GridInventoryEntry} entries that represent the network content
@@ -47,4 +51,9 @@ public interface IClientRepo {
      * Find all entries that match the given ingredient.
      */
     Collection<GridInventoryEntry> getByIngredient(Ingredient ingredient);
+
+    Set<AEKey> getCraftableKeys();
+
+    @Nullable
+    GridInventoryEntry getByKey(AEKey key);
 }

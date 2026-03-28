@@ -20,9 +20,14 @@ package appeng.helpers;
 
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
+
+import org.jetbrains.annotations.NotNull;
+
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
+import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
@@ -33,12 +38,22 @@ import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
 import appeng.menu.implementations.InterfaceMenu;
 import appeng.menu.locator.MenuLocator;
+import appeng.menu.locator.MenuLocators;
+import appeng.parts.AEBasePart;
+
+import gto_ae.helpers.facility_management.IStatusTracked;
+import gto_ae.helpers.facility_management.ThroughputCounter;
+import gto_ae.helpers.facility_management.WorkingStatus;
 
 /**
  * Interface that must be implemented by machines hosting {@link InterfaceLogic}.
  */
-public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObject, IPriorityHost, IConfigInvHost,
-        IStorageService.UpdateRequester {
+public interface InterfaceLogicHost extends IConfigurableObject,
+        IUpgradeableObject,
+        IPriorityHost,
+        IConfigInvHost,
+        IStorageService.UpdateRequester,
+        IStatusTracked {
     /**
      * @return The block entity that is in-world and hosts the interface.
      */
@@ -47,6 +62,18 @@ public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObj
     void saveChanges();
 
     InterfaceLogic getInterfaceLogic();
+
+    default MenuLocator getLocator() {
+        switch (this) {
+            case BlockEntity blockEntity -> {
+                return MenuLocators.forBlockEntity(blockEntity);
+            }
+            case AEBasePart part -> {
+                return MenuLocators.forPart(part);
+            }
+            default -> throw new IllegalStateException("Unknown host type: " + this.getClass());
+        }
+    }
 
     @Override
     default IConfigManager getConfigManager() {
@@ -96,4 +123,25 @@ public interface InterfaceLogicHost extends IConfigurableObject, IUpgradeableObj
         return getInterfaceLogic().getListener();
     }
 
+    @Override
+    default ImmutableSet<ICraftingLink> getRequestedJobs() {
+        return getInterfaceLogic().getRequestedJobs();
+    }
+
+    @Override
+    @NotNull
+    default WorkingStatus getStatus() {
+        return getInterfaceLogic().getStatus();
+    }
+
+    @Override
+    default void openGui(Player player) {
+        getInterfaceLogic().openGui(player);
+    }
+
+    @Override
+    @NotNull
+    default ThroughputCounter getThroughputCounter() {
+        return getInterfaceLogic().getThroughputCounter();
+    }
 }

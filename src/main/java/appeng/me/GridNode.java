@@ -584,7 +584,7 @@ public class GridNode implements IGridNode, IPathItem {
                     "Node %s has no connections, cannot have a controller route!".formatted(this));
         }
 
-        return this.connections.get(0);
+        return this.connections.getFirst();
     }
 
     public @Nullable GridNode getHighestSimilarAncestor() {
@@ -625,7 +625,7 @@ public class GridNode implements IGridNode, IPathItem {
         final int idx = this.connections.indexOf(connection);
         if (idx > 0) {
             this.connections.remove(connection);
-            this.connections.add(0, connection);
+            this.connections.addFirst(connection);
         }
     }
 

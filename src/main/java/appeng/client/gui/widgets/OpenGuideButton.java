@@ -2,10 +2,14 @@ package appeng.client.gui.widgets;
 
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.network.chat.Component;
 
 import appeng.client.gui.Icon;
 import appeng.core.localization.ButtonToolTips;
+
+import gto_ae.hooks.gui.IIcon;
 
 public class OpenGuideButton extends IconButton {
     public OpenGuideButton(OnPress onPress) {
@@ -20,7 +24,7 @@ public class OpenGuideButton extends IconButton {
     }
 
     @Override
-    protected Icon getIcon() {
+    protected @Nullable IIcon getIcon() {
         return Icon.HELP;
     }
 }

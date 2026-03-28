@@ -27,6 +27,8 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.MultiBufferSource.BufferSource;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 
 import appeng.core.AEConfig;
 
@@ -68,6 +70,32 @@ public class StackSizeRenderer {
         stack.scale(scaleFactor, scaleFactor, scaleFactor);
 
         renderSizeLabel(stack.last().pose(), fontRenderer, xPos, yPos, text, largeFonts);
+
+        stack.popPose();
+    }
+
+    public static void renderSizeLabel(GuiGraphics guiGraphics, Font fontRenderer, float xPos, float yPos,
+            Component text, float scaleFactor, boolean leftAlign, boolean topAlign) {
+        final float inverseScaleFactor = 1.0f / scaleFactor;
+        final float offset = Mth.lerp(-1, 0, scaleFactor / 0.85f);
+
+        var stack = guiGraphics.pose();
+        stack.pushPose();
+        // According to ItemRenderer, text is 200 above items.
+        stack.translate(0, 0, 200);
+        stack.scale(scaleFactor, scaleFactor, scaleFactor);
+
+        var leftAlignValue = leftAlign ? 0 : offset + 16.0f - fontRenderer.width(text) * scaleFactor;
+        var topAlignValue = topAlign ? 0 : offset + 16.0f - 7.0f * scaleFactor;
+
+        RenderSystem.disableBlend();
+        final int X = (int) ((xPos + leftAlignValue) * inverseScaleFactor);
+        final int Y = (int) ((yPos + topAlignValue) * inverseScaleFactor);
+        BufferSource buffer = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+        fontRenderer.drawInBatch(text, X, Y, 0xffffff, true, stack.last().pose(), buffer, Font.DisplayMode.NORMAL, 0,
+                15728880);
+        buffer.endBatch();
+        RenderSystem.enableBlend();
 
         stack.popPose();
     }

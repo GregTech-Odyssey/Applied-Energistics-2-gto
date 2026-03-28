@@ -43,7 +43,7 @@ import appeng.me.service.CraftingService;
 /**
  * Stores the crafting logic of a crafting CPU.
  */
-public class CraftingCpuLogic {
+public abstract class CraftingCpuLogic {
     public final CraftingCPUCluster cluster;
 
     protected final ListCraftingInventory inventory = new ListCraftingInventory(this::postChange);
@@ -56,63 +56,41 @@ public class CraftingCpuLogic {
         this.cluster = cluster;
     }
 
-    public ICraftingSubmitResult trySubmitJob(IGrid grid, ICraftingPlan plan, IActionSource src,
-            @Nullable ICraftingRequester requester) {
-        return null;
-    }
+    public abstract ICraftingSubmitResult trySubmitJob(IGrid grid, ICraftingPlan plan, IActionSource src,
+            @Nullable ICraftingRequester requester);
 
-    public void tickCraftingLogic(IEnergyService eg, CraftingService cc) {
-
-    }
+    public abstract void tickCraftingLogic(IEnergyService eg, CraftingService cc);
 
     /**
      * Called by the CraftingService with an Integer.MAX_VALUE priority to inject items that are being waited for.
      *
      * @return Consumed amount.
      */
-    public long insert(AEKey what, long amount, Actionable type) {
-        return 0;
-    }
+    public abstract long insert(AEKey what, long amount, Actionable type);
 
     /**
      * Cancel the current job.
      */
-    public void cancel() {
+    public abstract void cancel();
 
-    }
-
-    protected void postChange(AEKey what) {
-    }
+    protected abstract void postChange(AEKey what);
 
     public long getLastModifiedOnTick() {
         return lastModifiedOnTick;
     }
 
-    public boolean hasJob() {
-        return false;
-    }
+    public abstract boolean hasJob();
 
     @Nullable
-    public GenericStack getFinalJobOutput() {
-        return null;
-    }
+    public abstract GenericStack getFinalJobOutput();
 
-    public ElapsedTimeTracker getElapsedTimeTracker() {
-        return null;
-    }
+    public abstract ElapsedTimeTracker getElapsedTimeTracker();
 
-    public void readFromNBT(CompoundTag data) {
+    public abstract void readFromNBT(CompoundTag data);
 
-    }
+    public abstract void writeToNBT(CompoundTag data);
 
-    public void writeToNBT(CompoundTag data) {
-
-    }
-
-    public ICraftingLink getLastLink() {
-
-        return null;
-    }
+    public abstract ICraftingLink getLastLink();
 
     public ListCraftingInventory getInventory() {
         return this.inventory;
@@ -122,36 +100,24 @@ public class CraftingCpuLogic {
      * Register a listener that will receive stacks when either the stored items, await items or pending outputs change.
      * This is only used by the menu. Make sure to remove it by calling {@link #removeListener}.
      */
-    public void addListener(Consumer<AEKey> listener) {
+    public abstract void addListener(Consumer<AEKey> listener);
 
-    }
-
-    public void removeListener(Consumer<AEKey> listener) {
-
-    }
+    public abstract void removeListener(Consumer<AEKey> listener);
 
     public long getStored(AEKey template) {
         return this.inventory.extract(template, Long.MAX_VALUE, Actionable.SIMULATE);
     }
 
-    public long getWaitingFor(AEKey template) {
-        return 0;
-    }
+    public abstract long getWaitingFor(AEKey template);
 
-    public void getAllWaitingFor(Set<AEKey> waitingFor) {
+    public abstract void getAllWaitingFor(Set<AEKey> waitingFor);
 
-    }
-
-    public long getPendingOutputs(AEKey template) {
-        return 0;
-    }
+    public abstract long getPendingOutputs(AEKey template);
 
     /**
      * Used by the menu to gather all the kinds of stored items.
      */
-    public void getAllItems(KeyCounter out) {
-
-    }
+    public abstract void getAllItems(KeyCounter out);
 
     public boolean isCantStoreItems() {
         return cantStoreItems;

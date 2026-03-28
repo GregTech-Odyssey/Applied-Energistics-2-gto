@@ -40,14 +40,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import appeng.api.behaviors.ContainerItemStrategies;
-import appeng.api.config.Actionable;
-import appeng.api.config.PowerMultiplier;
-import appeng.api.config.Setting;
-import appeng.api.config.Settings;
-import appeng.api.config.SortDir;
-import appeng.api.config.SortOrder;
-import appeng.api.config.TypeFilter;
-import appeng.api.config.ViewItems;
+import appeng.api.config.*;
 import appeng.api.implementations.blockentities.IMEChest;
 import appeng.api.implementations.blockentities.IViewCellStorage;
 import appeng.api.implementations.menuobjects.IPortableTerminal;
@@ -88,11 +81,14 @@ import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerListener;
 import appeng.util.Platform;
 
+import gto_ae.hooks.gui.menu.IRepoMenu;
+
 /**
  * @see MEStorageScreen
  */
 public class MEStorageMenu extends AEBaseMenu
-        implements IConfigManagerListener, IConfigurableObject, IMEInteractionHandler {
+        implements IConfigManagerListener, IConfigurableObject, IMEInteractionHandler,
+        IRepoMenu {
 
     public static final MenuType<MEStorageMenu> TYPE = MenuTypeBuilder
             .<MEStorageMenu, ITerminalHost>create(MEStorageMenu::new, ITerminalHost.class)
@@ -110,7 +106,7 @@ public class MEStorageMenu extends AEBaseMenu
             .build("wirelessterm");
 
     private final List<RestrictedInputSlot> viewCellSlots;
-    private final IConfigManager clientCM;
+    private IConfigManager clientCM;
     private final ToolboxMenu toolboxMenu;
     private final ITerminalHost host;
     @GuiSync(98)
@@ -154,25 +150,25 @@ public class MEStorageMenu extends AEBaseMenu
     private KeyCounter previousAvailableStacks = new KeyCounter();
 
     private long lastUpdate = 0;
+    private boolean firstOpen = true;
 
     public MEStorageMenu(MenuType<?> menuType, int id, Inventory ip, ITerminalHost host) {
         this(menuType, id, ip, host, true);
     }
 
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     protected MEStorageMenu(MenuType<?> menuType, int id, Inventory ip, ITerminalHost host, boolean bindInventory) {
         super(menuType, id, ip, host);
 
         this.host = host;
         this.clientCM = new ConfigManager(this);
 
-        this.clientCM.registerSetting(Settings.SORT_BY, SortOrder.NAME);
-        this.clientCM.registerSetting(Settings.VIEW_MODE, ViewItems.ALL);
-        this.clientCM.registerSetting(Settings.TYPE_FILTER, TypeFilter.ALL);
-        this.clientCM.registerSetting(Settings.SORT_DIRECTION, SortDir.ASCENDING);
-
         IEnergySource powerSource = null;
         if (isServerSide()) {
             this.serverCM = host.getConfigManager();
+            for (var set : serverCM.getSettings()) {
+                clientCM.<Enum>registerSetting((Setting) set, set.getValues().iterator().next());
+            }
 
             this.storage = host.getInventory();
             if (this.storage != null) {
@@ -192,6 +188,9 @@ public class MEStorageMenu extends AEBaseMenu
             }
         } else {
             this.storage = null;
+            for (var set : host.getConfigManager().getSettings()) {
+                clientCM.<Enum>registerSetting((Setting) set, set.getValues().iterator().next());
+            }
         }
         this.powerSource = powerSource;
 
@@ -231,6 +230,7 @@ public class MEStorageMenu extends AEBaseMenu
         return this.networkNode;
     }
 
+    @Override
     public boolean isKeyVisible(AEKey key) {
         // If the host is a basic item cell with a limited key space, account for this
         if (host instanceof ItemMenuHost itemMenuHost) {
@@ -263,11 +263,12 @@ public class MEStorageMenu extends AEBaseMenu
                     var sideLocal = this.serverCM.getSetting(set);
                     var sideRemote = this.clientCM.getSetting(set);
 
-                    if (sideLocal != sideRemote) {
+                    if (sideLocal != sideRemote || firstOpen) {
                         set.copy(serverCM, clientCM);
                         sendPacketToClient(new ConfigValuePacket(set, serverCM));
                     }
                 }
+                firstOpen = false;
 
                 var craftables = getCraftablesFromGrid();
                 var availableStacks = storage == null ? new KeyCounter() : storage.getAvailableStacks();
@@ -691,8 +692,8 @@ public class MEStorageMenu extends AEBaseMenu
         this.gui = gui;
     }
 
-    @Nullable
-    public IClientRepo getClientRepo() {
+    @Override
+    public @Nullable IClientRepo getClientRepo() {
         return clientRepo;
     }
 
@@ -758,4 +759,5 @@ public class MEStorageMenu extends AEBaseMenu
     public ITerminalHost getHost() {
         return host;
     }
+
 }

@@ -249,10 +249,7 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
 
             // If we couldn't find the item, schedule its autocrafting
             if (currentItem.isEmpty() && craftMissing) {
-                int slot = x;
-                findCraftableKey(ingredient, craftingService).ifPresent(key -> {
-                    toAutoCraft.add(key, slot);
-                });
+                findCraftableKey(ingredient, craftingService).ifPresent(key -> toAutoCraft.add(key, 1));
             }
         }
 

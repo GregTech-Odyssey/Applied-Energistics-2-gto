@@ -29,6 +29,8 @@ import net.minecraft.network.chat.Component;
 
 import appeng.client.gui.Icon;
 
+import gto_ae.hooks.gui.IIcon;
+
 /**
  * Displays a small icon that shows validation errors for some input control.
  */
@@ -62,7 +64,7 @@ public class ValidationIcon extends IconButton {
     }
 
     @Override
-    protected Icon getIcon() {
+    protected @Nullable IIcon getIcon() {
         return Icon.INVALID;
     }
 
