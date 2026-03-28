@@ -20,6 +20,8 @@ package appeng.menu.me.crafting;
 
 import java.util.Comparator;
 
+import org.jetbrains.annotations.NotNull;
+
 import net.minecraft.network.FriendlyByteBuf;
 
 import appeng.api.stacks.AEKey;
@@ -39,12 +41,20 @@ public class CraftingPlanSummaryEntry implements Comparable<CraftingPlanSummaryE
     private final long missingAmount;
     private final long storedAmount;
     private final long craftAmount;
+    private final long emittingAmount;
 
+    @Deprecated
     public CraftingPlanSummaryEntry(AEKey what, long missingAmount, long storedAmount, long craftAmount) {
+        this(what, missingAmount, storedAmount, craftAmount, 0);
+    }
+
+    public CraftingPlanSummaryEntry(AEKey what, long missingAmount, long storedAmount, long craftAmount,
+            long emittingAmount) {
         this.what = what;
         this.missingAmount = missingAmount;
         this.storedAmount = storedAmount;
         this.craftAmount = craftAmount;
+        this.emittingAmount = emittingAmount;
     }
 
     public AEKey getWhat() {
@@ -63,8 +73,12 @@ public class CraftingPlanSummaryEntry implements Comparable<CraftingPlanSummaryE
         return craftAmount;
     }
 
+    public long getEmittingAmount() {
+        return emittingAmount;
+    }
+
     @Override
-    public int compareTo(final CraftingPlanSummaryEntry o) {
+    public int compareTo(final @NotNull CraftingPlanSummaryEntry o) {
         return COMPARATOR.compare(this, o);
     }
 
@@ -73,6 +87,7 @@ public class CraftingPlanSummaryEntry implements Comparable<CraftingPlanSummaryE
         buffer.writeVarLong(missingAmount);
         buffer.writeVarLong(storedAmount);
         buffer.writeVarLong(craftAmount);
+        buffer.writeVarLong(emittingAmount);
     }
 
     public static CraftingPlanSummaryEntry read(FriendlyByteBuf buffer) {
@@ -80,6 +95,7 @@ public class CraftingPlanSummaryEntry implements Comparable<CraftingPlanSummaryE
         long missingAmount = buffer.readVarLong();
         long storedAmount = buffer.readVarLong();
         long craftAmount = buffer.readVarLong();
-        return new CraftingPlanSummaryEntry(what, missingAmount, storedAmount, craftAmount);
+        long emittingAmount = buffer.readVarLong();
+        return new CraftingPlanSummaryEntry(what, missingAmount, storedAmount, craftAmount, emittingAmount);
     }
 }

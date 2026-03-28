@@ -94,6 +94,7 @@ public class CraftingPlanSummary {
     private static class KeyStats {
         public long stored;
         public long crafting;
+        public long emitting;
     }
 
     /**
@@ -119,7 +120,7 @@ public class CraftingPlanSummary {
         }
         for (var emitted : job.emittedItems()) {
             var entry = plan.mapping(emitted.getKey());
-            entry.stored += emitted.getLongValue();
+            entry.emitting += emitted.getLongValue();
             entry.crafting += emitted.getLongValue();
         }
         for (var entry : job.patternTimes().entrySet()) {
@@ -140,7 +141,7 @@ public class CraftingPlanSummary {
                 storedAmount = storage.extract(out.getKey(), out.getValue().stored, Actionable.SIMULATE, actionSource);
                 missingAmount = out.getValue().stored - storedAmount;
             } else {
-                storedAmount = out.getValue().stored;
+                storedAmount = storage.extract(out.getKey(), out.getValue().stored, Actionable.SIMULATE, actionSource);
                 missingAmount = 0;
             }
             long craftAmount = out.getValue().crafting;
@@ -149,8 +150,8 @@ public class CraftingPlanSummary {
                     out.getKey(),
                     missingAmount,
                     storedAmount,
-                    craftAmount));
-
+                    craftAmount,
+                    out.getValue().emitting));
         }
 
         Collections.sort(entries);

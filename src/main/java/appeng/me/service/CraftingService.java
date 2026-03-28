@@ -494,6 +494,11 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
         return !currentlyCrafting.isEmpty();
     }
 
+    @Override
+    public NetworkCraftingProviders getCraftingProviders() {
+        return craftingProviders;
+    }
+
     public Iterable<ICraftingProvider> getProviders(IPatternDetails key) {
         return craftingProviders.getMediums(key);
     }

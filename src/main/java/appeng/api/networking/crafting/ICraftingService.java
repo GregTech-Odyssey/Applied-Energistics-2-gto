@@ -39,6 +39,7 @@ import appeng.api.networking.IGridService;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.storage.AEKeyFilter;
+import appeng.me.service.helpers.NetworkCraftingProviders;
 
 public interface ICraftingService extends IGridService {
 
@@ -151,4 +152,6 @@ public interface ICraftingService extends IGridService {
      * @see #isRequesting(AEKey)
      */
     boolean isRequestingAny();
+
+    NetworkCraftingProviders getCraftingProviders();
 }

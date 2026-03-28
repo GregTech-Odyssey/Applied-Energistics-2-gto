@@ -67,6 +67,10 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
     FilterByCpuNameOrProductName("按CPU名称或主产物名称过滤", "Filter by CPU name or main product name"),
     CpuStateLastUpdated("CPU状态最后更新：%s前", "CPU status last updated: %s ago"),
 
+    EmitCrafting("发信合成：%s", "To emit: %s"),
+    EmitCraftingNotes("发信原料算作缺失合成物品的一部分",
+            "Emitted crafting ingredients are considered part of the missing-crafting items"),
+
     CraftingCycleErrorMain("检测到循环依赖，自动合成无法进行", "Cyclic dependency detected, automatic crafting cannot proceed"),
     CraftingCycleErrorCount("\n发现 %s 个环:", "\nFound %s cycles:"),
     CraftingCycleErrorMoreCycles("\n    ... 还有 %s 个环未显示", "\n    ... and %s more cycles not shown"),

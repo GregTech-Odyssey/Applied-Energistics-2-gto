@@ -87,8 +87,10 @@ public class CraftConfirmTableRenderer extends AbstractTableRenderer<CraftingPla
             String amount = entry.getWhat().formatAmount(entry.getMissingAmount(), AmountFormat.SLOT);
             lines.add(GuiText.Missing.text(amount));
         }
-
-        if (entry.getCraftAmount() > 0) {
+        if (entry.getEmittingAmount() > 0) {
+            String amount = entry.getWhat().formatAmount(entry.getEmittingAmount(), AmountFormat.SLOT);
+            lines.add(ExtendedLangs.EmitCrafting.text(amount));
+        } else if (entry.getCraftAmount() > 0) {
             String amount = entry.getWhat().formatAmount(entry.getCraftAmount(), AmountFormat.SLOT);
             lines.add(GuiText.ToCraft.text(amount));
         }
@@ -109,13 +111,19 @@ public class CraftConfirmTableRenderer extends AbstractTableRenderer<CraftingPla
             lines.add(GuiText.FromStorage
                     .text(entry.getWhat().formatAmount(entry.getStoredAmount(), AmountFormat.FULL)));
         }
+
+        if (entry.getEmittingAmount() > 0) {
+            lines.add(ExtendedLangs.EmitCrafting
+                    .text(entry.getWhat().formatAmount(entry.getEmittingAmount(), AmountFormat.FULL)));
+            lines.add(ExtendedLangs.EmitCraftingNotes.text());
+        } else if (entry.getCraftAmount() > 0) {
+            lines.add(GuiText.ToCraft
+                    .text(entry.getWhat().formatAmount(entry.getCraftAmount(), AmountFormat.FULL)));
+        }
+
         if (entry.getMissingAmount() > 0) {
             lines.add(GuiText.Missing.text(
                     entry.getWhat().formatAmount(entry.getMissingAmount(), AmountFormat.FULL)));
-        }
-        if (entry.getCraftAmount() > 0) {
-            lines.add(GuiText.ToCraft
-                    .text(entry.getWhat().formatAmount(entry.getCraftAmount(), AmountFormat.FULL)));
         }
 
         return lines;
