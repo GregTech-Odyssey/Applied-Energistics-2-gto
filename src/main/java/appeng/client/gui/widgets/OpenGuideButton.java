@@ -24,7 +24,7 @@ public class OpenGuideButton extends IconButton {
     }
 
     @Override
-    protected @Nullable IIcon getIcon() {
+    protected @Nullable IIcon getIIcon() {
         return Icon.HELP;
     }
 }

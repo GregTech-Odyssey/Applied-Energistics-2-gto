@@ -200,7 +200,7 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
     }
 
     @Override
-    protected @Nullable IIcon getIcon() {
+    protected @Nullable IIcon getIIcon() {
         var app = getAppearance();
         if (app != null && app.icon() != null) {
             return app.icon();
@@ -249,7 +249,7 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
         }
 
         @Override
-        protected @Nullable IIcon getIcon() {
+        protected @Nullable IIcon getIIcon() {
             if (app != null && app.icon() != null) {
                 return app.icon();
             }

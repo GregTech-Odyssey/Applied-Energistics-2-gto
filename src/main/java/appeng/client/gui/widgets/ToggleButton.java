@@ -81,7 +81,7 @@ public class ToggleButton extends IconButton implements ITooltip {
         this.state = isOn;
     }
 
-    protected @Nullable IIcon getIcon() {
+    protected @Nullable IIcon getIIcon() {
         return this.state ? this.iconOn : this.iconOff;
     }
 
