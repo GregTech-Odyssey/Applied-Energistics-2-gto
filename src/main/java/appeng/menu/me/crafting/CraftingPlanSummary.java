@@ -119,6 +119,9 @@ public class CraftingPlanSummary {
             plan.mapping(missing.getKey()).stored += missing.getLongValue();
         }
         for (var emitted : job.emittedItems()) {
+            if (emitted.getLongValue() == 0) {
+                continue;
+            }
             var entry = plan.mapping(emitted.getKey());
             entry.emitting += emitted.getLongValue();
             entry.crafting += emitted.getLongValue();
