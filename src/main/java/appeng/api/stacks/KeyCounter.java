@@ -40,6 +40,14 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     // First map contains a mapping from AEKey#primaryKey
     private Reference2ObjectMap<Object, VariantCounter> lists = new Reference2ObjectOpenHashMap<>();
 
+    private static long serial = 0L;
+
+    public static long nextSerial() {
+        return serial++;
+    }
+
+    public long req = nextSerial();
+
     public Collection<Object2LongMap.Entry<AEKey>> findFuzzy(AEKey key, FuzzyMode fuzzy) {
         Objects.requireNonNull(key, "key");
         var subIndex = getSubIndexOrNull(key);

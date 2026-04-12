@@ -39,6 +39,13 @@ public class NullInventory implements MEStorage {
     }
 
     @Override
+    public KeyCounter getAvailableStacks(long req) {
+        var counter = new KeyCounter();
+        counter.req = req;
+        return counter;
+    }
+
+    @Override
     public Component getDescription() {
         return Component.empty();
     }

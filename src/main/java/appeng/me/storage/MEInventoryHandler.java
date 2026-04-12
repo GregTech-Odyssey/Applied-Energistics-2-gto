@@ -114,7 +114,7 @@ public class MEInventoryHandler extends DelegatingMEInventory {
                     return;
                 }
 
-                for (var entry : getDelegate().getAvailableStacks()) {
+                for (var entry : getDelegate().getAvailableStacks(out.req)) {
                     if (canExtract(entry.getKey())) {
                         out.add(entry.getKey(), entry.getLongValue());
                     }

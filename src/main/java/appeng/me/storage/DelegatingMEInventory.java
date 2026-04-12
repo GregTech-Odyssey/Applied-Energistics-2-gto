@@ -57,6 +57,11 @@ public class DelegatingMEInventory implements MEStorage {
     }
 
     @Override
+    public KeyCounter getAvailableStacks(long req) {
+        return delegate.getAvailableStacks(req);
+    }
+
+    @Override
     public Component getDescription() {
         return delegate.getDescription();
     }

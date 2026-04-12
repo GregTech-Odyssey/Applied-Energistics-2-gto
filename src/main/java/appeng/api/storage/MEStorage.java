@@ -125,7 +125,17 @@ public interface MEStorage {
      * @return a new list of this inventories content
      */
     default KeyCounter getAvailableStacks() {
+        return getAvailableStacks(KeyCounter.nextSerial());
+    }
+
+    /**
+     * request a full report of all available items, storage.
+     *
+     * @return a new list of this inventories content
+     */
+    default KeyCounter getAvailableStacks(long req) {
         var result = new KeyCounter();
+        result.req = req;
         getAvailableStacks(result);
         return result;
     }
