@@ -19,10 +19,6 @@
 package appeng.me.service;
 
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentLinkedDeque;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Multimaps;
@@ -30,10 +26,8 @@ import com.google.common.collect.SetMultimap;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.Util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
-import net.minecraftforge.server.ServerLifecycleHooks;
 
 import it.unimi.dsi.fastutil.objects.*;
 
@@ -53,9 +47,6 @@ import appeng.me.storage.NetworkStorage;
 
 public class StorageService implements Runnable, IStorageService, IGridServiceProvider {
 
-    private static volatile CompletableFuture<Void> FUTURE;
-    private static final Deque<Runnable> TASK = new ConcurrentLinkedDeque<>();
-
     /**
      * Tracks the storage service's state for each grid node that provides storage to the network.
      */
@@ -73,7 +64,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     /**
      * Publicly exposed cached available stacks.
      */
-    private KeyCounter cachedAvailableStacks = new KeyCounter();
+    private final KeyCounter cachedAvailableStacks = new KeyCounter();
     /**
      * Private cached amounts, to ensure that we send correct change notifications even if
      * {@link #cachedAvailableStacks} is modified by mistake.
@@ -81,7 +72,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     private final AEKeyMap<AEKey> cachedAvailableAmounts = new AEKeyMap<>();
     private volatile boolean cachedStacksNeedUpdate = true;
     private boolean watcherUpdate = false;
-    private final Lock lock = new ReentrantLock();
+
     /**
      * Tracks the stack watcher associated with a given grid node. Needed to clean up watchers when the node leaves the
      * grid.
@@ -94,70 +85,21 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     @Override
     public void onServerEndTick(MinecraftServer server) {
-        cachedStacksNeedUpdate = true;
         if (watcherUpdate) {
-            TASK.add(this::asyncUpdateCachedStacks);
+            updateCachedStacks();
             if (!interestManager.isEmpty() && server.getTickCount() % 10 == 0) {
                 watcherUpdate();
             }
-        }
-    }
-
-    private void asyncUpdateCachedStacks() {
-        lock.lock();
-        try {
-            if (cachedStacksNeedUpdate) {
-                var stacks = new KeyCounter();
-                storage.getAvailableStacks(stacks);
-                cachedAvailableStacks = stacks;
-                cachedStacksNeedUpdate = false;
-            }
-        } finally {
-            lock.unlock();
+        } else {
+            cachedStacksNeedUpdate = true;
         }
     }
 
     private void updateCachedStacks() {
-        if (cachedStacksNeedUpdate) {
-            var server = ServerLifecycleHooks.getCurrentServer();
-            if (server == null || server.isSameThread()) {
-                update();
-            } else {
-                CompletableFuture.runAsync(this::update, server).join();
-            }
-        }
-    }
-
-    private void update() {
-        lock.lock();
-        try {
-            if (cachedStacksNeedUpdate) {
-                cachedAvailableStacks.clear();
-                storage.getAvailableStacks(cachedAvailableStacks);
-                cachedAvailableStacks.removeEmptySubmaps();
-                cachedStacksNeedUpdate = false;
-            }
-        } finally {
-            lock.unlock();
-        }
-    }
-
-    public static void join(MinecraftServer server) {
-        if (FUTURE != null) {
-            server.managedBlock(FUTURE::isDone);
-            FUTURE = null;
-        }
-    }
-
-    public static void asyncUpdate() {
-        if (TASK.isEmpty()) {
-            return;
-        }
-        FUTURE = CompletableFuture.runAsync(() -> {
-            while (!TASK.isEmpty()) {
-                TASK.poll().run();
-            }
-        }, Util.backgroundExecutor());
+        cachedAvailableStacks.clear();
+        storage.getAvailableStacks(cachedAvailableStacks);
+        cachedAvailableStacks.removeEmptySubmaps();
+        cachedStacksNeedUpdate = false;
     }
 
     private void watcherUpdate() {
