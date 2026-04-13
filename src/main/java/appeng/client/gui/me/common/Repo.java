@@ -448,7 +448,7 @@ public class Repo implements IClientRepo {
             rebuildItemIdToEntries();
             entriesByItemIdNeedsUpdate = false;
         }
-        return entriesByItemId.getOrDefault(itemId, List.of());
+        return entriesByItemId.getOrDefault(itemId, Collections.emptyList());
     }
 
     private void rebuildItemIdToEntries() {

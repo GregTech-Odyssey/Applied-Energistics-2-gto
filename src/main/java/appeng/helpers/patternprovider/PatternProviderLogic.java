@@ -18,10 +18,7 @@
 
 package appeng.helpers.patternprovider;
 
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -717,7 +714,7 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
             return new PatternContainerGroup(
                     this.host.getTerminalIcon(),
                     name,
-                    List.of());
+                    Collections.emptyList());
         }
 
         var sides = getActiveSides();
@@ -735,7 +732,7 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
             return groups.iterator().next();
         }
 
-        List<Component> tooltip = List.of();
+        List<Component> tooltip = Collections.emptyList();
         // If there are multiple groups, show that in the tooltip
         if (groups.size() > 1) {
             tooltip = new ArrayList<>();

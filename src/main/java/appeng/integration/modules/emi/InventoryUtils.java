@@ -1,5 +1,6 @@
 package appeng.integration.modules.emi;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class InventoryUtils {
 
     public static List<EmiStack> getExistingStacks(Set<GridInventoryEntry> allEntries) {
         if (allEntries == null || allEntries.isEmpty()) {
-            return List.of();
+            return Collections.emptyList();
         }
 
         return allEntries.stream()

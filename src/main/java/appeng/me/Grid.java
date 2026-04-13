@@ -173,14 +173,14 @@ public class Grid implements IGrid {
     @Override
     public <T> Set<T> getActiveMachines(Class<T> machineClass) {
         Set<IGridNode> nodes = this.machines.get(machineClass);
-        var resultBuilder = ImmutableSet.<T>builder();
-        for (IGridNode node : nodes) {
+        var resultBuilder = new ReferenceOpenHashSet<T>();
+        nodes.forEach(node -> {
             var logicalHost = node.getOwner();
             if (machineClass.isInstance(logicalHost) && node.isActive()) {
                 resultBuilder.add(machineClass.cast(logicalHost));
             }
-        }
-        return resultBuilder.build();
+        });
+        return resultBuilder;
     }
 
     @Override

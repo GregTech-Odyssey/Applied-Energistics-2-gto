@@ -18,11 +18,7 @@
 
 package appeng.items.tools;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -174,7 +170,7 @@ public class NetworkToolItem extends AEBaseItem implements IMenuItem, AEToolItem
         // Sort ascending by amount
         stacks.sort(Comparator.comparingLong(GenericStack::amount).reversed());
 
-        return Optional.of(new StorageCellTooltipComponent(List.of(), stacks, false, true));
+        return Optional.of(new StorageCellTooltipComponent(Collections.emptyList(), stacks, false, true));
     }
 
     /**

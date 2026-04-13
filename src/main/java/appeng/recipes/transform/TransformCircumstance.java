@@ -1,5 +1,6 @@
 package appeng.recipes.transform;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -94,7 +95,7 @@ public class TransformCircumstance {
     }
 
     public List<Fluid> getFluidsForRendering() {
-        return List.of();
+        return Collections.emptyList();
     }
 
     private static class FluidType extends TransformCircumstance {
@@ -151,7 +152,7 @@ public class TransformCircumstance {
         @Override
         public List<Fluid> getFluidsForRendering() {
             return BuiltInRegistries.FLUID.getTag(fluidTag).map(t -> t.stream().map(Holder::value).toList())
-                    .orElse(List.of());
+                    .orElse(Collections.emptyList());
         }
     }
 }

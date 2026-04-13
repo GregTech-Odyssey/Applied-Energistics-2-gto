@@ -57,9 +57,4 @@ public final class SupplierStorage implements MEStorage {
     public KeyCounter getAvailableStacks() {
         return getDelegate().getAvailableStacks();
     }
-
-    @Override
-    public KeyCounter getAvailableStacks(long req) {
-        return getDelegate().getAvailableStacks(req);
-    }
 }

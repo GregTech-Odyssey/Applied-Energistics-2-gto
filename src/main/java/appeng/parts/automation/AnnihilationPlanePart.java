@@ -18,6 +18,7 @@
 
 package appeng.parts.automation;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -160,7 +161,7 @@ public class AnnihilationPlanePart extends AEBasePart implements IGridTickable {
             // Don't initialize if the node is not initialized yet
             var node = getMainNode().getNode();
             if (node == null) {
-                return List.of();
+                return Collections.emptyList();
             }
             var self = this.getHost().getBlockEntity();
             var pos = self.getBlockPos().relative(this.getSide());

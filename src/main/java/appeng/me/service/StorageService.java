@@ -53,7 +53,7 @@ import appeng.me.storage.NetworkStorage;
 
 public class StorageService implements Runnable, IStorageService, IGridServiceProvider {
 
-    private static CompletableFuture<Void> FUTURE;
+    private static volatile CompletableFuture<Void> FUTURE;
     private static final Deque<Runnable> TASK = new ConcurrentLinkedDeque<>();
 
     /**

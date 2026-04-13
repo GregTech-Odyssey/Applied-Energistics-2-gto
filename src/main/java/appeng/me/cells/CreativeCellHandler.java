@@ -83,7 +83,7 @@ public class CreativeCellHandler implements ICellHandler {
         }
 
         return Optional.of(new StorageCellTooltipComponent(
-                List.of(),
+                Collections.emptyList(),
                 content,
                 hasMoreContent,
                 false));

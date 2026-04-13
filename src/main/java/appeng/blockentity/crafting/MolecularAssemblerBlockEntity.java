@@ -18,6 +18,7 @@
 
 package appeng.blockentity.crafting;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +136,7 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
         List<Component> tooltip;
         var accelerationCards = getInstalledUpgrades(AEItems.SPEED_CARD);
         if (accelerationCards == 0) {
-            tooltip = List.of();
+            tooltip = Collections.emptyList();
         } else {
             tooltip = List.of(
                     GuiText.CompatibleUpgrade.text(

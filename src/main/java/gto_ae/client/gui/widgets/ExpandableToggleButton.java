@@ -53,7 +53,7 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
     private final Setting<T> buttonSetting;
     private final IHandler<T, ExpandableToggleButton<T>> onPress;
     private T currentValue;
-    private List<Component> currentSubButtonTooltip = List.of();
+    private List<Component> currentSubButtonTooltip = Collections.emptyList();
     private final LayoutDirection layoutDirection;
 
     private boolean collapsed = true;

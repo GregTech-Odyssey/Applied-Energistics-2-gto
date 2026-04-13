@@ -19,6 +19,7 @@
 package appeng.block.networking;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -112,7 +113,7 @@ public class CableBusBlock extends AEBaseEntityBlock<CableBusBlockEntity> implem
             bus.getCableBus().addPartDrops(drops);
             return drops;
         } else {
-            return List.of();
+            return Collections.emptyList();
         }
     }
 

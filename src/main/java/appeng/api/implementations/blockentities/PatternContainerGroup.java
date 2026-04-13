@@ -1,6 +1,7 @@
 package appeng.api.implementations.blockentities;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ public record PatternContainerGroup(
         List<Component> tooltip) {
 
     private static final PatternContainerGroup NOTHING = new PatternContainerGroup(AEItemKey.of(Items.AIR),
-            GuiText.Nothing.text(), List.of());
+            GuiText.Nothing.text(), Collections.emptyList());
 
     public static PatternContainerGroup nothing() {
         return NOTHING;
@@ -89,7 +90,7 @@ public record PatternContainerGroup(
 
         AEItemKey icon;
         Component name;
-        List<Component> tooltip = List.of();
+        List<Component> tooltip = Collections.emptyList();
 
         // For scenarios like pattern providers against cable bus
         if (target instanceof IPartHost partHost) {

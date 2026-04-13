@@ -1,5 +1,6 @@
 package gto_ae.hooks.gui.menu;
 
+import java.util.Collections;
 import java.util.List;
 
 import com.mojang.blaze3d.platform.InputConstants;
@@ -189,12 +190,12 @@ public interface IRepoSlot {
                 && !fxRepoSlot.getEmptyTooltipMessage().isEmpty())
             tooltip = fxRepoSlot.getEmptyTooltipMessage();
         else if (carried.isEmpty()) {
-            tooltip = List.of();
+            tooltip = Collections.emptyList();
         } else {
             var emptyingAction = ContainerItemStrategies.getEmptyingAction(carried);
             tooltip = emptyingAction != null && menu.isKeyVisible(emptyingAction.what())
                     ? Tooltips.getEmptyingTooltip(ButtonToolTips.StoreAction, carried, emptyingAction)
-                    : List.of();
+                    : Collections.emptyList();
         }
         if (!tooltip.isEmpty()) {
             emptyDrawer.drawTooltip(

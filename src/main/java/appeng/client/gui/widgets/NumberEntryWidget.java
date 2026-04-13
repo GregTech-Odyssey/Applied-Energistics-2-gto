@@ -24,12 +24,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.text.ParsePosition;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.OptionalLong;
+import java.util.*;
 import java.util.function.Consumer;
 
 import com.google.common.primitives.Longs;
@@ -70,7 +65,7 @@ public class NumberEntryWidget implements ICompositeWidget {
     private final ConfirmableTextField textField;
     private final DecimalFormat decimalFormat;
     private NumberEntryType type;
-    private List<Button> buttons = List.of();
+    private List<Button> buttons = Collections.emptyList();
     private long minValue;
     private long maxValue = Long.MAX_VALUE;
     private ValidationIcon validationIcon;

@@ -187,7 +187,6 @@ public final class AEItemKey extends AEKey {
             var item = BuiltInRegistries.ITEM.getOptional(new ResourceLocation(tag.getString("id")))
                     .orElseThrow(() -> new IllegalArgumentException("Unknown item id."));
             var extraTag = tag.contains("tag") ? tag.getCompound("tag") : null;
-            var extraCaps = tag.contains("caps") ? tag.getCompound("caps") : null;
             return of(item, extraTag);
         } catch (Exception e) {
             AELog.debug("Tried to load an invalid item key from NBT: %s", tag, e);

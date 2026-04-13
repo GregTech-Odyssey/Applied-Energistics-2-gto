@@ -1,6 +1,6 @@
 package gto_ae.helpers.facility_management;
 
-import java.util.List;
+import java.util.Collections;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -74,14 +74,14 @@ public interface IStatusTracked {
             return new PatternContainerGroup(
                     icon,
                     name,
-                    List.of());
+                    Collections.emptyList());
         }
 
         // If nothing is adjacent, just use itself
         return new PatternContainerGroup(
                 icon,
                 icon.getDisplayName(),
-                List.of());
+                Collections.emptyList());
     }
 
     @Nullable

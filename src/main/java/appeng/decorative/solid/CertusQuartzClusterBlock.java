@@ -1,5 +1,6 @@
 package appeng.decorative.solid;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
@@ -69,7 +70,7 @@ public class CertusQuartzClusterBlock extends AEBaseBlock implements SimpleWater
         if (builder.getOptionalParameter(LootContextParams.THIS_ENTITY) == null) {
             // Prevent dropping anything if there is no player to avoid certus dust and crystals floating around when
             // the bud or cluster's supporting block is destroyed.
-            return List.of();
+            return Collections.emptyList();
         }
         return super.getDrops(state, builder);
     }

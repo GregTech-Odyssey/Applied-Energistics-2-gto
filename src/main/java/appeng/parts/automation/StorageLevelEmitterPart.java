@@ -18,6 +18,7 @@
 
 package appeng.parts.automation;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -172,7 +173,7 @@ public class StorageLevelEmitterPart extends AbstractLevelEmitterPart
 
     @Override
     public List<IPatternDetails> getAvailablePatterns() {
-        return List.of();
+        return Collections.emptyList();
     }
 
     @Override

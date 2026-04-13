@@ -1,5 +1,6 @@
 package gto_ae.hooks.gui.menu;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +21,6 @@ public interface IDecoratedSlot {
     }
 
     default @NotNull List<Component> getEmptyTooltipMessage() {
-        return List.of();
+        return Collections.emptyList();
     }
 }

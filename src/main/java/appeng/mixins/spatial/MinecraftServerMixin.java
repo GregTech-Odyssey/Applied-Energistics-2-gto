@@ -1,9 +1,8 @@
 package appeng.mixins.spatial;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.Executor;
-
-import com.google.common.collect.ImmutableList;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -80,7 +79,7 @@ public abstract class MinecraftServerMixin {
                 chunkProgressListener,
                 false /* debug */,
                 seed,
-                ImmutableList.of(),
+                Collections.emptyList(),
                 false,
                 null);
         // NOTE: We don't register the spatial dimension for the world-border. Players can't move freely in that
