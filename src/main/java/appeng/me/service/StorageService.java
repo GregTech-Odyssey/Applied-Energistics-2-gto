@@ -47,6 +47,7 @@ import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
 import appeng.api.storage.MEStorage;
+import appeng.hooks.ticking.TickHandler;
 import appeng.me.helpers.InterestManager;
 import appeng.me.helpers.StackWatcher;
 import appeng.me.storage.NetworkStorage;
@@ -80,6 +81,9 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
      */
     private final AEKeyMap<AEKey> cachedAvailableAmounts = new AEKeyMap<>();
     private volatile boolean cachedStacksNeedUpdate = true;
+    private volatile long lastWatcherUpdate = 0;
+    private volatile long lastUpdatedTick = Long.MIN_VALUE;
+    private volatile long lastScheduledTick = Long.MIN_VALUE;
     private boolean watcherUpdate = false;
     private final Lock lock = new ReentrantLock();
     /**
@@ -95,23 +99,30 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     @Override
     public void onServerEndTick(MinecraftServer server) {
         cachedStacksNeedUpdate = true;
-        if (watcherUpdate) {
-            TASK.add(this::asyncUpdateCachedStacks);
-            if (!interestManager.isEmpty() && server.getTickCount() % 10 == 0) {
-                watcherUpdate();
-            }
+        var currentTick = TickHandler.instance().getCurrentTick();
+
+        if (watcherUpdate || lastUpdatedTick != currentTick) {
+            scheduleCacheUpdate(currentTick);
+        }
+
+        if (watcherUpdate && !interestManager.isEmpty() && server.getTickCount() % 10 == 0
+                && lastWatcherUpdate != currentTick) {
+            watcherUpdate();
+            lastWatcherUpdate = currentTick;
         }
     }
 
-    private void asyncUpdateCachedStacks() {
+    private void asyncUpdateCachedStacks(long tick) {
         lock.lock();
         try {
             if (cachedStacksNeedUpdate) {
                 var stacks = new KeyCounter();
                 storage.getAvailableStacks(stacks);
+                stacks.removeEmptySubmaps();
                 cachedAvailableStacks = stacks;
                 cachedStacksNeedUpdate = false;
             }
+            lastUpdatedTick = tick;
         } finally {
             lock.unlock();
         }
@@ -119,26 +130,35 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     private void updateCachedStacks() {
         if (cachedStacksNeedUpdate) {
-            var server = ServerLifecycleHooks.getCurrentServer();
-            if (server == null || server.isSameThread()) {
-                update();
-            } else {
-                CompletableFuture.runAsync(this::update, server).join();
-            }
+            var currentTick = TickHandler.instance().getCurrentTick();
+            scheduleCacheUpdate(currentTick);
+            waitForCacheUpdate(ServerLifecycleHooks.getCurrentServer());
         }
     }
 
-    private void update() {
-        lock.lock();
-        try {
-            if (cachedStacksNeedUpdate) {
-                cachedAvailableStacks.clear();
-                storage.getAvailableStacks(cachedAvailableStacks);
-                cachedAvailableStacks.removeEmptySubmaps();
-                cachedStacksNeedUpdate = false;
-            }
-        } finally {
-            lock.unlock();
+    private void scheduleCacheUpdate(long tick) {
+        var runningFuture = FUTURE;
+        if (lastScheduledTick == tick && runningFuture != null && !runningFuture.isDone()) {
+            return;
+        }
+
+        lastScheduledTick = tick;
+        TASK.add(() -> asyncUpdateCachedStacks(tick));
+        asyncUpdate();
+    }
+
+    private void waitForCacheUpdate(@Nullable MinecraftServer server) {
+        var runningFuture = FUTURE;
+        if (runningFuture == null || runningFuture.isDone()) {
+            return;
+        }
+
+        asyncUpdate();
+
+        if (server != null) {
+            server.managedBlock(runningFuture::isDone);
+        } else {
+            runningFuture.join();
         }
     }
 
@@ -149,13 +169,19 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
         }
     }
 
-    public static void asyncUpdate() {
+    public static synchronized void asyncUpdate() {
+        if (FUTURE != null && !FUTURE.isDone()) {
+            return;
+        }
+
         if (TASK.isEmpty()) {
             return;
         }
+
         FUTURE = CompletableFuture.runAsync(() -> {
-            while (!TASK.isEmpty()) {
-                TASK.poll().run();
+            Runnable task;
+            while ((task = TASK.poll()) != null) {
+                task.run();
             }
         }, Util.backgroundExecutor());
     }
