@@ -282,14 +282,14 @@ public class TickHandler {
      */
     public void onServerTick(final ServerTickEvent ev) {
         if (ev.phase == Phase.START) {
-            onServerTickStart(ev.getServer());
+            onServerTickStart();
         } else if (ev.phase == Phase.END) {
             onServerTickEnd(ev.getServer());
         }
     }
 
-    private void onServerTickStart(MinecraftServer server) {
-        StorageService.join(server);
+    private void onServerTickStart() {
+        StorageService.join();
         // Reset the stop watch on the start of each server tick.
         this.processQueueElementsProcessed = 0;
         this.processQueueElementsRemaining = 0;
