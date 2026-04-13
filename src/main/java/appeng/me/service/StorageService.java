@@ -22,6 +22,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 import java.util.concurrent.locks.ReentrantLock;
 
 import com.google.common.base.Preconditions;
@@ -53,7 +54,7 @@ import appeng.me.storage.NetworkStorage;
 
 public class StorageService implements Runnable, IStorageService, IGridServiceProvider {
 
-    private static volatile CompletableFuture<Void> FUTURE;
+    private static volatile boolean running = false;
     private static final Deque<Runnable> TASK = new ConcurrentLinkedDeque<>();
 
     /**
@@ -94,26 +95,28 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     @Override
     public void onServerEndTick(MinecraftServer server) {
-        cachedStacksNeedUpdate = true;
         if (watcherUpdate) {
             TASK.add(this::asyncUpdateCachedStacks);
             if (!interestManager.isEmpty() && server.getTickCount() % 10 == 0) {
                 watcherUpdate();
             }
+        } else {
+            cachedStacksNeedUpdate = true;
         }
     }
 
     private void asyncUpdateCachedStacks() {
-        lock.lock();
-        try {
-            if (cachedStacksNeedUpdate) {
-                var stacks = new KeyCounter();
-                storage.getAvailableStacks(stacks);
-                cachedAvailableStacks = stacks;
-                cachedStacksNeedUpdate = false;
+        if (lock.tryLock()) {
+            try {
+                if (cachedStacksNeedUpdate) {
+                    var stacks = new KeyCounter();
+                    storage.getAvailableStacks(stacks);
+                    cachedAvailableStacks = stacks;
+                    cachedStacksNeedUpdate = false;
+                }
+            } finally {
+                lock.unlock();
             }
-        } finally {
-            lock.unlock();
         }
     }
 
@@ -144,19 +147,25 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     }
 
     public static void join() {
-        if (FUTURE != null) {
-            FUTURE.join();
-            FUTURE = null;
+        while (running) {
+            Thread.yield();
+            LockSupport.parkNanos("waiting for tasks", 100000L);
         }
     }
 
     public static void asyncUpdate() {
+        running = false;
         if (TASK.isEmpty()) {
             return;
         }
-        FUTURE = CompletableFuture.runAsync(() -> {
-            while (!TASK.isEmpty()) {
-                TASK.poll().run();
+        CompletableFuture.runAsync(() -> {
+            running = true;
+            try {
+                while (!TASK.isEmpty()) {
+                    TASK.poll().run();
+                }
+            } finally {
+                running = false;
             }
         }, Util.backgroundExecutor());
     }
