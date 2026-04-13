@@ -114,7 +114,7 @@ public class TickHandler {
      * Callbacks on the client are not support.
      * <p>
      * Using null as level will queue it into the global {@link ServerTickEvent}, otherwise it will be ticked with the
-     * corresponding {@link WorldTickEvent}.
+     * corresponding {@link LevelTickEvent}.
      *
      * @param level null or the specific {@link Level}
      * @param c     the callback
@@ -282,14 +282,14 @@ public class TickHandler {
      */
     public void onServerTick(final ServerTickEvent ev) {
         if (ev.phase == Phase.START) {
-            onServerTickStart();
+            onServerTickStart(ev.getServer());
         } else if (ev.phase == Phase.END) {
             onServerTickEnd(ev.getServer());
         }
     }
 
-    private void onServerTickStart() {
-        StorageService.join();
+    private void onServerTickStart(MinecraftServer server) {
+        StorageService.join(server);
         // Reset the stop watch on the start of each server tick.
         this.processQueueElementsProcessed = 0;
         this.processQueueElementsRemaining = 0;
