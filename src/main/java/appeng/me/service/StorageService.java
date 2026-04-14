@@ -85,9 +85,9 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     @Override
     public void onServerEndTick(MinecraftServer server) {
-        if (watcherUpdate) {
+        if (watcherUpdate && server.getTickCount() % 10 == 0) {
             updateCachedStacks();
-            if (!interestManager.isEmpty() && server.getTickCount() % 10 == 0) {
+            if (!interestManager.isEmpty()) {
                 watcherUpdate();
             }
         } else {
