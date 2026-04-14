@@ -53,7 +53,6 @@ import appeng.blockentity.AEBaseBlockEntity;
 import appeng.core.AELog;
 import appeng.me.Grid;
 import appeng.me.GridNode;
-import appeng.me.service.StorageService;
 import appeng.util.ILevelRunnable;
 import appeng.util.Platform;
 
@@ -289,7 +288,6 @@ public class TickHandler {
     }
 
     private void onServerTickStart() {
-        StorageService.join();
         // Reset the stop watch on the start of each server tick.
         this.processQueueElementsProcessed = 0;
         this.processQueueElementsRemaining = 0;
@@ -330,7 +328,6 @@ public class TickHandler {
         }
 
         tickCounter++;
-        StorageService.asyncUpdate();
     }
 
     /**
