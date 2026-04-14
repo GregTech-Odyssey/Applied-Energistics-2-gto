@@ -12,12 +12,12 @@ import net.minecraft.world.entity.player.Player;
 
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
 import it.unimi.dsi.fastutil.objects.Reference2LongMaps;
-import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
 
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyMap;
 import appeng.blockentity.AEBaseBlockEntity;
 import appeng.helpers.IConfigInvHost;
 import appeng.parts.AEBasePart;
@@ -53,7 +53,7 @@ public interface IStatusTracked {
 
     default Reference2LongMap<AEKey> getConfiguredSetting() {
         if (this instanceof IConfigInvHost configHolder) {
-            var map = new Reference2LongOpenHashMap<AEKey>();
+            var map = new AEKeyMap<AEKey>();
             for (var e : configHolder.getConfig().getAvailableStacks()) {
                 map.put(e.getKey(), e.getLongValue());
             }

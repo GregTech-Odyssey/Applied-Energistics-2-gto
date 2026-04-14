@@ -19,19 +19,20 @@
 package appeng.util.prioritylist;
 
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyMap;
 import appeng.api.stacks.KeyCounter;
 
 public class PrecisePriorityList implements IPartitionList {
 
-    private final KeyCounter list;
+    private final AEKeyMap<AEKey> list;
 
     public PrecisePriorityList(KeyCounter in) {
-        this.list = in;
+        this.list = in.getMap();
     }
 
     @Override
     public boolean isListed(AEKey input) {
-        return this.list.get(input) > 0;
+        return this.list.getAmount(input) > 0;
     }
 
     @Override

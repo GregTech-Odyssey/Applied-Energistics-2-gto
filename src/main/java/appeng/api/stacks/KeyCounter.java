@@ -45,6 +45,12 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         return subIndex == null ? Collections.emptyList() : subIndex.findFuzzy(key, fuzzy);
     }
 
+    public AEKeyMap<AEKey> getMap() {
+        var map = new AEKeyMap<AEKey>(size());
+        forEach(i -> map.set(i.getKey(), i.getLongValue()));
+        return map;
+    }
+
     public void removeZeros() {
         if (lists == null)
             return;

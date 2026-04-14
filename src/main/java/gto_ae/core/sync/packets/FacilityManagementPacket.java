@@ -8,10 +8,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
-
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyMap;
 import appeng.core.sync.BasePacket;
 
 import gto_ae.api.util.DirectionalGlobalPos;
@@ -39,12 +38,12 @@ public class FacilityManagementPacket extends BasePacket {
             var throughputCounter = ThroughputCounter.readFromBuffer(stream);
             var group = PatternContainerGroup.readFromPacket(stream);
 
-            Reference2LongOpenHashMap<AEKey> configuredSetting = new Reference2LongOpenHashMap<>();
+            AEKeyMap<AEKey> configuredSetting = new AEKeyMap<>();
             int settingSize = stream.readInt();
             for (int i = 0; i < settingSize; i++) {
                 var key = AEKey.readKey(stream);
                 var value = stream.readLong();
-                configuredSetting.put(key, value);
+                configuredSetting.set(key, value);
             }
 
             this.status = new FrozenMachineStatus(

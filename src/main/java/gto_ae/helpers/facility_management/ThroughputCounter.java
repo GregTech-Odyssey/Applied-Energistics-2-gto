@@ -2,9 +2,8 @@ package gto_ae.helpers.facility_management;
 
 import net.minecraft.network.FriendlyByteBuf;
 
-import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
-
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyMap;
 import appeng.core.AEConfig;
 
 /**
@@ -14,7 +13,7 @@ import appeng.core.AEConfig;
  * </p>
  * 这也意味着，从网络流出的物品会被记录为负数，向网络流入的物品会被记录为正数
  */
-public class ThroughputCounter extends Reference2LongOpenHashMap<AEKey> {
+public class ThroughputCounter extends AEKeyMap<AEKey> {
     public static final ThroughputCounter EMPTY = new ThroughputCounter() {
         @Override
         public void add(AEKey key, long count) {

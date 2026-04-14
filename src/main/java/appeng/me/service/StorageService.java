@@ -103,7 +103,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     }
 
     private void watcherUpdate() {
-        for (var it = cachedAvailableAmounts.reference2LongEntrySet().fastIterator(); it.hasNext();) {
+        for (var it = cachedAvailableAmounts.iterator(); it.hasNext();) {
             var entry = it.next();
             var what = entry.getKey();
             var newAmount = cachedAvailableStacks.get(what);
@@ -120,9 +120,9 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
         cachedAvailableStacks.forEach(entry -> {
             var what = entry.getKey();
             var newAmount = entry.getLongValue();
-            if (newAmount != cachedAvailableAmounts.getLong(what)) {
+            if (newAmount != cachedAvailableAmounts.getAmount(what)) {
                 postWatcherUpdate(what, newAmount);
-                cachedAvailableAmounts.put(what, newAmount);
+                cachedAvailableAmounts.set(what, newAmount);
             }
         });
     }
