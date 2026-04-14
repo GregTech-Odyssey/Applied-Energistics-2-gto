@@ -35,8 +35,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
@@ -48,7 +46,6 @@ import appeng.api.networking.crafting.ICraftingRequester;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.networking.storage.IStorageService;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
@@ -80,7 +77,6 @@ public class InterfaceLogic
         implements ICraftingRequester,
         IUpgradeableObject,
         IConfigurableObject,
-        IStorageService.UpdateRequester,
         IStatusTracked {
     @Nullable
     private InterfaceInventory localInvHandler;
@@ -551,7 +547,6 @@ public class InterfaceLogic
 
         // Update plan in case fuzzy card was inserted or removed
         updatePlan();
-        runListener();
     }
 
     private void onConfigRowChanged() {
@@ -646,17 +641,5 @@ public class InterfaceLogic
         } else {
             return LazyOptional.empty();
         }
-    }
-
-    protected final Set<Runnable> listeners = new ReferenceOpenHashSet<>();
-
-    @Override
-    public boolean isUpdateRequested(IStorageService service) {
-        return isUpgradedWith(AEItems.FUZZY_CARD);
-    }
-
-    @Override
-    public Set<Runnable> getListener() {
-        return listeners;
     }
 }

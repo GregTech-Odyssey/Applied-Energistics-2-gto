@@ -18,8 +18,6 @@
 
 package appeng.helpers;
 
-import java.util.Set;
-
 import com.google.common.collect.ImmutableSet;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +26,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import appeng.api.networking.crafting.ICraftingLink;
-import appeng.api.networking.storage.IStorageService;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.util.IConfigManager;
@@ -52,7 +49,6 @@ public interface InterfaceLogicHost extends IConfigurableObject,
         IUpgradeableObject,
         IPriorityHost,
         IConfigInvHost,
-        IStorageService.UpdateRequester,
         IStatusTracked {
     /**
      * @return The block entity that is in-world and hosts the interface.
@@ -111,16 +107,6 @@ public interface InterfaceLogicHost extends IConfigurableObject,
     @Override
     default void returnToMainMenu(Player player, ISubMenu subMenu) {
         MenuOpener.returnTo(InterfaceMenu.TYPE, player, subMenu.getLocator());
-    }
-
-    @Override
-    default boolean isUpdateRequested(IStorageService service) {
-        return getInterfaceLogic().isUpdateRequested(service);
-    }
-
-    @Override
-    default Set<Runnable> getListener() {
-        return getInterfaceLogic().getListener();
     }
 
     @Override
