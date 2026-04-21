@@ -25,6 +25,7 @@ package appeng.api.util;
 
 import java.util.Objects;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
@@ -89,10 +90,19 @@ public final class DimensionalBlockPos {
     }
 
     public Level getLevel() {
+        if (ServerLifecycleHooks.getCurrentServer() == null) {
+            return Client.getLevel(level);
+        }
         return ServerLifecycleHooks.getCurrentServer().getLevel(level);
     }
 
     public BlockPos getPos() {
         return pos;
+    }
+
+    private static class Client {
+        private static Level getLevel(ResourceKey<Level> level) {
+            return Minecraft.getInstance().level.dimension() == level ? Minecraft.getInstance().level : null;
+        }
     }
 }
