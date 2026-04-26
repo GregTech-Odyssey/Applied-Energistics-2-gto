@@ -41,7 +41,7 @@ public class VerticalButtonBar implements ICompositeWidget {
     // The margin between the right side of the buttons and the GUI
     private static final int MARGIN = 2;
 
-    private final List<Button> buttons = new ArrayList<>();
+    public final List<Button> buttons = new ArrayList<>();
 
     // The origin of the last initialized screen in window coordinates
     private Point screenOrigin = Point.ZERO;
