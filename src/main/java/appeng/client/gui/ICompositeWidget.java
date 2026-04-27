@@ -220,5 +220,25 @@ public interface ICompositeWidget {
         public void populateScreen(Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) {
             addWidget.accept(widget);
         }
+
+        @Override
+        public void addExclusionZones(List<Rect2i> exclusionZones, Rect2i screenBounds) {
+            Rect2i bounds = getBounds();
+            if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0) {
+                return;
+            }
+
+            // Automatically add the bounds if they exceed the screen bounds
+            if (bounds.getX() < 0
+                    || bounds.getY() < 0
+                    || bounds.getX() + bounds.getWidth() > screenBounds.getWidth()
+                    || bounds.getY() + bounds.getHeight() > screenBounds.getHeight()) {
+                exclusionZones.add(new Rect2i(
+                        bounds.getX(),
+                        bounds.getY(),
+                        bounds.getWidth(),
+                        bounds.getHeight()));
+            }
+        }
     }
 }

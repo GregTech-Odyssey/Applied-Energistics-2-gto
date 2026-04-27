@@ -12,6 +12,13 @@ public class ExpandableGroup {
         }
     }
 
+    public ExpandableGroup add(IExpandable... expandables) {
+        for (IExpandable e : expandables) {
+            e.setGroup(this);
+        }
+        return this;
+    }
+
     public void onExpand(IExpandable iExpandable) {
         if (currentlyExpanded != null && currentlyExpanded != iExpandable) {
             currentlyExpanded.toggleCollapsed();

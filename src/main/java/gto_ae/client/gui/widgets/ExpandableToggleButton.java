@@ -81,6 +81,37 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
     }
 
     @Override
+    public Rect2i getExpandedBound() {
+        if (this.expandedButtons.isEmpty()) {
+            return this.getBounds();
+        }
+        int x = 0, y = 0, w = 0, h = 0;
+        switch (this.layoutDirection) {
+            case LEFT, RIGHT -> {
+                var maxWidth = this.expandedButtons.stream().mapToInt(AbstractWidget::getWidth).max().orElse(0);
+                w = this.getWidth() + LAYOUT_SPACING + maxWidth;
+                var totalHeight = this.expandedButtons.stream().mapToInt(AbstractWidget::getHeight).sum();
+                var totalSpacing = LAYOUT_SPACING * (this.expandedButtons.size() - 1);
+                h = Math.max(this.getHeight(), totalHeight + totalSpacing);
+
+                x = (this.layoutDirection == LayoutDirection.LEFT ? -LAYOUT_SPACING - maxWidth : 0);
+                y = this.getHeight() / 2 - (totalHeight + totalSpacing) / 2;
+            }
+            case UP, DOWN -> {
+                var totalWidth = this.expandedButtons.stream().mapToInt(AbstractWidget::getWidth).sum();
+                var totalSpacing = LAYOUT_SPACING * (this.expandedButtons.size() - 1);
+                w = Math.max(this.getWidth(), totalWidth + totalSpacing);
+                var maxHeight = this.expandedButtons.stream().mapToInt(AbstractWidget::getHeight).max().orElse(0);
+                h = this.getHeight() + LAYOUT_SPACING + maxHeight;
+
+                x = this.getWidth() / 2 - (totalWidth + totalSpacing) / 2;
+                y = (this.layoutDirection == LayoutDirection.UP ? -LAYOUT_SPACING - maxHeight : 0);
+            }
+        }
+        return new Rect2i(x, y, w, h);
+    }
+
+    @Override
     public void populate(Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) {
         for (var b : expandedButtons) {
             addWidget.accept(b);

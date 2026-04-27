@@ -98,6 +98,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
     private final Scrollbar scrollbar;
     private final AETextField searchField;
     private final ToggleButton freezeViewBtn;
+    public final ExpandableGroup filterModeGroup;
 
     private int visibleRows = 0;
     private boolean refreshScheduled = false;
@@ -121,7 +122,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
                 WorkingStatus.NONE,
                 ExpandableToggleButton::sendToServer, ExpandableToggleButton.LayoutDirection.LEFT);
 
-        var filterModeGroup = new ExpandableGroup(filterModeBtn, filterCpuJobsBtn, filterWorkingStatusBtn);
+        filterModeGroup = new ExpandableGroup(filterModeBtn, filterCpuJobsBtn, filterWorkingStatusBtn);
 
         freezeViewBtn = new ToggleButton(IconsExtended.VIEW_UNLOCKED, IconsExtended.VIEW_LOCKED,
                 ExtendedLangs.FreezeView.text(), ExtendedLangs.FreezeViewTooltip.text(), (b) -> {

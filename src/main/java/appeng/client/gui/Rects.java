@@ -46,4 +46,12 @@ public final class Rects {
                 rect.getHeight());
     }
 
+    public static Rect2i union(Rect2i a, Rect2i b) {
+        int x1 = Math.min(a.getX(), b.getX());
+        int y1 = Math.min(a.getY(), b.getY());
+        int x2 = Math.max(a.getX() + a.getWidth(), b.getX() + b.getWidth());
+        int y2 = Math.max(a.getY() + a.getHeight(), b.getY() + b.getHeight());
+        return new Rect2i(x1, y1, x2 - x1, y2 - y1);
+    }
+
 }

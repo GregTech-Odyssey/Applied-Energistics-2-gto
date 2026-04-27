@@ -78,7 +78,7 @@ public class NumberEntryWidget implements ICompositeWidget {
 
     private boolean hideValidationIcon;
 
-    private Rect2i bounds = new Rect2i(0, 0, 0, 0);
+    private Rect2i bounds = Rects.ZERO;
 
     private Rect2i textFieldBounds = Rects.ZERO;
     private Point currentScreenOrigin = Point.ZERO;

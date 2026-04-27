@@ -29,6 +29,9 @@ import net.minecraft.client.renderer.Rect2i;
 import appeng.client.Point;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.ICompositeWidget;
+import appeng.client.gui.Rects;
+
+import gto_ae.client.gui.widgets.expandable.IExpandable;
 
 /**
  * A stacked button panel on the left or right side of our UIs.
@@ -46,7 +49,7 @@ public class VerticalButtonBar implements ICompositeWidget {
     // The origin of the last initialized screen in window coordinates
     private Point screenOrigin = Point.ZERO;
     // This bounding rectangle relative to the screens origin
-    private Rect2i bounds = new Rect2i(0, 0, 0, 0);
+    private Rect2i bounds = Rects.ZERO;
 
     private Point position;
 
@@ -96,7 +99,7 @@ public class VerticalButtonBar implements ICompositeWidget {
 
         // Set up a bounding rectangle for JEI exclusion zones
         if (maxWidth == 0) {
-            bounds = new Rect2i(0, 0, 0, 0);
+            bounds = Rects.ZERO;
         } else {
             int boundX = position.getX() - maxWidth - 2 * MARGIN;
             int boundY = position.getY();
@@ -105,6 +108,19 @@ public class VerticalButtonBar implements ICompositeWidget {
                     boundY,
                     maxWidth + 2 * MARGIN,
                     currentY - boundY);
+        }
+    }
+
+    @Override
+    public void addExclusionZones(List<Rect2i> exclusionZones, Rect2i screenBounds) {
+        ICompositeWidget.super.addExclusionZones(exclusionZones, screenBounds);
+        for (var button : buttons) {
+            if (button instanceof IExpandable expandable) {
+                if (!expandable.isCollapsed()) {
+                    exclusionZones
+                            .add(expandable.getExpandedBound());
+                }
+            }
         }
     }
 

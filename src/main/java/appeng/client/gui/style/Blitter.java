@@ -40,6 +40,7 @@ import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import appeng.client.gui.Rects;
 import appeng.core.AppEng;
 
 /**
@@ -65,7 +66,7 @@ public final class Blitter {
     private int b = 255;
     private int a = 255;
     private Rect2i srcRect;
-    private Rect2i destRect = new Rect2i(0, 0, 0, 0);
+    private Rect2i destRect = Rects.ZERO;
     private boolean blending = true;
     private TextureTransform transform = TextureTransform.NONE;
 

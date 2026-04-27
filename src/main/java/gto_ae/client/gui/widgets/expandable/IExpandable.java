@@ -1,5 +1,7 @@
 package gto_ae.client.gui.widgets.expandable;
 
+import net.minecraft.client.renderer.Rect2i;
+
 public interface IExpandable {
     void toggleCollapsed();
 
@@ -20,4 +22,6 @@ public interface IExpandable {
             getGroup().onCollapse(this);
         }
     }
+
+    Rect2i getExpandedBound();
 }

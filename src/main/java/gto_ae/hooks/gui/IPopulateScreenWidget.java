@@ -8,20 +8,21 @@ import net.minecraft.client.renderer.Rect2i;
 import appeng.client.Point;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.ICompositeWidget;
+import appeng.client.gui.Rects;
 
 @FunctionalInterface
 public interface IPopulateScreenWidget extends ICompositeWidget {
     @Override
     default void setPosition(Point position) {
-    };
+    }
 
     @Override
     default void setSize(int width, int height) {
-    };
+    }
 
     @Override
     default Rect2i getBounds() {
-        return new Rect2i(0, 0, 0, 0);
+        return Rects.ZERO;
     }
 
     /**

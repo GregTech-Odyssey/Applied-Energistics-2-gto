@@ -27,6 +27,7 @@ import net.minecraft.network.chat.Component;
 
 import appeng.client.Point;
 import appeng.client.gui.ICompositeWidget;
+import appeng.client.gui.Rects;
 import appeng.client.gui.Tooltip;
 import appeng.client.gui.style.Blitter;
 import appeng.client.gui.style.ScreenStyle;
@@ -43,7 +44,7 @@ public class ToolboxPanel implements ICompositeWidget {
     private final Component toolbeltName;
 
     // Relative to the origin of the current screen (not window)
-    private Rect2i bounds = new Rect2i(0, 0, 0, 0);
+    private Rect2i bounds = Rects.ZERO;
 
     public ToolboxPanel(ScreenStyle style, Component toolbeltName) {
         this.background = style.getImage("toolbox");
