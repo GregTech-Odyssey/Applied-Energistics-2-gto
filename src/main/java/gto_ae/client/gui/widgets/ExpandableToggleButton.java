@@ -94,8 +94,8 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
                 var totalSpacing = LAYOUT_SPACING * (this.expandedButtons.size() - 1);
                 h = Math.max(this.getHeight(), totalHeight + totalSpacing);
 
-                x = (this.layoutDirection == LayoutDirection.LEFT ? -LAYOUT_SPACING - maxWidth : 0);
-                y = this.getHeight() / 2 - (totalHeight + totalSpacing) / 2;
+                x = this.getX() + (this.layoutDirection == LayoutDirection.LEFT ? -LAYOUT_SPACING - maxWidth : 0);
+                y = this.getY() + this.getHeight() / 2 - (totalHeight + totalSpacing) / 2;
             }
             case UP, DOWN -> {
                 var totalWidth = this.expandedButtons.stream().mapToInt(AbstractWidget::getWidth).sum();
@@ -104,8 +104,8 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
                 var maxHeight = this.expandedButtons.stream().mapToInt(AbstractWidget::getHeight).max().orElse(0);
                 h = this.getHeight() + LAYOUT_SPACING + maxHeight;
 
-                x = this.getWidth() / 2 - (totalWidth + totalSpacing) / 2;
-                y = (this.layoutDirection == LayoutDirection.UP ? -LAYOUT_SPACING - maxHeight : 0);
+                x = this.getX() + this.getWidth() / 2 - (totalWidth + totalSpacing) / 2;
+                y = this.getY() + (this.layoutDirection == LayoutDirection.UP ? -LAYOUT_SPACING - maxHeight : 0);
             }
         }
         return new Rect2i(x, y, w, h);
