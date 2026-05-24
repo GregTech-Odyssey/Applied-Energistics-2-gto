@@ -79,6 +79,8 @@ import appeng.util.IConfigManagerListener;
 import appeng.util.Platform;
 import appeng.util.prioritylist.IPartitionList;
 
+import gto_ae.client.gui.IconsExtended;
+import gto_ae.core.localization.ExtendedLangs;
 import gto_ae.hooks.gui.menu.IRepoSlot;
 
 public class MEStorageScreen<C extends MEStorageMenu>
@@ -151,15 +153,15 @@ public class MEStorageScreen<C extends MEStorageMenu>
         }
 
         this.manualPinnedRowToggle = this.addToLeftToolbar(new ToggleButton(
-                Icon.PATTERN_ACCESS_SHOW,
-                Icon.PATTERN_ACCESS_HIDE,
+                IconsExtended.MANUAL_PIN,
+                IconsExtended.MANUAL_PIN_OFF,
                 this::toggleManualPinnedRowVisibility));
         this.manualPinnedRowToggle.setTooltipOn(List.of(
-                GuiText.TerminalManualPinnedRow.text(),
-                GuiText.TerminalManualPinnedRowShown.text()));
+                ExtendedLangs.TerminalManualPinnedRow.text(),
+                ExtendedLangs.TerminalManualPinnedRowShown.text()));
         this.manualPinnedRowToggle.setTooltipOff(List.of(
-                GuiText.TerminalManualPinnedRow.text(),
-                GuiText.TerminalManualPinnedRowHidden.text()));
+                ExtendedLangs.TerminalManualPinnedRow.text(),
+                ExtendedLangs.TerminalManualPinnedRowHidden.text()));
 
         if (this.style.isSortable()) {
             this.sortByToggle = this.addToLeftToolbar(new SettingToggleButton<>(Settings.SORT_BY,

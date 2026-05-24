@@ -36,6 +36,9 @@ public enum IconsExtended implements IIcon {
 
     SLOT_BG_FILTER_SEARCH(240, 0, 16, 16),
     SLOT_BG_CONFIG(240, 16, 16, 16),
+
+    MANUAL_PIN(128, 16, 16, 16),
+    MANUAL_PIN_OFF(144, 16, 16, 16),
     ;
 
     private final int x, y, width, height;

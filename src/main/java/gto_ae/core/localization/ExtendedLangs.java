@@ -160,7 +160,11 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
             "Middle-click to create a temporary crafting order, ordering one set of raw materials for this recipe"),
     CraftEncodeSend("§o[右键点击] 编码并发送样板§r", "§o[Right Click] Encode and send pattern§r"),
     CraftEncodeSendDesc("点击选择目的地样板供应器，并将样板发送至该供应器",
-            "Click to select the destination Pattern Provider and encode the current recipe to it");
+            "Click to select the destination Pattern Provider and encode the current recipe to it"),
+    TerminalManualPinnedRow("手动置顶项", "Manually pinned row"),
+    TerminalManualPinnedRowShown("显示手动置顶项(使用Alt + 左键点击项目以置顶/取消置顶某物品)",
+            "Show manually pinned row (Use Alt + Left Click on an item to pin/unpin it)"),
+    TerminalManualPinnedRowHidden("隐藏手动置顶项", "Hidden manually pinned row"),;
 
     private final String enText;
     private final String cnText;
