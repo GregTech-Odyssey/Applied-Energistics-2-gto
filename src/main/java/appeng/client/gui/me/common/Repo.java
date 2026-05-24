@@ -77,7 +77,8 @@ public class Repo implements IClientRepo {
     private final Reference2ObjectMap<AEKey, GridInventoryEntry> byKey = new Reference2ObjectOpenHashMap<>();
     private final ReferenceSet<AEKey> craftableKeys = new ReferenceOpenHashSet<>();
     private final ArrayList<GridInventoryEntry> view = new ArrayList<>();
-    private final ArrayList<GridInventoryEntry> pinnedRow = new ArrayList<>();
+    private final ArrayList<GridInventoryEntry> craftingPinnedRow = new ArrayList<>();
+    private final ArrayList<GridInventoryEntry> manualPinnedView = new ArrayList<>();
     /**
      * Entries by item ID to speed up ingredient matching.
      */
@@ -90,6 +91,7 @@ public class Repo implements IClientRepo {
     private final IScrollSource src;
     private final ISortSource sortSrc;
     private boolean paused;
+    private boolean showManualPinnedRow = true;
 
     public Repo(IScrollSource src, ISortSource sortSrc) {
         this.src = src;
@@ -169,10 +171,12 @@ public class Repo implements IClientRepo {
         if (isPaused()) {
             // First pass -> detect and update
             var visibleSerials = new LongOpenHashSet(this.view.size());
-            updateEntriesWhilePaused(pinnedRow, visibleSerials);
+            updateEntriesWhilePaused(craftingPinnedRow, visibleSerials);
+            updateEntriesWhilePaused(manualPinnedView, visibleSerials);
             updateEntriesWhilePaused(view, visibleSerials);
 
-            var pinnedRowFreeSlots = getFreeSlots(pinnedRow);
+            var craftingPinnedRowFreeSlots = getFreeSlots(craftingPinnedRow);
+            var manualPinnedFreeSlots = getFreeSlots(manualPinnedView);
             var viewFreeSlots = getFreeSlots(view);
 
             var entriesToAdd = new ArrayList<GridInventoryEntry>();
@@ -185,7 +189,8 @@ public class Repo implements IClientRepo {
 
                 // First, try to find an empty/meaningless slot in the view that is visually indistinguishable
                 // and fill it
-                if (takeOverSlotOccupiedByRemovedItem(serverEntry, pinnedRowFreeSlots, pinnedRow)
+                if (takeOverSlotOccupiedByRemovedItem(serverEntry, craftingPinnedRowFreeSlots, craftingPinnedRow)
+                        || takeOverSlotOccupiedByRemovedItem(serverEntry, manualPinnedFreeSlots, manualPinnedView)
                         || takeOverSlotOccupiedByRemovedItem(serverEntry, viewFreeSlots, view)) {
                     continue;
                 }
@@ -196,24 +201,12 @@ public class Repo implements IClientRepo {
 
             addEntriesToView(entriesToAdd);
         } else {
-            this.view.clear();
-            this.pinnedRow.clear();
-
-            this.view.ensureCapacity(this.entries.size());
-            this.pinnedRow.ensureCapacity(rowSize);
-
-            addEntriesToView(this.entries.values());
+            rebuildVisibleRows();
         }
 
         // Don't re-sort while being paused
         if (!isPaused()) {
-            // Sort older entries first in the pinned row
-            pinnedRow.sort(PINNED_ROW_COMPARATOR);
-
-            var sortOrder = this.sortSrc.getSortBy();
-            var sortDir = this.sortSrc.getSortDir();
-
-            this.view.sort(getComparator(sortOrder, sortDir));
+            sortVisibleRows();
         }
 
         if (this.updateViewListener != null) {
@@ -221,19 +214,54 @@ public class Repo implements IClientRepo {
         }
     }
 
+    public final void rebuildView() {
+        rebuildVisibleRows();
+        sortVisibleRows();
+
+        if (this.updateViewListener != null) {
+            this.updateViewListener.run();
+        }
+    }
+
+    private void rebuildVisibleRows() {
+        this.view.clear();
+        this.craftingPinnedRow.clear();
+        this.manualPinnedView.clear();
+
+        this.view.ensureCapacity(this.entries.size());
+        this.craftingPinnedRow.ensureCapacity(rowSize);
+        this.manualPinnedView.ensureCapacity(this.entries.size());
+
+        addEntriesToView(this.entries.values());
+    }
+
+    private void sortVisibleRows() {
+        // Sort older entries first in the pinned rows
+        craftingPinnedRow.sort(PINNED_ROW_COMPARATOR);
+        manualPinnedView.sort(PINNED_ROW_COMPARATOR);
+
+        var sortOrder = this.sortSrc.getSortBy();
+        var sortDir = this.sortSrc.getSortDir();
+
+        this.view.sort(getComparator(sortOrder, sortDir));
+    }
+
     private void addEntriesToView(Collection<GridInventoryEntry> entries) {
         var viewMode = this.sortSrc.getSortDisplay();
         var typeFilter = this.sortSrc.getTypeFilter().getFilter();
 
-        var hasPinnedRow = !PinnedKeys.isEmpty();
-
         for (var entry : entries) {
-            // Pinned keys ignore all filters & search
-            if (hasPinnedRow && pinnedRow.size() < rowSize && PinnedKeys.isPinned(entry.getWhat())) {
-                pinnedRow.add(entry);
+            if (PinnedKeys.isPinned(entry.getWhat(), PinnedKeys.PinReason.CRAFTING)) {
+                craftingPinnedRow.add(entry);
                 continue;
             }
 
+            if (showManualPinnedRow && PinnedKeys.isPinned(entry.getWhat(), PinnedKeys.PinReason.MANUAL)) {
+                manualPinnedView.add(entry);
+                continue;
+            }
+
+            // Pinned keys ignore all filters & search
             if (this.partitionList != null && !this.partitionList.isListed(entry.getWhat())) {
                 continue;
             }
@@ -255,15 +283,11 @@ public class Repo implements IClientRepo {
             }
         }
 
-        // Any pinned entry that has not yet been added to the pinned row will be represented by a fake
-        // entry. Pinned crafting jobs are excluded from this because they *should* have a grid-entry
-        // with craftable=true if they're craftable on this grid.
-        if (hasPinnedRow) {
-            for (var pinnedKey : PinnedKeys.getPinnedKeys()) {
-                var info = PinnedKeys.getPinInfo(pinnedKey);
-                if (info.reason != PinnedKeys.PinReason.CRAFTING
-                        && pinnedRow.stream().noneMatch(r -> pinnedKey.equals(r.getWhat()))) {
-                    this.pinnedRow.add(new GridInventoryEntry(
+        // Manual pinned entries can outlive their backing grid entry, so represent missing ones with a fake entry.
+        if (showManualPinnedRow) {
+            for (var pinnedKey : PinnedKeys.getPinnedKeys(PinnedKeys.PinReason.MANUAL)) {
+                if (manualPinnedView.stream().noneMatch(r -> pinnedKey.equals(r.getWhat()))) {
+                    this.manualPinnedView.add(new GridInventoryEntry(
                             -1, pinnedKey, 0, 0, false));
                 }
             }
@@ -339,21 +363,80 @@ public class Repo implements IClientRepo {
         return Comparator.comparing(GridInventoryEntry::getWhat, getKeyComparator(sortOrder, sortDir));
     }
 
-    public List<GridInventoryEntry> getPinnedEntries() {
-        return Collections.unmodifiableList(this.pinnedRow);
+    public List<GridInventoryEntry> getPinnedEntries(PinnedKeys.PinReason reason) {
+        return Collections.unmodifiableList(reason == PinnedKeys.PinReason.CRAFTING ? this.craftingPinnedRow
+                : this.manualPinnedView);
+    }
+
+    @Nullable
+    public PinnedKeys.PinReason getPinnedRowReason(int idx) {
+        if (!craftingPinnedRow.isEmpty()) {
+            if (idx < this.rowSize) {
+                return PinnedKeys.PinReason.CRAFTING;
+            }
+            idx -= this.rowSize;
+        }
+
+        var manualSlots = getVisibleManualPinnedRowCount() * this.rowSize;
+        if (idx < manualSlots) {
+            return PinnedKeys.PinReason.MANUAL;
+        }
+
+        return null;
+    }
+
+    public int getPinnedRowCount() {
+        return (!craftingPinnedRow.isEmpty() ? 1 : 0) + getVisibleManualPinnedRowCount();
+    }
+
+    public int getTotalDisplayRows() {
+        return getPinnedRowCount() + (this.view.size() + this.rowSize - 1) / this.rowSize;
+    }
+
+    public int getSyntheticPinnedEntryCount() {
+        if (!showManualPinnedRow) {
+            return 0;
+        }
+
+        int count = 0;
+        for (var entry : manualPinnedView) {
+            if (entry.getSerial() == -1) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    public boolean isShowManualPinnedRow() {
+        return showManualPinnedRow;
+    }
+
+    public void setShowManualPinnedRow(boolean showManualPinnedRow) {
+        this.showManualPinnedRow = showManualPinnedRow;
     }
 
     @Nullable
     public final GridInventoryEntry get(int idx) {
-        if (!this.pinnedRow.isEmpty()) {
-            // First row of slots is reserved for pinned keys
+        if (!this.craftingPinnedRow.isEmpty()) {
+            // The first row of slots is reserved for pinned crafting keys.
             if (idx < this.rowSize) {
-                if (idx < this.pinnedRow.size()) {
-                    return this.pinnedRow.get(idx);
+                if (idx < this.craftingPinnedRow.size()) {
+                    return this.craftingPinnedRow.get(idx);
                 }
                 return null;
             }
             idx -= this.rowSize;
+        }
+
+        var manualSlots = getVisibleManualPinnedRowCount() * this.rowSize;
+        if (manualSlots > 0) {
+            if (idx < manualSlots) {
+                if (idx < this.manualPinnedView.size()) {
+                    return this.manualPinnedView.get(idx);
+                }
+                return null;
+            }
+            idx -= manualSlots;
         }
 
         idx += this.src.getCurrentScroll() * this.rowSize;
@@ -365,20 +448,22 @@ public class Repo implements IClientRepo {
     }
 
     public final int size() {
-        return this.view.size() + this.pinnedRow.size();
+        return this.view.size() + this.craftingPinnedRow.size()
+                + (this.showManualPinnedRow ? this.manualPinnedView.size() : 0);
     }
 
     public final void clear() {
         this.entries.clear();
         this.byKey.clear();
         this.view.clear();
-        this.pinnedRow.clear();
+        this.craftingPinnedRow.clear();
+        this.manualPinnedView.clear();
         this.entriesByItemId.clear();
         this.entriesByItemIdNeedsUpdate = true;
     }
 
     public final boolean hasPinnedRow() {
-        return !this.pinnedRow.isEmpty();
+        return getPinnedRowCount() > 0;
     }
 
     public final boolean hasPower() {
@@ -395,6 +480,13 @@ public class Repo implements IClientRepo {
 
     public final void setRowSize(int rowSize) {
         this.rowSize = rowSize;
+    }
+
+    private int getVisibleManualPinnedRowCount() {
+        if (!showManualPinnedRow || manualPinnedView.isEmpty()) {
+            return 0;
+        }
+        return (manualPinnedView.size() + rowSize - 1) / rowSize;
     }
 
     public final String getSearchString() {

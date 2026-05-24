@@ -61,6 +61,7 @@ import appeng.client.gui.widgets.ISortSource;
 import appeng.client.gui.widgets.Scrollbar;
 import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.client.gui.widgets.TabButton;
+import appeng.client.gui.widgets.ToggleButton;
 import appeng.client.gui.widgets.ToolboxPanel;
 import appeng.client.gui.widgets.UpgradesPanel;
 import appeng.core.AEConfig;
@@ -102,6 +103,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
     private SettingToggleButton<TypeFilter> filterTypesToggle;
     private SettingToggleButton<SortOrder> sortByToggle;
     private final SettingToggleButton<SortDir> sortDirToggle;
+    private final ToggleButton manualPinnedRowToggle;
     private int currentMouseX = 0;
     private int currentMouseY = 0;
     private final Scrollbar scrollbar;
@@ -121,6 +123,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
         this.scrollbar = widgets.addScrollBar("scrollbar");
         this.repo = new Repo(scrollbar, this);
+        this.repo.setShowManualPinnedRow(config.isShowManualPinnedRow());
         menu.setClientRepo(this.repo);
         this.repo.setUpdateViewListener(this::updateScrollbar);
         updateScrollbar();
@@ -146,6 +149,17 @@ public class MEStorageScreen<C extends MEStorageMenu>
             this.craftingStatusBtn.setStyle(TabButton.Style.CORNER);
             this.widgets.add("craftingStatus", this.craftingStatusBtn);
         }
+
+        this.manualPinnedRowToggle = this.addToLeftToolbar(new ToggleButton(
+                Icon.PATTERN_ACCESS_SHOW,
+                Icon.PATTERN_ACCESS_HIDE,
+                this::toggleManualPinnedRowVisibility));
+        this.manualPinnedRowToggle.setTooltipOn(List.of(
+                GuiText.TerminalManualPinnedRow.text(),
+                GuiText.TerminalManualPinnedRowShown.text()));
+        this.manualPinnedRowToggle.setTooltipOff(List.of(
+                GuiText.TerminalManualPinnedRow.text(),
+                GuiText.TerminalManualPinnedRowHidden.text()));
 
         if (this.style.isSortable()) {
             this.sortByToggle = this.addToLeftToolbar(new SettingToggleButton<>(Settings.SORT_BY,
@@ -218,19 +232,12 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
     private void updateScrollbar() {
         scrollbar.setHeight(this.rows * style.getRow().getSrcHeight() - 2);
-        int totalRows = (this.repo.size() + getSlotsPerRow() - 1) / getSlotsPerRow();
-        if (repo.hasPinnedRow()) {
-            totalRows++;
-        }
+        int totalRows = this.repo.getTotalDisplayRows();
         scrollbar.setRange(0, totalRows - this.rows, Math.max(1, this.rows / 6));
     }
 
     private void showCraftingStatus() {
         NetworkHandler.instance().sendToServer(SwitchGuisPacket.openSubMenu(CraftingStatusMenu.TYPE));
-    }
-
-    private int getSlotsPerRow() {
-        return style.getSlotsPerRow();
     }
 
     @Override
@@ -268,6 +275,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
         super.updateBeforeRender();
 
         repo.setPaused(hasShiftDown());
+        manualPinnedRowToggle.setState(repo.isShowManualPinnedRow());
         updateSearch();
 
         // Override the dialog title found in the screen JSON with the user-supplied name
@@ -287,7 +295,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
                 setSearchText(externalSearchText);
             }
 
-            var allEntries = repo.getAllEntries().size();
+            var allEntries = repo.getAllEntries().size() + repo.getSyntheticPinnedEntryCount();
             var visibleEntries = repo.size();
             if (allEntries != visibleEntries) {
                 setTextHidden(TEXT_ID_ENTRIES_SHOWN, false);
@@ -362,6 +370,25 @@ public class MEStorageScreen<C extends MEStorageMenu>
         }
     }
 
+    private void handleAltPinnedInteraction(RepoSlot repoSlot) {
+        var entry = repoSlot.getEntry();
+        if (entry == null || entry.getWhat() == null) {
+            return;
+        }
+
+        var pinnedRowReason = repo.getPinnedRowReason(repoSlot.getRepoViewIndex());
+        if (pinnedRowReason == PinnedKeys.PinReason.MANUAL) {
+            PinnedKeys.unpin(entry.getWhat());
+        } else if (pinnedRowReason == null) {
+            PinnedKeys.pinKey(entry.getWhat(), PinnedKeys.PinReason.MANUAL);
+        } else {
+            return;
+        }
+
+        repo.rebuildView();
+        updateScrollbar();
+    }
+
     @Override
     public boolean mouseClicked(double xCoord, double yCoord, int btn) {
         // Right-clicking on the search field should clear it
@@ -369,6 +396,14 @@ public class MEStorageScreen<C extends MEStorageMenu>
             this.searchField.setValue("");
             setSearchText("");
             // Don't return immediately to also grab focus.
+        }
+
+        if (hasAltDown()) {
+            Slot slot = this.findSlot(xCoord, yCoord);
+            if (slot instanceof RepoSlot repoSlot) {
+                handleAltPinnedInteraction(repoSlot);
+                return true;
+            }
         }
 
         // handler for middle mouse button crafting in survival mode
@@ -413,7 +448,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
         // Mark any keys as pruneable that were pinned due to crafting, but are no longer pending
         // they will be removed the next time the screen is opened fresh
-        for (var entry : repo.getPinnedEntries()) {
+        for (var entry : repo.getPinnedEntries(PinnedKeys.PinReason.CRAFTING)) {
             var info = PinnedKeys.getPinInfo(entry.getWhat());
             if (info != null && info.reason == PinnedKeys.PinReason.CRAFTING
                     && !PendingCraftingJobs.hasPendingJob(entry.getWhat())) {
@@ -449,11 +484,12 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
         style.getBottom().dest(offsetX, y).blit(guiGraphics);
 
-        // Draw the overlay for the pinned row
-        if (repo.hasPinnedRow()) {
+        // Draw the overlay for the pinned rows
+        for (int row = 0; row < repo.getPinnedRowCount(); row++) {
+            Point rowPos = style.getSlotPos(row, 0);
             Blitter.texture("guis/terminal.png")
                     .src(0, 204, 162, 18)
-                    .dest(offsetX + 7, offsetY + style.getHeader().getSrcHeight())
+                    .dest(offsetX + rowPos.getX() - 1, offsetY + rowPos.getY() - 1)
                     .blit(guiGraphics);
         }
 
@@ -603,6 +639,13 @@ public class MEStorageScreen<C extends MEStorageMenu>
     private void setSearchText(String text) {
         repo.setSearchString(text);
         repo.updateView();
+        updateScrollbar();
+    }
+
+    private void toggleManualPinnedRowVisibility(boolean state) {
+        config.setShowManualPinnedRow(state);
+        repo.setShowManualPinnedRow(state);
+        repo.rebuildView();
         updateScrollbar();
     }
 

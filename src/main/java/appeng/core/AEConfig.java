@@ -523,6 +523,14 @@ public final class AEConfig {
         CLIENT.pinAutoCraftedItems.set(enabled);
     }
 
+    public boolean isShowManualPinnedRow() {
+        return CLIENT.showManualPinnedRow.get();
+    }
+
+    public void setShowManualPinnedRow(boolean enabled) {
+        CLIENT.showManualPinnedRow.set(enabled);
+    }
+
     public boolean isNotifyForFinishedCraftingJobs() {
         return CLIENT.notifyForFinishedCraftingJobs.get();
     }
@@ -575,6 +583,7 @@ public final class AEConfig {
         // Terminal Settings
         public final EnumOption<TerminalStyle> terminalStyle;
         public final BooleanOption pinAutoCraftedItems;
+        public final BooleanOption showManualPinnedRow;
         public final BooleanOption clearGridOnClose;
         public final IntegerOption terminalMargin;
 
@@ -615,6 +624,8 @@ public final class AEConfig {
             this.terminalStyle = terminals.addEnum("terminalStyle", TerminalStyle.SMALL);
             this.pinAutoCraftedItems = terminals.addBoolean("pinAutoCraftedItems", true,
                     "Pin items that the player auto-crafts to the top of the terminal");
+            this.showManualPinnedRow = terminals.addBoolean("showManualPinnedRow", true,
+                    "Show dedicated rows for manually pinned terminal entries below crafting pins");
             this.clearGridOnClose = client.addBoolean("clearGridOnClose", false,
                     "Automatically clear the crafting/encoding grid when closing the terminal");
             this.terminalMargin = client.addInt("terminalMargin", 25,

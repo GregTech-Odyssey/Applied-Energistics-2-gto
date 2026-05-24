@@ -20,6 +20,7 @@ import appeng.core.AppEng;
 import appeng.core.definitions.AEBlocks;
 import appeng.recipes.handlers.InscriberRecipe;
 
+@SuppressWarnings("unused")
 class InscriberRecipeCategory implements IRecipeCategory<InscriberRecipe> {
 
     private static final String TITLE_TRANSLATION_KEY = "block.ae2.inscriber";
