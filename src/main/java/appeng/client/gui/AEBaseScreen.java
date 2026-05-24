@@ -896,7 +896,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
                 color);
     }
 
-    private TextOverride getOrCreateTextOverride(String id) {
+    protected TextOverride getOrCreateTextOverride(String id) {
         return textOverrides.computeIfAbsent(id, x -> new TextOverride());
     }
 
@@ -1086,4 +1086,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         return widgets;
     }
 
+    public VerticalButtonBar getVerticalToolbar() {
+        return verticalToolbar;
+    }
 }

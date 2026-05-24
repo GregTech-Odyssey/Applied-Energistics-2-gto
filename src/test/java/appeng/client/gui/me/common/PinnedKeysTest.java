@@ -53,4 +53,51 @@ class PinnedKeysTest {
         assertThat(PinnedKeys.getPinInfo(key).reason).isEqualTo(PinnedKeys.PinReason.MANUAL);
         assertThat(PinnedKeys.isPinned(key, PinnedKeys.PinReason.MANUAL)).isTrue();
     }
+
+    @Test
+    void pinsAreIndexedByReason() {
+        var crafting = new TestKey("crafting_indexed");
+        var manual = new TestKey("manual_indexed");
+
+        PinnedKeys.pinKey(crafting, PinnedKeys.PinReason.CRAFTING);
+        PinnedKeys.pinKey(manual, PinnedKeys.PinReason.MANUAL);
+
+        assertThat(PinnedKeys.getPinned(PinnedKeys.PinReason.CRAFTING))
+                .containsOnlyKeys(crafting);
+        assertThat(PinnedKeys.getPinned(PinnedKeys.PinReason.MANUAL))
+                .containsOnlyKeys(manual);
+        assertThat(PinnedKeys.getPinnedByReason())
+                .containsKeys(PinnedKeys.PinReason.CRAFTING, PinnedKeys.PinReason.MANUAL);
+    }
+
+    @Test
+    void promotingPinUpdatesReasonBuckets() {
+        var key = new TestKey("promoted");
+
+        PinnedKeys.pinKey(key, PinnedKeys.PinReason.CRAFTING);
+        PinnedKeys.pinKey(key, PinnedKeys.PinReason.MANUAL);
+
+        assertThat(PinnedKeys.getPinned(PinnedKeys.PinReason.CRAFTING))
+                .doesNotContainKey(key);
+        assertThat(PinnedKeys.getPinned(PinnedKeys.PinReason.MANUAL))
+                .containsOnlyKeys(key);
+    }
+
+    @Test
+    void pruningKeepsReasonBucketsInSync() {
+        var crafting = new TestKey("crafting_prune");
+        var manual = new TestKey("manual_prune");
+
+        PinnedKeys.pinKey(crafting, PinnedKeys.PinReason.CRAFTING);
+        PinnedKeys.pinKey(manual, PinnedKeys.PinReason.MANUAL);
+
+        PinnedKeys.getPinInfo(crafting).canPrune = true;
+        PinnedKeys.prune();
+
+        assertThat(PinnedKeys.getPinned(PinnedKeys.PinReason.CRAFTING))
+                .isEmpty();
+        assertThat(PinnedKeys.getPinned(PinnedKeys.PinReason.MANUAL))
+                .containsOnlyKeys(manual);
+        assertThat(PinnedKeys.getPinInfo(crafting)).isNull();
+    }
 }

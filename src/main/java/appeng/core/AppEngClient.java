@@ -156,7 +156,7 @@ public class AppEngClient extends AppEngBase {
 
         MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn evt) -> {
             PendingCraftingJobs.clearPendingJobs();
-            PinnedKeys.clearPinnedKeys();
+            PinnedKeys.reloadClientCache();
         });
 
         MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent e) -> {
@@ -277,6 +277,7 @@ public class AppEngClient extends AppEngBase {
         InitScreens.init();
         InitStackRenderHandlers.init();
         InitRenderTypes.init();
+        PinnedKeys.reloadClientCache();
 
         // Only activate the site exporter when we're not running a release version, since it'll
         // replace blocks around spawn.
