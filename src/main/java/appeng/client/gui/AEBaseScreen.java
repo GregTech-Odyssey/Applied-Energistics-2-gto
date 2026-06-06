@@ -115,7 +115,9 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
     public static final String TEXT_ID_DIALOG_TITLE = "dialog_title";
 
     private final VerticalButtonBar verticalToolbar;
-    private final OpenGuideButton helpButton;
+    @SuppressWarnings("unused")
+    // keep compatibility with addons
+    private final OpenGuideButton helpButton = null;
 
     // drag y
     private final Set<Slot> drag_click = new HashSet<>();
@@ -148,7 +150,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         this.widgets.add("verticalToolbar", this.verticalToolbar = new VerticalButtonBar());
 
         // Add a help-button to the vertical button bar
-        this.helpButton = addToLeftToolbar(new OpenGuideButton(btn -> openHelp()));
+//        this.helpButton = addToLeftToolbar(new OpenGuideButton(btn -> openHelp()));
 
         if (style.getGeneratedBackground() != null) {
             this.imageWidth = style.getGeneratedBackground().getWidth();
@@ -247,7 +249,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
      */
     @MustBeInvokedByOverriders
     protected void updateBeforeRender() {
-        helpButton.setVisibility(getHelpTopic() != null);
+//        helpButton.setVisibility(getHelpTopic() != null);
     }
 
     @Override
