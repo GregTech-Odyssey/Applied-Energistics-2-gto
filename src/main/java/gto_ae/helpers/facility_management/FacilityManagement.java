@@ -11,6 +11,7 @@ import net.minecraft.nbt.ListTag;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
+import appeng.core.AELog;
 import appeng.util.ConfigInventory;
 
 import gto_ae.api.util.DirectionalGlobalPos;
@@ -144,8 +145,25 @@ public class FacilityManagement implements IFacilityManagement {
         ListTag list = tag.getList("savedView", 10);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag posTag = list.getCompound(i);
-            DirectionalGlobalPos pos = DirectionalGlobalPos.readFromTag(posTag, "p");
+            DirectionalGlobalPos pos = tryReadSavedViewEntry(posTag, i);
+            if (pos == null) {
+                continue;
+            }
             savedView.add(pos);
+        }
+    }
+
+    @Nullable
+    private DirectionalGlobalPos tryReadSavedViewEntry(CompoundTag posTag, int index) {
+        try {
+            DirectionalGlobalPos pos = DirectionalGlobalPos.readFromTag(posTag, "p");
+            if (pos == null) {
+                AELog.warn("Skipping invalid facility savedView entry at index " + index);
+            }
+            return pos;
+        } catch (Exception e) {
+            AELog.warn("Skipping invalid facility savedView entry at index " + index + ": " + e);
+            return null;
         }
     }
 }
