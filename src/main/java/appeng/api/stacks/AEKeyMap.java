@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
 import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
 
-public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
+public class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K>
         implements Iterable<Reference2LongMap.Entry<K>> {
 
     public AEKeyMap() {
@@ -43,9 +43,9 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
         if (k == null)
             return 0;
         int pos;
-        K curr;
-        final K[] key = this.key;
-        if ((curr = key[pos = ((AEKey) k).mix & mask]) != null) {
+        Object curr;
+        final Object[] key = this.key;
+        if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
                     final long oldValue = value[pos];
@@ -66,8 +66,8 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
         if (k == null) {
             return 0;
         } else {
-            final K[] key = this.key;
-            K curr;
+            final Object[] key = this.key;
+            Object curr;
             int pos;
             if ((curr = key[pos = ((AEKey) k).mix & this.mask]) == null) {
                 return 0;
@@ -89,9 +89,9 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
         if (k == null)
             return 0;
         int pos;
-        K curr;
-        final K[] key = this.key;
-        if ((curr = key[pos = ((AEKey) k).mix & mask]) != null) {
+        Object curr;
+        final Object[] key = this.key;
+        if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
                     final long oldValue = value[pos];
@@ -116,9 +116,9 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
         if (k == null)
             return 0;
         int pos;
-        K curr;
-        final K[] key = this.key;
-        if ((curr = key[pos = ((AEKey) k).mix & mask]) != null) {
+        Object curr;
+        final Object[] key = this.key;
+        if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
                     final long oldValue = value[pos];
@@ -143,9 +143,9 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
     public long getLong(final Object k) {
         if (k == null)
             return 0;
-        K curr;
+        Object curr;
         int pos;
-        final K[] key = this.key;
+        final Object[] key = this.key;
         if ((curr = key[pos = ((AEKey) k).mix & mask]) == null)
             return 0;
         if (k == curr)
@@ -166,9 +166,9 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
     public long getAmount(final AEKey k) {
         if (k == null)
             return 0;
-        K curr;
+        Object curr;
         int pos;
-        final K[] key = this.key;
+        final Object[] key = this.key;
         if ((curr = key[pos = k.mix & mask]) == null)
             return 0;
         if (k == curr)
@@ -264,13 +264,13 @@ public class AEKeyMap<K> extends Reference2LongOpenHashMap<K>
     }
 
     public void fastForEach(ObjLongConsumer<? super K> consumer) {
-        final K[] key = this.key;
+        final Object[] key = this.key;
         final long[] value = this.value;
         int pos = this.n;
-        K k;
+        Object k;
         while (pos-- != 0) {
             if ((k = key[pos]) != null) {
-                consumer.accept(k, value[pos]);
+                consumer.accept((K) k, value[pos]);
             }
         }
     }

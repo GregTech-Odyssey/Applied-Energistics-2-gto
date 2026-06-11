@@ -8,6 +8,8 @@ import com.google.common.primitives.Ints;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -35,8 +37,6 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
     @Nullable
     private Runnable changeListener;
-
-    protected boolean extractableOnly;
 
     public void setChangeListener(@Nullable Runnable listener) {
         this.changeListener = listener;
@@ -91,7 +91,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
     }
 
     public void setExtractableOnly(boolean extractableOnly) {
-        this.extractableOnly = extractableOnly;
+
     }
 
     private static class ItemHandlerFacade extends ExternalStorageFacade {
@@ -229,35 +229,27 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
         @Override
         public boolean containsAnyFuzzy(Set<AEKey> keys) {
-            for (int i = 0; i < handler.getSlots(); i++) {
-                var what = AEItemKey.of(handler.getStackInSlot(i));
-                if (what != null) {
-                    if (keys.contains(what.dropSecondary())) {
-                        return true;
-                    }
-                }
+            var slots = handler.getSlots();
+            for (int i = 0; i < slots; i++) {
+                var stack = handler.getStackInSlot(i);
+                var item = stack.getItem();
+                if (item == Items.AIR)
+                    continue;
+                if (keys.contains(AEItemKey.of(item)))
+                    return true;
             }
             return false;
         }
 
         @Override
         public void getAvailableStacks(KeyCounter out) {
-            for (int i = 0; i < handler.getSlots(); i++) {
-                // Skip resources that cannot be extracted if that filter was enabled
+            var slots = handler.getSlots();
+            for (int i = 0; i < slots; i++) {
                 var stack = handler.getStackInSlot(i);
-                if (stack.isEmpty()) {
+                var count = stack.getCount();
+                if (count < 1)
                     continue;
-                }
-
-                if (extractableOnly) {
-                    if (handler.extractItem(i, 1, true).isEmpty()) {
-                        if (handler.extractItem(i, stack.getCount(), true).isEmpty()) {
-                            continue;
-                        }
-                    }
-                }
-
-                out.add(AEItemKey.of(stack), stack.getCount());
+                out.add(AEItemKey.of(stack), count);
             }
         }
     }
@@ -314,33 +306,27 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
         @Override
         public boolean containsAnyFuzzy(Set<AEKey> keys) {
-            for (int i = 0; i < handler.getTanks(); i++) {
-                var what = AEFluidKey.of(handler.getFluidInTank(i));
-                if (what != null) {
-                    if (keys.contains(what.dropSecondary())) {
-                        return true;
-                    }
-                }
+            var tanks = handler.getTanks();
+            for (int i = 0; i < tanks; i++) {
+                var stack = handler.getFluidInTank(i);
+                var fluid = stack.getFluid();
+                if (fluid == Fluids.EMPTY)
+                    continue;
+                if (keys.contains(AEFluidKey.of(fluid)))
+                    return true;
             }
             return false;
         }
 
         @Override
         public void getAvailableStacks(KeyCounter out) {
-            for (int i = 0; i < handler.getTanks(); i++) {
-                // Skip resources that cannot be extracted if that filter was enabled
+            var tanks = handler.getTanks();
+            for (int i = 0; i < tanks; i++) {
                 var stack = handler.getFluidInTank(i);
-                if (stack.isEmpty()) {
+                var amount = stack.getAmount();
+                if (amount < 1)
                     continue;
-                }
-
-                if (extractableOnly) {
-                    if (handler.drain(stack, IFluidHandler.FluidAction.SIMULATE).isEmpty()) {
-                        continue;
-                    }
-                }
-
-                out.add(AEFluidKey.of(stack), stack.getAmount());
+                out.add(AEFluidKey.of(stack), amount);
             }
         }
     }

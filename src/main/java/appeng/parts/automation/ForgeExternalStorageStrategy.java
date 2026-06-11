@@ -37,7 +37,6 @@ public class ForgeExternalStorageStrategy<C, S> implements ExternalStorageStrate
 
         var result = conversion.getFacade(storage);
         result.setChangeListener(injectOrExtractCallback);
-        result.setExtractableOnly(extractableOnly);
         return result;
     }
 
