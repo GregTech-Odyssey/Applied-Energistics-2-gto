@@ -21,8 +21,8 @@ package appeng.menu.me.items;
 import java.util.List;
 import java.util.Set;
 
-import com.fast.fastcollection.O2IOpenCacheHashMap;
 import com.google.common.base.Preconditions;
+import com.gto.fastcollection.O2IOpenCacheHashMap;
 
 import org.jetbrains.annotations.Nullable;
 

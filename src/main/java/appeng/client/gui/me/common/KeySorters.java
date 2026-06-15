@@ -21,7 +21,7 @@ package appeng.client.gui.me.common;
 import java.util.Comparator;
 import java.util.WeakHashMap;
 
-import com.fast.fastcollection.O2IOpenCacheHashMap;
+import com.gto.fastcollection.O2IOpenCacheHashMap;
 
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;

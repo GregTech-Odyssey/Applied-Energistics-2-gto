@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import com.fast.fastcollection.O2OOpenCacheHashMap;
 import com.google.common.collect.Iterators;
+import com.gto.fastcollection.O2OOpenCacheHashMap;
 
 import org.jetbrains.annotations.Nullable;
 

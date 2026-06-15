@@ -26,8 +26,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.*;
 
-import com.fast.fastcollection.O2OOpenCacheHashMap;
 import com.google.common.collect.*;
+import com.gto.fastcollection.O2OOpenCacheHashMap;
 
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
