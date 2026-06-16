@@ -1,109 +1,73 @@
 package appeng.api.stacks;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
 import java.util.List;
 import java.util.Objects;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NumericTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.capabilities.CapabilityProvider;
-
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
+import appeng.hooks.IAEItem;
 
 public final class AEItemKey extends AEKey {
 
-    private static final Object2ObjectOpenCustomHashMap<AEItemKey, AEItemKey> VALUES = new Object2ObjectOpenCustomHashMap<>(
-            new Hash.Strategy<>() {
-                @Override
-                public int hashCode(AEItemKey o) {
-                    return Objects.hash(o.item, o.internedTag);
-                }
-
-                @Override
-                public boolean equals(AEItemKey a, AEItemKey b) {
-                    if (a == null)
-                        return b == null;
-                    if (b == null)
-                        return false;
-                    return Objects.equals(a.item, b.item) && Objects.equals(a.internedTag, b.internedTag);
-                }
-            });
-
-    private static final MethodHandle SERIALIZE_CAPS_HANDLE;
-    static {
-        try {
-            var method = CapabilityProvider.class.getDeclaredMethod("serializeCaps");
-            method.setAccessible(true);
-            SERIALIZE_CAPS_HANDLE = MethodHandles.lookup().unreflect(method);
-        } catch (Exception exception) {
-            throw new RuntimeException("Failed to create serializeCaps method handle", exception);
-        }
-    }
-
-    @Nullable
-    public static CompoundTag serializeStackCaps(ItemStack stack) {
-        try {
-            var caps = (CompoundTag) SERIALIZE_CAPS_HANDLE.invokeExact((CapabilityProvider) stack);
-            // Ensure stacks with no serializable cap providers are treated the same as stacks with no caps!
-            return caps == null || caps.isEmpty() ? null : caps;
-        } catch (Throwable ex) {
-            throw new RuntimeException("Failed to call serializeCaps", ex);
-        }
-    }
-
     private final Item item;
     private final InternedTag internedTag;
-    private final int cachedDamage;
-    private int fuzzySearchMaxValue = -1;
-    /**
-     * A lazily initialized itemstack used for display and ingredient testing purposes. This should never be modified
-     * and will always have amount 1.
-     */
+
+    // cache
     @Nullable
     private ItemStack readOnlyStack;
-
-    /**
-     * Max stack size cache, or {@code -1} if not initialized.
-     */
     private int maxStackSize = -1;
+    private int fuzzySearchValue = -1;
+    private int fuzzySearchMaxValue = -1;
 
+    @ApiStatus.Internal
     public AEItemKey(Item item, InternedTag internedTag) {
         this.item = item;
         this.internedTag = internedTag;
-        if (internedTag.tag != null && internedTag.tag.get("Damage") instanceof NumericTag numericTag) {
-            this.cachedDamage = numericTag.getAsInt();
-        } else {
-            this.cachedDamage = 0;
+    }
+
+    public static AEItemKey of(ItemLike item) {
+        var aeItem = (IAEItem) item.asItem();
+        return aeItem.ae2$getAEKey();
+    }
+
+    public static AEItemKey of(ItemLike item, @Nullable CompoundTag tag) {
+        var i = item.asItem();
+        var aeItem = (IAEItem) i;
+        if (tag == null || tag.isEmpty()) {
+            return aeItem.ae2$getAEKey();
         }
+        return aeItem.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, true), t -> new AEItemKey(i, t));
     }
 
     @Nullable
     public static AEItemKey of(ItemStack stack) {
-        if (stack.isEmpty()) {
+        var item = stack.getItem();
+        if (item == Items.AIR) {
             return null;
         }
-        var ret = of(stack.getItem(), stack.getTag());
-        // Cache max stack size since we already have an ItemStack.
-        ret.maxStackSize = stack.getMaxStackSize();
-        return ret;
+        var aeItem = (IAEItem) item;
+        var tag = stack.getTag();
+        if (tag == null || tag.isEmpty()) {
+            return aeItem.ae2$getAEKey();
+        }
+        return aeItem.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, true), t -> new AEItemKey(item, t));
     }
 
     public static boolean matches(AEKey what, ItemStack itemStack) {
@@ -125,16 +89,7 @@ public final class AEItemKey extends AEKey {
 
     @Override
     public AEItemKey dropSecondary() {
-        return of(item, null);
-    }
-
-    public static AEItemKey of(ItemLike item) {
-        return of(item, null);
-    }
-
-    public static AEItemKey of(ItemLike item, @Nullable CompoundTag tag) {
-        var key = new AEItemKey(item.asItem(), InternedTag.of(tag, true));
-        return VALUES.computeIfAbsent(key, k -> key);
+        return of(item);
     }
 
     public boolean matches(ItemStack stack) {
@@ -186,8 +141,12 @@ public final class AEItemKey extends AEKey {
         try {
             var item = BuiltInRegistries.ITEM.getOptional(new ResourceLocation(tag.getString("id")))
                     .orElseThrow(() -> new IllegalArgumentException("Unknown item id."));
-            var extraTag = tag.contains("tag") ? tag.getCompound("tag") : null;
-            return of(item, extraTag);
+            var extraTag = tag.get("tag") instanceof CompoundTag compoundTag ? compoundTag : null;
+            var aeItem = (IAEItem) item;
+            if (extraTag == null || extraTag.isEmpty()) {
+                return aeItem.ae2$getAEKey();
+            }
+            return aeItem.ae2$getTagAEKeyCache().getCache(InternedTag.of(extraTag, false), t -> new AEItemKey(item, t));
         } catch (Exception e) {
             AELog.debug("Tried to load an invalid item key from NBT: %s", tag, e);
             return null;
@@ -212,21 +171,27 @@ public final class AEItemKey extends AEKey {
     }
 
     /**
-     * @see ItemStack#getMaxDamage()
-     */
-    @Override
-    public int getFuzzySearchValue() {
-        return this.cachedDamage;
-    }
-
-    /**
      * @see ItemStack#getDamageValue()
      */
     @Override
+    public int getFuzzySearchValue() {
+        int ret = fuzzySearchValue;
+        if (ret == -1) {
+            fuzzySearchValue = ret = getReadOnlyStack().getDamageValue();
+        }
+        return ret;
+    }
+
+    /**
+     * @see ItemStack#getMaxDamage()
+     */
+    @Override
     public int getFuzzySearchMaxValue() {
-        if (fuzzySearchMaxValue < 0)
-            fuzzySearchMaxValue = getReadOnlyStack().getMaxDamage();
-        return fuzzySearchMaxValue;
+        int ret = fuzzySearchMaxValue;
+        if (ret == -1) {
+            fuzzySearchMaxValue = ret = getReadOnlyStack().getMaxDamage();
+        }
+        return ret;
     }
 
     @Override
@@ -286,7 +251,7 @@ public final class AEItemKey extends AEKey {
      * @return True if the item represented by this key is damaged.
      */
     public boolean isDamaged() {
-        return cachedDamage > 0;
+        return getFuzzySearchValue() > 0;
     }
 
     public int getMaxStackSize() {
@@ -310,12 +275,16 @@ public final class AEItemKey extends AEKey {
     }
 
     public static AEItemKey fromPacket(FriendlyByteBuf data) {
-        int i = data.readVarInt();
-        var item = Item.byId(i);
+        var item = Item.byId(data.readVarInt());
         var shareTag = data.readNbt();
         var stack = new ItemStack(item);
         stack.readShareTag(shareTag);
-        return VALUES.computeIfAbsent(new AEItemKey(item, InternedTag.of(stack.getTag(), false)), k -> (AEItemKey) k);
+        var tag = stack.getTag();
+        var aeItem = (IAEItem) item;
+        if (tag == null || tag.isEmpty()) {
+            return aeItem.ae2$getAEKey();
+        }
+        return aeItem.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, false), t -> new AEItemKey(item, t));
     }
 
     @Override

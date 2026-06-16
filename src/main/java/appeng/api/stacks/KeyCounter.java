@@ -24,204 +24,204 @@
 package appeng.api.stacks;
 
 import java.util.*;
+import java.util.function.Consumer;
 
-import com.google.common.collect.Iterators;
-
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.*;
 
 import appeng.api.config.FuzzyMode;
+import appeng.hooks.IUnique;
 
 /**
  * Associates a generic value of type T with AE keys and makes key/value pairs searchable with fuzzy mode semantics.
  */
 public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>> {
-    // First map contains a mapping from AEKey#primaryKey
-    private Reference2ObjectMap<Object, VariantCounter> lists = new Reference2ObjectOpenHashMap<>();
 
-    public Collection<Object2LongMap.Entry<AEKey>> findFuzzy(AEKey key, FuzzyMode fuzzy) {
-        var subIndex = getSubIndexOrNull(key);
-        return subIndex == null ? Collections.emptyList() : subIndex.findFuzzy(key, fuzzy);
-    }
+    private AEKeyMap<AEKey> map;
+
+    private Int2ObjectOpenHashMap<Object2LongOpenHashMap<AEKey>> fuzzyMap;
+
+    private boolean fuzzyUpdate;
 
     public AEKeyMap<AEKey> getMap() {
-        var map = new AEKeyMap<AEKey>(size());
-        forEach(i -> map.set(i.getKey(), i.getLongValue()));
+        if (map == null) {
+            return AEKeyMap.EMPTY;
+        }
         return map;
     }
 
-    public void removeZeros() {
-        if (lists == null)
+    @Override
+    public void forEach(Consumer<? super Reference2LongMap.Entry<AEKey>> consumer) {
+        if (map == null) {
             return;
-        var iterator = lists.entrySet().iterator();
-        while (iterator.hasNext()) {
-            var entry = iterator.next();
-            var variantList = entry.getValue();
-            variantList.removeZeros();
-            if (variantList.isEmpty()) {
-                iterator.remove();
+        }
+        map.reference2LongEntrySet().fastForEach(consumer);
+    }
+
+    public Collection<Object2LongMap.Entry<AEKey>> findFuzzy(AEKey key, FuzzyMode fuzzy) {
+        if (map == null) {
+            return Collections.emptyList();
+        }
+        if (key.getPrimaryKey() instanceof IUnique unique) {
+            if (fuzzyUpdate || fuzzyMap == null) {
+                fuzzyUpdate = false;
+                if (fuzzyMap == null) {
+                    fuzzyMap = new Int2ObjectOpenHashMap<>();
+                } else {
+                    fuzzyMap.values().forEach(Object2LongOpenHashMap::clear);
+                }
+                map.fastForEach((k, v) -> {
+                    if (k.getPrimaryKey() instanceof IUnique u) {
+                        fuzzyMap.computeIfAbsent(u.ae2$getUid(), _k -> new Object2LongOpenHashMap<>()).addTo(k, v);
+                    }
+                });
+            }
+            var map = fuzzyMap.get(unique.ae2$getUid());
+            if (map != null) {
+                return map.object2LongEntrySet();
             }
         }
+        long value = map.getOrDefault(key, Long.MIN_VALUE);
+        if (value > Long.MIN_VALUE) {
+            return Collections.singleton(new Entry(value, key));
+        }
+        return Collections.emptyList();
+    }
+
+    public void removeZeros() {
+        if (map == null) {
+            return;
+        }
+        var it = map.iterator();
+        while (it.hasNext()) {
+            if (it.next().getLongValue() == 0) {
+                it.remove();
+            }
+        }
+        fuzzyUpdate = true;
     }
 
     public void removeEmptySubmaps() {
-        if (lists == null)
-            return;
-        lists.values().removeIf(VariantCounter::isEmpty);
     }
 
     public void addAll(KeyCounter other) {
-        if (lists == null)
-            lists = new Reference2ObjectOpenHashMap<>();
-        for (var entry : other.lists.entrySet()) {
-            var ourSubIndex = lists.get(entry.getKey());
-            if (ourSubIndex == null) {
-                lists.put(entry.getKey(), entry.getValue().copy());
-            } else {
-                ourSubIndex.addAll(entry.getValue());
-            }
+        var m = other.getMap();
+        if (m.isEmpty()) {
+            return;
         }
+        if (map == null) {
+            map = m.clone();
+        } else {
+            map.addAll(m);
+        }
+        fuzzyUpdate = true;
     }
 
     public void removeAll(KeyCounter other) {
-        if (lists == null)
-            lists = new Reference2ObjectOpenHashMap<>();
-        for (var entry : other.lists.entrySet()) {
-            var ourSubIndex = lists.get(entry.getKey());
-            if (ourSubIndex == null) {
-                var copied = entry.getValue().copy();
-                copied.invert();
-                lists.put(entry.getKey(), copied);
-            } else {
-                ourSubIndex.removeAll(entry.getValue());
-            }
+        var m = other.getMap();
+        if (m.isEmpty()) {
+            return;
         }
+        var size = m.size();
+        var map = this.map;
+        if (map == null) {
+            this.map = map = new AEKeyMap<>(size);
+        }
+        map.removeAll(m);
+        fuzzyUpdate = true;
     }
 
     public void add(AEKey key, long amount) {
-        Objects.requireNonNull(key, "key");
-        if (lists == null)
-            lists = new Reference2ObjectOpenHashMap<>();
-        getSubIndex(key).add(key, amount);
-    }
-
-    /**
-     * Subtracts the given amount from the value associated with the given key.
-     */
-    public void remove(AEKey key, long amount) {
-        add(key, -amount);
-    }
-
-    /**
-     * Removes the given key from this counter, and returns the old value (or 0).
-     */
-    public long remove(AEKey key) {
-        if (lists == null)
-            return 0;
-        var subIndex = getSubIndex(key);
-        var ret = subIndex.remove(key);
-        if (subIndex.isEmpty()) {
-            lists.remove(key.getPrimaryKey());
+        var map = this.map;
+        if (map == null) {
+            this.map = map = new AEKeyMap<>();
         }
-        return ret;
+        map.addTo(key, amount);
+        fuzzyUpdate = true;
+    }
+
+    public void remove(AEKey key, long amount) {
+        var map = this.map;
+        if (map == null) {
+            this.map = map = new AEKeyMap<>();
+        }
+        map.addTo(key, -amount);
+        fuzzyUpdate = true;
+    }
+
+    public long remove(AEKey key) {
+        var map = this.map;
+        if (map == null) {
+            return 0;
+        }
+        fuzzyUpdate = true;
+        return map.removeLong(key);
     }
 
     public void set(AEKey key, long amount) {
-        if (lists == null)
-            lists = new Reference2ObjectOpenHashMap<>();
-        getSubIndex(key).set(key, amount);
+        var map = this.map;
+        if (map == null) {
+            this.map = map = new AEKeyMap<>();
+        }
+        map.set(key, amount);
+        fuzzyUpdate = true;
     }
 
     public long get(AEKey key) {
-        if (lists == null)
-            return 0;
-        Objects.requireNonNull(key);
-        var subIndex = lists.get(key.getPrimaryKey());
-        if (subIndex == null) {
+        var map = this.map;
+        if (map == null) {
             return 0;
         }
-        return subIndex.get(key);
+        return map.getAmount(key);
     }
 
     public void reset() {
-        if (lists == null)
+        var map = this.map;
+        if (map == null) {
             return;
-        for (var list : lists.values()) {
-            list.reset();
         }
+        map.reset();
+        fuzzyUpdate = true;
     }
 
     public void clear() {
-        if (lists == null)
+        var map = this.map;
+        if (map == null) {
             return;
-        for (var list : lists.values()) {
-            list.clear();
         }
+        map.clear();
+        fuzzyUpdate = true;
     }
 
     public boolean isEmpty() {
-        if (lists == null)
+        var map = this.map;
+        if (map == null) {
             return true;
-        for (var list : lists.values()) {
-            if (!list.isEmpty()) {
-                return false;
-            }
         }
-        return true;
+        return map.isEmpty();
     }
 
     public int size() {
-        if (lists == null)
+        var map = this.map;
+        if (map == null) {
             return 0;
-        int tot = 0;
-        for (var list : lists.values()) {
-            tot += list.size();
         }
-        return tot;
+        return map.size();
     }
 
     @Override
-    public Iterator<Reference2LongMap.Entry<AEKey>> iterator() {
-        if (lists == null)
+    public @NotNull Iterator<Reference2LongMap.Entry<AEKey>> iterator() {
+        var map = this.map;
+        if (map == null) {
             return Collections.emptyIterator();
-        return Iterators.transform(Iterators.concat(
-                Iterators.transform(lists.values().iterator(), VariantCounter::iterator)),
-                i -> new Reference2LongMap.Entry<>() {
-
-                    @Override
-                    public AEKey getKey() {
-                        return i.getKey();
-                    }
-
-                    @Override
-                    public long getLongValue() {
-                        return i.getLongValue();
-                    }
-
-                    @Override
-                    public long setValue(long value) {
-                        return i.setValue(value);
-                    }
-                });
-    }
-
-    private VariantCounter getSubIndex(AEKey key) {
-        // We check before the call to computeIfAbsent, otherwise we'd need a capturing lambda.
-        if (key.getFuzzySearchMaxValue() > 0) {
-            return lists.computeIfAbsent(key.getPrimaryKey(), k -> new VariantCounter.FuzzyVariantMap());
-        } else {
-            return lists.computeIfAbsent(key.getPrimaryKey(), k -> new VariantCounter.UnorderedVariantMap());
         }
+        return map.iterator();
     }
 
-    @Nullable
-    private VariantCounter getSubIndexOrNull(AEKey key) {
-        return lists.get(key.getPrimaryKey());
-    }
-
-    @Nullable
-    public AEKey getFirstKey() {
+    public @Nullable AEKey getFirstKey() {
         var e = getFirstEntry();
         return e != null ? e.getKey() : null;
     }
@@ -234,54 +234,108 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
 
     @Nullable
     public Object2LongMap.Entry<AEKey> getFirstEntry() {
-        if (lists == null)
+        var map = this.map;
+        if (map == null) {
             return null;
-        for (var value : lists.values()) {
-            var it = value.iterator();
-            if (it.hasNext()) {
-                return it.next();
-            }
+        }
+        for (var e : map) {
+            return new Entry(e.getLongValue(), e.getKey());
         }
         return null;
     }
 
     @Nullable
     public <T extends AEKey> Object2LongMap.Entry<AEKey> getFirstEntry(Class<T> keyClass) {
-        if (lists == null)
+        var map = this.map;
+        if (map == null) {
             return null;
-        for (var value : lists.values()) {
-            var it = value.iterator();
-            if (it.hasNext()) {
-                var entry = it.next();
-                if (keyClass.isInstance(entry.getKey())) {
-                    return entry;
-                }
+        }
+        for (var e : map) {
+            if (keyClass.isInstance(e.getKey())) {
+                return new Entry(e.getLongValue(), e.getKey());
             }
         }
         return null;
     }
 
     public Set<AEKey> keySet() {
-        if (lists == null)
+        var map = this.map;
+        if (map == null) {
             return Collections.emptySet();
-        var keys = new ReferenceOpenHashSet<AEKey>(size());
-        for (var list : lists.values()) {
-            for (var entry : list) {
-                keys.add(entry.getKey());
-            }
         }
+        return map.keySet();
+    }
+
+    public Set<Reference2LongMap.Entry<AEKey>> entrySet() {
+        var map = this.map;
+        if (map == null) {
+            return Collections.emptySet();
+        }
+        return map.reference2LongEntrySet();
+    }
+
+    public Set<GenericStack> genericStackSet() {
+        var map = this.map;
+        if (map == null) {
+            return Collections.emptySet();
+        }
+        var keys = new ReferenceOpenHashSet<GenericStack>(map.size());
+        map.fastForEach((k, v) -> keys.add(new GenericStack(k, v)));
         return keys;
     }
 
-    public Set<GenericStack> entrySet() {
-        if (lists == null)
-            return Collections.emptySet();
-        var keys = new HashSet<GenericStack>(size());
-        for (var list : lists.values()) {
-            for (var entry : list) {
-                keys.add(new GenericStack(entry.getKey(), entry.getLongValue()));
-            }
+    public boolean contains(AEKey key) {
+        var map = this.map;
+        if (map == null) {
+            return false;
         }
-        return keys;
+        return map.containsKey(key);
+    }
+
+    public void ensureCapacity(int capacity) {
+        var map = this.map;
+        if (map == null) {
+            this.map = map = new AEKeyMap<>();
+        }
+        map.ensureCapacity(capacity);
+    }
+
+    public void addAll(int size, Consumer<AEKeyMap<AEKey>> consumer) {
+        if (size < 1) {
+            return;
+        }
+        var map = this.map;
+        if (map == null) {
+            this.map = map = new AEKeyMap<>();
+        }
+        map.ensureCapacity(size);
+        consumer.accept(map);
+        fuzzyUpdate = true;
+    }
+
+    private static final class Entry implements Object2LongMap.Entry<AEKey> {
+
+        private final long value;
+        private final AEKey key;
+
+        private Entry(long value, AEKey key) {
+            this.value = value;
+            this.key = key;
+        }
+
+        @Override
+        public long getLongValue() {
+            return value;
+        }
+
+        @Override
+        public long setValue(long value) {
+            return 0;
+        }
+
+        @Override
+        public AEKey getKey() {
+            return key;
+        }
     }
 }

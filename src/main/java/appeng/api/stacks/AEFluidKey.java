@@ -3,6 +3,7 @@ package appeng.api.stacks;
 import java.util.List;
 import java.util.Objects;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,33 +17,15 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
-
-import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
+import appeng.hooks.IAEFluid;
 import appeng.util.Platform;
 
 public final class AEFluidKey extends AEKey {
-
-    private static final Object2ObjectOpenCustomHashMap<AEFluidKey, AEFluidKey> VALUES = new Object2ObjectOpenCustomHashMap<>(
-            new Hash.Strategy<>() {
-                @Override
-                public int hashCode(AEFluidKey o) {
-                    return Objects.hash(o.fluid, o.internedTag);
-                }
-
-                @Override
-                public boolean equals(AEFluidKey a, AEFluidKey b) {
-                    if (a == null)
-                        return b == null;
-                    if (b == null)
-                        return false;
-                    return Objects.equals(a.fluid, b.fluid) && Objects.equals(a.internedTag, b.internedTag);
-                }
-            });
 
     public static final int AMOUNT_BUCKET = 1000;
     public static final int AMOUNT_BLOCK = 1000;
@@ -50,29 +33,42 @@ public final class AEFluidKey extends AEKey {
     private final Fluid fluid;
     @NotNull
     private final InternedTag internedTag;
+
+    // cache
     @Nullable
     private FluidStack readOnlyStack;
 
-    public AEFluidKey(Fluid fluid, @Nullable CompoundTag tag) {
+    @ApiStatus.Internal
+    public AEFluidKey(@NotNull Fluid fluid, @NotNull InternedTag tag) {
         this.fluid = fluid;
-        this.internedTag = InternedTag.of(tag, false);
-    }
-
-    public static AEFluidKey of(Fluid fluid, @Nullable CompoundTag tag) {
-        var key = new AEFluidKey(fluid, tag != null ? tag.copy() : null);
-        return VALUES.computeIfAbsent(key, k -> key);
+        this.internedTag = tag;
     }
 
     public static AEFluidKey of(Fluid fluid) {
-        return of(fluid, null);
+        var aeFluid = (IAEFluid) fluid;
+        return aeFluid.ae2$getAEKey();
+    }
+
+    public static AEFluidKey of(Fluid fluid, @Nullable CompoundTag tag) {
+        var aeFluid = (IAEFluid) fluid;
+        if (tag == null || tag.isEmpty()) {
+            return aeFluid.ae2$getAEKey();
+        }
+        return aeFluid.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, true), t -> new AEFluidKey(fluid, t));
     }
 
     @Nullable
     public static AEFluidKey of(FluidStack fluidVariant) {
-        if (fluidVariant.isEmpty()) {
+        var fluid = fluidVariant.getFluid();
+        if (fluid == Fluids.EMPTY) {
             return null;
         }
-        return of(fluidVariant.getFluid(), fluidVariant.getTag());
+        var aeFluid = (IAEFluid) fluid;
+        var tag = fluidVariant.getTag();
+        if (tag == null || tag.isEmpty()) {
+            return aeFluid.ae2$getAEKey();
+        }
+        return aeFluid.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, true), t -> new AEFluidKey(fluid, t));
     }
 
     public static boolean matches(AEKey what, FluidStack fluid) {
@@ -104,15 +100,20 @@ public final class AEFluidKey extends AEKey {
 
     @Override
     public AEFluidKey dropSecondary() {
-        return of(fluid, null);
+        return of(fluid);
     }
 
     public static AEFluidKey fromTag(CompoundTag tag) {
         try {
             var fluid = BuiltInRegistries.FLUID.getOptional(new ResourceLocation(tag.getString("id")))
                     .orElseThrow(() -> new IllegalArgumentException("Unknown fluid id."));
-            var extraTag = tag.contains("tag") ? tag.getCompound("tag") : null;
-            return of(fluid, extraTag);
+            var extraTag = tag.get("tag") instanceof CompoundTag compoundTag ? compoundTag : null;
+            var aeFluid = (IAEFluid) fluid;
+            if (extraTag == null || extraTag.isEmpty()) {
+                return aeFluid.ae2$getAEKey();
+            }
+            return aeFluid.ae2$getTagAEKeyCache().getCache(InternedTag.of(extraTag, false),
+                    t -> new AEFluidKey(fluid, t));
         } catch (Exception e) {
             AELog.debug("Tried to load an invalid fluid key from NBT: %s", tag, e);
             return null;
@@ -203,7 +204,11 @@ public final class AEFluidKey extends AEKey {
     public static AEFluidKey fromPacket(FriendlyByteBuf data) {
         var fluid = BuiltInRegistries.FLUID.byId(data.readVarInt());
         var tag = data.readNbt();
-        return VALUES.computeIfAbsent(new AEFluidKey(fluid, tag), k -> (AEFluidKey) k);
+        var aeFluid = (IAEFluid) fluid;
+        if (tag == null || tag.isEmpty()) {
+            return aeFluid.ae2$getAEKey();
+        }
+        return aeFluid.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, false), t -> new AEFluidKey(fluid, t));
     }
 
     public static boolean is(@Nullable GenericStack stack) {

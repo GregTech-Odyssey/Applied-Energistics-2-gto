@@ -15,6 +15,79 @@ import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
 public class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K>
         implements Iterable<Reference2LongMap.Entry<K>> {
 
+    public static final AEKeyMap<AEKey> EMPTY = new AEKeyMap<>() {
+
+        @Override
+        public long put(AEKey k, long v) {
+            return 0;
+        }
+
+        @Override
+        public long removeLong(Object k) {
+            return 0;
+        }
+
+        @Override
+        public long addTo(final AEKey k, final long incr) {
+            return 0;
+        }
+
+        @Override
+        public long removeTo(final AEKey k, final long incr) {
+            return 0;
+        }
+
+        @Override
+        public long getLong(final Object k) {
+            return 0;
+        }
+
+        @Override
+        public boolean remove(final Object k, final long v) {
+            return false;
+        }
+
+        @Override
+        public long getAmount(final AEKey k) {
+            return 0;
+        }
+
+        @Override
+        public long set(final AEKey k, final long v) {
+            return 0;
+        }
+
+        @Override
+        public long insert(AEKey k, long amount) {
+            return 0;
+        }
+
+        @Override
+        public long extract(AEKey k, long amount) {
+            return 0;
+        }
+
+        @Override
+        public void addAll(AEKeyMap<AEKey> map) {
+        }
+
+        @Override
+        public void removeAll(AEKeyMap<AEKey> map) {
+        }
+
+        @Override
+        public void fastForEach(ObjLongConsumer<? super AEKey> consumer) {
+        }
+
+        @Override
+        public void ensureCapacity(int capacity) {
+        }
+
+        @Override
+        public void reset() {
+        }
+    };
+
     public AEKeyMap() {
         super(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR);
     }

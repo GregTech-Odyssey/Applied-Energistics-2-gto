@@ -268,7 +268,7 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
             }
 
             // This must be the last call since it changes the menu!
-            var stacks = List.copyOf(toAutoCraft.entrySet());
+            var stacks = List.copyOf(toAutoCraft.genericStackSet());
             cct.startAutoCrafting(stacks);
         }
     }
