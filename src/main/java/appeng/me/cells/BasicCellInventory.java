@@ -357,6 +357,9 @@ public class BasicCellInventory implements StorageCell {
         if (this.getStoredItemTypes() == 0) {
             return CellState.EMPTY;
         }
+        if (this.getFreeBytes() <= 0) {
+            return CellState.FULL;
+        }
         if (this.canHoldNewItem()) {
             return CellState.NOT_EMPTY;
         }
