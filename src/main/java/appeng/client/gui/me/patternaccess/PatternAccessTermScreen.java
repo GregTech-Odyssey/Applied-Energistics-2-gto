@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
@@ -100,6 +101,8 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
      * The maximum length for the string of a text row in pixel.
      */
     private static final int TEXT_MAX_WIDTH = 155;
+    private static final int TEXT_SCROLL_PAUSE_MS = 500;
+    private static final int TEXT_SCROLL_PIXELS_PER_SECOND = 30;
 
     /**
      * Height of a table-row in pixels.
@@ -137,6 +140,8 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
     private final HashMultimap<PatternContainerGroup, PatternContainerRecord> byGroup = HashMultimap.create();
     private final ArrayList<PatternContainerGroup> groups = new ArrayList<>();
     private final ArrayList<Row> rows = new ArrayList<>();
+    private PatternContainerGroup scrollingGroup;
+    private long scrollingGroupHoverStart;
 
     private final Map<String, Set<Object>> cachedSearches = new WeakHashMap<>();
     private final Scrollbar scrollbar;
@@ -199,6 +204,7 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
         var level = Minecraft.getInstance().level;
 
         final int scrollLevel = scrollbar.getCurrentScroll();
+        boolean scrollingGroupHovered = false;
         int i = 0;
         for (; i < this.visibleRows; ++i) {
             if (scrollLevel + i < this.rows.size()) {
@@ -246,14 +252,55 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
                         displayName = group.name();
                     }
 
-                    var text = Language.getInstance().getVisualOrder(
-                            this.font.substrByWidth(displayName, TEXT_MAX_WIDTH - 10));
+                    int textX = GUI_PADDING_X + PATTERN_PROVIDER_NAME_MARGIN_X + 10;
+                    int textY = GUI_PADDING_Y + GUI_HEADER_HEIGHT + i * ROW_HEIGHT;
+                    int textWidth = TEXT_MAX_WIDTH - 10;
+                    int fullTextWidth = font.width(displayName);
+                    boolean hovered = getHoveredLineIndex(mouseX, mouseY) == scrollLevel + i;
 
-                    guiGraphics.drawString(font, text, GUI_PADDING_X + PATTERN_PROVIDER_NAME_MARGIN_X + 10,
-                            GUI_PADDING_Y + GUI_HEADER_HEIGHT + i * ROW_HEIGHT, textColor, false);
+                    if (fullTextWidth > textWidth && hovered) {
+                        scrollingGroupHovered = true;
+                        if (!group.equals(scrollingGroup)) {
+                            scrollingGroup = group;
+                            scrollingGroupHoverStart = Util.getMillis();
+                        }
+
+                        int scrollOffset = getTextScrollOffset(fullTextWidth - textWidth);
+                        var text = Language.getInstance().getVisualOrder(displayName);
+                        guiGraphics.enableScissor(offsetX + textX, offsetY + textY,
+                                offsetX + textX + textWidth, offsetY + textY + font.lineHeight);
+                        guiGraphics.drawString(font, text, textX - scrollOffset, textY, textColor, false);
+                        guiGraphics.disableScissor();
+                    } else {
+                        var text = Language.getInstance().getVisualOrder(
+                                this.font.substrByWidth(displayName, textWidth));
+                        guiGraphics.drawString(font, text, textX, textY, textColor, false);
+                    }
                 }
             }
         }
+        if (!scrollingGroupHovered) {
+            scrollingGroup = null;
+        }
+    }
+
+    private int getTextScrollOffset(int maxOffset) {
+        long travelTime = Math.max(1, maxOffset * 1000L / TEXT_SCROLL_PIXELS_PER_SECOND);
+        long cycleTime = TEXT_SCROLL_PAUSE_MS * 2L + travelTime * 2L;
+        long elapsed = (Util.getMillis() - scrollingGroupHoverStart) % cycleTime;
+        if (elapsed < TEXT_SCROLL_PAUSE_MS) {
+            return 0;
+        }
+        elapsed -= TEXT_SCROLL_PAUSE_MS;
+        if (elapsed < travelTime) {
+            return (int) (maxOffset * elapsed / travelTime);
+        }
+        elapsed -= travelTime;
+        if (elapsed < TEXT_SCROLL_PAUSE_MS) {
+            return maxOffset;
+        }
+        elapsed -= TEXT_SCROLL_PAUSE_MS;
+        return maxOffset - (int) (maxOffset * elapsed / travelTime);
     }
 
     @Override
