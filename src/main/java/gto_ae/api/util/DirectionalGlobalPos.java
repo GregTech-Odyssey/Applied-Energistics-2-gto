@@ -40,6 +40,9 @@ public record DirectionalGlobalPos(GlobalPos pos, @Nullable Direction side) {
         return new DirectionalGlobalPos(pos, side);
     }
 
+    /**
+     * Writes a block position, dimension id and optional side into a child compound under {@code key}.
+     */
     public static void writeToTag(CompoundTag tag, String key, DirectionalGlobalPos pos) {
         CompoundTag posTag = new CompoundTag();
         posTag.put("pos", NbtUtils.writeBlockPos(pos.blockPos()));
@@ -50,14 +53,25 @@ public record DirectionalGlobalPos(GlobalPos pos, @Nullable Direction side) {
         tag.put(key, posTag);
     }
 
+    /**
+     * Reads a position written by {@link #writeToTag}; malformed dimensions or side ordinals return {@code null}.
+     */
+    @Nullable
     public static DirectionalGlobalPos readFromTag(CompoundTag tag, String key) {
         CompoundTag posTag = tag.getCompound(key);
         BlockPos blockPos = NbtUtils.readBlockPos(posTag.getCompound("pos"));
-        ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION,
-                new ResourceLocation(posTag.getString("dimension")));
+        ResourceLocation dimensionId = ResourceLocation.tryParse(posTag.getString("dimension"));
+        if (dimensionId == null) {
+            return null;
+        }
+        ResourceKey<Level> dimension = ResourceKey.create(Registries.DIMENSION, dimensionId);
         Direction side = null;
         if (posTag.contains("side")) {
-            side = Direction.values()[posTag.getInt("side")];
+            int sideOrdinal = posTag.getInt("side");
+            if (sideOrdinal < 0 || sideOrdinal >= Direction.values().length) {
+                return null;
+            }
+            side = Direction.values()[sideOrdinal];
         }
         return new DirectionalGlobalPos(dimension, blockPos, side);
     }

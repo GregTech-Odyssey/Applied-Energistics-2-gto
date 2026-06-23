@@ -19,6 +19,7 @@
 package gto_ae.client.gui.me.facility_management;
 
 import java.util.*;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.glodblock.github.extendedae.client.button.HighlightButton;
@@ -601,22 +602,15 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
         this.openGuiBtns.clear();
         this.shownIds.clear();
 
-        final String searchFilterLowerCase = this.searchField.getValue().toLowerCase();
+        final String searchFilterLowerCase = this.searchField.getValue().toLowerCase(Locale.ROOT);
 
         Set<Integer> intset = byFacilityUniqueId.keySet();
 
         for (int facilityId : intset) {
             var entry = byFacilityUniqueId.get(facilityId);
 
-            // Shortcut to skip any filter if search term is ""/empty
-            boolean found = searchFilterLowerCase.isEmpty();
-
             // if found, filter skipped or machine name matching the search term, add it
-            if (found || entry.getSearchName().toLowerCase().contains(searchFilterLowerCase)
-                    || entry.getThroughputCounter().keySet().stream().anyMatch(
-                            key -> key.getDisplayName().getString().toLowerCase().contains(searchFilterLowerCase))
-                    || entry.getConfiguredSetting().keySet().stream().anyMatch(
-                            key -> key.getDisplayName().getString().toLowerCase().contains(searchFilterLowerCase))) {
+            if (matchesSearch(entry, searchFilterLowerCase)) {
                 this.byGroup.put(entry.getTerminalGroup(), entry);
             }
         }
@@ -675,6 +669,15 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
 
         // lines may have changed - recalculate scroll bar.
         this.resetScrollbar();
+    }
+
+    private boolean matchesSearch(FrozenMachineStatus entry, String searchFilterLowerCase) {
+        return searchFilterLowerCase.isEmpty()
+                || entry.getSearchName().toLowerCase(Locale.ROOT).contains(searchFilterLowerCase)
+                || entry.getThroughputCounter().keySet().stream().anyMatch(
+                        key -> key.getDisplayName().getString().toLowerCase(Locale.ROOT).contains(searchFilterLowerCase))
+                || entry.getConfiguredSetting().keySet().stream().anyMatch(
+                        key -> key.getDisplayName().getString().toLowerCase(Locale.ROOT).contains(searchFilterLowerCase));
     }
 
     private double playerToBlockDis(BlockPos pos) {
