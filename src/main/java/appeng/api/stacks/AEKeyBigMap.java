@@ -348,6 +348,31 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
         return BigInteger.ZERO;
     }
 
+    public long extractLong(final AEKey k, final long amount) {
+        if (k == null || amount < 1) {
+            return 0;
+        }
+        final Object[] key = this.key;
+        final int mask = this.mask;
+        int pos;
+        Object curr;
+        if ((curr = key[pos = k.mix & mask]) != null) {
+            do
+                if (curr == k) {
+                    final var bigAmount = BigInteger.valueOf(amount);
+                    final BigInteger oldValue = value[pos];
+                    if (oldValue.compareTo(bigAmount) > 0) {
+                        value[pos] = oldValue.subtract(bigAmount);
+                        return amount;
+                    } else {
+                        return saturateToLong(removeEntry(pos));
+                    }
+                }
+            while ((curr = key[pos = (pos + 1) & mask]) != null);
+        }
+        return 0;
+    }
+
     public void putAll(AEKeyMap<K> map) {
         this.ensureCapacity(map.size());
         map.fastForEach((k, v) -> set(k, BigInteger.valueOf(v)));
@@ -429,8 +454,9 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
     private static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
 
     public static long saturateToLong(BigInteger value) {
-        if (value == null)
+        if (value == null) {
             return 0L;
+        }
         int bitLength = value.bitLength();
         if (bitLength < 63) {
             return value.longValue();
