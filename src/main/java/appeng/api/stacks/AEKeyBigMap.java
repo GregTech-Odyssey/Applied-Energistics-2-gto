@@ -2,70 +2,65 @@ package appeng.api.stacks;
 
 import static it.unimi.dsi.fastutil.HashCommon.arraySize;
 
+import java.math.BigInteger;
 import java.util.Iterator;
+import java.util.function.BiConsumer;
 import java.util.function.ObjLongConsumer;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import it.unimi.dsi.fastutil.HashCommon;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2LongMap;
-import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceMap;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
-public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K>
-        implements Iterable<Reference2LongMap.Entry<K>> {
+public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenHashMap<K, BigInteger>
+        implements Iterable<Reference2ReferenceMap.Entry<K, BigInteger>> {
 
     @UnmodifiableView
-    public static final AEKeyMap<AEKey> EMPTY = new AEKeyMap<>(0);
+    public static final AEKeyBigMap<AEKey> EMPTY = new AEKeyBigMap<>(0);
 
-    public AEKeyMap() {
+    public AEKeyBigMap() {
         super(DEFAULT_INITIAL_SIZE, DEFAULT_LOAD_FACTOR);
     }
 
-    public AEKeyMap(int size) {
+    public AEKeyBigMap(int size) {
         super(size, DEFAULT_LOAD_FACTOR);
     }
 
-    public AEKeyMap(AEKeyBigMap<K> map) {
+    public AEKeyBigMap(AEKeyMap<K> map) {
         super(map.size(), DEFAULT_LOAD_FACTOR);
-        map.fastForEachLong(this::set);
+        map.fastForEach((k, v) -> set(k, BigInteger.valueOf(v)));
     }
 
-    public AEKeyMap(AEKeyMap<K> map) {
+    public AEKeyBigMap(AEKeyBigMap<K> map) {
         super(map.size, DEFAULT_LOAD_FACTOR);
-        map.fastForEach(this::set);
+        map.fastForEach(this::put);
     }
 
-    public AEKeyMap(Reference2LongOpenHashMap<K> map) {
+    public AEKeyBigMap(Reference2ReferenceOpenHashMap<K, BigInteger> map) {
         super(map.size(), DEFAULT_LOAD_FACTOR);
-        map.reference2LongEntrySet().fastForEach(e -> set(e.getKey(), e.getLongValue()));
-    }
-
-    public AEKeyMap(Object2LongOpenHashMap<K> map) {
-        super(map.size(), DEFAULT_LOAD_FACTOR);
-        map.object2LongEntrySet().fastForEach(e -> set(e.getKey(), e.getLongValue()));
+        map.reference2ReferenceEntrySet().fastForEach(e -> put(e.getKey(), e.getValue()));
     }
 
     @Override
-    public @NotNull Iterator<Entry<K>> iterator() {
-        return reference2LongEntrySet().fastIterator();
+    public @NotNull Iterator<Entry<K, BigInteger>> iterator() {
+        return reference2ReferenceEntrySet().fastIterator();
     }
 
     @Override
-    public long put(final K k, final long v) {
+    public BigInteger put(final K k, final BigInteger v) {
         if (k == null) {
-            return 0;
+            return BigInteger.ZERO;
         }
         final Object[] key = this.key;
-        final long[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final long oldValue = value[pos];
+                    final BigInteger oldValue = value[pos];
                     value[pos] = v;
                     return oldValue;
                 }
@@ -76,20 +71,20 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         if (size++ >= maxFill) {
             rehash(arraySize(size + 1, f));
         }
-        return 0;
+        return BigInteger.ZERO;
     }
 
     @Override
-    public long removeLong(final Object k) {
+    public BigInteger remove(final Object k) {
         if (k == null) {
-            return 0;
+            return BigInteger.ZERO;
         }
         final Object[] key = this.key;
         final int mask = this.mask;
         Object curr;
         int pos;
         if ((curr = key[pos = ((AEKey) k).mix & mask]) == null) {
-            return 0;
+            return BigInteger.ZERO;
         } else if (k == curr) {
             return this.removeEntry(pos);
         } else {
@@ -98,31 +93,25 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
                     return this.removeEntry(pos);
                 }
             }
-            return 0;
+            return BigInteger.ZERO;
         }
 
     }
 
-    @Override
-    public long addTo(final K k, final long incr) {
+    public BigInteger addTo(final AEKey k, final BigInteger incr) {
         if (k == null) {
-            return 0;
+            return BigInteger.ZERO;
         }
         final Object[] key = this.key;
-        final long[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final long oldValue = value[pos];
-                    final long newValue = oldValue + incr;
-                    if (newValue < 0 && incr > 0 && oldValue > 0) {
-                        value[pos] = Long.MAX_VALUE;
-                    } else {
-                        value[pos] = newValue;
-                    }
+                    final BigInteger oldValue = value[pos];
+                    final BigInteger newValue = oldValue.add(incr);
+                    value[pos] = newValue;
                     return oldValue;
                 }
             while ((curr = key[pos = (pos + 1) & mask]) != null);
@@ -132,52 +121,20 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         if (size++ >= maxFill) {
             rehash(arraySize(size + 1, f));
         }
-        return 0;
-
-    }
-
-    public long removeTo(final AEKey k, final long incr) {
-        if (k == null) {
-            return 0;
-        }
-        final Object[] key = this.key;
-        final long[] value = this.value;
-        final int mask = this.mask;
-        int pos;
-        Object curr;
-        if ((curr = key[pos = k.mix & mask]) != null) {
-            do
-                if (curr == k) {
-                    final long oldValue = value[pos];
-                    final long newValue = oldValue - incr;
-                    if (oldValue < 0 && newValue > 0 && incr > 0) {
-                        value[pos] = -Long.MAX_VALUE;
-                    } else {
-                        value[pos] = newValue;
-                    }
-                    return oldValue;
-                }
-            while ((curr = key[pos = (pos + 1) & mask]) != null);
-        }
-        key[pos] = k;
-        value[pos] = -incr;
-        if (size++ >= maxFill) {
-            rehash(arraySize(size + 1, f));
-        }
-        return 0;
+        return BigInteger.ZERO;
     }
 
     @Override
-    public long getLong(final Object k) {
+    public BigInteger get(final Object k) {
         if (k == null) {
-            return 0;
+            return BigInteger.ZERO;
         }
         final Object[] key = this.key;
         final int mask = this.mask;
         Object curr;
         int pos;
         if ((curr = key[pos = ((AEKey) k).mix & mask]) == null) {
-            return 0;
+            return BigInteger.ZERO;
         } else if (k == curr) {
             return value[pos];
         } else {
@@ -186,7 +143,7 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
                     return value[pos];
                 }
             }
-            return 0;
+            return BigInteger.ZERO;
         }
     }
 
@@ -214,8 +171,8 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
     }
 
     @Override
-    public AEKeyMap<K> clone() {
-        return (AEKeyMap<K>) super.clone();
+    public AEKeyBigMap<K> clone() {
+        return (AEKeyBigMap<K>) super.clone();
     }
 
     public boolean contains(final AEKey k) {
@@ -240,7 +197,7 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         }
     }
 
-    public long getAmount(final AEKey k) {
+    public long getLongAmount(final AEKey k) {
         if (k == null) {
             return 0;
         }
@@ -251,6 +208,28 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         if ((curr = key[pos = k.mix & mask]) == null) {
             return 0;
         } else if (k == curr) {
+            return saturateToLong(value[pos]);
+        } else {
+            while ((curr = key[pos = (pos + 1) & mask]) != null) {
+                if (k == curr) {
+                    return saturateToLong(value[pos]);
+                }
+            }
+            return 0;
+        }
+    }
+
+    public BigInteger getAmount(final AEKey k) {
+        if (k == null) {
+            return BigInteger.ZERO;
+        }
+        final Object[] key = this.key;
+        final int mask = this.mask;
+        Object curr;
+        int pos;
+        if ((curr = key[pos = k.mix & mask]) == null) {
+            return BigInteger.ZERO;
+        } else if (k == curr) {
             return value[pos];
         } else {
             while ((curr = key[pos = (pos + 1) & mask]) != null) {
@@ -258,11 +237,11 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
                     return value[pos];
                 }
             }
-            return 0;
+            return BigInteger.ZERO;
         }
     }
 
-    public void set(final AEKey k, final long v) {
+    public void set(final AEKey k, final BigInteger v) {
         if (k == null) {
             return;
         }
@@ -285,25 +264,20 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         }
     }
 
-    public void insert(final AEKey k, final long amount) {
-        if (k == null || amount < 1) {
+    public void insert(final AEKey k, final BigInteger amount) {
+        if (k == null || amount.signum() <= 0) {
             return;
         }
         final Object[] key = this.key;
-        final long[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final long oldValue = value[pos];
-                    final long newValue = oldValue + amount;
-                    if (newValue < 0 && oldValue > 0) {
-                        value[pos] = Long.MAX_VALUE;
-                    } else {
-                        value[pos] = newValue;
-                    }
+                    final BigInteger oldValue = value[pos];
+                    final BigInteger newValue = oldValue.add(amount);
+                    value[pos] = newValue;
                     return;
                 }
             while ((curr = key[pos = (pos + 1) & mask]) != null);
@@ -315,26 +289,25 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         }
     }
 
-    public long insert(final AEKey k, final long amount, final long limit) {
-        if (k == null || amount < 1 || limit < 1) {
-            return 0;
+    public BigInteger insert(final AEKey k, final BigInteger amount, final BigInteger limit) {
+        if (k == null || amount.signum() <= 0 || limit.signum() <= 0) {
+            return BigInteger.ZERO;
         }
         final Object[] key = this.key;
-        final long[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final long oldValue = value[pos];
-                    if (oldValue >= limit) {
-                        return 0;
+                    final BigInteger oldValue = value[pos];
+                    if (oldValue.compareTo(limit) >= 0) {
+                        return BigInteger.ZERO;
                     }
-                    final long newValue = oldValue + amount;
-                    if (newValue > limit || newValue < 0) {
+                    final BigInteger newValue = oldValue.add(amount);
+                    if (newValue.compareTo(limit) > 0) {
                         value[pos] = limit;
-                        return limit - oldValue;
+                        return limit.subtract(oldValue);
                     } else {
                         value[pos] = newValue;
                         return amount;
@@ -342,7 +315,7 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
                 }
             while ((curr = key[pos = (pos + 1) & mask]) != null);
         }
-        final long toInsert = Math.min(amount, limit);
+        final BigInteger toInsert = amount.compareTo(limit) > 0 ? limit : amount;
         key[pos] = k;
         value[pos] = toInsert;
         if (size++ >= maxFill) {
@@ -351,9 +324,9 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         return toInsert;
     }
 
-    public long extract(final AEKey k, final long amount) {
-        if (k == null || amount < 1) {
-            return 0;
+    public BigInteger extract(final AEKey k, final BigInteger amount) {
+        if (k == null || amount.signum() <= 0) {
+            return BigInteger.ZERO;
         }
         final Object[] key = this.key;
         final int mask = this.mask;
@@ -362,10 +335,9 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final long[] value = this.value;
-                    final long oldValue = value[pos];
-                    if (oldValue > amount) {
-                        value[pos] = oldValue - amount;
+                    final BigInteger oldValue = value[pos];
+                    if (oldValue.compareTo(amount) > 0) {
+                        value[pos] = oldValue.subtract(amount);
                         return amount;
                     } else {
                         return removeEntry(pos);
@@ -373,36 +345,53 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
                 }
             while ((curr = key[pos = (pos + 1) & mask]) != null);
         }
-        return 0;
+        return BigInteger.ZERO;
     }
 
     public void putAll(AEKeyMap<K> map) {
+        this.ensureCapacity(map.size());
+        map.fastForEach((k, v) -> set(k, BigInteger.valueOf(v)));
+    }
+
+    public void putAll(AEKeyBigMap<K> map) {
         this.ensureCapacity(map.size);
         map.fastForEach(this::put);
     }
 
-    public void addAll(AEKeyMap<K> map) {
+    public void addAll(AEKeyBigMap<K> map) {
         this.ensureCapacity(map.size);
         map.fastForEach(this::addTo);
     }
 
-    public void removeAll(AEKeyMap<K> map) {
-        this.ensureCapacity(map.size);
-        map.fastForEach(this::removeTo);
-    }
-
-    public void fastForEach(final ObjLongConsumer<? super K> consumer) {
+    public void fastForEach(final BiConsumer<? super K, BigInteger> consumer) {
         int remaining = this.size;
         if (remaining == 0) {
             return;
         }
         final Object[] key = this.key;
-        final long[] value = this.value;
+        final Object[] value = this.value;
         int pos = this.n;
         Object k;
         while (remaining > 0 && pos-- != 0) {
             if ((k = key[pos]) != null) {
-                consumer.accept((K) k, value[pos]);
+                consumer.accept((K) k, (BigInteger) value[pos]);
+                remaining--;
+            }
+        }
+    }
+
+    public void fastForEachLong(final ObjLongConsumer<? super K> consumer) {
+        int remaining = this.size;
+        if (remaining == 0) {
+            return;
+        }
+        final Object[] key = this.key;
+        final Object[] value = this.value;
+        int pos = this.n;
+        Object k;
+        while (remaining > 0 && pos-- != 0) {
+            if ((k = key[pos]) != null) {
+                consumer.accept((K) k, saturateToLong((BigInteger) value[pos]));
                 remaining--;
             }
         }
@@ -422,12 +411,12 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
 
     public void reset() {
         for (int i = 0, len = value.length; i < len; i++) {
-            value[i] = 0;
+            value[i] = BigInteger.ZERO;
         }
     }
 
-    private long removeEntry(final int pos) {
-        final long oldValue = this.value[pos];
+    private BigInteger removeEntry(final int pos) {
+        final BigInteger oldValue = this.value[pos];
         --this.size;
         this.shiftKeys(pos);
         if (this.n > this.minN && this.size < this.maxFill / 4 && this.n > 16) {
@@ -435,5 +424,19 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         }
 
         return oldValue;
+    }
+
+    private static final BigInteger MAX_LONG = BigInteger.valueOf(Long.MAX_VALUE);
+
+    public static long saturateToLong(BigInteger value) {
+        if (value == null)
+            return 0L;
+        int bitLength = value.bitLength();
+        if (bitLength < 63) {
+            return value.longValue();
+        } else if (bitLength > 63) {
+            return Long.MAX_VALUE;
+        }
+        return value.compareTo(MAX_LONG) > 0 ? Long.MAX_VALUE : value.longValue();
     }
 }
