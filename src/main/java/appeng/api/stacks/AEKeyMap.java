@@ -421,6 +421,7 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
     }
 
     public void reset() {
+        final long[] value = this.value;
         for (int i = 0, len = value.length; i < len; i++) {
             value[i] = 0;
         }

@@ -54,13 +54,14 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return BigInteger.ZERO;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final BigInteger oldValue = value[pos];
+                    final BigInteger oldValue = (BigInteger) value[pos];
                     value[pos] = v;
                     return oldValue;
                 }
@@ -103,13 +104,14 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return BigInteger.ZERO;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final BigInteger oldValue = value[pos];
+                    final BigInteger oldValue = (BigInteger) value[pos];
                     final BigInteger newValue = oldValue.add(incr);
                     value[pos] = newValue;
                     return oldValue;
@@ -130,17 +132,18 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return BigInteger.ZERO;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         Object curr;
         int pos;
         if ((curr = key[pos = ((AEKey) k).mix & mask]) == null) {
             return BigInteger.ZERO;
         } else if (k == curr) {
-            return value[pos];
+            return (BigInteger) value[pos];
         } else {
             while ((curr = key[pos = (pos + 1) & mask]) != null) {
                 if (k == curr) {
-                    return value[pos];
+                    return (BigInteger) value[pos];
                 }
             }
             return BigInteger.ZERO;
@@ -202,17 +205,18 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return 0;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         Object curr;
         int pos;
         if ((curr = key[pos = k.mix & mask]) == null) {
             return 0;
         } else if (k == curr) {
-            return saturateToLong(value[pos]);
+            return saturateToLong((BigInteger) value[pos]);
         } else {
             while ((curr = key[pos = (pos + 1) & mask]) != null) {
                 if (k == curr) {
-                    return saturateToLong(value[pos]);
+                    return saturateToLong((BigInteger) value[pos]);
                 }
             }
             return 0;
@@ -224,17 +228,18 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return BigInteger.ZERO;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         Object curr;
         int pos;
         if ((curr = key[pos = k.mix & mask]) == null) {
             return BigInteger.ZERO;
         } else if (k == curr) {
-            return value[pos];
+            return (BigInteger) value[pos];
         } else {
             while ((curr = key[pos = (pos + 1) & mask]) != null) {
                 if (k == curr) {
-                    return value[pos];
+                    return (BigInteger) value[pos];
                 }
             }
             return BigInteger.ZERO;
@@ -246,6 +251,7 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
@@ -269,13 +275,14 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final BigInteger oldValue = value[pos];
+                    final BigInteger oldValue = (BigInteger) value[pos];
                     final BigInteger newValue = oldValue.add(amount);
                     value[pos] = newValue;
                     return;
@@ -294,13 +301,14 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return BigInteger.ZERO;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final BigInteger oldValue = value[pos];
+                    final BigInteger oldValue = (BigInteger) value[pos];
                     if (oldValue.compareTo(limit) >= 0) {
                         return BigInteger.ZERO;
                     }
@@ -329,13 +337,14 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return BigInteger.ZERO;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
         if ((curr = key[pos = k.mix & mask]) != null) {
             do
                 if (curr == k) {
-                    final BigInteger oldValue = value[pos];
+                    final BigInteger oldValue = (BigInteger) value[pos];
                     if (oldValue.compareTo(amount) > 0) {
                         value[pos] = oldValue.subtract(amount);
                         return amount;
@@ -353,6 +362,7 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             return 0;
         }
         final Object[] key = this.key;
+        final Object[] value = this.value;
         final int mask = this.mask;
         int pos;
         Object curr;
@@ -360,7 +370,7 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
             do
                 if (curr == k) {
                     final var bigAmount = BigInteger.valueOf(amount);
-                    final BigInteger oldValue = value[pos];
+                    final BigInteger oldValue = (BigInteger) value[pos];
                     if (oldValue.compareTo(bigAmount) > 0) {
                         value[pos] = oldValue.subtract(bigAmount);
                         return amount;
@@ -435,13 +445,15 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
     }
 
     public void reset() {
+        final Object[] value = this.value;
         for (int i = 0, len = value.length; i < len; i++) {
             value[i] = BigInteger.ZERO;
         }
     }
 
     private BigInteger removeEntry(final int pos) {
-        final BigInteger oldValue = this.value[pos];
+        final Object[] value = this.value;
+        final BigInteger oldValue = (BigInteger) value[pos];
         --this.size;
         this.shiftKeys(pos);
         if (this.n > this.minN && this.size < this.maxFill / 4 && this.n > 16) {
