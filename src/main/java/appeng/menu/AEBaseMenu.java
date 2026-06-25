@@ -20,7 +20,6 @@ package appeng.menu;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -30,6 +29,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.gto.fastcollection.OpenCacheHashSet;
 
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +57,7 @@ import appeng.api.parts.IPart;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.upgrades.IUpgradeInventory;
+import appeng.api.util.IMenuHost;
 import appeng.core.AELog;
 import appeng.core.sync.BasePacket;
 import appeng.core.sync.network.NetworkHandler;
@@ -83,6 +84,7 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
     private static final String SERVER_SHIFT_STATE = "ServerShiftState";
 
     private final IActionSource mySrc;
+    private final Object host;
     @Nullable
     private final BlockEntity blockEntity;
     @Nullable
@@ -98,7 +100,7 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
     private boolean menuValid = true;
     private MenuLocator locator;
     // Slots that are only present on the client-side
-    private final Set<Slot> clientSideSlot = new HashSet<>();
+    private final Set<Slot> clientSideSlot = new OpenCacheHashSet<>();
     /**
      * Indicates that the menu was created after returning from a {@link ISubMenu}. Previous screen state stored on the
      * client should be restored.
@@ -106,11 +108,13 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
     private boolean returnedFromSubScreen;
 
     protected boolean serverShiftState;
+    protected long lastUpdateTime = 0;
 
     public AEBaseMenu(MenuType<?> menuType, int id, Inventory playerInventory,
             Object host) {
         super(menuType, id);
         this.playerInventory = playerInventory;
+        this.host = host;
         this.blockEntity = host instanceof BlockEntity ? (BlockEntity) host : null;
         this.part = host instanceof IPart ? (IPart) host : null;
         this.itemMenuHost = host instanceof ItemMenuHost ? (ItemMenuHost) host : null;
@@ -126,6 +130,9 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
         this.mySrc = new PlayerSource(getPlayer(), this.getActionHost());
         registerClientAction(HIDE_SLOT, String.class, this::hideSlot);
         registerClientAction(SERVER_SHIFT_STATE, Boolean.class, state -> this.serverShiftState = state);
+        if (host instanceof IMenuHost menuHost) {
+            menuHost.onMenuOpen();
+        }
     }
 
     protected final IActionHost getActionHost() {
@@ -206,6 +213,14 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
                     ? SlotSemantics.PLAYER_HOTBAR
                     : SlotSemantics.PLAYER_INVENTORY;
             addSlot(slot, s);
+        }
+    }
+
+    @Override
+    public void removed(Player p_38940_) {
+        super.removed(p_38940_);
+        if (host instanceof IMenuHost menuHost) {
+            menuHost.onMenuClose();
         }
     }
 
@@ -314,7 +329,8 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
 
         if (isServerSide()) {
             if (this.blockEntity != null
-                    && this.blockEntity.getLevel().getBlockEntity(this.blockEntity.getBlockPos()) != this.blockEntity) {
+                    && this.blockEntity.getLevel()
+                            .getBlockEntity(this.blockEntity.getBlockPos()) != this.blockEntity) {
                 this.setValidMenu(false);
             }
             if (this.part instanceof AEBasePart basePart) {
@@ -323,7 +339,9 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
                     setValidMenu(false);
                 }
             }
-
+            if (host instanceof IMenuHost menuHost) {
+                menuHost.onMenuChange();
+            }
             if (dataSync.hasChanges()) {
                 sendPacketToClient(new GuiDataSyncPacket(containerId, dataSync::writeUpdate));
             }
@@ -858,6 +876,10 @@ public abstract class AEBaseMenu extends AbstractContainerMenu {
      */
     protected boolean isServerSide() {
         return !isClientSide();
+    }
+
+    protected long getGameTime() {
+        return getPlayer().getCommandSenderWorld().getGameTime();
     }
 
     protected final void sendPacketToClient(BasePacket packet) {

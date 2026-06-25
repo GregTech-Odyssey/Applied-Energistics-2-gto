@@ -42,11 +42,12 @@ import appeng.me.helpers.PlayerSource;
  *
  */
 public interface IActionSource {
+
     /**
      * Create a new empty source.
      */
-    static IActionSource empty() {
-        return new BaseActionSource();
+    static BaseActionSource empty() {
+        return BaseActionSource.EMPTY;
     }
 
     /**

@@ -13,7 +13,8 @@ import appeng.core.AEConfig;
  * </p>
  * 这也意味着，从网络流出的物品会被记录为负数，向网络流入的物品会被记录为正数
  */
-public class ThroughputCounter extends AEKeyMap<AEKey> {
+public class ThroughputCounter {
+
     public static final ThroughputCounter EMPTY = new ThroughputCounter() {
         @Override
         public void add(AEKey key, long count) {
@@ -39,12 +40,13 @@ public class ThroughputCounter extends AEKeyMap<AEKey> {
     private long lastRefreshTime = 0;
     private long lastRefreshInterval = 0;
     private ThroughputCounter immutableView = null;
+    public final AEKeyMap<AEKey> map = new AEKeyMap<>();
 
     public void add(AEKey key, long count) {
         if (count == 0) {
             return;
         }
-        this.addTo(key, count);
+        map.insert(key, count);
         hasPositiveValues |= count > 0;
         hasNegativeValues |= count < 0;
     }
@@ -53,14 +55,13 @@ public class ThroughputCounter extends AEKeyMap<AEKey> {
         if (count == 0) {
             return;
         }
-        this.addTo(key, -count);
+        map.insert(key, -count);
         hasPositiveValues |= count < 0;
         hasNegativeValues |= count > 0;
     }
 
-    @Override
     public void clear() {
-        super.clear();
+        map.clear();
         hasPositiveValues = false;
         hasNegativeValues = false;
     }
@@ -85,7 +86,7 @@ public class ThroughputCounter extends AEKeyMap<AEKey> {
 
     private void captureImmutableView() {
         immutableView = new ThroughputCounter();
-        immutableView.putAll(this);
+        immutableView.map.putAll(map);
         immutableView.hasPositiveValues = this.hasPositiveValues;
         immutableView.hasNegativeValues = this.hasNegativeValues;
     }
@@ -98,8 +99,8 @@ public class ThroughputCounter extends AEKeyMap<AEKey> {
         if (k.immutableView == null) {
             k.captureImmutableView();
         }
-        buf.writeInt(k.immutableView.size());
-        for (var entry : k.immutableView.reference2LongEntrySet()) {
+        buf.writeInt(k.immutableView.map.size());
+        for (var entry : k.immutableView.map) {
             AEKey.writeKey(buf, entry.getKey());
             buf.writeVarLong(entry.getLongValue());
         }

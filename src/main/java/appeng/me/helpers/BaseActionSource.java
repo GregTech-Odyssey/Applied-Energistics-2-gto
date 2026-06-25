@@ -26,6 +26,8 @@ import appeng.api.networking.security.IActionHost;
 import appeng.api.networking.security.IActionSource;
 
 public class BaseActionSource implements IActionSource {
+    public static final BaseActionSource EMPTY = new BaseActionSource();
+
     @Override
     public Optional<Player> player() {
         return Optional.empty();

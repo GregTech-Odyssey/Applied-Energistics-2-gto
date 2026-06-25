@@ -67,7 +67,6 @@ import appeng.core.sync.packets.ConfigValuePacket;
 import appeng.core.sync.packets.MEInteractionPacket;
 import appeng.core.sync.packets.MEInventoryUpdatePacket;
 import appeng.helpers.InventoryAction;
-import appeng.hooks.ticking.TickHandler;
 import appeng.me.helpers.ChannelPowerSrc;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;
@@ -149,7 +148,6 @@ public class MEStorageMenu extends AEBaseMenu
     private Set<AEKey> previousCraftables = Collections.emptySet();
     private KeyCounter previousAvailableStacks = new KeyCounter();
 
-    private long lastUpdate = 0;
     private boolean firstOpen = true;
 
     public MEStorageMenu(MenuType<?> menuType, int id, Inventory ip, ITerminalHost host) {
@@ -245,18 +243,15 @@ public class MEStorageMenu extends AEBaseMenu
     @Override
     public void broadcastChanges() {
         toolboxMenu.tick();
-
         if (isServerSide()) {
             // Close the screen if the backing network inventory has changed
             if (this.storage != this.host.getInventory()) {
                 this.setValidMenu(false);
                 return;
             }
-
-            var tick = TickHandler.instance().getCurrentTick();
-            if (lastUpdate != tick) {
-                lastUpdate = tick;
-
+            var time = getGameTime();
+            if (lastUpdateTime != time) {
+                lastUpdateTime = time;
                 this.updateActiveCraftingJobs();
 
                 for (var set : this.serverCM.getSettings()) {

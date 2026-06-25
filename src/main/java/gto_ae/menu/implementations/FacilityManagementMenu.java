@@ -222,7 +222,7 @@ public class FacilityManagementMenu extends AEBaseMenu {
 
             var ioFilter = manager.getFilter();
             var contentMatch = ioFilter == null ||
-                    ioStatistics.containsKey(ioFilter) ||
+                    ioStatistics.map.containsKey(ioFilter) ||
                     machine.getConfiguredSetting().containsKey(ioFilter);
             if (!contentMatch) {
                 return true;

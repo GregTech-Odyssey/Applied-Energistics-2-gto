@@ -242,7 +242,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
                     var aeKeyInv = ConfigInventory.configStacks(null, 9, () -> {
                     }, true);
                     var vanillaInv = aeKeyInv.createMenuWrapper();
-                    throughput.reference2LongEntrySet().stream()
+                    throughput.map.reference2LongEntrySet().stream()
                             .sorted(Comparator.<Reference2LongMap.Entry<AEKey>>comparingLong(
                                     Reference2LongMap.Entry::getLongValue).reversed())
                             .forEach(entry -> {
@@ -375,7 +375,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
             if (row instanceof StatRow(FrozenMachineStatus group0)) {
                 group = group0;
                 scrollLevels = statsRowScrollLevels;
-                groupCollection = group.getThroughputCounter();
+                groupCollection = group.getThroughputCounter().map;
             } else if (row instanceof ConfigDisplayRow(FrozenMachineStatus group0)) {
                 group = group0;
                 scrollLevels = configScrollLevels;
@@ -418,7 +418,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
                 }
 
                 boolean hasMoreThan9Items = switch (row) {
-                    case StatRow(FrozenMachineStatus container) -> container.getThroughputCounter().size() > 9;
+                    case StatRow(FrozenMachineStatus container) -> container.getThroughputCounter().map.size() > 9;
                     case ConfigDisplayRow(FrozenMachineStatus container) -> container.getConfiguredSetting().size() > 9;
                     default -> false;
                 };
@@ -613,7 +613,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
 
             // if found, filter skipped or machine name matching the search term, add it
             if (found || entry.getSearchName().toLowerCase().contains(searchFilterLowerCase)
-                    || entry.getThroughputCounter().keySet().stream().anyMatch(
+                    || entry.getThroughputCounter().map.keySet().stream().anyMatch(
                             key -> key.getDisplayName().getString().toLowerCase().contains(searchFilterLowerCase))
                     || entry.getConfiguredSetting().keySet().stream().anyMatch(
                             key -> key.getDisplayName().getString().toLowerCase().contains(searchFilterLowerCase))) {

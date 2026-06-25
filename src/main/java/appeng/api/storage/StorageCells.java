@@ -24,7 +24,6 @@
 package appeng.api.storage;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import com.google.common.base.Preconditions;
@@ -45,8 +44,8 @@ import appeng.api.storage.cells.StorageCell;
  */
 public final class StorageCells {
 
-    private static final List<ICellHandler> handlers = new ArrayList<>();
-    private static final List<ICellGuiHandler> guiHandlers = new ArrayList<>();
+    private static final ArrayList<ICellHandler> handlers = new ArrayList<>();
+    private static final ArrayList<ICellGuiHandler> guiHandlers = new ArrayList<>();
 
     private StorageCells() {
     }
