@@ -46,7 +46,7 @@ public interface IActionSource {
     /**
      * Create a new empty source.
      */
-    static BaseActionSource empty() {
+    static IActionSource empty() {
         return BaseActionSource.EMPTY;
     }
 
