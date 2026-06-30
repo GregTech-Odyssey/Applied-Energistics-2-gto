@@ -1,6 +1,5 @@
 package appeng.api.storage;
 
-import java.util.Objects;
 import java.util.function.Supplier;
 
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +24,13 @@ public final class SupplierStorage implements MEStorage {
     }
 
     private MEStorage getDelegate() {
-        return Objects.requireNonNullElseGet(supplier.get(), NullInventory::of);
+        var delegate = supplier.get();
+        return delegate == null ? NullInventory.INSTANCE : delegate;
+    }
+
+    @Override
+    public Object getStorageOwner() {
+        return getDelegate().getStorageOwner();
     }
 
     @Override

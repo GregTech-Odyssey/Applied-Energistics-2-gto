@@ -9,6 +9,7 @@ import com.google.common.primitives.Ints;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
@@ -37,9 +38,20 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
     @Nullable
     private Runnable changeListener;
+    private BlockEntity blockEntity;
 
     public void setChangeListener(@Nullable Runnable listener) {
         this.changeListener = listener;
+    }
+
+    public void setBlockEntity(@Nullable BlockEntity blockEntity) {
+        this.blockEntity = blockEntity;
+    }
+
+    @Override
+    public Object getStorageOwner() {
+        var be = blockEntity;
+        return be == null ? this : be;
     }
 
     public abstract int getSlots();

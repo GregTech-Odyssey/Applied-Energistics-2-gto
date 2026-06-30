@@ -23,12 +23,17 @@ public class DelegatingMEInventory implements MEStorage {
         this.delegate = Objects.requireNonNull(delegate, "delegate");
     }
 
-    protected MEStorage getDelegate() {
+    public MEStorage getDelegate() {
         return delegate;
     }
 
-    protected void setDelegate(MEStorage delegate) {
+    public void setDelegate(MEStorage delegate) {
         this.delegate = delegate;
+    }
+
+    @Override
+    public Object getStorageOwner() {
+        return this.delegate == null ? this : this.delegate.getStorageOwner();
     }
 
     @Override

@@ -5,6 +5,8 @@ import java.util.Objects;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.ticking.TickRateModulation;
@@ -31,6 +33,17 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
 
     public void setStorages(Map<AEKeyType, MEStorage> storages) {
         this.storages = Objects.requireNonNull(storages);
+    }
+
+    @Override
+    public Object getStorageOwner() {
+        if (this.storages == null || storages.isEmpty()) {
+            return this;
+        } else {
+            var set = new ObjectOpenHashSet<>();
+            storages.values().forEach(s -> MEStorage.addOwner(set, s.getStorageOwner()));
+            return set;
+        }
     }
 
     @Override

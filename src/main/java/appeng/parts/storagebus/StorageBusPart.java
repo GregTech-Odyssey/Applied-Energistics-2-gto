@@ -236,7 +236,6 @@ public class StorageBusPart extends UpgradeablePart
 
     @Override
     public final void onNeighborChanged(BlockGetter level, BlockPos pos, BlockPos neighbor) {
-        this.handler.owner = handler;
         if (pos.relative(getSide()).equals(neighbor)) {
             var te = level.getBlockEntity(neighbor);
 
@@ -344,11 +343,6 @@ public class StorageBusPart extends UpgradeablePart
             handlerDescription = null;
         }
         this.handler.setDelegate(newInventory);
-        if (newInventory != NullInventory.INSTANCE) {
-            this.handler.owner = getLevel().getBlockEntity(getBlockEntity().getBlockPos().relative(getSide()));
-        } else {
-            this.handler.owner = handler;
-        }
 
         // Apply other settings.
         this.handler.setAccessRestriction(this.getConfigManager().getSetting(Settings.ACCESS));
@@ -464,25 +458,8 @@ public class StorageBusPart extends UpgradeablePart
      */
     public static class StorageBusInventory extends MEInventoryHandler {
 
-        public Object owner = this;
-
         public StorageBusInventory(MEStorage inventory) {
             super(inventory);
-        }
-
-        @Override
-        public Object getStorageOwner() {
-            return owner;
-        }
-
-        @Override
-        protected MEStorage getDelegate() {
-            return super.getDelegate();
-        }
-
-        @Override
-        protected void setDelegate(MEStorage delegate) {
-            super.setDelegate(delegate);
         }
 
         public void setAccessRestriction(AccessRestriction setting) {

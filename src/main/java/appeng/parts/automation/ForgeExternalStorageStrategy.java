@@ -30,12 +30,16 @@ public class ForgeExternalStorageStrategy<C, S> implements ExternalStorageStrate
     @Nullable
     @Override
     public MEStorage createWrapper(boolean extractableOnly, Runnable injectOrExtractCallback) {
+        var be = apiCache.getBlockEntity();
+        if (be == null) {
+            return null;
+        }
         var storage = apiCache.find(fromSide);
         if (storage == null) {
             return null;
         }
-
         var result = conversion.getFacade(storage);
+        result.setBlockEntity(be);
         result.setChangeListener(injectOrExtractCallback);
         return result;
     }

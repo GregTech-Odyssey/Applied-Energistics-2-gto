@@ -24,6 +24,7 @@
 package appeng.api.storage;
 
 import java.util.Objects;
+import java.util.Set;
 
 import com.google.common.base.Preconditions;
 
@@ -132,6 +133,35 @@ public interface MEStorage {
 
     default Object getStorageOwner() {
         return this;
+    }
+
+    static boolean containsOwner(Set<Object> set, Object owner) {
+        if (owner instanceof Set<?> set1) {
+            for (var o : set1) {
+                if (set.contains(o)) {
+                    return true;
+                }
+            }
+            return false;
+        } else {
+            return set.contains(owner);
+        }
+    }
+
+    static void addOwner(Set<Object> set, Object owner) {
+        if (owner instanceof Set<?> set1) {
+            set.addAll(set1);
+        } else {
+            set.add(owner);
+        }
+    }
+
+    static void removeOwner(Set<Object> set, Object owner) {
+        if (owner instanceof Set<?> set1) {
+            set1.forEach(set::remove);
+        } else {
+            set.remove(owner);
+        }
     }
 
     static void checkPreconditions(AEKey what, long amount, Actionable mode, IActionSource source) {
