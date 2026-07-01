@@ -50,7 +50,6 @@ public class NetworkStorage implements MEStorage {
     private final ObjectArrayList<MountOperation> priorityInventory;
     private final Reference2ReferenceOpenHashMap<MEStorage, Object> storages;
     private final ReferenceOpenHashSet<Object> identities;
-    private final ReferenceOpenHashSet<Runnable> listeners;
 
     // Queued mount/unmount operations that occurred while an insert/extract was ongoing
     // Is only non-null if something is queued
@@ -62,13 +61,6 @@ public class NetworkStorage implements MEStorage {
         this.storages = new Reference2ReferenceOpenHashMap<>();
         this.storages.defaultReturnValue(NetworkStorage.class);
         this.identities = new ReferenceOpenHashSet<>();
-        this.listeners = new ReferenceOpenHashSet<>();
-    }
-
-    @Override
-    public Runnable addMountListener(Runnable listener) {
-        listeners.add(listener);
-        return () -> listeners.remove(listener);
     }
 
     public void mount(int priority, MEStorage inventory) {
@@ -97,7 +89,6 @@ public class NetworkStorage implements MEStorage {
                     }
                     identities.add(identity);
                 }
-                listeners.clone().forEach(Runnable::run);
             }
             storages.put(inventory, identity);
             priorityInventory.add(operation);

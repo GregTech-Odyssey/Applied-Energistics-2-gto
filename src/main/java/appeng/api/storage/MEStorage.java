@@ -39,6 +39,7 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.me.storage.NetworkStorage;
 
 /**
  * AE's Equivalent to IInventory, used to reading contents, and manipulating contents of ME Inventories.
@@ -135,20 +136,12 @@ public interface MEStorage {
         return result;
     }
 
-    default void onMount(MEStorage parent) {
+    default void onMount(NetworkStorage parent) {
 
     }
 
-    default void onUnmount(MEStorage parent) {
+    default void onUnmount(NetworkStorage parent) {
 
-    }
-
-    /**
-     * @return delete call
-     */
-    @Nullable
-    default Runnable addMountListener(Runnable listener) {
-        return null;
     }
 
     @Nullable

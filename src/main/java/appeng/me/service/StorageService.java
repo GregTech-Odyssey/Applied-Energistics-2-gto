@@ -265,7 +265,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
      */
     private class ProviderState implements IStorageMounts {
         private final IStorageProvider provider;
-        private final Set<MEStorage> inventories = new HashSet<>();
+        private final ReferenceOpenHashSet<MEStorage> inventories = new ReferenceOpenHashSet<>();
         private boolean mounted;
 
         public ProviderState(IStorageProvider provider) {

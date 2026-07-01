@@ -29,15 +29,6 @@ public final class SupplierStorage implements MEStorage {
     }
 
     @Nullable
-    public Runnable addMountListener(Runnable listener) {
-        var delegate = supplier.get();
-        if (delegate == null) {
-            return null;
-        }
-        return delegate.addMountListener(listener);
-    }
-
-    @Nullable
     public Object getResourceIdentity() {
         var delegate = supplier.get();
         return delegate == null ? null : delegate.getResourceIdentity();

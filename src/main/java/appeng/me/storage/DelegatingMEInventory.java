@@ -34,14 +34,6 @@ public class DelegatingMEInventory implements MEStorage {
     }
 
     @Nullable
-    public Runnable addMountListener(Runnable listener) {
-        if (delegate == null) {
-            return null;
-        }
-        return delegate.addMountListener(listener);
-    }
-
-    @Nullable
     public Object getResourceIdentity() {
         return delegate == null ? null : delegate.getResourceIdentity();
     }

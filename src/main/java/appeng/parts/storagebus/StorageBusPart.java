@@ -109,7 +109,7 @@ public class StorageBusPart extends UpgradeablePart
      * cell-change notifications, we instead use a handler that will exist as long as this storage bus exists, while
      * changing the underlying inventory.
      */
-    private final StorageBusInventory handler = new StorageBusInventory(NullInventory.of(), this::remountStorage);
+    private final StorageBusInventory handler = new StorageBusInventory(NullInventory.of());
     @Nullable
     private Component handlerDescription;
     private final PartAdjacentApi<MEStorage> adjacentStorageAccessor;
@@ -460,15 +460,9 @@ public class StorageBusPart extends UpgradeablePart
 
         @Nullable
         private Object identity;
-        @Nullable
-        private Runnable listenerDelete;
-        @Nullable
-        private Runnable parentListenerDelete;
-        private final Runnable listener;
 
-        public StorageBusInventory(MEStorage inventory, Runnable listener) {
+        public StorageBusInventory(MEStorage inventory) {
             super(inventory);
-            this.listener = listener;
         }
 
         public void setAccessRestriction(AccessRestriction setting) {
@@ -480,24 +474,6 @@ public class StorageBusPart extends UpgradeablePart
         public Object getResourceIdentity() {
             var identity = super.getResourceIdentity();
             return identity != null ? identity : this.identity;
-        }
-
-        @Override
-        public void onMount(MEStorage parent) {
-            listenerDelete = this.addMountListener(listener);
-            parentListenerDelete = parent.addMountListener(listener);
-        }
-
-        @Override
-        public void onUnmount(MEStorage parent) {
-            if (listenerDelete != null) {
-                listenerDelete.run();
-                listenerDelete = null;
-            }
-            if (parentListenerDelete != null) {
-                parentListenerDelete.run();
-                parentListenerDelete = null;
-            }
         }
     }
 
