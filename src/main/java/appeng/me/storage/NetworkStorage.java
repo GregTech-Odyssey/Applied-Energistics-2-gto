@@ -131,7 +131,7 @@ public class NetworkStorage implements MEStorage {
     @Nullable
     @Override
     public Object getResourceIdentity() {
-        return identities;
+        return identities.isEmpty() ? this : identities;
     }
 
     @Override

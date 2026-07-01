@@ -478,7 +478,8 @@ public class StorageBusPart extends UpgradeablePart
 
         @Override
         public Object getResourceIdentity() {
-            return identity;
+            var identity = super.getResourceIdentity();
+            return identity != null ? identity : this.identity;
         }
 
         @Override
