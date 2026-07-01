@@ -348,10 +348,7 @@ public class IOPortBlockEntity extends AENetworkInvBlockEntity
                 if (totalStackSize > 0) {
                     var what = srcEntry.getKey();
                     var possible = destination.insert(what, totalStackSize, Actionable.SIMULATE, this.mySrc);
-
                     if (possible > 0) {
-                        possible = Math.min(possible, itemsToMove * what.getAmountPerOperation());
-
                         possible = src.extract(what, possible, Actionable.MODULATE, this.mySrc);
                         if (possible > 0) {
                             var inserted = StorageHelper.poweredInsert(energy, destination, what, possible, this.mySrc);
