@@ -27,8 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -48,8 +47,8 @@ public class NetworkStorage implements MEStorage {
     private boolean getInUse;
 
     private final ObjectArrayList<MountOperation> priorityInventory;
-    private final ObjectOpenHashSet<Object> owners;
-    private final Reference2ReferenceOpenHashMap<MEStorage, Object> ownerMap;
+    private final ReferenceOpenHashSet<MEStorage> storages;
+    private final ReferenceOpenHashSet<Runnable> listeners;
 
     // Queued mount/unmount operations that occurred while an insert/extract was ongoing
     // Is only non-null if something is queued
@@ -58,8 +57,14 @@ public class NetworkStorage implements MEStorage {
 
     public NetworkStorage() {
         this.priorityInventory = new ObjectArrayList<>();
-        this.owners = new ObjectOpenHashSet<>();
-        this.ownerMap = new Reference2ReferenceOpenHashMap<>();
+        this.storages = new ReferenceOpenHashSet<>();
+        this.listeners = new ReferenceOpenHashSet<>();
+    }
+
+    @Override
+    public Runnable addMountListener(Runnable listener) {
+        listeners.add(listener);
+        return () -> listeners.remove(listener);
     }
 
     public void mount(int priority, MEStorage inventory) {
@@ -70,17 +75,15 @@ public class NetworkStorage implements MEStorage {
             }
             queuedOperations.add(operation);
         } else {
-            if (ownerMap.containsKey(inventory)) {
-                return;
+            if (storages.add(inventory)) {
+                if (this.contains(inventory, new ReferenceOpenHashSet<>())) {
+                    return;
+                }
+                priorityInventory.add(operation);
+                priorityInventory.sort(MountOperation.PRIORITY_SORTER);
+                listeners.clone().forEach(Runnable::run);
+                inventory.onMount(this);
             }
-            var owner = inventory.getStorageOwner();
-            if (MEStorage.containsOwner(owners, owner)) {
-                return;
-            }
-            MEStorage.addOwner(owners, owner);
-            ownerMap.put(inventory, owner);
-            priorityInventory.add(operation);
-            priorityInventory.sort(MountOperation.PRIORITY_SORTER);
         }
     }
 
@@ -91,10 +94,9 @@ public class NetworkStorage implements MEStorage {
             }
             queuedOperations.add(new UnmountOperation(inventory));
         } else {
-            var owner = ownerMap.remove(inventory);
-            if (owner != null) {
-                MEStorage.removeOwner(owners, owner);
+            if (storages.remove(inventory)) {
                 priorityInventory.removeIf(obj -> obj.storage == inventory);
+                inventory.onUnmount(this);
             }
         }
     }
@@ -149,10 +151,16 @@ public class NetworkStorage implements MEStorage {
     }
 
     @Override
-    public ObjectOpenHashSet<Object> getStorageOwner() {
-        var set = new ObjectOpenHashSet<>(priorityInventory.size());
-        priorityInventory.forEach(i -> MEStorage.addOwner(set, i.storage.getStorageOwner()));
-        return set;
+    public boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
+        if (MEStorage.super.contains(storage, checked)) {
+            return true;
+        }
+        for (var i : priorityInventory) {
+            if (i.storage.contains(storage, checked)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

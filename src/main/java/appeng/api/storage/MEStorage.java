@@ -24,12 +24,17 @@
 package appeng.api.storage;
 
 import java.util.Objects;
-import java.util.Set;
+
+import javax.annotation.Nullable;
 
 import com.google.common.base.Preconditions;
 
+import org.jetbrains.annotations.MustBeInvokedByOverriders;
+
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -131,37 +136,25 @@ public interface MEStorage {
         return result;
     }
 
-    default Object getStorageOwner() {
-        return this;
+    default void onMount(MEStorage parent) {
+
     }
 
-    static boolean containsOwner(Set<Object> set, Object owner) {
-        if (owner instanceof Set<?> set1) {
-            for (var o : set1) {
-                if (set.contains(o)) {
-                    return true;
-                }
-            }
-            return false;
-        } else {
-            return set.contains(owner);
-        }
+    default void onUnmount(MEStorage parent) {
+
     }
 
-    static void addOwner(Set<Object> set, Object owner) {
-        if (owner instanceof Set<?> set1) {
-            set.addAll(set1);
-        } else {
-            set.add(owner);
-        }
+    /**
+     * @return delete call
+     */
+    @Nullable
+    default Runnable addMountListener(Runnable listener) {
+        return null;
     }
 
-    static void removeOwner(Set<Object> set, Object owner) {
-        if (owner instanceof Set<?> set1) {
-            set1.forEach(set::remove);
-        } else {
-            set.remove(owner);
-        }
+    @MustBeInvokedByOverriders
+    default boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
+        return storage == this || (checked.add(this) && storage.contains(this, checked));
     }
 
     static void checkPreconditions(AEKey what, long amount, Actionable mode, IActionSource source) {

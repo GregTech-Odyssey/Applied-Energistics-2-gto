@@ -6,6 +6,8 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
@@ -29,8 +31,11 @@ public final class SupplierStorage implements MEStorage {
     }
 
     @Override
-    public Object getStorageOwner() {
-        return getDelegate().getStorageOwner();
+    public boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
+        if (MEStorage.super.contains(storage, checked)) {
+            return true;
+        }
+        return getDelegate().contains(storage, checked);
     }
 
     @Override

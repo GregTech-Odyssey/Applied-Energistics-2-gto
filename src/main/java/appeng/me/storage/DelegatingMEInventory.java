@@ -2,7 +2,11 @@ package appeng.me.storage;
 
 import java.util.Objects;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.network.chat.Component;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -31,9 +35,17 @@ public class DelegatingMEInventory implements MEStorage {
         this.delegate = delegate;
     }
 
+    @Nullable
+    public Runnable addMountListener(Runnable listener) {
+        if (delegate == null) {
+            return null;
+        }
+        return delegate.addMountListener(listener);
+    }
+
     @Override
-    public Object getStorageOwner() {
-        return this.delegate == null ? this : this.delegate.getStorageOwner();
+    public boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
+        return MEStorage.super.contains(storage, checked) || (delegate != null && delegate.contains(storage, checked));
     }
 
     @Override

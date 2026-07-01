@@ -112,7 +112,7 @@ public class StorageBusPart extends UpgradeablePart
      * cell-change notifications, we instead use a handler that will exist as long as this storage bus exists, while
      * changing the underlying inventory.
      */
-    private final StorageBusInventory handler = new StorageBusInventory(NullInventory.of());
+    private final StorageBusInventory handler = new StorageBusInventory(NullInventory.of(), this::remountStorage);
     @Nullable
     private Component handlerDescription;
     private final PartAdjacentApi<MEStorage> adjacentStorageAccessor;
@@ -189,6 +189,12 @@ public class StorageBusPart extends UpgradeablePart
         super.writeToNBT(data);
         data.putInt("priority", this.priority);
         config.writeToChildTag(data, "config");
+    }
+
+    @Override
+    public void removeFromWorld() {
+        super.removeFromWorld();
+        handler.onUnmount(null);
     }
 
     @Override
@@ -329,6 +335,12 @@ public class StorageBusPart extends UpgradeablePart
         var wasSleeping = this.monitor == null;
         var wasRegistered = this.hasRegisteredCellToNetwork();
 
+        if (foundMonitor != null) {
+            if (getMainNode().getGrid().getStorageService().getInventory() == foundMonitor) {
+                foundMonitor = null;
+            }
+        }
+
         // Update inventory
         MEStorage newInventory;
         if (foundMonitor != null) {
@@ -458,13 +470,38 @@ public class StorageBusPart extends UpgradeablePart
      */
     public static class StorageBusInventory extends MEInventoryHandler {
 
-        public StorageBusInventory(MEStorage inventory) {
+        @Nullable
+        private Runnable listenerDelete;
+        @Nullable
+        private Runnable parentListenerDelete;
+        private final Runnable listener;
+
+        public StorageBusInventory(MEStorage inventory, Runnable listener) {
             super(inventory);
+            this.listener = listener;
         }
 
         public void setAccessRestriction(AccessRestriction setting) {
             setAllowExtraction(setting.isAllowExtraction());
             setAllowInsertion(setting.isAllowInsertion());
+        }
+
+        @Override
+        public void onMount(MEStorage parent) {
+            listenerDelete = this.addMountListener(listener);
+            parentListenerDelete = parent.addMountListener(listener);
+        }
+
+        @Override
+        public void onUnmount(MEStorage parent) {
+            if (listenerDelete != null) {
+                listenerDelete.run();
+                listenerDelete = null;
+            }
+            if (parentListenerDelete != null) {
+                parentListenerDelete.run();
+                parentListenerDelete = null;
+            }
         }
     }
 

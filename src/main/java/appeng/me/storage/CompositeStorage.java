@@ -5,7 +5,7 @@ import java.util.Objects;
 
 import net.minecraft.network.chat.Component;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
@@ -36,14 +36,19 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
     }
 
     @Override
-    public Object getStorageOwner() {
-        if (this.storages == null || storages.isEmpty()) {
-            return this;
-        } else {
-            var set = new ObjectOpenHashSet<>();
-            storages.values().forEach(s -> MEStorage.addOwner(set, s.getStorageOwner()));
-            return set;
+    public boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
+        if (MEStorage.super.contains(storage, checked)) {
+            return true;
         }
+        if (storages == null || storages.isEmpty()) {
+            return false;
+        }
+        for (var s : storages.values()) {
+            if (s.contains(storage, checked)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
