@@ -5,8 +5,6 @@ import java.util.Objects;
 
 import net.minecraft.network.chat.Component;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.ticking.TickRateModulation;
@@ -33,22 +31,6 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
 
     public void setStorages(Map<AEKeyType, MEStorage> storages) {
         this.storages = Objects.requireNonNull(storages);
-    }
-
-    @Override
-    public boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
-        if (MEStorage.super.contains(storage, checked)) {
-            return true;
-        }
-        if (storages == null || storages.isEmpty()) {
-            return false;
-        }
-        for (var s : storages.values()) {
-            if (s.contains(storage, checked)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override

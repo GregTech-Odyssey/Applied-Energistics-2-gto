@@ -3,10 +3,10 @@ package appeng.parts;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 
 import appeng.util.BlockApiCache;
-import appeng.util.Platform;
 
 /**
  * Utility class to cache an API that is adjacent to a part.
@@ -22,23 +22,38 @@ public class PartAdjacentApi<C> {
     }
 
     @Nullable
-    public C find() {
-        if (!(part.getLevel() instanceof ServerLevel serverLevel)) {
-            return null;
-        }
-
-        var host = part.getHost().getBlockEntity();
-        var attachedSide = part.getSide();
-        var targetPos = host.getBlockPos().relative(attachedSide);
-
-        if (!Platform.areBlockEntitiesTicking(serverLevel, targetPos)) {
-            return null;
-        }
-
+    private BlockApiCache<C> getApiCache() {
+        var apiCache = this.apiCache;
         if (apiCache == null) {
-            apiCache = BlockApiCache.create(apiLookup, serverLevel, targetPos);
+            if (!(part.getLevel() instanceof ServerLevel serverLevel)) {
+                return null;
+            }
+            var host = part.getHost().getBlockEntity();
+            var targetPos = host.getBlockPos().relative(part.getSide());
+            this.apiCache = apiCache = BlockApiCache.create(apiLookup, serverLevel, targetPos);
         }
+        return apiCache;
+    }
 
-        return apiCache.find(attachedSide.getOpposite());
+    public void clear() {
+        apiCache = null;
+    }
+
+    @Nullable
+    public BlockEntity getBlockEntity() {
+        var apiCache = getApiCache();
+        if (apiCache == null) {
+            return null;
+        }
+        return apiCache.getBlockEntity();
+    }
+
+    @Nullable
+    public C find() {
+        var apiCache = getApiCache();
+        if (apiCache == null) {
+            return null;
+        }
+        return apiCache.find(part.getSide().getOpposite());
     }
 }

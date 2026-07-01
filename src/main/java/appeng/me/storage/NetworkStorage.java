@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.network.chat.Component;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
@@ -47,7 +48,8 @@ public class NetworkStorage implements MEStorage {
     private boolean getInUse;
 
     private final ObjectArrayList<MountOperation> priorityInventory;
-    private final ReferenceOpenHashSet<MEStorage> storages;
+    private final Reference2ReferenceOpenHashMap<MEStorage, Object> storages;
+    private final ReferenceOpenHashSet<Object> identities;
     private final ReferenceOpenHashSet<Runnable> listeners;
 
     // Queued mount/unmount operations that occurred while an insert/extract was ongoing
@@ -57,7 +59,9 @@ public class NetworkStorage implements MEStorage {
 
     public NetworkStorage() {
         this.priorityInventory = new ObjectArrayList<>();
-        this.storages = new ReferenceOpenHashSet<>();
+        this.storages = new Reference2ReferenceOpenHashMap<>();
+        this.storages.defaultReturnValue(NetworkStorage.class);
+        this.identities = new ReferenceOpenHashSet<>();
         this.listeners = new ReferenceOpenHashSet<>();
     }
 
@@ -75,15 +79,30 @@ public class NetworkStorage implements MEStorage {
             }
             queuedOperations.add(operation);
         } else {
-            if (storages.add(inventory)) {
-                if (this.contains(inventory, new ReferenceOpenHashSet<>())) {
-                    return;
-                }
-                priorityInventory.add(operation);
-                priorityInventory.sort(MountOperation.PRIORITY_SORTER);
-                listeners.clone().forEach(Runnable::run);
-                inventory.onMount(this);
+            if (storages.containsKey(inventory)) {
+                return;
             }
+            var identity = inventory.getResourceIdentity();
+            if (identity != null) {
+                if (identity instanceof Set<?> set) {
+                    for (var i : set) {
+                        if (identities.contains(i)) {
+                            return;
+                        }
+                    }
+                    identities.addAll(set);
+                } else {
+                    if (identities.contains(identity)) {
+                        return;
+                    }
+                    identities.add(identity);
+                }
+                listeners.clone().forEach(Runnable::run);
+            }
+            storages.put(inventory, identity);
+            priorityInventory.add(operation);
+            priorityInventory.sort(MountOperation.PRIORITY_SORTER);
+            inventory.onMount(this);
         }
     }
 
@@ -94,13 +113,28 @@ public class NetworkStorage implements MEStorage {
             }
             queuedOperations.add(new UnmountOperation(inventory));
         } else {
-            if (storages.remove(inventory)) {
+            var identity = storages.remove(inventory);
+            if (identity != NetworkStorage.class) {
+                if (identity != null) {
+                    if (identity instanceof Set<?> set) {
+                        identities.removeAll(set);
+                    } else {
+                        identities.remove(identity);
+                    }
+                }
                 priorityInventory.removeIf(obj -> obj.storage == inventory);
                 inventory.onUnmount(this);
             }
         }
     }
 
+    @Nullable
+    @Override
+    public Object getResourceIdentity() {
+        return identities;
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable type, IActionSource src) {
         if (mountsInUse) {
             return 0;
@@ -145,19 +179,6 @@ public class NetworkStorage implements MEStorage {
                 if (queuedOperation instanceof UnmountOperation(MEStorage storage) && storage == inv) {
                     return true;
                 }
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
-        if (MEStorage.super.contains(storage, checked)) {
-            return true;
-        }
-        for (var i : priorityInventory) {
-            if (i.storage.contains(storage, checked)) {
-                return true;
             }
         }
         return false;

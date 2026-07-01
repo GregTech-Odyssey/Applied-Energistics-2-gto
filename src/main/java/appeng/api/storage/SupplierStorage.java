@@ -6,8 +6,6 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
@@ -30,12 +28,19 @@ public final class SupplierStorage implements MEStorage {
         return delegate == null ? NullInventory.INSTANCE : delegate;
     }
 
-    @Override
-    public boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
-        if (MEStorage.super.contains(storage, checked)) {
-            return true;
+    @Nullable
+    public Runnable addMountListener(Runnable listener) {
+        var delegate = supplier.get();
+        if (delegate == null) {
+            return null;
         }
-        return getDelegate().contains(storage, checked);
+        return delegate.addMountListener(listener);
+    }
+
+    @Nullable
+    public Object getResourceIdentity() {
+        var delegate = supplier.get();
+        return delegate == null ? null : delegate.getResourceIdentity();
     }
 
     @Override

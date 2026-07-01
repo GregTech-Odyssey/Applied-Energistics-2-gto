@@ -25,11 +25,10 @@ package appeng.api.storage;
 
 import java.util.Objects;
 
-import javax.annotation.Nullable;
-
 import com.google.common.base.Preconditions;
 
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
+import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -149,6 +148,11 @@ public interface MEStorage {
      */
     @Nullable
     default Runnable addMountListener(Runnable listener) {
+        return null;
+    }
+
+    @Nullable
+    default Object getResourceIdentity() {
         return null;
     }
 

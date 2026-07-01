@@ -19,7 +19,6 @@
 package appeng.parts.storagebus;
 
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.Map;
 
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +35,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import appeng.api.behaviors.ExternalStorageStrategy;
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.FuzzyMode;
@@ -44,7 +45,6 @@ import appeng.api.config.Setting;
 import appeng.api.config.Settings;
 import appeng.api.config.StorageFilter;
 import appeng.api.config.YesNo;
-import appeng.api.features.IPlayerRegistry;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.security.IActionSource;
@@ -52,7 +52,6 @@ import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.parts.IPartCollisionHelper;
-import appeng.api.parts.IPartHost;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEKeyType;
@@ -65,10 +64,8 @@ import appeng.capabilities.Capabilities;
 import appeng.core.AppEng;
 import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
-import appeng.core.stats.AdvancementTriggers;
 import appeng.helpers.IConfigInvHost;
 import appeng.helpers.IPriorityHost;
-import appeng.helpers.InterfaceLogicHost;
 import appeng.items.parts.PartModels;
 import appeng.me.helpers.MachineSource;
 import appeng.me.storage.CompositeStorage;
@@ -195,6 +192,7 @@ public class StorageBusPart extends UpgradeablePart
     public void removeFromWorld() {
         super.removeFromWorld();
         handler.onUnmount(null);
+        handler.identity = null;
     }
 
     @Override
@@ -243,12 +241,13 @@ public class StorageBusPart extends UpgradeablePart
     @Override
     public final void onNeighborChanged(BlockGetter level, BlockPos pos, BlockPos neighbor) {
         if (pos.relative(getSide()).equals(neighbor)) {
-            var te = level.getBlockEntity(neighbor);
-
+            var te = adjacentStorageAccessor.getBlockEntity();
             if (te == null) {
+                handler.identity = null;
                 // In case the TE was destroyed, we have to update the target handler immediately.
                 this.updateTarget(false);
             } else {
+                handler.identity = te;
                 this.scheduleUpdate();
             }
         }
@@ -306,15 +305,20 @@ public class StorageBusPart extends UpgradeablePart
         if (Platform.areBlockEntitiesTicking(getLevel(), getBlockEntity().getBlockPos().relative(getSide()))) {
             // In any case we don't need any further update
             this.updateStatus = PendingUpdateStatus.NO_UPDATE;
-
-            // Prioritize a handler to directly link to another ME network
-            foundMonitor = adjacentStorageAccessor.find();
-
-            if (foundMonitor == null) {
-                // Query all available external APIs
-                // TODO: If a filter is configured, we might want to only query external APIs for compatible key spaces
-                foundExternalApi = new IdentityHashMap<>(2);
-                findExternalStorages(foundExternalApi);
+            var be = adjacentStorageAccessor.getBlockEntity();
+            if (be != null) {
+                handler.identity = be;
+                // Prioritize a handler to directly link to another ME network
+                foundMonitor = adjacentStorageAccessor.find();
+                if (foundMonitor == null) {
+                    // Query all available external APIs
+                    // TODO: If a filter is configured, we might want to only query external APIs for compatible key
+                    // spaces
+                    foundExternalApi = new Reference2ReferenceOpenHashMap<>(2);
+                    findExternalStorages(foundExternalApi);
+                }
+            } else {
+                handler.identity = null;
             }
         } else {
             // Try again in the future...
@@ -428,22 +432,6 @@ public class StorageBusPart extends UpgradeablePart
     }
 
     private void checkStorageBusOnInterface() {
-        var oppositeSide = getSide().getOpposite();
-        var targetPos = getBlockEntity().getBlockPos().relative(getSide());
-        var targetBe = getLevel().getBlockEntity(targetPos);
-
-        Object targetHost = targetBe;
-        if (targetBe instanceof IPartHost partHost) {
-            targetHost = partHost.getPart(oppositeSide);
-        }
-
-        if (targetHost instanceof InterfaceLogicHost) {
-            var server = getLevel().getServer();
-            var player = IPlayerRegistry.getConnected(server, this.getActionableNode().getOwningPlayerId());
-            if (player != null) {
-                AdvancementTriggers.RECURSIVE.trigger(player);
-            }
-        }
     }
 
     @Override
@@ -471,6 +459,8 @@ public class StorageBusPart extends UpgradeablePart
     public static class StorageBusInventory extends MEInventoryHandler {
 
         @Nullable
+        private Object identity;
+        @Nullable
         private Runnable listenerDelete;
         @Nullable
         private Runnable parentListenerDelete;
@@ -484,6 +474,11 @@ public class StorageBusPart extends UpgradeablePart
         public void setAccessRestriction(AccessRestriction setting) {
             setAllowExtraction(setting.isAllowExtraction());
             setAllowInsertion(setting.isAllowInsertion());
+        }
+
+        @Override
+        public Object getResourceIdentity() {
+            return identity;
         }
 
         @Override

@@ -15,8 +15,6 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.IItemHandler;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEFluidKey;
@@ -40,25 +38,13 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
     @Nullable
     private Runnable changeListener;
-    private BlockEntity blockEntity;
 
     public void setChangeListener(@Nullable Runnable listener) {
         this.changeListener = listener;
     }
 
     public void setBlockEntity(@Nullable BlockEntity blockEntity) {
-        this.blockEntity = blockEntity;
-    }
 
-    @Override
-    public boolean contains(MEStorage storage, ReferenceOpenHashSet<MEStorage> checked) {
-        if (MEStorage.super.contains(storage, checked)) {
-            return true;
-        }
-        if (storage instanceof ExternalStorageFacade externalStorageFacade) {
-            return externalStorageFacade.blockEntity == blockEntity;
-        }
-        return false;
     }
 
     public abstract int getSlots();
