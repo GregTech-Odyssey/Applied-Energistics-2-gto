@@ -18,15 +18,17 @@ import appeng.core.localization.GuiText;
  * Combines several ME storages that each handle only a given key-space.
  */
 public class CompositeStorage implements MEStorage, ITickingMonitor {
-    private final InventoryCache cache;
+    private final AvailableStacksCache cache;
 
     private Map<AEKeyType, MEStorage> storages;
 
-    private boolean forceCacheRebuild = true;
-
     public CompositeStorage(Map<AEKeyType, MEStorage> storages) {
         this.storages = storages;
-        this.cache = new InventoryCache();
+        this.cache = new AvailableStacksCache(out -> {
+            for (var storage : storages.values()) {
+                storage.getAvailableStacks(out);
+            }
+        });
     }
 
     public void setStorages(Map<AEKeyType, MEStorage> storages) {
@@ -45,7 +47,7 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
         var inserted = storage != null ? storage.insert(what, amount, mode, source) : 0;
 
         if (inserted > 0 && mode == Actionable.MODULATE) {
-            forceCacheRebuild = true;
+            cache.invalidateCache();
         }
 
         return inserted;
@@ -57,7 +59,7 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
         var extracted = storage != null ? storage.extract(what, amount, mode, source) : 0;
 
         if (extracted > 0 && mode == Actionable.MODULATE) {
-            forceCacheRebuild = true;
+            cache.invalidateCache();
         }
 
         return extracted;
@@ -84,70 +86,16 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
 
     @Override
     public TickRateModulation onTick() {
-        synchronized (cache) {
-            forceCacheRebuild = false;
-            boolean changed = this.cache.update();
-            if (changed) {
-                return TickRateModulation.URGENT;
-            } else {
-                return TickRateModulation.SLOWER;
-            }
-        }
+        return TickRateModulation.SLOWER;
     }
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        synchronized (cache) {
-            if (forceCacheRebuild) {
-                forceCacheRebuild = false;
-                cache.update();
-            }
-            this.cache.getAvailableKeys(out);
-        }
+        out.addAll(cache.getAvailableStacksCache());
     }
 
-    public class InventoryCache {
-        public KeyCounter frontBuffer = new KeyCounter();
-        public KeyCounter backBuffer = new KeyCounter();
-
-        public boolean update() {
-            // Flip back & front buffer and start building a new list
-            var tmp = backBuffer;
-            backBuffer = frontBuffer;
-            frontBuffer = tmp;
-            frontBuffer.reset();
-
-            // Rebuild the front buffer
-            for (var storage : storages.values()) {
-                storage.getAvailableStacks(frontBuffer);
-            }
-
-            boolean changed = false;
-            // Diff the front-buffer against the backbuffer
-            for (var entry : frontBuffer) {
-                var old = backBuffer.get(entry.getKey());
-                if (old == 0 || old != entry.getLongValue()) {
-                    changed = true;
-                }
-            }
-            // Account for removals
-            for (var oldEntry : backBuffer) {
-                if (frontBuffer.get(oldEntry.getKey()) == 0) {
-                    changed = true;
-                }
-            }
-
-            frontBuffer.removeZeros();
-
-            return changed;
-        }
-
-        public void getAvailableKeys(KeyCounter out) {
-            out.addAll(frontBuffer);
-        }
-
-        public boolean contains(AEKey what) {
-            return frontBuffer.get(what) > 0;
-        }
+    @Override
+    public KeyCounter getAvailableStacks() {
+        return cache.getAvailableStacksCache();
     }
 }

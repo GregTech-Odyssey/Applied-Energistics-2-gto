@@ -56,14 +56,14 @@ import appeng.me.GridNode;
 import appeng.util.ILevelRunnable;
 import appeng.util.Platform;
 
-public class TickHandler {
+public final class TickHandler {
 
     /**
      * Time limit for process queues with respect to the 50ms of a minecraft tick.
      */
     private static final int TIME_LIMIT_PROCESS_QUEUE_MILLISECONDS = 25;
 
-    private static final TickHandler INSTANCE = new TickHandler();
+    public static final TickHandler INSTANCE = new TickHandler();
     private final Queue<ILevelRunnable> serverQueue = new ArrayDeque<>();
     private final Map<LevelAccessor, Queue<ILevelRunnable>> callQueue = new HashMap<>();
     private final ServerBlockEntityRepo blockEntities = new ServerBlockEntityRepo();
@@ -79,7 +79,7 @@ public class TickHandler {
     private int processQueueElementsProcessed = 0;
     private int processQueueElementsRemaining = 0;
 
-    private long tickCounter;
+    public long tickCounter;
 
     public boolean playerJoined;
 

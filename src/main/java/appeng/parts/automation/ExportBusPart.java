@@ -135,13 +135,12 @@ public class ExportBusPart extends IOBusPart implements ICraftingRequester {
 
             if (isUpgradedWith(AEItems.FUZZY_CARD)) {
                 // When fuzzy exporting, simply attempt export of all items in the set of fuzzy-equals keys
-                for (var fuzzyWhat : ImmutableList
-                        .copyOf(storageService.getCachedInventory().findFuzzy(what, fzMode))) {
+                for (var fuzzyWhat : storageService.getCachedInventory().findFuzzyKey(what, fzMode)) {
                     // The max amount exported is scaled by the key-space's transfer factor (think millibuckets vs.
                     // items)
-                    var transferFactory = fuzzyWhat.getKey().getAmountPerOperation();
+                    var transferFactory = fuzzyWhat.getAmountPerOperation();
                     long amount = (long) context.getOperationsRemaining() * transferFactory;
-                    amount = getExportStrategy().transfer(context, fuzzyWhat.getKey(), amount);
+                    amount = getExportStrategy().transfer(context, fuzzyWhat, amount);
                     context.reduceOperationsRemaining(Math.max(1, amount / transferFactory));
                     if (!context.hasOperationsLeft()) {
                         break;

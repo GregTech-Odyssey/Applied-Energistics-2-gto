@@ -8,7 +8,7 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
 
-public class InternedTag {
+public final class InternedTag {
 
     public static final InternedTag EMPTY = new InternedTag(null);
 

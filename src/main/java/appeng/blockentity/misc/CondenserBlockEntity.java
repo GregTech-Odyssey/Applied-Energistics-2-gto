@@ -156,8 +156,10 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
 
     @Override
     public void onChangeInventory(InternalInventory inv, int slot) {
-        if (inv == outputSlot)
+        if (inv == outputSlot) {
             fillOutput();
+            meStorage.cache.markAsDirty();
+        }
     }
 
     @Override

@@ -61,16 +61,8 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     private final InterestManager<StackWatcher<IStorageWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final NetworkStorage storage;
-    /**
-     * Publicly exposed cached available stacks.
-     */
-    private final KeyCounter cachedAvailableStacks = new KeyCounter();
-    /**
-     * Private cached amounts, to ensure that we send correct change notifications even if
-     * {@link #cachedAvailableStacks} is modified by mistake.
-     */
+
     private final AEKeyMap<AEKey> cachedAvailableAmounts = new AEKeyMap<>();
-    private volatile boolean cachedStacksNeedUpdate = true;
     private boolean watcherUpdate = false;
 
     /**
@@ -86,23 +78,15 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     @Override
     public void onServerEndTick(MinecraftServer server) {
         if (watcherUpdate && server.getTickCount() % 10 == 0) {
-            updateCachedStacks();
+            storage.getAvailableStacks();
             if (!interestManager.isEmpty()) {
                 watcherUpdate();
             }
-        } else {
-            cachedStacksNeedUpdate = true;
         }
     }
 
-    private void updateCachedStacks() {
-        cachedStacksNeedUpdate = false;
-        cachedAvailableStacks.clear();
-        storage.getAvailableStacks(cachedAvailableStacks);
-        cachedAvailableStacks.removeEmptySubmaps();
-    }
-
     private void watcherUpdate() {
+        var cachedAvailableStacks = storage.getAvailableStacks();
         for (var it = cachedAvailableAmounts.iterator(); it.hasNext();) {
             var entry = it.next();
             var what = entry.getKey();
@@ -193,10 +177,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     @Override
     public KeyCounter getCachedInventory() {
-        if (cachedStacksNeedUpdate) {
-            updateCachedStacks();
-        }
-        return cachedAvailableStacks;
+        return storage.cache.getAvailableStacksCache();
     }
 
     @Override
@@ -241,7 +222,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     @Override
     public void invalidateCache() {
-        cachedStacksNeedUpdate = true;
+        storage.cache.invalidateCache();
     }
 
     @Override

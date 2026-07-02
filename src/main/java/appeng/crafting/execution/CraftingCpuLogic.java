@@ -50,7 +50,7 @@ public abstract class CraftingCpuLogic {
 
     protected boolean cantStoreItems = false;
 
-    protected long lastModifiedOnTick = TickHandler.instance().getCurrentTick();
+    protected long lastModifiedOnTick = TickHandler.INSTANCE.getCurrentTick();
 
     public CraftingCpuLogic(CraftingCPUCluster cluster) {
         this.cluster = cluster;

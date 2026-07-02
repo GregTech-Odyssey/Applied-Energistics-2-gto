@@ -160,7 +160,7 @@ public abstract class AppEngBase implements AppEng {
 
         modEventBus.addListener(this::registerTests);
 
-        TickHandler.instance().init();
+        TickHandler.INSTANCE.init();
 
         MinecraftForge.EVENT_BUS.addListener(this::onServerAboutToStart);
         MinecraftForge.EVENT_BUS.addListener(this::serverStopped);
@@ -238,7 +238,7 @@ public abstract class AppEngBase implements AppEng {
     }
 
     private void serverStopped(final ServerStoppedEvent event) {
-        TickHandler.instance().shutdown();
+        TickHandler.INSTANCE.shutdown();
     }
 
     public void registerCreativeTabs(Registry<CreativeModeTab> registry) {

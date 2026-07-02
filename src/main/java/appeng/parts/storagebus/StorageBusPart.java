@@ -109,7 +109,7 @@ public class StorageBusPart extends UpgradeablePart
      * cell-change notifications, we instead use a handler that will exist as long as this storage bus exists, while
      * changing the underlying inventory.
      */
-    private final StorageBusInventory handler = new StorageBusInventory(NullInventory.of());
+    private final StorageBusInventory handler = new StorageBusInventory(NullInventory.INSTANCE);
     @Nullable
     private Component handlerDescription;
     private final PartAdjacentApi<MEStorage> adjacentStorageAccessor;

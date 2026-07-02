@@ -125,8 +125,8 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     public CraftingService(IGrid grid, IStorageService storageGrid, IEnergyService energyGrid) {
         this.grid = grid;
         this.energyGrid = energyGrid;
-        this.lastProcessedCraftingLogicChangeTick = TickHandler.instance().getCurrentTick();
-        this.lastProcessedCraftableChangeTick = TickHandler.instance().getCurrentTick();
+        this.lastProcessedCraftingLogicChangeTick = TickHandler.INSTANCE.getCurrentTick();
+        this.lastProcessedCraftableChangeTick = TickHandler.INSTANCE.getCurrentTick();
 
         storageGrid.addGlobalStorageProvider(new CraftingServiceStorage(this));
     }

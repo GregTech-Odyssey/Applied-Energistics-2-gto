@@ -42,7 +42,7 @@ public record PostGridInitAction(BoundingBox bb,
 
                 if (gridNode == null || waitForActive && !gridNode.isActive()) {
                     if (--attempts > 0) {
-                        TickHandler.instance().addCallable(level, this);
+                        TickHandler.INSTANCE.addCallable(level, this);
                     } else {
                         throw new IllegalStateException("Couldn't access grid node @ " + pos);
                     }
@@ -51,7 +51,7 @@ public record PostGridInitAction(BoundingBox bb,
                 }
             }
         };
-        TickHandler.instance().addCallable(level, delayedAction);
+        TickHandler.INSTANCE.addCallable(level, delayedAction);
     }
 
     @Override

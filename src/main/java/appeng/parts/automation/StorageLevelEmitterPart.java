@@ -101,7 +101,7 @@ public class StorageLevelEmitterPart extends AbstractLevelEmitterPart
             } else { // either fuzzy upgrade or null filter
                 // When using a fuzzy upgrade or no filter at all, the level emitter will actively scan the grid
                 // We need to ensure we only do this once per tick in case any stack has changed.
-                long currentTick = TickHandler.instance().getCurrentTick();
+                long currentTick = TickHandler.INSTANCE.getCurrentTick();
                 if (currentTick != lastUpdateTick) {
                     lastUpdateTick = currentTick;
                     updateReportingValue(getGridNode().getGrid());
@@ -258,9 +258,8 @@ public class StorageLevelEmitterPart extends AbstractLevelEmitterPart
         } else if (isUpgradedWith(AEItems.FUZZY_CARD)) {
             this.lastReportedValue = 0;
             var fzMode = this.getConfigManager().getSetting(Settings.FUZZY_MODE);
-            var fuzzyList = stacks.findFuzzy(myStack, fzMode);
-            for (var st : fuzzyList) {
-                this.lastReportedValue += st.getLongValue();
+            for (var st : stacks.findFuzzyValue(myStack, fzMode)) {
+                this.lastReportedValue += st;
                 if (this.lastReportedValue > this.getReportingValue()) {
                     // Stop here, we have enough info!
                     break;

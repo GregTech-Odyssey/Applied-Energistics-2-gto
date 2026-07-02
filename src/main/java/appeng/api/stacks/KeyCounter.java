@@ -30,21 +30,45 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongCollection;
+import it.unimi.dsi.fastutil.longs.LongLists;
 import it.unimi.dsi.fastutil.objects.*;
 
 import appeng.api.config.FuzzyMode;
-import appeng.hooks.IUnique;
 
 /**
  * Associates a generic value of type T with AE keys and makes key/value pairs searchable with fuzzy mode semantics.
  */
 public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>> {
 
+    public static final KeyCounter EMPTY = new KeyCounter();
+
     private AEKeyMap<AEKey> map;
 
-    private Int2ObjectOpenHashMap<Object2LongOpenHashMap<AEKey>> fuzzyMap;
+    private Int2ObjectOpenHashMap<VariantCounter> fuzzyMap;
 
     private boolean fuzzyUpdate;
+
+    public KeyCounter() {
+    }
+
+    public KeyCounter(AEKeyMap<AEKey> map) {
+        this.map = map;
+    }
+
+    public static KeyCounter empty() {
+        EMPTY.map = null;
+        return EMPTY;
+    }
+
+    public KeyCounter copy() {
+        var copy = new KeyCounter();
+        var map = this.map;
+        if (map != null) {
+            copy.map = map.clone();
+        }
+        return copy;
+    }
 
     public AEKeyMap<AEKey> getMap() {
         if (map == null) {
@@ -61,32 +85,123 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         map.reference2LongEntrySet().fastForEach(consumer);
     }
 
-    public Collection<Object2LongMap.Entry<AEKey>> findFuzzy(AEKey key, FuzzyMode fuzzy) {
-        if (map == null) {
-            return Collections.emptyList();
-        }
-        if (key.getPrimaryKey() instanceof IUnique unique) {
-            if (fuzzyUpdate || fuzzyMap == null) {
-                fuzzyUpdate = false;
-                if (fuzzyMap == null) {
-                    fuzzyMap = new Int2ObjectOpenHashMap<>();
-                } else {
-                    fuzzyMap.values().forEach(Object2LongOpenHashMap::clear);
-                }
-                map.fastForEach((k, v) -> {
-                    if (k.getPrimaryKey() instanceof IUnique u) {
-                        fuzzyMap.computeIfAbsent(u.ae2$getUid(), _k -> new Object2LongOpenHashMap<>()).addTo(k, v);
+    public boolean containsFuzzy(AEKey key, FuzzyMode fuzzy) {
+        if (map != null) {
+            var uid = key.uid;
+            if (uid != 0) {
+                if (fuzzyUpdate || fuzzyMap == null) {
+                    fuzzyUpdate = false;
+                    if (fuzzyMap == null) {
+                        fuzzyMap = new Int2ObjectOpenHashMap<>();
+                    } else {
+                        fuzzyMap.values().forEach(VariantCounter::clear);
                     }
-                });
-            }
-            var map = fuzzyMap.get(unique.ae2$getUid());
-            if (map != null) {
-                return map.object2LongEntrySet();
+                    map.fastForEach((k, v) -> {
+                        if (k.uid != 0) {
+                            fuzzyMap.computeIfAbsent(k.uid, _k -> new VariantCounter()).add(k, v);
+                        }
+                    });
+                }
+                var map = fuzzyMap.get(uid);
+                if (map != null) {
+                    return map.containsFuzzy(key, fuzzy);
+                }
+            } else {
+                return map.getOrDefault(key, Long.MIN_VALUE) > Long.MIN_VALUE;
             }
         }
-        long value = map.getOrDefault(key, Long.MIN_VALUE);
-        if (value > Long.MIN_VALUE) {
-            return Collections.singleton(new Entry(value, key));
+        return false;
+    }
+
+    public Set<AEKey> findFuzzyKey(AEKey key, FuzzyMode fuzzy) {
+        if (map != null) {
+            var uid = key.uid;
+            if (uid != 0) {
+                if (fuzzyUpdate || fuzzyMap == null) {
+                    fuzzyUpdate = false;
+                    if (fuzzyMap == null) {
+                        fuzzyMap = new Int2ObjectOpenHashMap<>();
+                    } else {
+                        fuzzyMap.values().forEach(VariantCounter::clear);
+                    }
+                    map.fastForEach((k, v) -> {
+                        if (k.uid != 0) {
+                            fuzzyMap.computeIfAbsent(k.uid, _k -> new VariantCounter()).add(k, v);
+                        }
+                    });
+                }
+                var map = fuzzyMap.get(uid);
+                if (map != null) {
+                    return map.findFuzzyKey(key, fuzzy);
+                }
+            } else {
+                long value = map.getOrDefault(key, Long.MIN_VALUE);
+                if (value > Long.MIN_VALUE) {
+                    return Collections.singleton(key);
+                }
+            }
+        }
+        return Collections.emptySet();
+    }
+
+    public LongCollection findFuzzyValue(AEKey key, FuzzyMode fuzzy) {
+        if (map != null) {
+            var uid = key.uid;
+            if (uid != 0) {
+                if (fuzzyUpdate || fuzzyMap == null) {
+                    fuzzyUpdate = false;
+                    if (fuzzyMap == null) {
+                        fuzzyMap = new Int2ObjectOpenHashMap<>();
+                    } else {
+                        fuzzyMap.values().forEach(VariantCounter::clear);
+                    }
+                    map.fastForEach((k, v) -> {
+                        if (k.uid != 0) {
+                            fuzzyMap.computeIfAbsent(k.uid, _k -> new VariantCounter()).add(k, v);
+                        }
+                    });
+                }
+                var map = fuzzyMap.get(uid);
+                if (map != null) {
+                    return map.findFuzzyValue(key, fuzzy);
+                }
+            } else {
+                long value = map.getOrDefault(key, Long.MIN_VALUE);
+                if (value > Long.MIN_VALUE) {
+                    return LongLists.singleton(value);
+                }
+            }
+        }
+        return LongLists.EMPTY_LIST;
+    }
+
+    public Collection<Object2LongMap.Entry<AEKey>> findFuzzy(AEKey key, FuzzyMode fuzzy) {
+        if (map != null) {
+            var uid = key.uid;
+            if (uid != 0) {
+                if (fuzzyUpdate || fuzzyMap == null) {
+                    fuzzyUpdate = false;
+                    if (fuzzyMap == null) {
+                        fuzzyMap = new Int2ObjectOpenHashMap<>();
+                    } else {
+                        fuzzyMap.values().forEach(VariantCounter::clear);
+                    }
+                    map.fastForEach((k, v) -> {
+                        if (k.uid != 0) {
+                            fuzzyMap.computeIfAbsent(k.uid, _k -> new VariantCounter()).add(k, v);
+                        }
+                    });
+                }
+                var map = fuzzyMap.get(uid);
+                if (map != null) {
+                    return map.findFuzzy(key, fuzzy);
+                }
+            } else {
+                long value = map.getOrDefault(key, Long.MIN_VALUE);
+                if (value > Long.MIN_VALUE) {
+                    return Collections.singleton(new Entry(value, key));
+                }
+            }
         }
         return Collections.emptyList();
     }
@@ -108,8 +223,8 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     }
 
     public void addAll(KeyCounter other) {
-        var m = other.getMap();
-        if (m.isEmpty()) {
+        var m = other.map;
+        if (m == null || m.isEmpty()) {
             return;
         }
         if (map == null) {
@@ -121,8 +236,8 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     }
 
     public void removeAll(KeyCounter other) {
-        var m = other.getMap();
-        if (m.isEmpty()) {
+        var m = other.map;
+        if (m == null || m.isEmpty()) {
             return;
         }
         var size = m.size();
@@ -305,12 +420,12 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         fuzzyUpdate = true;
     }
 
-    private static final class Entry implements Object2LongMap.Entry<AEKey> {
+    public static final class Entry implements Object2LongMap.Entry<AEKey> {
 
         private final long value;
         private final AEKey key;
 
-        private Entry(long value, AEKey key) {
+        public Entry(long value, AEKey key) {
             this.value = value;
             this.key = key;
         }

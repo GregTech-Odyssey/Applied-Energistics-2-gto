@@ -29,9 +29,17 @@ import appeng.api.storage.MEStorage;
 
 class CondenserMEStorage implements MEStorage {
     private final CondenserBlockEntity target;
+    final AvailableStacksCache cache;
 
     CondenserMEStorage(CondenserBlockEntity te) {
         this.target = te;
+        this.cache = new AvailableStacksCache(out -> {
+            var stack = this.target.getOutputSlot().getStackInSlot(0);
+            if (!stack.isEmpty()) {
+                out.add(AEItemKey.of(stack), stack.getCount());
+            }
+        });
+        this.cache.setTickUpdate(false);
     }
 
     @Override
@@ -59,10 +67,12 @@ class CondenserMEStorage implements MEStorage {
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        var stack = this.target.getOutputSlot().getStackInSlot(0);
-        if (!stack.isEmpty()) {
-            out.add(AEItemKey.of(stack), stack.getCount());
-        }
+        out.addAll(cache.getAvailableStacksCache());
+    }
+
+    @Override
+    public KeyCounter getAvailableStacks() {
+        return cache.getAvailableStacksCache();
     }
 
     @Override

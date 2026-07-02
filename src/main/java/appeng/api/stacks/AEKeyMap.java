@@ -47,6 +47,12 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         map.object2LongEntrySet().fastForEach(e -> set(e.getKey(), e.getLongValue()));
     }
 
+    @SuppressWarnings("all")
+    @UnmodifiableView
+    public static <T extends AEKey> AEKeyMap<T> empty() {
+        return (AEKeyMap<T>) EMPTY;
+    }
+
     @Override
     public @NotNull Iterator<Entry<K>> iterator() {
         return reference2LongEntrySet().fastIterator();
@@ -378,7 +384,7 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
 
     public void putAll(AEKeyMap<K> map) {
         this.ensureCapacity(map.size);
-        map.fastForEach(this::put);
+        map.fastForEach(this::set);
     }
 
     public void addAll(AEKeyMap<K> map) {

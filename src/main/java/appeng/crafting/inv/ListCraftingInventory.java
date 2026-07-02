@@ -18,10 +18,6 @@
 
 package appeng.crafting.inv;
 
-import java.util.Map;
-
-import com.google.common.collect.Iterables;
-
 import net.minecraft.nbt.ListTag;
 
 import appeng.api.config.Actionable;
@@ -68,7 +64,7 @@ public class ListCraftingInventory implements ICraftingInventory {
 
     @Override
     public Iterable<AEKey> findFuzzyTemplates(AEKey what) {
-        return Iterables.transform(list.findFuzzy(what, FuzzyMode.IGNORE_ALL), Map.Entry::getKey);
+        return list.findFuzzyKey(what, FuzzyMode.IGNORE_ALL);
     }
 
     public void clear() {

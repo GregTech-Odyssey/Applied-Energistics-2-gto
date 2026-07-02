@@ -40,7 +40,7 @@ import appeng.core.localization.GuiText;
 /**
  * Manages all available {@link MEStorage} on the network.
  */
-public class NetworkStorage implements MEStorage {
+public final class NetworkStorage implements MEStorage {
 
     // This flag prevents both concurrent modifications of the mounted storage while
     // they're being iterated, and recursive extract/insert/list operations.
@@ -55,12 +55,27 @@ public class NetworkStorage implements MEStorage {
     // Is only non-null if something is queued
     @Nullable
     private ArrayList<QueuedOperation> queuedOperations;
+    public final AvailableStacksCache cache;
 
     public NetworkStorage() {
         this.priorityInventory = new ObjectArrayList<>();
         this.storages = new Reference2ReferenceOpenHashMap<>();
         this.storages.defaultReturnValue(NetworkStorage.class);
         this.identities = new ReferenceOpenHashSet<>();
+        this.cache = new AvailableStacksCache(out -> {
+            if (getInUse) {
+                return;
+            }
+            getInUse = true;
+            try {
+                if (priorityInventory.isEmpty()) {
+                    return;
+                }
+                priorityInventory.forEach(entry -> entry.storage.getAvailableStacks(out));
+            } finally {
+                getInUse = false;
+            }
+        });
     }
 
     public void mount(int priority, MEStorage inventory) {
@@ -117,12 +132,6 @@ public class NetworkStorage implements MEStorage {
                 inventory.onUnmount(this);
             }
         }
-    }
-
-    @Nullable
-    @Override
-    public Object getResourceIdentity() {
-        return identities;
     }
 
     @Override
@@ -199,18 +208,12 @@ public class NetworkStorage implements MEStorage {
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        if (getInUse) {
-            return;
-        }
-        getInUse = true;
-        try {
-            if (priorityInventory.isEmpty()) {
-                return;
-            }
-            priorityInventory.forEach(entry -> entry.storage.getAvailableStacks(out));
-        } finally {
-            getInUse = false;
-        }
+        out.addAll(cache.getAvailableStacksCache());
+    }
+
+    @Override
+    public KeyCounter getAvailableStacks() {
+        return cache.getAvailableStacksCache();
     }
 
     @Override

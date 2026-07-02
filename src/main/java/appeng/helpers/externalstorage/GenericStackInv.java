@@ -56,6 +56,7 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
     private AEKeyFilter filter;
     protected final Mode mode;
     private Component description = Component.empty();
+    private final AvailableStacksCache cache;
 
     public enum Mode {
         CONFIG_TYPES,
@@ -71,6 +72,14 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
         this.stacks = new GenericStack[size];
         this.listener = listener;
         this.mode = mode;
+        this.cache = new AvailableStacksCache(out -> {
+            for (var stack : stacks) {
+                if (stack != null) {
+                    out.add(stack.what(), stack.amount());
+                }
+            }
+        });
+        this.cache.setTickUpdate(false);
     }
 
     protected void setFilter(@Nullable AEKeyFilter filter) {
@@ -234,6 +243,7 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
         } else {
             onChangeSuppressed = true;
         }
+        cache.markAsDirty();
     }
 
     protected void notifyListener() {
@@ -414,11 +424,12 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        for (var stack : stacks) {
-            if (stack != null) {
-                out.add(stack.what(), stack.amount());
-            }
-        }
+        out.addAll(cache.getAvailableStacksCache());
+    }
+
+    @Override
+    public KeyCounter getAvailableStacks() {
+        return cache.getAvailableStacksCache();
     }
 
     @Override

@@ -28,7 +28,7 @@ import appeng.me.Grid;
 /**
  * A class to hold data related to ticking networks.
  */
-class ServerGridRepo {
+final class ServerGridRepo {
     final ObjectArrayList<Grid> networks = new ObjectArrayList<>();
     private final ReferenceOpenHashSet<Grid> toAdd = new ReferenceOpenHashSet<>();
     private final ReferenceOpenHashSet<Grid> toRemove = new ReferenceOpenHashSet<>();

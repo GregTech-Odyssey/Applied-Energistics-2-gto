@@ -39,4 +39,9 @@ public class DefaultPriorityList implements IPartitionList {
     public Iterable<AEKey> getItems() {
         return Collections.emptyList();
     }
+
+    @Override
+    public boolean isStrict() {
+        return true;
+    }
 }

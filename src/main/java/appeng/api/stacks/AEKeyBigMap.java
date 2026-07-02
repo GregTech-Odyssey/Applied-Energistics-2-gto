@@ -35,12 +35,12 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
 
     public AEKeyBigMap(AEKeyBigMap<K> map) {
         super(map.size, DEFAULT_LOAD_FACTOR);
-        map.fastForEach(this::put);
+        map.fastForEach(this::set);
     }
 
     public AEKeyBigMap(Reference2ReferenceOpenHashMap<K, BigInteger> map) {
         super(map.size(), DEFAULT_LOAD_FACTOR);
-        map.reference2ReferenceEntrySet().fastForEach(e -> put(e.getKey(), e.getValue()));
+        map.reference2ReferenceEntrySet().fastForEach(e -> set(e.getKey(), e.getValue()));
     }
 
     @Override
@@ -390,7 +390,7 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
 
     public void putAll(AEKeyBigMap<K> map) {
         this.ensureCapacity(map.size);
-        map.fastForEach(this::put);
+        map.fastForEach(this::set);
     }
 
     public void addAll(AEKeyBigMap<K> map) {

@@ -155,7 +155,7 @@ public class MEP2PTunnelPart extends P2PTunnelPart<MEP2PTunnelPart> implements I
             pendingUpdate = ConnectionUpdate.CONNECT;
         }
 
-        TickHandler.instance().addCallable(getLevel(), this::updateConnections);
+        TickHandler.INSTANCE.addCallable(getLevel(), this::updateConnections);
         return TickRateModulation.SLEEP;
     }
 

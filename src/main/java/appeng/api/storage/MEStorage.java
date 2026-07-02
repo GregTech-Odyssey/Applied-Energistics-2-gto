@@ -24,6 +24,7 @@
 package appeng.api.storage;
 
 import java.util.Objects;
+import java.util.function.Consumer;
 
 import com.google.common.base.Preconditions;
 
@@ -39,6 +40,7 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.hooks.ticking.TickHandler;
 import appeng.me.storage.NetworkStorage;
 
 /**
@@ -121,11 +123,6 @@ public interface MEStorage {
     }
 
     /**
-     * @return The type of storage represented by this object.
-     */
-    Component getDescription();
-
-    /**
      * request a full report of all available items, storage.
      *
      * @return a new list of this inventories content
@@ -135,6 +132,11 @@ public interface MEStorage {
         getAvailableStacks(result);
         return result;
     }
+
+    /**
+     * @return The type of storage represented by this object.
+     */
+    Component getDescription();
 
     default void onMount(NetworkStorage parent) {
 
@@ -159,6 +161,58 @@ public interface MEStorage {
         Objects.requireNonNull(mode, "Cannot pass a null mode");
         Objects.requireNonNull(source, "Cannot pass a null source");
         Preconditions.checkArgument(amount >= 0, "Cannot pass a negative amount");
+    }
+
+    final class AvailableStacksCache {
+
+        private long lastTick;
+        private boolean tickUpdate = true;
+        private boolean needUpdate = true;
+
+        private KeyCounter keyCounter;
+        private Consumer<KeyCounter> adder;
+
+        public AvailableStacksCache() {
+        }
+
+        public AvailableStacksCache(Consumer<KeyCounter> adder) {
+            this.adder = adder;
+        }
+
+        public void setAdder(Consumer<KeyCounter> adder) {
+            this.adder = adder;
+        }
+
+        public void setTickUpdate(boolean tickUpdate) {
+            this.tickUpdate = tickUpdate;
+        }
+
+        public void markAsDirty() {
+            needUpdate = true;
+        }
+
+        public void invalidateCache() {
+            needUpdate = true;
+            lastTick = 0;
+        }
+
+        public KeyCounter getAvailableStacksCache() {
+            var counter = keyCounter;
+            if (needUpdate || tickUpdate) {
+                var tick = TickHandler.INSTANCE.tickCounter;
+                if (tick != lastTick) {
+                    needUpdate = false;
+                    lastTick = tick;
+                    if (counter == null) {
+                        keyCounter = counter = new KeyCounter();
+                    } else {
+                        counter.clear();
+                    }
+                    adder.accept(counter);
+                }
+            }
+            return counter;
+        }
     }
 
 }

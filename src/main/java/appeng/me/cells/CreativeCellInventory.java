@@ -36,6 +36,7 @@ import appeng.items.contents.CellConfig;
 class CreativeCellInventory implements StorageCell {
     private final Set<AEKey> configured;
     private final ItemStack stack;
+    private final AvailableStacksCache cache;
 
     protected CreativeCellInventory(ItemStack o) {
         this.configured = new ReferenceOpenHashSet<>();
@@ -43,6 +44,12 @@ class CreativeCellInventory implements StorageCell {
 
         var cc = CellConfig.create(o);
         configured.addAll(cc.keySet());
+        this.cache = new AvailableStacksCache(out -> {
+            for (AEKey key : this.configured) {
+                out.add(key, Integer.MAX_VALUE);
+            }
+        });
+        this.cache.setTickUpdate(false);
     }
 
     @Override
@@ -57,9 +64,12 @@ class CreativeCellInventory implements StorageCell {
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        for (AEKey key : this.configured) {
-            out.add(key, Integer.MAX_VALUE);
-        }
+        out.addAll(cache.getAvailableStacksCache());
+    }
+
+    @Override
+    public KeyCounter getAvailableStacks() {
+        return cache.getAvailableStacksCache();
     }
 
     @Override

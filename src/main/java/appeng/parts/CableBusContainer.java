@@ -1086,7 +1086,7 @@ public class CableBusContainer implements AEMultiBlockEntity, ICableBusContainer
         // Update the shape of the neighbor asynchronously (i.e. for walls)
         var be = getBlockEntity();
         if (be != null && be.getLevel() != null && !be.getLevel().isClientSide()) {
-            TickHandler.instance().addCallable(be.getLevel(), level -> {
+            TickHandler.INSTANCE.addCallable(be.getLevel(), level -> {
                 if (!be.isRemoved()) {
                     var ourPos = be.getBlockPos();
                     var neighborPos = ourPos.relative(side);

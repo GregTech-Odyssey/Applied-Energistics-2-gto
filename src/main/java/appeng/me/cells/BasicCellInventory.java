@@ -70,6 +70,7 @@ public class BasicCellInventory implements StorageCell {
     private final long maxItemsPerType; // max items per type, basically infinite unless there is a distribution card.
     private final boolean hasVoidUpgrade;
     private boolean isPersisted = true;
+    private final AvailableStacksCache cache;
 
     private BasicCellInventory(IBasicCellItem cellType, ItemStack o, ISaveProvider container) {
         this.i = o;
@@ -123,6 +124,23 @@ public class BasicCellInventory implements StorageCell {
         }
 
         this.hasVoidUpgrade = upgrades.isInstalled(AEItems.VOID_CARD);
+        this.cache = new AvailableStacksCache(this::addAvailableStacks);
+    }
+
+    private void addAvailableStacks(KeyCounter out) {
+        for (var entry : Object2LongMaps.fastIterable(this.getCellItems())) {
+            out.add(entry.getKey(), entry.getLongValue());
+        }
+    }
+
+    @Override
+    public void getAvailableStacks(KeyCounter out) {
+        out.addAll(cache.getAvailableStacksCache());
+    }
+
+    @Override
+    public KeyCounter getAvailableStacks() {
+        return cache.getAvailableStacksCache();
     }
 
     public IncludeExclude getPartitionListMode() {
@@ -268,13 +286,6 @@ public class BasicCellInventory implements StorageCell {
 
         if (corruptedTag) {
             this.saveChanges();
-        }
-    }
-
-    @Override
-    public void getAvailableStacks(KeyCounter out) {
-        for (var entry : Object2LongMaps.fastIterable(this.getCellItems())) {
-            out.add(entry.getKey(), entry.getLongValue());
         }
     }
 

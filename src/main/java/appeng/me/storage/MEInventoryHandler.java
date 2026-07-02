@@ -39,8 +39,48 @@ public class MEInventoryHandler extends DelegatingMEInventory {
 
     private boolean gettingAvailableContent = false;
 
+    private final AvailableStacksCache cache;
+
     public MEInventoryHandler(MEStorage inventory) {
         super(inventory);
+        this.cache = new AvailableStacksCache(out -> {
+            if (!this.allowExtraction || this.gettingAvailableContent) {
+                // Prevent recursion in case the internal inventory somehow calls this when the available items are
+                // queried.
+                // This is handled by the NetworkInventoryHandler when the initial query is coming from the network.
+                // However, this function might be called from the storage bus code directly,
+                // so we have to do this check manually.
+                return;
+            }
+
+            this.gettingAvailableContent = true;
+            try {
+                var list = this.partitionList;
+                if (!this.filterAvailableContents || list.isEmpty()) {
+                    super.getAvailableStacks(out);
+                } else {
+                    var mode = this.partitionListMode;
+                    var all = getDelegate().getAvailableStacks();
+                    if (mode == IncludeExclude.WHITELIST && list.isStrict() && list.size() < all.size()) {
+                        for (var key : list.getItems()) {
+                            var entry = all.get(key);
+                            if (entry > 0) {
+                                out.add(key, entry);
+                            }
+                        }
+                    } else {
+                        for (var entry : all) {
+                            var key = entry.getKey();
+                            if (list.matchesFilter(key, mode)) {
+                                out.add(entry.getKey(), entry.getLongValue());
+                            }
+                        }
+                    }
+                }
+            } finally {
+                this.gettingAvailableContent = false;
+            }
+        });
     }
 
     public void setAllowExtraction(boolean allowExtraction) {
@@ -88,7 +128,7 @@ public class MEInventoryHandler extends DelegatingMEInventory {
 
     @Override
     public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-        if (this.filterOnExtraction && !canExtract(what)) {
+        if (this.filterOnExtraction && !allowExtraction || !passesBlackOrWhitelist(what)) {
             return 0;
         }
 
@@ -97,32 +137,12 @@ public class MEInventoryHandler extends DelegatingMEInventory {
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        if (this.gettingAvailableContent) {
-            // Prevent recursion in case the internal inventory somehow calls this when the available items are queried.
-            // This is handled by the NetworkInventoryHandler when the initial query is coming from the network.
-            // However, this function might be called from the storage bus code directly,
-            // so we have to do this check manually.
-            return;
-        }
+        out.addAll(cache.getAvailableStacksCache());
+    }
 
-        this.gettingAvailableContent = true;
-        try {
-            if (!this.filterAvailableContents) {
-                super.getAvailableStacks(out);
-            } else {
-                if (!this.allowExtraction) {
-                    return;
-                }
-
-                for (var entry : getDelegate().getAvailableStacks()) {
-                    if (canExtract(entry.getKey())) {
-                        out.add(entry.getKey(), entry.getLongValue());
-                    }
-                }
-            }
-        } finally {
-            this.gettingAvailableContent = false;
-        }
+    @Override
+    public KeyCounter getAvailableStacks() {
+        return cache.getAvailableStacksCache();
     }
 
     @Override

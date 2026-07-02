@@ -43,7 +43,7 @@ public class NetworkCraftingProviders {
     private final Set<AEKey> craftableKeys = craftableItems.keySet();
     private final Set<AEKey> emittableKeys = emitableItems.keySet();
 
-    private long lastModifiedOnTick = TickHandler.instance().getCurrentTick();
+    private long lastModifiedOnTick = TickHandler.INSTANCE.getCurrentTick();
 
     public void addProvider(IGridNode node) {
         var provider = node.getService(ICraftingProvider.class);
@@ -106,9 +106,9 @@ public class NetworkCraftingProviders {
 
     @Nullable
     public AEKey getFuzzyCraftable(AEKey whatToCraft, AEKeyFilter filter) {
-        for (var fuzzy : craftableItemsList.findFuzzy(whatToCraft, FuzzyMode.IGNORE_ALL)) {
-            if (filter.matches(fuzzy.getKey())) {
-                return fuzzy.getKey();
+        for (var fuzzy : craftableItemsList.findFuzzyKey(whatToCraft, FuzzyMode.IGNORE_ALL)) {
+            if (filter.matches(fuzzy)) {
+                return fuzzy;
             }
         }
         return null;
@@ -228,7 +228,7 @@ public class NetworkCraftingProviders {
     }
 
     private void setLastModifiedOnTick() {
-        lastModifiedOnTick = TickHandler.instance().getCurrentTick();
+        lastModifiedOnTick = TickHandler.INSTANCE.getCurrentTick();
     }
 
     /**

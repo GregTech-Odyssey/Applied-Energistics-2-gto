@@ -158,7 +158,7 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
     public void onTunnelNetworkChange() {
         // This might be invoked while the network is being unloaded and we don't want to send a block update then, so
         // we delay it until the next tick.
-        TickHandler.instance().addCallable(getLevel(), () -> {
+        TickHandler.INSTANCE.addCallable(getLevel(), () -> {
             if (getMainNode().isReady()) { // Check that the p2p tunnel is still there.
                 sendBlockUpdate();
             }

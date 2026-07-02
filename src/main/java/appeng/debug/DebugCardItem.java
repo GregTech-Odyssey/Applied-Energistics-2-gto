@@ -71,7 +71,7 @@ public class DebugCardItem extends AEBaseItem {
             int grids = 0;
 
             var stats = new StatsAccumulator();
-            for (Grid g : TickHandler.instance().getGridList()) {
+            for (Grid g : TickHandler.INSTANCE.getGridList()) {
                 grids++;
                 stats.add(g.size());
             }
@@ -88,7 +88,7 @@ public class DebugCardItem extends AEBaseItem {
             outputMessage(player, "Ticking", ChatFormatting.BOLD);
             this.outputSecondaryMessage(player, "Current Tick: ",
                     Long.toString(TickHandler.instance().getCurrentTick()));
-            for (var line : TickHandler.instance().getBlockEntityReport()) {
+            for (var line : TickHandler.INSTANCE.getBlockEntityReport()) {
                 player.sendSystemMessage(line);
             }
         }

@@ -397,7 +397,7 @@ public class AEBaseBlockEntity extends BlockEntity
         } else {
             this.level.blockEntityChanged(this.worldPosition);
             if (!this.setChangedQueued) {
-                TickHandler.instance().addCallable(null, this::setChangedAtEndOfTick);
+                TickHandler.INSTANCE.addCallable(null, this::setChangedAtEndOfTick);
                 this.setChangedQueued = true;
             }
         }

@@ -74,7 +74,7 @@ public final class GridHelper {
      * Client side this can be safely called, it will do nothing.
      */
     public static <T extends BlockEntity> void onFirstTick(T blockEntity, Consumer<? super T> callback) {
-        TickHandler.instance().addInit(blockEntity, callback);
+        TickHandler.INSTANCE.addInit(blockEntity, callback);
     }
 
     /**

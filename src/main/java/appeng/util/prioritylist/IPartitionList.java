@@ -26,11 +26,20 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
 
 public interface IPartitionList {
+
     boolean isListed(AEKey input);
 
     boolean isEmpty();
 
     Iterable<AEKey> getItems();
+
+    default int size() {
+        return 0;
+    }
+
+    default boolean isStrict() {
+        return false;
+    }
 
     /**
      * Checks if the given stack matches this partition list assuming a given WHITELIST/BLACKLIST mode.

@@ -73,7 +73,7 @@ public class Grid implements IGrid {
     public static Grid create(GridNode center) {
         Grid grid = new Grid(center);
 
-        TickHandler.instance().addNetwork(grid);
+        TickHandler.INSTANCE.addNetwork(grid);
         center.setGrid(grid);
 
         AELog.grid("Created grid %s with center %s", grid, center);
@@ -109,7 +109,7 @@ public class Grid implements IGrid {
                 this.pivot = (GridNode) nodesIt.next();
             } else {
                 this.pivot = null;
-                TickHandler.instance().removeNetwork(this);
+                TickHandler.INSTANCE.removeNetwork(this);
 
                 AELog.grid("Removed grid %s", this);
             }

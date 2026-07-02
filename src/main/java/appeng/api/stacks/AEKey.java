@@ -19,6 +19,7 @@ import it.unimi.dsi.fastutil.HashCommon;
 
 import appeng.api.config.FuzzyMode;
 import appeng.core.AELog;
+import appeng.hooks.IUnique;
 
 /**
  * Uniquely identifies something that "stacks" within an ME inventory.
@@ -42,6 +43,7 @@ public abstract class AEKey {
     private volatile Component cachedDisplayName;
     private final int hashCode = System.identityHashCode(this);
     public final int mix = HashCommon.mix(hashCode);
+    public final int uid = getPrimaryKey() instanceof IUnique unique ? unique.ae2$getUid() : 0;
 
     @Nullable
     public static AEKey fromTagGeneric(CompoundTag tag) {
@@ -195,17 +197,17 @@ public abstract class AEKey {
             return false;
         }
 
-        // If the type doesn't support fuzzy range search, it always behaves like IGNORE_ALL, which just ignores NBT
-        if (!supportsFuzzyRangeSearch()) {
-            return true;
-        } else if (fuzzyMode == FuzzyMode.IGNORE_ALL) {
+        return fuzzyModeEquals(other, fuzzyMode);
+    }
+
+    public final boolean fuzzyModeEquals(AEKey other, FuzzyMode fuzzyMode) {
+        if (fuzzyMode == FuzzyMode.IGNORE_ALL || !supportsFuzzyRangeSearch()) {
             return true;
         } else if (fuzzyMode == FuzzyMode.PERCENT_99) {
             return getFuzzySearchValue() > 0 == other.getFuzzySearchValue() > 0;
         } else {
             final float percentA = (float) getFuzzySearchValue() / getFuzzySearchMaxValue();
             final float percentB = (float) other.getFuzzySearchValue() / other.getFuzzySearchMaxValue();
-
             return percentA > fuzzyMode.breakPoint == percentB > fuzzyMode.breakPoint;
         }
     }

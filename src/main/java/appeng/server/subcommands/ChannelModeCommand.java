@@ -45,7 +45,7 @@ public class ChannelModeCommand implements ISubCommand {
         AEConfig.instance().save();
 
         var gridCount = 0;
-        for (Grid grid : TickHandler.instance().getGridList()) {
+        for (Grid grid : TickHandler.INSTANCE.getGridList()) {
             grid.getPathingService().repath();
             gridCount++;
         }

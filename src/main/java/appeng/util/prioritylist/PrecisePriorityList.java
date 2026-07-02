@@ -18,12 +18,15 @@
 
 package appeng.util.prioritylist;
 
+import org.jetbrains.annotations.UnmodifiableView;
+
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyMap;
 import appeng.api.stacks.KeyCounter;
 
 public class PrecisePriorityList implements IPartitionList {
 
+    @UnmodifiableView
     private final AEKeyMap<AEKey> list;
 
     public PrecisePriorityList(KeyCounter in) {
@@ -43,5 +46,15 @@ public class PrecisePriorityList implements IPartitionList {
     @Override
     public Iterable<AEKey> getItems() {
         return this.list.keySet();
+    }
+
+    @Override
+    public int size() {
+        return list.size();
+    }
+
+    @Override
+    public boolean isStrict() {
+        return true;
     }
 }

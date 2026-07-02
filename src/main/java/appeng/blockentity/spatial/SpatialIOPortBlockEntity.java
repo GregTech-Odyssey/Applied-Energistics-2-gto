@@ -127,7 +127,7 @@ public class SpatialIOPortBlockEntity extends AENetworkInvBlockEntity {
             final ItemStack cell = this.inv.getStackInSlot(0);
             if (this.isSpatialCell(cell)) {
                 // this needs to be cross world synced.
-                TickHandler.instance().addCallable(null, transitionCallback);
+                TickHandler.INSTANCE.addCallable(null, transitionCallback);
             }
         }
     }

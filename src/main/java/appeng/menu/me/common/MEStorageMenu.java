@@ -297,7 +297,7 @@ public class MEStorageMenu extends AEBaseMenu
                 }
 
                 previousCraftables = craftables;
-                previousAvailableStacks = availableStacks;
+                previousAvailableStacks = availableStacks.copy();
 
                 this.updatePowerStatus();
             }

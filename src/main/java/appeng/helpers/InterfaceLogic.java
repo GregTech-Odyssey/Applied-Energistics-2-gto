@@ -481,10 +481,10 @@ public class InterfaceLogic
             // Try a fuzzy import from network instead if we don't have stacks in stock yet
             if (storage.getStack(slot) == null && upgrades.isInstalled(AEItems.FUZZY_CARD)) {
                 FuzzyMode fuzzyMode = getConfigManager().getSetting(Settings.FUZZY_MODE);
-                for (var entry : grid.getStorageService().getCachedInventory().findFuzzy(what, fuzzyMode)) {
+                for (var entry : grid.getStorageService().getCachedInventory().findFuzzyKey(what, fuzzyMode)) {
                     // Simulate insertion first in case the stack size is different
-                    long maxAmount = storage.insert(slot, entry.getKey(), amount, Actionable.SIMULATE);
-                    if (acquireFromNetwork(energySrc, networkInv, slot, entry.getKey(), maxAmount)) {
+                    long maxAmount = storage.insert(slot, entry, amount, Actionable.SIMULATE);
+                    if (acquireFromNetwork(energySrc, networkInv, slot, entry, maxAmount)) {
                         return true;
                     }
                 }
