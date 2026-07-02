@@ -48,15 +48,15 @@ import appeng.util.ConfigMenuInventory;
 
 public class GenericStackInv implements MEStorage, GenericInternalInventory {
     protected final GenericStack[] stacks;
-    private final Runnable listener;
-    private boolean suppressOnChange;
-    private boolean onChangeSuppressed;
-    private final Reference2LongMap<AEKeyType> capacities = new Reference2LongArrayMap<>();
+    protected final Runnable listener;
+    protected boolean suppressOnChange;
+    protected boolean onChangeSuppressed;
+    protected final Reference2LongMap<AEKeyType> capacities = new Reference2LongArrayMap<>();
     @org.jetbrains.annotations.Nullable
-    private AEKeyFilter filter;
+    protected AEKeyFilter filter;
     protected final Mode mode;
-    private Component description = Component.empty();
-    private final AvailableStacksCache cache;
+    protected Component description = Component.empty();
+    protected final AvailableStacksCache cache;
 
     public enum Mode {
         CONFIG_TYPES,

@@ -29,17 +29,17 @@ import appeng.util.prioritylist.IPartitionList;
 
 public class MEInventoryHandler extends DelegatingMEInventory {
 
-    private IPartitionList partitionList = DefaultPriorityList.INSTANCE;
-    private IncludeExclude partitionListMode = IncludeExclude.WHITELIST;
-    private boolean filterOnExtraction;
-    private boolean filterAvailableContents;
-    private boolean allowExtraction = true;
-    private boolean allowInsertion = true;
-    private boolean voidOverflow;
+    protected IPartitionList partitionList = DefaultPriorityList.INSTANCE;
+    protected IncludeExclude partitionListMode = IncludeExclude.WHITELIST;
+    protected boolean filterOnExtraction;
+    protected boolean filterAvailableContents;
+    protected boolean allowExtraction = true;
+    protected boolean allowInsertion = true;
+    protected boolean voidOverflow;
 
-    private boolean gettingAvailableContent = false;
+    protected boolean gettingAvailableContent = false;
 
-    private final AvailableStacksCache cache;
+    protected final AvailableStacksCache cache;
 
     public MEInventoryHandler(MEStorage inventory) {
         super(inventory);
