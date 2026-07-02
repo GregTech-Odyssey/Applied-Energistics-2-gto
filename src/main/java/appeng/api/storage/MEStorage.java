@@ -165,7 +165,7 @@ public interface MEStorage {
 
     final class AvailableStacksCache {
 
-        private long lastTick;
+        private long lastTick = -1;
         private boolean tickUpdate = true;
         private boolean needUpdate = true;
 
