@@ -62,20 +62,7 @@ public final class NetworkStorage implements MEStorage {
         this.storages = new Reference2ReferenceOpenHashMap<>();
         this.storages.defaultReturnValue(NetworkStorage.class);
         this.identities = new ReferenceOpenHashSet<>();
-        this.cache = new AvailableStacksCache(out -> {
-            if (getInUse) {
-                return;
-            }
-            getInUse = true;
-            try {
-                if (priorityInventory.isEmpty()) {
-                    return;
-                }
-                priorityInventory.forEach(entry -> entry.storage.getAvailableStacks(out));
-            } finally {
-                getInUse = false;
-            }
-        });
+        this.cache = new AvailableStacksCache(this::getAvailableStacks);
     }
 
     public void mount(int priority, MEStorage inventory) {
@@ -208,7 +195,18 @@ public final class NetworkStorage implements MEStorage {
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        out.addAll(cache.getAvailableStacksCache());
+        if (getInUse) {
+            return;
+        }
+        getInUse = true;
+        try {
+            if (priorityInventory.isEmpty()) {
+                return;
+            }
+            priorityInventory.forEach(entry -> entry.storage.getAvailableStacks(out));
+        } finally {
+            getInUse = false;
+        }
     }
 
     @Override
