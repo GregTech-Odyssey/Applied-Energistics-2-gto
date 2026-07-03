@@ -99,7 +99,7 @@ public class ThroughputCounter {
         if (k.immutableView == null) {
             k.captureImmutableView();
         }
-        buf.writeInt(k.immutableView.map.size());
+        buf.writeVarInt(k.immutableView.map.size());
         for (var entry : k.immutableView.map) {
             AEKey.writeKey(buf, entry.getKey());
             buf.writeVarLong(entry.getLongValue());
@@ -114,7 +114,7 @@ public class ThroughputCounter {
             return EMPTY;
         }
         var ret = new ThroughputCounter();
-        int size = buf.readInt();
+        int size = buf.readVarInt();
         for (int i = 0; i < size; i++) {
             var key = AEKey.readKey(buf);
             var value = buf.readVarLong();

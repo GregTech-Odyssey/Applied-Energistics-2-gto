@@ -61,6 +61,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     private final InterestManager<StackWatcher<IStorageWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final NetworkStorage storage;
+    public final MEStorage.AvailableStacksCache cache;
 
     private final AEKeyMap<AEKey> cachedAvailableAmounts = new AEKeyMap<>();
     private boolean watcherUpdate = false;
@@ -73,24 +74,23 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     public StorageService() {
         this.storage = new NetworkStorage();
+        this.cache = new MEStorage.AvailableStacksCache(storage::getAvailableStacks);
     }
 
     @Override
     public void onServerEndTick(MinecraftServer server) {
         if (watcherUpdate && server.getTickCount() % 10 == 0) {
-            storage.getAvailableStacks();
             if (!interestManager.isEmpty()) {
-                watcherUpdate();
+                watcherUpdate(cache.getAvailableStacksCache());
             }
         }
     }
 
-    private void watcherUpdate() {
-        var cachedAvailableStacks = storage.getAvailableStacks();
+    private void watcherUpdate(KeyCounter stacks) {
         for (var it = cachedAvailableAmounts.iterator(); it.hasNext();) {
             var entry = it.next();
             var what = entry.getKey();
-            var newAmount = cachedAvailableStacks.get(what);
+            var newAmount = stacks.get(what);
             if (newAmount != entry.getLongValue()) {
                 postWatcherUpdate(what, newAmount);
                 if (newAmount == 0) {
@@ -101,9 +101,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
             }
         }
 
-        cachedAvailableStacks.forEach(entry -> {
-            var what = entry.getKey();
-            var newAmount = entry.getLongValue();
+        stacks.fastForEach((what, newAmount) -> {
             if (newAmount != cachedAvailableAmounts.getAmount(what)) {
                 postWatcherUpdate(what, newAmount);
                 cachedAvailableAmounts.set(what, newAmount);
@@ -177,7 +175,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     @Override
     public KeyCounter getCachedInventory() {
-        return storage.cache.getAvailableStacksCache();
+        return cache.getAvailableStacksCache();
     }
 
     @Override
@@ -222,7 +220,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     @Override
     public void invalidateCache() {
-        storage.cache.invalidateCache();
+        cache.invalidateCache();
     }
 
     @Override

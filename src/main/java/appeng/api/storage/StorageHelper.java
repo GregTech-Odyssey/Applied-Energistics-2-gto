@@ -25,8 +25,6 @@ package appeng.api.storage;
 
 import java.util.Objects;
 
-import com.google.common.primitives.Ints;
-
 import net.minecraft.nbt.CompoundTag;
 
 import appeng.api.config.Actionable;
@@ -35,9 +33,7 @@ import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.networking.crafting.ICraftingRequester;
 import appeng.api.networking.energy.IEnergySource;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
-import appeng.core.stats.AeStats;
 import appeng.crafting.CraftingLink;
 
 public final class StorageHelper {
@@ -81,38 +77,17 @@ public final class StorageHelper {
      * @param mode    Simulate or modulate
      * @return extracted items or {@code null} of nothing was extracted.
      */
-    public static long poweredExtraction(IEnergySource energy, MEStorage inv,
-            AEKey request, long amount, IActionSource src, Actionable mode) {
-        Objects.requireNonNull(energy, "energy");
-        Objects.requireNonNull(inv, "inv");
-        Objects.requireNonNull(request, "request");
-        Objects.requireNonNull(src, "src");
-        Objects.requireNonNull(mode, "mode");
-
-        var retrieved = inv.extract(request, amount, Actionable.SIMULATE, src);
-
-        var energyFactor = Math.max(1.0, request.getAmountPerOperation());
-        var availablePower = energy.extractAEPower(retrieved / energyFactor, Actionable.SIMULATE,
-                PowerMultiplier.CONFIG);
-        var itemToExtract = Math.min((long) (availablePower * energyFactor + 0.9), retrieved);
-
-        if (itemToExtract > 0) {
-            if (mode == Actionable.MODULATE) {
-                energy.extractAEPower(retrieved / energyFactor, Actionable.MODULATE, PowerMultiplier.CONFIG);
-                var ret = inv.extract(request, itemToExtract, Actionable.MODULATE, src);
-
-                if (ret != 0 && request instanceof AEItemKey) {
-                    src.player().ifPresent(player -> {
-                        AeStats.ItemsExtracted.addToPlayer(player, Ints.saturatedCast(ret));
-                    });
-                }
-                return ret;
-            } else {
-                return itemToExtract;
-            }
+    public static long poweredExtraction(IEnergySource energy, MEStorage inv, AEKey request, long amount,
+            IActionSource src, Actionable mode) {
+        amount = inv.extract(request, amount, mode, src);
+        if (amount <= 0) {
+            return 0;
         }
-
-        return 0;
+        if (mode == Actionable.MODULATE) {
+            var energyFactor = Math.max(1.0, request.getAmountPerOperation());
+            energy.extractAEPower(amount / energyFactor, Actionable.MODULATE, PowerMultiplier.CONFIG);
+        }
+        return amount;
     }
 
     /**
@@ -139,42 +114,16 @@ public final class StorageHelper {
      * @param mode   Simulate or modulate
      * @return the number of items inserted.
      */
-    public static long poweredInsert(IEnergySource energy, MEStorage inv, AEKey input, long amount,
-            IActionSource src, Actionable mode) {
-        Objects.requireNonNull(energy);
-        Objects.requireNonNull(inv);
-        Objects.requireNonNull(input);
-        Objects.requireNonNull(src);
-        Objects.requireNonNull(mode);
-
-        amount = inv.insert(input, amount, Actionable.SIMULATE, src);
+    public static long poweredInsert(IEnergySource energy, MEStorage inv, AEKey input, long amount, IActionSource src,
+            Actionable mode) {
+        amount = inv.insert(input, amount, mode, src);
         if (amount <= 0) {
             return 0;
         }
-
-        final double energyFactor = Math.max(1.0, input.getAmountPerOperation());
-        final double availablePower = energy.extractAEPower(amount / energyFactor, Actionable.SIMULATE,
-                PowerMultiplier.CONFIG);
-        amount = Math.min((long) (availablePower * energyFactor + 0.9), amount);
-
-        if (amount <= 0) {
-            return 0;
-        }
-
         if (mode == Actionable.MODULATE) {
+            final double energyFactor = Math.max(1.0, input.getAmountPerOperation());
             energy.extractAEPower(amount / energyFactor, Actionable.MODULATE, PowerMultiplier.CONFIG);
-            var inserted = inv.insert(input, amount, Actionable.MODULATE, src);
-
-            if (input instanceof AEItemKey) {
-                src.player().ifPresent(player -> {
-                    AeStats.ItemsInserted.addToPlayer(player, Ints.saturatedCast(inserted));
-                });
-            }
-
-            return inserted;
-        } else {
-            return amount;
         }
-
+        return amount;
     }
 }

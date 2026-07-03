@@ -27,18 +27,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
-import it.unimi.dsi.fastutil.objects.Object2LongMaps;
-import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 
 import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.IncludeExclude;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyType;
-import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.*;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.CellState;
 import appeng.api.storage.cells.IBasicCellItem;
@@ -64,13 +58,12 @@ public class BasicCellInventory implements StorageCell {
     private int maxItemTypes;
     private short storedItems;
     private long storedItemCount;
-    private Object2LongMap<AEKey> storedAmounts;
+    private AEKeyMap<AEKey> storedAmounts;
     private final ItemStack i;
     private final IBasicCellItem cellType;
     private final long maxItemsPerType; // max items per type, basically infinite unless there is a distribution card.
     private final boolean hasVoidUpgrade;
     private boolean isPersisted = true;
-    private final AvailableStacksCache cache;
 
     private BasicCellInventory(IBasicCellItem cellType, ItemStack o, ISaveProvider container) {
         this.i = o;
@@ -124,23 +117,12 @@ public class BasicCellInventory implements StorageCell {
         }
 
         this.hasVoidUpgrade = upgrades.isInstalled(AEItems.VOID_CARD);
-        this.cache = new AvailableStacksCache(this::addAvailableStacks);
-    }
-
-    private void addAvailableStacks(KeyCounter out) {
-        for (var entry : Object2LongMaps.fastIterable(this.getCellItems())) {
-            out.add(entry.getKey(), entry.getLongValue());
-        }
     }
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        out.addAll(cache.getAvailableStacksCache());
-    }
-
-    @Override
-    public KeyCounter getAvailableStacks() {
-        return cache.getAvailableStacksCache();
+        var items = getCellItems();
+        out.addAll(items);
     }
 
     public IncludeExclude getPartitionListMode() {
@@ -195,9 +177,9 @@ public class BasicCellInventory implements StorageCell {
         return cellType.storableInStorageCell() || getAvailableStacks().isEmpty();
     }
 
-    protected Object2LongMap<AEKey> getCellItems() {
+    protected AEKeyMap<AEKey> getCellItems() {
         if (this.storedAmounts == null) {
-            this.storedAmounts = new Object2LongOpenHashMap<>();
+            this.storedAmounts = new AEKeyMap<>();
             this.loadCellItems();
         }
 
@@ -216,7 +198,7 @@ public class BasicCellInventory implements StorageCell {
         var amounts = new LongArrayList(storedAmounts.size());
         var keys = new ListTag();
 
-        for (var entry : this.storedAmounts.object2LongEntrySet()) {
+        for (var entry : this.storedAmounts) {
             long amount = entry.getLongValue();
 
             if (amount > 0) {

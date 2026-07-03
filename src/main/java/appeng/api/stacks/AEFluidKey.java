@@ -23,6 +23,7 @@ import net.minecraftforge.fluids.FluidStack;
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
 import appeng.hooks.IAEFluid;
+import appeng.hooks.IUnique;
 import appeng.util.Platform;
 
 public final class AEFluidKey extends AEKey {
@@ -30,7 +31,8 @@ public final class AEFluidKey extends AEKey {
     public static final int AMOUNT_BUCKET = 1000;
     public static final int AMOUNT_BLOCK = 1000;
 
-    private final Fluid fluid;
+    public final Fluid fluid;
+    public final int uid;
     @NotNull
     private final InternedTag internedTag;
 
@@ -42,6 +44,7 @@ public final class AEFluidKey extends AEKey {
     public AEFluidKey(@NotNull Fluid fluid, @NotNull InternedTag tag) {
         this.fluid = fluid;
         this.internedTag = tag;
+        this.uid = ((IUnique) fluid).ae2$getUid();
     }
 
     public static AEFluidKey of(Fluid fluid) {
@@ -86,6 +89,11 @@ public final class AEFluidKey extends AEKey {
     public boolean matches(FluidStack variant) {
         return !variant.isEmpty() && fluid.isSame(variant.getFluid())
                 && Objects.equals(internedTag.tag, variant.getTag());
+    }
+
+    @Override
+    public int getUid() {
+        return uid;
     }
 
     @Override
@@ -164,14 +172,14 @@ public final class AEFluidKey extends AEKey {
     }
 
     public FluidStack getReadOnlyStack() {
-        if (readOnlyStack == null) {
-            readOnlyStack = toStack(1);
-        } else if (readOnlyStack.isEmpty()) {
-            readOnlyStack = null;
+        var stack = readOnlyStack;
+        if (stack == null) {
+            stack = readOnlyStack = toStack(1);
+        } else if (stack.isEmpty()) {
+            stack = readOnlyStack = toStack(1);
             AELog.error("Something destroyed the read-only fluidStack of {}", this);
-            return getReadOnlyStack();
         }
-        return readOnlyStack;
+        return stack;
     }
 
     public Fluid getFluid() {

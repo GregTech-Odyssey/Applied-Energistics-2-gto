@@ -19,7 +19,6 @@ import it.unimi.dsi.fastutil.HashCommon;
 
 import appeng.api.config.FuzzyMode;
 import appeng.core.AELog;
-import appeng.hooks.IUnique;
 
 /**
  * Uniquely identifies something that "stacks" within an ME inventory.
@@ -36,14 +35,9 @@ import appeng.hooks.IUnique;
  */
 public abstract class AEKey {
 
-    /**
-     * The display name, which is used to sort by name in client terminal. Lazily initialized to avoid unnecessary work
-     * on the server. Volatile ensures that this cache is thread-safe (but can be initialized multiple times).
-     */
-    private volatile Component cachedDisplayName;
+    private Component cachedDisplayName;
     private final int hashCode = System.identityHashCode(this);
     public final int mix = HashCommon.mix(hashCode);
-    public final int uid = getPrimaryKey() instanceof IUnique unique ? unique.ae2$getUid() : 0;
 
     @Nullable
     public static AEKey fromTagGeneric(CompoundTag tag) {
@@ -112,6 +106,10 @@ public abstract class AEKey {
         var tag = toTag();
         tag.putString("#c", getType().getId().toString());
         return tag;
+    }
+
+    public int getUid() {
+        return 0;
     }
 
     /**

@@ -4,7 +4,6 @@ import java.util.Comparator;
 import java.util.SortedMap;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Preconditions;
 
 import net.minecraft.world.item.ItemStack;
 
@@ -17,51 +16,37 @@ final class FuzzySearch {
     private FuzzySearch() {
     }
 
-    /**
-     * Does a fuzzy search. The map must have been created using {@link #createMap}.
-     */
     @SuppressWarnings({ "unchecked" })
     public static <T extends SortedMap<K, V>, K, V> T findFuzzy(T map, AEKey key, FuzzyMode fuzzy) {
         var lowerBound = makeLowerBound(key, fuzzy);
         var upperBound = makeUpperBound(key, fuzzy);
-        Preconditions.checkState(lowerBound.itemDamage > upperBound.itemDamage);
-
         // We can use lower/upper bound in this map for queries because our comparator (see below) specifically
         // supports dealing with it
         return (T) map.subMap((K) lowerBound, (K) upperBound);
     }
 
-    @VisibleForTesting
-    record FuzzyBound(int itemDamage) {
-    }
-
-    /**
-     * This comparator creates a strict and total ordering over all {@link AEKey} of the same item. To support selecting
-     * ranges of durability, it is defined for type {@link Object} and also accepts {@link FuzzyBound} as an argument to
-     * compare against.
-     */
     private static class KeyComparator implements Comparator<Object> {
         @Override
         public int compare(Object a, Object b) {
             // Either argument can either be a damage bound or a shared item stack
             // Since we never put damage bounds into the map as keys, only one
             // of the two arguments can possibly be a bound
-            FuzzyBound boundA = null;
+            Integer boundA = null;
             AEKey stackA = null;
             int fuzzyOrderB;
-            if (a instanceof FuzzyBound) {
-                boundA = (FuzzyBound) a;
-                fuzzyOrderB = boundA.itemDamage;
+            if (a instanceof Integer integer) {
+                boundA = integer;
+                fuzzyOrderB = boundA;
             } else {
                 stackA = (AEKey) a;
                 fuzzyOrderB = stackA.getFuzzySearchValue();
             }
-            FuzzyBound boundB = null;
+            Integer boundB = null;
             AEKey stackB = null;
             int fuzzyOrderA;
-            if (b instanceof FuzzyBound) {
-                boundB = (FuzzyBound) b;
-                fuzzyOrderA = boundB.itemDamage;
+            if (b instanceof Integer integer) {
+                boundB = integer;
+                fuzzyOrderA = boundB;
             } else {
                 stackB = (AEKey) b;
                 fuzzyOrderA = stackB.getFuzzySearchValue();
@@ -73,7 +58,7 @@ final class FuzzySearch {
                 return Integer.compare(fuzzyOrderA, fuzzyOrderB);
             }
 
-            if (stackA.equals(stackB)) {
+            if (stackA == stackB) {
                 return 0;
             }
 
@@ -105,11 +90,8 @@ final class FuzzySearch {
      * Keep in mind that the stack order is from most damaged to least damaged, so this lower bound will actually be a
      * higher number than the upper bound.
      */
-    static FuzzyBound makeLowerBound(AEKey key, FuzzyMode fuzzy) {
+    static Integer makeLowerBound(AEKey key, FuzzyMode fuzzy) {
         var maxValue = key.getFuzzySearchMaxValue();
-        Preconditions.checkState(maxValue > 0, "Cannot use fuzzy search on keys that don't have a fuzzy max value: %s",
-                key);
-
         int damage;
         if (fuzzy == FuzzyMode.IGNORE_ALL) {
             damage = maxValue;
@@ -118,18 +100,15 @@ final class FuzzySearch {
             damage = key.getFuzzySearchValue() <= breakpoint ? breakpoint : maxValue;
         }
 
-        return new FuzzyBound(damage);
+        return damage;
     }
 
     /*
      * Keep in mind that the stack order is from most damaged to least damaged, so this upper bound will actually be a
      * lower number than the lower bound. It also is exclusive.
      */
-    static FuzzyBound makeUpperBound(AEKey key, FuzzyMode fuzzy) {
+    static Integer makeUpperBound(AEKey key, FuzzyMode fuzzy) {
         var maxValue = key.getFuzzySearchMaxValue();
-        Preconditions.checkState(maxValue > 0, "Cannot use fuzzy search on keys that don't have a fuzzy max value: %s",
-                key);
-
         int damage;
         if (fuzzy == FuzzyMode.IGNORE_ALL) {
             damage = MIN_DAMAGE_VALUE;
@@ -138,6 +117,6 @@ final class FuzzySearch {
             damage = key.getFuzzySearchValue() <= breakpoint ? MIN_DAMAGE_VALUE : breakpoint;
         }
 
-        return new FuzzyBound(damage);
+        return damage;
     }
 }

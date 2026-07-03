@@ -55,14 +55,14 @@ public final class NetworkStorage implements MEStorage {
     // Is only non-null if something is queued
     @Nullable
     private ArrayList<QueuedOperation> queuedOperations;
-    public final AvailableStacksCache cache;
+    public final KeyCounter cache;
 
     public NetworkStorage() {
         this.priorityInventory = new ObjectArrayList<>();
         this.storages = new Reference2ReferenceOpenHashMap<>();
         this.storages.defaultReturnValue(NetworkStorage.class);
         this.identities = new ReferenceOpenHashSet<>();
-        this.cache = new AvailableStacksCache(this::getAvailableStacks);
+        this.cache = new KeyCounter();
     }
 
     public void mount(int priority, MEStorage inventory) {
@@ -211,7 +211,10 @@ public final class NetworkStorage implements MEStorage {
 
     @Override
     public KeyCounter getAvailableStacks() {
-        return cache.getAvailableStacksCache();
+        var cache = this.cache;
+        cache.clear();
+        getAvailableStacks(cache);
+        return cache;
     }
 
     @Override

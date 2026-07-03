@@ -23,10 +23,12 @@ import net.minecraft.world.level.Level;
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
 import appeng.hooks.IAEItem;
+import appeng.hooks.IUnique;
 
 public final class AEItemKey extends AEKey {
 
-    private final Item item;
+    public final Item item;
+    public final int uid;
     private final InternedTag internedTag;
 
     // cache
@@ -40,6 +42,7 @@ public final class AEItemKey extends AEKey {
     public AEItemKey(Item item, InternedTag internedTag) {
         this.item = item;
         this.internedTag = internedTag;
+        this.uid = ((IUnique) item).ae2$getUid();
     }
 
     public static AEItemKey of(ItemLike item) {
@@ -83,6 +86,11 @@ public final class AEItemKey extends AEKey {
     }
 
     @Override
+    public int getUid() {
+        return uid;
+    }
+
+    @Override
     public AEKeyType getType() {
         return AEItemKeys.INSTANCE;
     }
@@ -105,17 +113,16 @@ public final class AEItemKey extends AEKey {
      * @return The ItemStack represented by this key. <strong>NEVER MUTATE THIS</strong>
      */
     public ItemStack getReadOnlyStack() {
-        if (readOnlyStack == null) {
-            readOnlyStack = new ItemStack(item, 1);
-            readOnlyStack.setTag(internedTag.tag);
-        } else {
-            if (readOnlyStack.isEmpty()) {
-                AELog.error("Something destroyed the read-only itemstack of {}", this);
-                readOnlyStack = null;
-                return getReadOnlyStack();
-            }
+        var stack = readOnlyStack;
+        if (stack == null) {
+            stack = readOnlyStack = new ItemStack(item, 1);
+            stack.setTag(internedTag.tag);
+        } else if (stack.isEmpty()) {
+            stack = readOnlyStack = new ItemStack(item, 1);
+            stack.setTag(internedTag.tag);
+            AELog.error("Something destroyed the read-only itemstack of {}", this);
         }
-        return readOnlyStack;
+        return stack;
     }
 
     public ItemStack toStack() {

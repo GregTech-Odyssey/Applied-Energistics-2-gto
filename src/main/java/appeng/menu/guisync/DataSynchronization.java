@@ -18,7 +18,6 @@
 
 package appeng.menu.guisync;
 
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import net.minecraft.network.FriendlyByteBuf;
@@ -34,7 +33,7 @@ import appeng.core.AELog;
  */
 public class DataSynchronization {
 
-    private static final Map<Class<?>, Short2ObjectOpenHashMap<SynchronizedField.Factory>> CACHE = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Class<?>, Short2ObjectOpenHashMap<SynchronizedField.Factory>> CACHE = new ConcurrentHashMap<>();
 
     private final Short2ObjectOpenHashMap<SynchronizedField<?>> fields;
 
@@ -70,6 +69,7 @@ public class DataSynchronization {
                     fields.putAll(collectFields(superclass));
                 }
             }
+            CACHE.put(clazz, fields);
             return fields;
         }
         return fields;
