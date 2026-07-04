@@ -1,11 +1,12 @@
 package appeng.api.stacks;
 
 import java.util.Comparator;
-import java.util.SortedMap;
 
 import com.google.common.annotations.VisibleForTesting;
 
 import net.minecraft.world.item.ItemStack;
+
+import it.unimi.dsi.fastutil.objects.Object2LongSortedMap;
 
 import appeng.api.config.FuzzyMode;
 
@@ -17,12 +18,15 @@ final class FuzzySearch {
     }
 
     @SuppressWarnings({ "unchecked" })
-    public static <T extends SortedMap<K, V>, K, V> T findFuzzy(T map, AEKey key, FuzzyMode fuzzy) {
+    public static <T extends Object2LongSortedMap<K>, K> Object2LongSortedMap<K> findFuzzy(T map, AEKey key,
+            FuzzyMode fuzzy) {
+        if (fuzzy == FuzzyMode.IGNORE_ALL)
+            return map;
         var lowerBound = makeLowerBound(key, fuzzy);
         var upperBound = makeUpperBound(key, fuzzy);
         // We can use lower/upper bound in this map for queries because our comparator (see below) specifically
         // supports dealing with it
-        return (T) map.subMap((K) lowerBound, (K) upperBound);
+        return map.subMap((K) lowerBound, (K) upperBound);
     }
 
     private static class KeyComparator implements Comparator<Object> {
