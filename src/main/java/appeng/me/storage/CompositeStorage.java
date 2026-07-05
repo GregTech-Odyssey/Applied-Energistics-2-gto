@@ -29,6 +29,7 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
                 storage.getAvailableStacks(out);
             }
         });
+        this.cache.setTickUpdate(false);
     }
 
     public void setStorages(Map<AEKeyType, MEStorage> storages) {
@@ -86,7 +87,11 @@ public class CompositeStorage implements MEStorage, ITickingMonitor {
 
     @Override
     public TickRateModulation onTick() {
-        return TickRateModulation.SLOWER;
+        if (cache.updateCache()) {
+            return TickRateModulation.URGENT;
+        } else {
+            return TickRateModulation.SLOWER;
+        }
     }
 
     @Override
