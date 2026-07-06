@@ -53,12 +53,14 @@ public abstract class HandlerStrategy<C, S> {
         @Override
         public long insert(IItemHandler handler, AEKey what, long amount, Actionable mode) {
             if (what instanceof AEItemKey itemKey) {
-                var stack = itemKey.toStack(Ints.saturatedCast(amount));
-
+                var intAmount = Ints.saturatedCast(amount);
+                if (handler instanceof ExternalStorageFacade.MEStorageItemHandler meStorageItemHandler) {
+                    return meStorageItemHandler.insertExternal(itemKey, intAmount, mode);
+                }
+                var stack = itemKey.toStack(intAmount);
                 var remainder = ItemHandlerHelper.insertItem(handler, stack, mode.isSimulate());
                 return amount - remainder.getCount();
             }
-
             return 0;
         }
 
@@ -85,11 +87,13 @@ public abstract class HandlerStrategy<C, S> {
 
         @Override
         public long insert(IFluidHandler handler, AEKey what, long amount, Actionable mode) {
-            if (what instanceof AEFluidKey itemKey && amount > 0) {
-                var stack = itemKey.toStack(Ints.saturatedCast(amount));
-                return handler.fill(stack, mode.getFluidAction());
+            if (what instanceof AEFluidKey fluidKey && amount > 0) {
+                var intAmount = Ints.saturatedCast(amount);
+                if (handler instanceof ExternalStorageFacade.MEStorageFluidHandler meStorageFluidHandler) {
+                    return meStorageFluidHandler.insertExternal(fluidKey, intAmount, mode);
+                }
+                return handler.fill(fluidKey.toStack(intAmount), mode.getFluidAction());
             }
-
             return 0;
         }
 
