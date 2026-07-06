@@ -10,10 +10,11 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.entity.player.Player;
 
+import it.unimi.dsi.fastutil.objects.Reference2LongMap;
+
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyMap;
 
 import gto_ae.api.util.DirectionalGlobalPos;
 
@@ -28,14 +29,14 @@ public final class FrozenMachineStatus implements IStatusTracked {
     private final int facilityUid;
     @NotNull
     private final DirectionalGlobalPos directionalGlobalPos;
-    private AEKeyMap<AEKey> machineConfiguration;
+    private Reference2LongMap<AEKey> machineConfiguration;
 
     @Nullable
     private Consumer<Player> openGuiAction;
 
     public FrozenMachineStatus(@NotNull DirectionalGlobalPos directionalGlobalPos, WorkingStatus value, int jobCount,
             ThroughputCounter entries,
-            PatternContainerGroup group, int facilityUid, AEKeyMap<AEKey> machineConfiguration) {
+            PatternContainerGroup group, int facilityUid, Reference2LongMap<AEKey> machineConfiguration) {
         this.status = value;
         this.relatedJobsCount = jobCount;
         this.throughputCounter = entries;
@@ -63,7 +64,7 @@ public final class FrozenMachineStatus implements IStatusTracked {
     }
 
     @Override
-    public AEKeyMap<AEKey> getConfiguredSetting() {
+    public Reference2LongMap<AEKey> getConfiguredSetting() {
         return machineConfiguration;
     }
 

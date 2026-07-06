@@ -368,7 +368,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
             var row = rows.get(hoveredLineIndex);
             FrozenMachineStatus group;
             Int2IntOpenHashMap scrollLevels;
-            AEKeyMap<AEKey> groupCollection;
+            Reference2LongMap<AEKey> groupCollection;
             if (row instanceof StatRow(FrozenMachineStatus group0)) {
                 group = group0;
                 scrollLevels = statsRowScrollLevels;
