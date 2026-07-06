@@ -8,6 +8,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import it.unimi.dsi.fastutil.objects.Reference2LongMaps;
+
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyMap;
@@ -78,7 +80,7 @@ public class FacilityManagementPacket extends BasePacket {
         tracked.getTerminalGroup().writeToPacket(data);
 
         data.writeInt(tracked.getConfiguredSetting().size());
-        for (var setting : tracked.getConfiguredSetting().reference2LongEntrySet()) {
+        for (var setting : Reference2LongMaps.fastIterable(tracked.getConfiguredSetting())) {
             AEKey.writeKey(data, setting.getKey());
             data.writeLong(setting.getLongValue());
         }

@@ -266,7 +266,10 @@ public class MEStorageMenu extends AEBaseMenu
                 firstOpen = false;
 
                 var craftables = getCraftablesFromGrid();
-                var availableStacks = storage == null ? new KeyCounter() : storage.getAvailableStacks();
+                var availableStacks = new KeyCounter();
+                if (storage != null) {
+                    storage.getAvailableStacks(availableStacks);
+                }
 
                 // This is currently not supported/backed by any network service
                 var requestables = new KeyCounter();
@@ -297,7 +300,7 @@ public class MEStorageMenu extends AEBaseMenu
                 }
 
                 previousCraftables = craftables;
-                previousAvailableStacks = availableStacks.copy();
+                previousAvailableStacks = availableStacks;
 
                 this.updatePowerStatus();
             }

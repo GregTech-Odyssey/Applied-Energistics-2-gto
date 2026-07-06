@@ -115,16 +115,18 @@ public class MEInventoryHandler extends DelegatingMEInventory {
                 super.getAvailableStacks(out);
             } else {
                 var mode = this.partitionListMode;
-                var all = getDelegate().getAvailableStacks();
-                if (mode == IncludeExclude.WHITELIST && list.isStrict() && list.size() < all.size()) {
+                var cache = this.cache;
+                cache.clear();
+                super.getAvailableStacks(cache);
+                if (mode == IncludeExclude.WHITELIST && list.isStrict() && list.size() < cache.size()) {
                     for (var key : list.getItems()) {
-                        var entry = all.get(key);
+                        var entry = cache.get(key);
                         if (entry > 0) {
                             out.add(key, entry);
                         }
                     }
                 } else {
-                    for (var entry : all) {
+                    for (var entry : cache) {
                         var key = entry.getKey();
                         if (list.matchesFilter(key, mode)) {
                             out.add(entry.getKey(), entry.getLongValue());

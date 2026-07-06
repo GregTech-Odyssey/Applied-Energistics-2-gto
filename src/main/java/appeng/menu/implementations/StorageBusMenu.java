@@ -20,9 +20,6 @@ package appeng.menu.implementations;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
-
-import com.google.common.collect.Iterators;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -125,7 +122,7 @@ public class StorageBusMenu extends UpgradeableMenu<StorageBusPart> {
 
         Iterator<AEKey> i = Collections.emptyIterator();
         if (cellInv != null) {
-            i = Iterators.transform(cellInv.getAvailableStacks().iterator(), Map.Entry::getKey);
+            i = cellInv.getAvailableStacks().keySet().iterator();
         }
 
         inv.beginBatch();

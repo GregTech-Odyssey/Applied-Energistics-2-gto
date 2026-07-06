@@ -168,7 +168,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
                 return 0;
             }
 
-            ItemStack orgInput = itemKey.toStack(Ints.saturatedCast(amount));
+            ItemStack orgInput = itemKey.toStack(amount);
             ItemStack remaining = orgInput;
 
             int slotCount = handler.getSlots();
@@ -363,7 +363,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
                 return 0;
             }
 
-            var fluidStack = fluidKey.toStack(Ints.saturatedCast(amount));
+            var fluidStack = fluidKey.toStack(amount);
 
             // Drain the fluid from the tank
             FluidStack gathered = handler.drain(fluidStack, mode.getFluidAction());

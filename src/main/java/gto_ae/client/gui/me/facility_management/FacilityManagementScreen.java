@@ -52,10 +52,7 @@ import appeng.api.config.Settings;
 import appeng.api.config.TerminalStyle;
 import appeng.api.config.YesNo;
 import appeng.api.implementations.blockentities.PatternContainerGroup;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AmountFormat;
-import appeng.api.stacks.GenericStack;
+import appeng.api.stacks.*;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.me.common.StackSizeRenderer;
 import appeng.client.gui.style.PaletteColor;
@@ -371,7 +368,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
             var row = rows.get(hoveredLineIndex);
             FrozenMachineStatus group;
             Int2IntOpenHashMap scrollLevels;
-            Reference2LongMap<AEKey> groupCollection;
+            AEKeyMap<AEKey> groupCollection;
             if (row instanceof StatRow(FrozenMachineStatus group0)) {
                 group = group0;
                 scrollLevels = statsRowScrollLevels;

@@ -17,7 +17,6 @@ import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyMap;
 import appeng.blockentity.AEBaseBlockEntity;
 import appeng.helpers.IConfigInvHost;
 import appeng.parts.AEBasePart;
@@ -53,11 +52,7 @@ public interface IStatusTracked {
 
     default Reference2LongMap<AEKey> getConfiguredSetting() {
         if (this instanceof IConfigInvHost configHolder) {
-            var map = new AEKeyMap<AEKey>();
-            for (var e : configHolder.getConfig().getAvailableStacks()) {
-                map.put(e.getKey(), e.getLongValue());
-            }
-            return map;
+            return configHolder.getConfig().getAvailableStacks().getMap();
         }
         return Reference2LongMaps.emptyMap();
     }
