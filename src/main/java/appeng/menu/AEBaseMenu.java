@@ -29,7 +29,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.gto.fastcollection.OpenCacheHashSet;
+import com.gto.fastcollection.fastutil.OpenCacheHashSet;
 
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;

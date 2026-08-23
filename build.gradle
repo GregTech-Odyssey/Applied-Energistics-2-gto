@@ -57,7 +57,7 @@ dependencies {
     implementation("org.lwjgl:lwjgl:3.3.2")
     implementation("org.lwjgl:lwjgl-opengl:3.3.2")
 
-    implementation("dev:fastcollection-1.2")
+    implementation("com.gto.fastcollection:FastCollection:26.8.6")
 
     modImplementation("org.appliedenergistics:guideme:${guideme_version}")
 
@@ -165,6 +165,7 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
+        maven { url = 'https://maven.gtodyssey.com/releases' }
         maven {
             url "https://maven.shedaniel.me/"
             content {

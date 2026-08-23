@@ -22,6 +22,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.NonNullList;
@@ -70,7 +71,7 @@ public class AECraftingPattern implements IPatternDetails, IMolecularAssemblerSu
      * We cache results of isValid(...) calls for stacks that don't have NBT.
      */
     @SuppressWarnings("unchecked")
-    private final Map<Item, Boolean>[] isValidCache = new Map[9];
+    private final Reference2BooleanOpenHashMap<Item>[] isValidCache = new Reference2BooleanOpenHashMap[9];
 
     public AECraftingPattern(AEItemKey definition, Level level) {
         this.definition = definition;
@@ -301,7 +302,7 @@ public class AECraftingPattern implements IPatternDetails, IMolecularAssemblerSu
         if (cache == null) {
             return null;
         } else {
-            return cache.get(what.getItem());
+            return cache.getBoolean(what.getItem());
         }
     }
 
@@ -309,7 +310,7 @@ public class AECraftingPattern implements IPatternDetails, IMolecularAssemblerSu
         if (what != null && !what.hasTag()) {
             var cache = isValidCache[slot];
             if (cache == null) {
-                cache = isValidCache[slot] = new IdentityHashMap<>();
+                cache = isValidCache[slot] = new Reference2BooleanOpenHashMap<>();
             }
             cache.put(what.getItem(), result);
         }

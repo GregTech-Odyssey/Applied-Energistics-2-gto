@@ -15,6 +15,6 @@ pluginManagement {
     plugins {
         id 'net.neoforged.moddev.legacyforge' version '2.0.86'
         id 'com.diffplug.spotless' version '6.25.0'
-        id "com.gto.gtopublishgradleplugin" version "1.0.24"
+        id "com.gto.gtopublishgradleplugin" version "1.0.25"
     }
 }

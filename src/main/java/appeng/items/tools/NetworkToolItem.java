@@ -20,6 +20,9 @@ package appeng.items.tools;
 
 import java.util.*;
 
+import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
+import it.unimi.dsi.fastutil.objects.Reference2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -158,13 +161,14 @@ public class NetworkToolItem extends AEBaseItem implements IMenuItem, AEToolItem
             return Optional.empty();
         }
 
-        var upgradeCards = new LinkedHashMap<AEItemKey, Integer>();
+        var upgradeCards = new Reference2IntLinkedOpenHashMap<AEItemKey>();
         for (var card : toolHost.getInventory()) {
-            upgradeCards.merge(AEItemKey.of(card), card.getCount(), Integer::sum);
+            upgradeCards.addTo(AEItemKey.of(card), card.getCount());
         }
         var stacks = new ArrayList<GenericStack>(upgradeCards.size());
-        for (var entry : upgradeCards.entrySet()) {
-            stacks.add(new GenericStack(entry.getKey(), entry.getValue()));
+        for (ObjectBidirectionalIterator<Reference2IntMap.Entry<AEItemKey>> it = upgradeCards.reference2IntEntrySet().fastIterator(); it.hasNext(); ) {
+            var entry = it.next();
+            stacks.add(new GenericStack(entry.getKey(), entry.getIntValue()));
         }
 
         // Sort ascending by amount

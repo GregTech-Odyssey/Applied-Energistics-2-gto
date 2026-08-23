@@ -31,6 +31,7 @@ import java.util.WeakHashMap;
 
 import com.google.common.collect.HashMultimap;
 
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -135,7 +136,7 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
     private static final Comparator<PatternContainerGroup> GROUP_COMPARATOR = Comparator
             .comparing(group -> group.name().getString().toLowerCase(Locale.ROOT));
 
-    private final HashMap<Long, PatternContainerRecord> byId = new HashMap<>();
+    private final Long2ObjectOpenHashMap<PatternContainerRecord> byId = new Long2ObjectOpenHashMap<>();
     // Used to show multiple pattern providers with the same name under a single header
     private final HashMultimap<PatternContainerGroup, PatternContainerRecord> byGroup = HashMultimap.create();
     private final ArrayList<PatternContainerGroup> groups = new ArrayList<>();

@@ -29,7 +29,8 @@ public final class AEItemKey extends AEKey {
 
     public final Item item;
     public final int uid;
-    private final InternedTag internedTag;
+    @Nullable
+    private final CompoundTag internedTag;
 
     // cache
     @Nullable
@@ -39,7 +40,7 @@ public final class AEItemKey extends AEKey {
     private int fuzzySearchMaxValue = -1;
 
     @ApiStatus.Internal
-    public AEItemKey(Item item, InternedTag internedTag) {
+    public AEItemKey(Item item, @Nullable CompoundTag internedTag) {
         this.item = item;
         this.internedTag = internedTag;
         this.uid = ((IUnique) item).ae2$getUid();
@@ -56,7 +57,8 @@ public final class AEItemKey extends AEKey {
         if (tag == null || tag.isEmpty()) {
             return aeItem.ae2$getAEKey();
         }
-        return aeItem.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, true), t -> new AEItemKey(i, t));
+        var cache = aeItem.ae2$getTagAEKeyCache();
+        return cache.getCache(tag, cache.createFunction(), IdentityTag.COPY);
     }
 
     @Nullable
@@ -70,7 +72,8 @@ public final class AEItemKey extends AEKey {
         if (tag == null || tag.isEmpty()) {
             return aeItem.ae2$getAEKey();
         }
-        return aeItem.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, true), t -> new AEItemKey(item, t));
+        var cache = aeItem.ae2$getTagAEKeyCache();
+        return cache.getCache(tag, cache.createFunction(), IdentityTag.COPY);
     }
 
     public static boolean matches(AEKey what, ItemStack itemStack) {
@@ -102,7 +105,7 @@ public final class AEItemKey extends AEKey {
 
     public boolean matches(ItemStack stack) {
         // TODO: remove or optimize cap check if it becomes too slow >:-(
-        return !stack.isEmpty() && stack.is(item) && Objects.equals(stack.getTag(), internedTag.tag);
+        return !stack.isEmpty() && stack.is(item) && Objects.equals(stack.getTag(), internedTag);
     }
 
     public boolean matches(Ingredient ingredient) {
@@ -116,10 +119,10 @@ public final class AEItemKey extends AEKey {
         var stack = readOnlyStack;
         if (stack == null) {
             stack = readOnlyStack = new ItemStack(item, 1);
-            stack.setTag(internedTag.tag);
+            stack.setTag(internedTag);
         } else if (stack.isEmpty()) {
             stack = readOnlyStack = new ItemStack(item, 1);
-            stack.setTag(internedTag.tag);
+            stack.setTag(internedTag);
             AELog.error("Something destroyed the read-only itemstack of {}", this);
         }
         return stack;
@@ -153,7 +156,8 @@ public final class AEItemKey extends AEKey {
             if (extraTag == null || extraTag.isEmpty()) {
                 return aeItem.ae2$getAEKey();
             }
-            return aeItem.ae2$getTagAEKeyCache().getCache(InternedTag.of(extraTag, false), t -> new AEItemKey(item, t));
+            var cache = aeItem.ae2$getTagAEKeyCache();
+            return cache.getCache(extraTag, cache.createFunction());
         } catch (Exception e) {
             AELog.debug("Tried to load an invalid item key from NBT: %s", tag, e);
             return null;
@@ -165,8 +169,8 @@ public final class AEItemKey extends AEKey {
         CompoundTag result = new CompoundTag();
         result.putString("id", getId().toString());
 
-        if (internedTag.tag != null) {
-            result.put("tag", internedTag.tag.copy());
+        if (internedTag != null) {
+            result.put("tag", internedTag.copy());
         }
 
         return result;
@@ -211,16 +215,16 @@ public final class AEItemKey extends AEKey {
      */
     @Nullable
     public CompoundTag getTag() {
-        return internedTag.tag;
+        return internedTag;
     }
 
     @Nullable
     public CompoundTag copyTag() {
-        return internedTag.tag != null ? internedTag.tag.copy() : null;
+        return internedTag != null ? internedTag.copy() : null;
     }
 
     public boolean hasTag() {
-        return internedTag.tag != null;
+        return internedTag != null;
     }
 
     @Override
@@ -291,7 +295,8 @@ public final class AEItemKey extends AEKey {
         if (tag == null || tag.isEmpty()) {
             return aeItem.ae2$getAEKey();
         }
-        return aeItem.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, false), t -> new AEItemKey(item, t));
+        var cache = aeItem.ae2$getTagAEKeyCache();
+        return cache.getCache(tag, cache.createFunction());
     }
 
     @Override
@@ -299,6 +304,6 @@ public final class AEItemKey extends AEKey {
         var id = getId();
         String idString = id != BuiltInRegistries.ITEM.getDefaultKey() ? id.toString()
                 : item.getClass().getName() + "(unregistered)";
-        return internedTag.tag == null ? idString : idString + " (+tag)";
+        return internedTag == null ? idString : idString + " (+tag)";
     }
 }

@@ -30,6 +30,7 @@ import java.util.Objects;
 
 import com.google.common.base.Preconditions;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.resources.model.ModelBakery;
@@ -46,7 +47,7 @@ public final class StorageCellModels {
     private static final ResourceLocation MODEL_CELL_DEFAULT = new ResourceLocation(
             "ae2:block/drive/drive_cell");
 
-    private static final Map<Item, ResourceLocation> registry = new IdentityHashMap<>();
+    private static final Reference2ReferenceOpenHashMap<Item, ResourceLocation> registry = new Reference2ReferenceOpenHashMap<>();
 
     private StorageCellModels() {
     }
@@ -97,7 +98,7 @@ public final class StorageCellModels {
      */
 
     public synchronized static Map<Item, ResourceLocation> models() {
-        return new HashMap<>(registry);
+        return registry.clone();
     }
 
     /**

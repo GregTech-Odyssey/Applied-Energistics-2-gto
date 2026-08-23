@@ -31,6 +31,9 @@ import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.Weigher;
 
+import com.gto.fastcollection.map.enums.Enum2ObjectMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +112,7 @@ public class CableBusBakedModel implements IDynamicBakedModel {
         this.cableModelCache = CacheBuilder.newBuilder()//
                 .maximumWeight(CACHE_QUAD_COUNT)//
                 .weigher((Weigher<CableBusRenderState, List<BakedQuad>>) (key, value) -> value.size())//
-                .build(new CacheLoader<CableBusRenderState, List<BakedQuad>>() {
+                .build(new CacheLoader<>() {
                     @Override
                     public List<BakedQuad> load(CableBusRenderState renderState) {
                         final List<BakedQuad> model = new ArrayList<>();
@@ -214,8 +217,8 @@ public class CableBusBakedModel implements IDynamicBakedModel {
 
     // Determines whether a cable is connected to exactly two sides that are
     // opposite each other
-    private static boolean isStraightLine(AECableType cableType, EnumMap<Direction, AECableType> sides) {
-        final Iterator<Entry<Direction, AECableType>> it = sides.entrySet().iterator();
+    private static boolean isStraightLine(AECableType cableType, Enum2ObjectMap<Direction, AECableType> sides) {
+        final var it = sides.reference2ReferenceEntrySet().fastIterator();
         if (!it.hasNext()) {
             return false; // No connections
         }
@@ -236,7 +239,7 @@ public class CableBusBakedModel implements IDynamicBakedModel {
 
         final AECableType secondType = sides.get(firstSide.getOpposite());
 
-        return firstType == secondType && cableType == firstType && cableType == secondType;
+        return cableType == firstType && cableType == secondType;
     }
 
     private static int getPartSpin(ModelData partModelData) {
@@ -255,13 +258,13 @@ public class CableBusBakedModel implements IDynamicBakedModel {
         }
 
         AEColor cableColor = renderState.getCableColor();
-        EnumMap<Direction, AECableType> connectionTypes = renderState.getConnectionTypes();
+        var connectionTypes = renderState.getConnectionTypes();
 
         // If the connection is straight, no busses are attached, and no covered core
         // has been forced (in case of glass
         // cables), then render the cable as a simplified straight line.
-        boolean noAttachments = !renderState.getAttachments().values().stream()
-                .anyMatch(IPartModel::requireCableConnection);
+        boolean noAttachments = renderState.getAttachments().values().stream()
+                .noneMatch(IPartModel::requireCableConnection);
         if (noAttachments && isStraightLine(cableType, connectionTypes)) {
             Direction facing = connectionTypes.keySet().iterator().next();
 
@@ -274,14 +277,14 @@ public class CableBusBakedModel implements IDynamicBakedModel {
                     break;
                 case SMART:
                     this.cableBuilder.addStraightSmartConnection(facing, cableColor,
-                            renderState.getChannelsOnSide().get(facing), quadsOut);
+                            renderState.getChannelsOnSide().getInt(facing), quadsOut);
                     break;
                 case DENSE_COVERED:
                     this.cableBuilder.addStraightDenseCoveredConnection(facing, cableColor, quadsOut);
                     break;
                 case DENSE_SMART:
                     this.cableBuilder.addStraightDenseSmartConnection(facing, cableColor,
-                            renderState.getChannelsOnSide().get(facing), quadsOut);
+                            renderState.getChannelsOnSide().getInt(facing), quadsOut);
                     break;
                 default:
                     break;
@@ -293,10 +296,12 @@ public class CableBusBakedModel implements IDynamicBakedModel {
         this.cableBuilder.addCableCore(renderState.getCoreType(), cableColor, quadsOut);
 
         // Render all internal connections to attachments
-        EnumMap<Direction, Integer> attachmentConnections = renderState.getAttachmentConnections();
-        for (Direction facing : attachmentConnections.keySet()) {
-            int distance = attachmentConnections.get(facing);
-            int channels = renderState.getChannelsOnSide().get(facing);
+        var attachmentConnections = renderState.getAttachmentConnections();
+        for (ObjectIterator<Reference2IntMap.Entry<Direction>> it = attachmentConnections.reference2IntEntrySet().fastIterator(); it.hasNext(); ) {
+            var e = it.next();
+            int distance = e.getIntValue();
+            var facing = e.getKey();
+            int channels = renderState.getChannelsOnSide().getInt(facing);
 
             switch (cableType) {
                 case GLASS:
@@ -322,7 +327,7 @@ public class CableBusBakedModel implements IDynamicBakedModel {
             final Direction facing = connection.getKey();
             final AECableType connectionType = connection.getValue();
             final boolean cableBusAdjacent = renderState.getCableBusAdjacent().contains(facing);
-            final int channels = renderState.getChannelsOnSide().get(facing);
+            final int channels = renderState.getChannelsOnSide().getInt(facing);
 
             switch (cableType) {
                 case GLASS:

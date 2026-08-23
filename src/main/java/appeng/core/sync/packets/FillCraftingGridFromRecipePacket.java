@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.function.ObjIntConsumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.primitives.Ints;
@@ -284,7 +285,7 @@ public class FillCraftingGridFromRecipePacket extends BasePacket {
         var energy = grid.getEnergyService();
         ItemStack resultTaken = ItemStack.EMPTY;
 
-        BiConsumer<ItemStack, Integer> insert = (item, i) -> {
+        ObjIntConsumer<ItemStack> insert = (item, i) -> {
             var aeItemKey = AEItemKey.of(item);
             var inserted = StorageHelper.poweredInsert(energy, storage, aeItemKey, item.getCount(),
                     cct.getActionSource());

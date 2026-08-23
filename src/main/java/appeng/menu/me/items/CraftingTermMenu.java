@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
-import com.gto.fastcollection.O2IOpenCacheHashMap;
+import com.gto.fastcollection.fastutil.O2IOpenCacheHashMap;
 
 import org.jetbrains.annotations.Nullable;
 

@@ -22,6 +22,7 @@ import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.NonNullList;
@@ -62,7 +63,7 @@ public class AEStonecuttingPattern implements IPatternDetails, IMolecularAssembl
     /**
      * We cache results of isValid(...) calls for stacks that don't have NBT.
      */
-    private final Map<Item, Boolean> isValidCache = new IdentityHashMap<>();
+    private final Reference2BooleanOpenHashMap<Item> isValidCache = new Reference2BooleanOpenHashMap<>();
 
     public AEStonecuttingPattern(AEItemKey definition, Level level) {
         this.definition = definition;
@@ -173,7 +174,7 @@ public class AEStonecuttingPattern implements IPatternDetails, IMolecularAssembl
             return null;
         }
 
-        return isValidCache.get(what.getItem());
+        return isValidCache.getBoolean(what.getItem());
     }
 
     private void setTestResult(AEItemKey what, boolean result) {

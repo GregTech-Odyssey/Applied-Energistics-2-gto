@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
@@ -43,7 +44,7 @@ final class CompassRegion extends AESavedData {
     private static final int BITMAP_LENGTH = CHUNKS_PER_REGION * CHUNKS_PER_REGION;
 
     // Key is the section index, see ChunkAccess.getSections()
-    private final Map<Integer, BitSet> sections = new HashMap<>();
+    private final Int2ObjectOpenHashMap<BitSet> sections = new Int2ObjectOpenHashMap<>();
 
     /**
      * Gets the name of the save data for a region that has the given coordinates.
@@ -87,8 +88,8 @@ final class CompassRegion extends AESavedData {
 
     @Override
     public CompoundTag save(CompoundTag compound) {
-        for (var entry : sections.entrySet()) {
-            var key = "section" + entry.getKey();
+        for (var entry : sections.int2ObjectEntrySet()) {
+            var key = "section" + entry.getIntKey();
             if (entry.getValue().isEmpty()) {
                 continue;
             }

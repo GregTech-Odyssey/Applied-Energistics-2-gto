@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 
 import com.google.common.collect.Multiset;
 
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.ChunkPos;
@@ -87,15 +88,15 @@ public class SpatialAnchorMenu extends AEBaseMenu {
                 this.powerConsumption = (long) gridNode.getIdlePowerUsage();
                 this.loadedChunks = anchor.countLoadedChunks();
 
-                HashMap<LevelAccessor, Integer> stats = new HashMap<>();
+                Object2IntOpenHashMap<LevelAccessor> stats = new Object2IntOpenHashMap<>();
 
                 for (var machine : grid.getMachines(SpatialAnchorBlockEntity.class)) {
                     LevelAccessor level = machine.getLevel();
-                    stats.merge(level, machine.countLoadedChunks(), Math::max);
+                    stats.mergeInt(level, machine.countLoadedChunks(), Math::max);
                 }
 
-                this.allLoadedChunks = stats.values().stream().reduce(Integer::sum).orElse(0);
-                this.allLoadedWorlds = stats.keySet().size();
+                this.allLoadedChunks = stats.values().intStream().reduce(Integer::sum).orElse(0);
+                this.allLoadedWorlds = stats.size();
 
                 this.allWorlds = statistics.getChunks().size();
                 this.allChunks = 0;

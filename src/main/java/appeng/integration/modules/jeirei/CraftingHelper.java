@@ -3,6 +3,7 @@ package appeng.integration.modules.jeirei;
 import java.util.Comparator;
 import java.util.Map;
 
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
@@ -70,10 +71,10 @@ public final class CraftingHelper {
             if (!ingredient.isEmpty()) {
                 // Try to find the best item. In case the ingredient is a tag, it might contain versions the
                 // player doesn't actually have
-                var stack = ingredientPriorities.entrySet()
+                var stack = ingredientPriorities.reference2IntEntrySet()
                         .stream()
                         .filter(e -> e.getKey() instanceof AEItemKey itemKey && itemKey.matches(ingredient))
-                        .max(Comparator.comparingInt(Map.Entry::getValue))
+                        .max(Comparator.comparingInt(Reference2IntMap.Entry::getIntValue))
                         .map(e -> ((AEItemKey) e.getKey()).toStack())
                         .orElse(ingredient.getItems()[0]);
 

@@ -4,6 +4,9 @@ import java.util.LinkedHashMap;
 
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
+import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
+import it.unimi.dsi.fastutil.objects.Reference2LongLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2LongMap;
 
 /**
  * Helpers that apply to both processing and crafting patterns.
@@ -18,11 +21,11 @@ final class AEPatternHelper {
      */
     public static GenericStack[] condenseStacks(GenericStack[] sparseInput) {
         // Use a linked map to preserve ordering.
-        var map = new LinkedHashMap<AEKey, Long>();
+        var map = new Reference2LongLinkedOpenHashMap<AEKey>();
 
         for (var input : sparseInput) {
             if (input != null) {
-                map.merge(input.what(), input.amount(), Long::sum);
+                map.addTo(input.what(), input.amount());
             }
         }
 
@@ -32,8 +35,9 @@ final class AEPatternHelper {
 
         GenericStack[] out = new GenericStack[map.size()];
         int i = 0;
-        for (var entry : map.entrySet()) {
-            out[i++] = new GenericStack(entry.getKey(), entry.getValue());
+        for (ObjectBidirectionalIterator<Reference2LongMap.Entry<AEKey>> it = map.reference2LongEntrySet().fastIterator(); it.hasNext(); ) {
+            var entry = it.next();
+            out[i++] = new GenericStack(entry.getKey(), entry.getLongValue());
         }
         return out;
     }

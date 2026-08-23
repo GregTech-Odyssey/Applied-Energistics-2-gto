@@ -67,7 +67,7 @@ public final class EncodingHelper {
     }
 
     private static void encodeBestMatchingStacksIntoSlots(List<List<GenericStack>> possibleInputsBySlot,
-            Map<AEKey, Integer> ingredientPriorities,
+            Reference2IntOpenHashMap<AEKey> ingredientPriorities,
             FakeSlot[] slots) {
         var encodedInputs = new ArrayList<GenericStack>();
         for (var genericIngredient : possibleInputsBySlot) {
@@ -179,7 +179,7 @@ public final class EncodingHelper {
     }
 
     // Given a set of possible ingredients, find the one that has the highest priority
-    private static GenericStack findBestIngredient(Map<AEKey, Integer> ingredientPriorities,
+    private static GenericStack findBestIngredient(Reference2IntOpenHashMap<AEKey> ingredientPriorities,
             List<GenericStack> possibleIngredients) {
         return possibleIngredients.stream()
                 .map(gi -> Pair.of(gi, ingredientPriorities.getOrDefault(gi.what(), Integer.MIN_VALUE)))
@@ -217,7 +217,7 @@ public final class EncodingHelper {
      * <p/>
      * Higher means higher priority.
      */
-    public static Map<AEKey, Integer> getIngredientPriorities(MEStorageMenu menu,
+    public static Reference2IntOpenHashMap<AEKey> getIngredientPriorities(MEStorageMenu menu,
             Comparator<GridInventoryEntry> comparator) {
         var orderedEntries = menu.getClientRepo().getAllEntries()
                 .stream()

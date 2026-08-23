@@ -33,15 +33,15 @@ public final class AEFluidKey extends AEKey {
 
     public final Fluid fluid;
     public final int uid;
-    @NotNull
-    private final InternedTag internedTag;
+    @Nullable
+    private final CompoundTag internedTag;
 
     // cache
     @Nullable
     private FluidStack readOnlyStack;
 
     @ApiStatus.Internal
-    public AEFluidKey(@NotNull Fluid fluid, @NotNull InternedTag tag) {
+    public AEFluidKey(@NotNull Fluid fluid, @Nullable CompoundTag tag) {
         this.fluid = fluid;
         this.internedTag = tag;
         this.uid = ((IUnique) fluid).ae2$getUid();
@@ -57,7 +57,8 @@ public final class AEFluidKey extends AEKey {
         if (tag == null || tag.isEmpty()) {
             return aeFluid.ae2$getAEKey();
         }
-        return aeFluid.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, true), t -> new AEFluidKey(fluid, t));
+        var cache = aeFluid.ae2$getTagAEKeyCache();
+        return cache.getCache(tag, cache.createFunction(), IdentityTag.COPY);
     }
 
     @Nullable
@@ -71,7 +72,8 @@ public final class AEFluidKey extends AEKey {
         if (tag == null || tag.isEmpty()) {
             return aeFluid.ae2$getAEKey();
         }
-        return aeFluid.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, true), t -> new AEFluidKey(fluid, t));
+        var cache = aeFluid.ae2$getTagAEKeyCache();
+        return cache.getCache(tag, cache.createFunction(), IdentityTag.COPY);
     }
 
     public static boolean matches(AEKey what, FluidStack fluid) {
@@ -88,7 +90,7 @@ public final class AEFluidKey extends AEKey {
 
     public boolean matches(FluidStack variant) {
         return !variant.isEmpty() && fluid.isSame(variant.getFluid())
-                && Objects.equals(internedTag.tag, variant.getTag());
+                && Objects.equals(internedTag, variant.getTag());
     }
 
     @Override
@@ -120,8 +122,8 @@ public final class AEFluidKey extends AEKey {
             if (extraTag == null || extraTag.isEmpty()) {
                 return aeFluid.ae2$getAEKey();
             }
-            return aeFluid.ae2$getTagAEKeyCache().getCache(InternedTag.of(extraTag, false),
-                    t -> new AEFluidKey(fluid, t));
+            var cache = aeFluid.ae2$getTagAEKeyCache();
+            return cache.getCache(extraTag, cache.createFunction());
         } catch (Exception e) {
             AELog.debug("Tried to load an invalid fluid key from NBT: %s", tag, e);
             return null;
@@ -132,9 +134,8 @@ public final class AEFluidKey extends AEKey {
     public CompoundTag toTag() {
         CompoundTag result = new CompoundTag();
         result.putString("id", getId().toString());
-
-        if (internedTag.tag != null) {
-            result.put("tag", internedTag.tag.copy());
+        if (internedTag != null) {
+            result.put("tag", internedTag.copy());
         }
 
         return result;
@@ -157,7 +158,7 @@ public final class AEFluidKey extends AEKey {
 
     @Override
     protected Component computeDisplayName() {
-        return Platform.getFluidDisplayName(fluid, internedTag.tag);
+        return Platform.getFluidDisplayName(fluid, internedTag);
     }
 
     @SuppressWarnings("unchecked")
@@ -168,7 +169,7 @@ public final class AEFluidKey extends AEKey {
     }
 
     public FluidStack toStack(int amount) {
-        return new FluidStack(fluid, amount, internedTag.tag);
+        return new FluidStack(fluid, amount, internedTag);
     }
 
     public FluidStack getReadOnlyStack() {
@@ -191,22 +192,22 @@ public final class AEFluidKey extends AEKey {
      */
     @Nullable
     public CompoundTag getTag() {
-        return internedTag.tag;
+        return internedTag;
     }
 
     @Nullable
     public CompoundTag copyTag() {
-        return internedTag.tag != null ? internedTag.tag.copy() : null;
+        return internedTag != null ? internedTag.copy() : null;
     }
 
     public boolean hasTag() {
-        return internedTag.tag != null;
+        return internedTag != null;
     }
 
     @Override
     public void writeToPacket(FriendlyByteBuf data) {
         data.writeVarInt(BuiltInRegistries.FLUID.getId(fluid));
-        data.writeNbt(internedTag.tag);
+        data.writeNbt(internedTag);
     }
 
     public static AEFluidKey fromPacket(FriendlyByteBuf data) {
@@ -216,7 +217,8 @@ public final class AEFluidKey extends AEKey {
         if (tag == null || tag.isEmpty()) {
             return aeFluid.ae2$getAEKey();
         }
-        return aeFluid.ae2$getTagAEKeyCache().getCache(InternedTag.of(tag, false), t -> new AEFluidKey(fluid, t));
+        var cache = aeFluid.ae2$getTagAEKeyCache();
+        return cache.getCache(tag, cache.createFunction());
     }
 
     public static boolean is(@Nullable GenericStack stack) {
@@ -228,6 +230,6 @@ public final class AEFluidKey extends AEKey {
         var id = getId();
         String idString = id != BuiltInRegistries.FLUID.getDefaultKey() ? id.toString()
                 : fluid.getClass().getName() + "(unregistered)";
-        return internedTag.tag == null ? idString : idString + " (+tag)";
+        return internedTag == null ? idString : idString + " (+tag)";
     }
 }

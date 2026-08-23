@@ -24,6 +24,8 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
+import com.gto.fastcollection.map.enums.Enum2IntMap;
+import com.gto.fastcollection.map.enums.Enum2ObjectMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
@@ -53,7 +55,7 @@ public class CableBusRenderState {
 
     // Describes the outgoing connections of this cable bus to other blocks, and how
     // they should be rendered
-    private EnumMap<Direction, AECableType> connectionTypes = new EnumMap<>(Direction.class);
+    private Enum2ObjectMap<Direction, AECableType> connectionTypes = new Enum2ObjectMap<>(Direction.class);
 
     // Indicate on which sides signified by connectionTypes above, there is another
     // cable bus. If a side is connected,
@@ -66,16 +68,16 @@ public class CableBusRenderState {
     // Specifies the number of channels used for the connection to a given side.
     // Only contains entries if
     // connections contains a corresponding entry.
-    private EnumMap<Direction, Integer> channelsOnSide = new EnumMap<>(Direction.class);
+    private Enum2IntMap<Direction> channelsOnSide = new Enum2IntMap<>(Direction.class);
 
-    private EnumMap<Direction, IPartModel> attachments = new EnumMap<>(Direction.class);
+    private final Enum2ObjectMap<Direction, IPartModel> attachments = new Enum2ObjectMap<>(Direction.class);
 
     // For each attachment, this contains the distance from the edge until which a
     // cable connection should be drawn
-    private EnumMap<Direction, Integer> attachmentConnections = new EnumMap<>(Direction.class);
+    private final Enum2IntMap<Direction> attachmentConnections = new Enum2IntMap<>(Direction.class);
 
     // Contains the facade to use for each side that has a facade attached
-    private EnumMap<Direction, FacadeRenderState> facades = new EnumMap<>(Direction.class);
+    private final Enum2ObjectMap<Direction, FacadeRenderState> facades = new Enum2ObjectMap<>(Direction.class);
 
     // Used for Facades.
     private BlockPos pos;
@@ -84,10 +86,10 @@ public class CableBusRenderState {
     // cut out holes for the parts. This
     // list is only populated if there are
     // facades on this cable bus
-    private List<AABB> boundingBoxes = new ArrayList<>();
+    private final List<AABB> boundingBoxes = new ArrayList<>();
 
     // Additional model data passed to the part models
-    private EnumMap<Direction, ModelData> partModelData = new EnumMap<>(Direction.class);
+    private final Enum2ObjectMap<Direction, ModelData> partModelData = new Enum2ObjectMap<>(Direction.class);
 
     public CableCoreType getCoreType() {
         return this.coreType;
@@ -113,19 +115,19 @@ public class CableBusRenderState {
         this.cableColor = cableColor;
     }
 
-    public EnumMap<Direction, Integer> getChannelsOnSide() {
+    public Enum2IntMap<Direction> getChannelsOnSide() {
         return this.channelsOnSide;
     }
 
-    public EnumMap<Direction, AECableType> getConnectionTypes() {
+    public Enum2ObjectMap<Direction, AECableType> getConnectionTypes() {
         return this.connectionTypes;
     }
 
-    public void setConnectionTypes(EnumMap<Direction, AECableType> connectionTypes) {
+    public void setConnectionTypes(Enum2ObjectMap<Direction, AECableType> connectionTypes) {
         this.connectionTypes = connectionTypes;
     }
 
-    public void setChannelsOnSide(EnumMap<Direction, Integer> channelsOnSide) {
+    public void setChannelsOnSide(Enum2IntMap<Direction> channelsOnSide) {
         this.channelsOnSide = channelsOnSide;
     }
 
@@ -137,15 +139,15 @@ public class CableBusRenderState {
         this.cableBusAdjacent = cableBusAdjacent;
     }
 
-    public EnumMap<Direction, IPartModel> getAttachments() {
+    public Enum2ObjectMap<Direction, IPartModel> getAttachments() {
         return this.attachments;
     }
 
-    public EnumMap<Direction, Integer> getAttachmentConnections() {
+    public Enum2IntMap<Direction> getAttachmentConnections() {
         return this.attachmentConnections;
     }
 
-    public EnumMap<Direction, FacadeRenderState> getFacades() {
+    public Enum2ObjectMap<Direction, FacadeRenderState> getFacades() {
         return this.facades;
     }
 
@@ -161,7 +163,7 @@ public class CableBusRenderState {
         return this.boundingBoxes;
     }
 
-    public EnumMap<Direction, ModelData> getPartModelData() {
+    public Enum2ObjectMap<Direction, ModelData> getPartModelData() {
         return this.partModelData;
     }
 
@@ -169,14 +171,14 @@ public class CableBusRenderState {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + (this.attachmentConnections == null ? 0 : this.attachmentConnections.hashCode());
+        result = prime * result + this.attachmentConnections.hashCode();
         result = prime * result + (this.cableBusAdjacent == null ? 0 : this.cableBusAdjacent.hashCode());
         result = prime * result + (this.cableColor == null ? 0 : this.cableColor.hashCode());
         result = prime * result + (this.cableType == null ? 0 : this.cableType.hashCode());
         result = prime * result + (this.channelsOnSide == null ? 0 : this.channelsOnSide.hashCode());
         result = prime * result + (this.connectionTypes == null ? 0 : this.connectionTypes.hashCode());
         result = prime * result + (this.coreType == null ? 0 : this.coreType.hashCode());
-        result = prime * result + (this.partModelData == null ? 0 : this.partModelData.hashCode());
+        result = prime * result + this.partModelData.hashCode();
         return result;
     }
 

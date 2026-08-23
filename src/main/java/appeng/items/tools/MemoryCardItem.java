@@ -24,6 +24,9 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.ChatFormatting;
@@ -169,7 +172,7 @@ public class MemoryCardItem extends AEBaseItem implements IMemoryCard, DyeableLe
         }
 
         var desiredUpgradesTag = input.getCompound("upgrades");
-        var desiredUpgrades = new IdentityHashMap<Item, Integer>();
+        var desiredUpgrades = new Reference2IntOpenHashMap<Item>();
         for (String itemIdStr : desiredUpgradesTag.getAllKeys()) {
             ResourceLocation itemId;
             try {
@@ -199,8 +202,9 @@ public class MemoryCardItem extends AEBaseItem implements IMemoryCard, DyeableLe
             for (int i = 0; i < upgrades.size(); i++) {
                 upgrades.setItemDirect(i, ItemStack.EMPTY);
             }
-            for (var entry : desiredUpgrades.entrySet()) {
-                upgrades.addItems(new ItemStack(entry.getKey(), entry.getValue()));
+            for (ObjectIterator<Reference2IntMap.Entry<Item>> it = desiredUpgrades.reference2IntEntrySet().fastIterator(); it.hasNext(); ) {
+                var entry = it.next();
+                upgrades.addItems(new ItemStack(entry.getKey(), entry.getIntValue()));
             }
             return true;
         }

@@ -25,6 +25,7 @@ import com.glodblock.github.extendedae.client.button.HighlightButton;
 import com.glodblock.github.extendedae.util.MessageUtil;
 import com.google.common.collect.HashMultimap;
 
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,9 +43,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
 
 import appeng.api.client.AEKeyRendering;
@@ -600,9 +598,10 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
 
         final String searchFilterLowerCase = this.searchField.getValue().toLowerCase();
 
-        Set<Integer> intset = byFacilityUniqueId.keySet();
+        IntSet intset = byFacilityUniqueId.keySet();
 
-        for (int facilityId : intset) {
+        for (IntIterator it = intset.iterator(); it.hasNext(); ) {
+            int facilityId = it.nextInt();
             var entry = byFacilityUniqueId.get(facilityId);
 
             // Shortcut to skip any filter if search term is ""/empty

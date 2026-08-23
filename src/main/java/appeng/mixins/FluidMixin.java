@@ -1,14 +1,14 @@
 package appeng.mixins;
 
-import com.gto.fastcollection.cache.WeakValueIdentityHashCache;
+import com.gto.fastcollection.cache.WeakValueHashCache;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.material.Fluid;
 
 import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.InternedTag;
 import appeng.hooks.IAEFluid;
 import appeng.hooks.IUnique;
 
@@ -19,7 +19,7 @@ public class FluidMixin implements IAEFluid {
     @Unique
     private AEFluidKey ae2$itemKey;
     @Unique
-    private WeakValueIdentityHashCache<InternedTag, AEFluidKey> ae2$cache;
+    private WeakValueHashCache<CompoundTag, AEFluidKey> ae2$cache;
 
     @Override
     public int ae2$getUid() {
@@ -34,16 +34,16 @@ public class FluidMixin implements IAEFluid {
     public AEFluidKey ae2$getAEKey() {
         var key = ae2$itemKey;
         if (key == null) {
-            ae2$itemKey = key = new AEFluidKey((Fluid) (Object) this, InternedTag.EMPTY);
+            ae2$itemKey = key = new AEFluidKey((Fluid) (Object) this, null);
         }
         return key;
     }
 
     @Override
-    public WeakValueIdentityHashCache<InternedTag, AEFluidKey> ae2$getTagAEKeyCache() {
+    public WeakValueHashCache<CompoundTag, AEFluidKey> ae2$getTagAEKeyCache() {
         var cache = this.ae2$cache;
         if (cache == null) {
-            cache = this.ae2$cache = new WeakValueIdentityHashCache<>();
+            cache = this.ae2$cache = new WeakValueHashCache<>(t -> new AEFluidKey((Fluid) (Object) this, t));
         }
         return cache;
     }
