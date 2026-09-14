@@ -34,6 +34,7 @@ import appeng.api.networking.crafting.ICraftingService;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.storage.StorageHelper;
+import appeng.core.AELog;
 
 public class MultiCraftingTracker {
 
@@ -79,17 +80,18 @@ public class MultiCraftingTracker {
 
         // We're already running a crafting job
         if (craftingJob != null) {
+            if (!craftingJob.isDone()) {
+                return false;
+            }
+
+            // A terminal future must never keep the slot busy, even when retrieving its result fails.
+            this.setJob(x, null);
             try {
-                ICraftingPlan job = null;
-                if (craftingJob.isDone()) {
-                    job = craftingJob.get();
-                }
+                var job = craftingJob.get();
 
                 // Check if job is complete
                 if (job != null) {
                     var result = cg.submitJob(job, this.owner, null, false, mySrc);
-
-                    this.setJob(x, null);
 
                     if (result.successful()) {
                         this.setLink(x, result.link());
@@ -97,8 +99,11 @@ public class MultiCraftingTracker {
                         return true;
                     }
                 }
-            } catch (InterruptedException | ExecutionException e) {
-                // :P
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            } catch (ExecutionException e) {
+                var cause = e.getCause() != null ? e.getCause() : e;
+                AELog.warn(cause, "Failed to calculate automatic crafting plan for " + what + " x" + amount);
             }
         } else if (this.getLink(x) == null) {
             this.setJob(x,
