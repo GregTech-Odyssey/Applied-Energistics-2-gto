@@ -167,7 +167,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
             } else {
                 long value = map.getOrDefault(key, Long.MIN_VALUE);
                 if (value > Long.MIN_VALUE) {
-                    return Collections.singleton(new Entry(value, key));
+                    return Collections.singleton(new VariantCounter.Single(key, value));
                 }
             }
         }
@@ -184,7 +184,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         map.fastForEach((k, v) -> {
             var kuid = k.getUid();
             if (kuid != 0) {
-                fuzzyMap.put(kuid, VariantCounter.add(fuzzyMap.get(kuid), k, v));
+                fuzzyMap.compute(kuid, (i, vc) -> VariantCounter.add(vc, k, v));
             }
         });
     }
@@ -337,7 +337,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
             return null;
         }
         for (var e : map) {
-            return new Entry(e.getLongValue(), e.getKey());
+            return new VariantCounter.Single(e.getKey(), e.getLongValue());
         }
         return null;
     }
@@ -350,7 +350,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         }
         for (var e : map) {
             if (keyClass.isInstance(e.getKey())) {
-                return new Entry(e.getLongValue(), e.getKey());
+                return new VariantCounter.Single(e.getKey(), e.getLongValue());
             }
         }
         return null;
@@ -429,31 +429,5 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         map.ensureCapacity(size);
         consumer.accept(map);
         fuzzyUpdate = true;
-    }
-
-    public static final class Entry implements Object2LongMap.Entry<AEKey> {
-
-        private final long value;
-        private final AEKey key;
-
-        public Entry(long value, AEKey key) {
-            this.value = value;
-            this.key = key;
-        }
-
-        @Override
-        public long getLongValue() {
-            return value;
-        }
-
-        @Override
-        public long setValue(long value) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
-        public AEKey getKey() {
-            return key;
-        }
     }
 }
