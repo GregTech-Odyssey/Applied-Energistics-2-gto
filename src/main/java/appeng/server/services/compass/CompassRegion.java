@@ -19,14 +19,13 @@
 package appeng.server.services.compass;
 
 import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
+
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
 import appeng.core.AELog;
 import appeng.core.worlddata.AESavedData;

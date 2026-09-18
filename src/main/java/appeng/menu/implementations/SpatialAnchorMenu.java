@@ -18,16 +18,16 @@
 
 package appeng.menu.implementations;
 
-import java.util.HashMap;
 import java.util.Map.Entry;
 
 import com.google.common.collect.Multiset;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.LevelAccessor;
+
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 
 import appeng.api.config.Settings;
 import appeng.api.config.YesNo;

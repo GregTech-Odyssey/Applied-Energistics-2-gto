@@ -20,9 +20,6 @@ package appeng.items.tools;
 
 import java.util.*;
 
-import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
-import it.unimi.dsi.fastutil.objects.Reference2IntLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -38,6 +35,10 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
+import it.unimi.dsi.fastutil.objects.Reference2IntLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 
 import appeng.api.implementations.menuobjects.IMenuItem;
 import appeng.api.networking.GridHelper;
@@ -166,7 +167,8 @@ public class NetworkToolItem extends AEBaseItem implements IMenuItem, AEToolItem
             upgradeCards.addTo(AEItemKey.of(card), card.getCount());
         }
         var stacks = new ArrayList<GenericStack>(upgradeCards.size());
-        for (ObjectBidirectionalIterator<Reference2IntMap.Entry<AEItemKey>> it = upgradeCards.reference2IntEntrySet().fastIterator(); it.hasNext(); ) {
+        for (ObjectBidirectionalIterator<Reference2IntMap.Entry<AEItemKey>> it = upgradeCards.reference2IntEntrySet()
+                .fastIterator(); it.hasNext();) {
             var entry = it.next();
             stacks.add(new GenericStack(entry.getKey(), entry.getIntValue()));
         }

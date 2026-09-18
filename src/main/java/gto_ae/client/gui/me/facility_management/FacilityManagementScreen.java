@@ -25,7 +25,6 @@ import com.glodblock.github.extendedae.client.button.HighlightButton;
 import com.glodblock.github.extendedae.util.MessageUtil;
 import com.google.common.collect.HashMultimap;
 
-import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +42,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 
+import it.unimi.dsi.fastutil.ints.*;
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
 
 import appeng.api.client.AEKeyRendering;
@@ -600,7 +600,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
 
         IntSet intset = byFacilityUniqueId.keySet();
 
-        for (IntIterator it = intset.iterator(); it.hasNext(); ) {
+        for (IntIterator it = intset.iterator(); it.hasNext();) {
             int facilityId = it.nextInt();
             var entry = byFacilityUniqueId.get(facilityId);
 

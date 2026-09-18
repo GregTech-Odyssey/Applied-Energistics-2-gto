@@ -23,14 +23,13 @@
 
 package appeng.api.features;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Objects;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 
 import appeng.api.networking.security.IActionHost;
 
@@ -42,7 +41,7 @@ public final class Locatables {
     private static final Type<IActionHost> QUANTUM_NETWORK_BRIDGES = new Type<>();
 
     public static class Type<T> {
-        private final Long2ObjectOpenHashMap< T> objects = new Long2ObjectOpenHashMap<>();
+        private final Long2ObjectOpenHashMap<T> objects = new Long2ObjectOpenHashMap<>();
 
         /**
          * Gets the currently registered locatable object for a given key. This only works server-side, which is why a

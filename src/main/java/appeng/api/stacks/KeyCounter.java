@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.ints.Int2ReferenceFunction;
 import it.unimi.dsi.fastutil.longs.LongCollection;
 import it.unimi.dsi.fastutil.longs.LongLists;
 import it.unimi.dsi.fastutil.objects.*;
@@ -42,8 +41,6 @@ import appeng.api.config.FuzzyMode;
  * Associates a generic value of type T with AE keys and makes key/value pairs searchable with fuzzy mode semantics.
  */
 public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>> {
-
-    private static final Int2ReferenceFunction<VariantCounter> VARIANT_COUNTER__FUNCTION = k -> new VariantCounter();
 
     public static final KeyCounter EMPTY = new KeyCounter();
 
@@ -182,12 +179,12 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         if (fuzzyMap == null) {
             fuzzyMap = new Int2ObjectOpenHashMap<>(map.size());
         } else {
-            fuzzyMap.values().forEach(VariantCounter::clear);
+            fuzzyMap.clear();
         }
         map.fastForEach((k, v) -> {
             var kuid = k.getUid();
             if (kuid != 0) {
-                fuzzyMap.computeIfAbsent(kuid, VARIANT_COUNTER__FUNCTION).add(k, v);
+                fuzzyMap.put(kuid, VariantCounter.add(fuzzyMap.get(kuid), k, v));
             }
         });
     }
@@ -451,7 +448,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
 
         @Override
         public long setValue(long value) {
-            return 0;
+            throw new UnsupportedOperationException();
         }
 
         @Override

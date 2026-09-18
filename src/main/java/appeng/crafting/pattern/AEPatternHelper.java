@@ -1,12 +1,11 @@
 package appeng.crafting.pattern;
 
-import java.util.LinkedHashMap;
-
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.GenericStack;
 import it.unimi.dsi.fastutil.objects.ObjectBidirectionalIterator;
 import it.unimi.dsi.fastutil.objects.Reference2LongLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2LongMap;
+
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.GenericStack;
 
 /**
  * Helpers that apply to both processing and crafting patterns.
@@ -35,7 +34,8 @@ final class AEPatternHelper {
 
         GenericStack[] out = new GenericStack[map.size()];
         int i = 0;
-        for (ObjectBidirectionalIterator<Reference2LongMap.Entry<AEKey>> it = map.reference2LongEntrySet().fastIterator(); it.hasNext(); ) {
+        for (ObjectBidirectionalIterator<Reference2LongMap.Entry<AEKey>> it = map.reference2LongEntrySet()
+                .fastIterator(); it.hasNext();) {
             var entry = it.next();
             out[i++] = new GenericStack(entry.getKey(), entry.getLongValue());
         }

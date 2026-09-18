@@ -29,7 +29,6 @@ import java.util.concurrent.*;
 import com.google.common.collect.*;
 import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
 
-import it.unimi.dsi.fastutil.objects.*;
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +37,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+
+import it.unimi.dsi.fastutil.objects.*;
 
 import appeng.api.config.Actionable;
 import appeng.api.crafting.IPatternDetails;
@@ -364,10 +365,12 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
 
             @Override
             public Object2LongMap<IPatternDetails> patternTimes() {
-                return Object2LongMaps.singleton(AEItems.PROCESSING_PATTERN.asItem().decode(PatternDetailsHelper.encodeProcessingPattern(
-                                new GenericStack[]{new GenericStack(AEItemKey.of(Blocks.DIRT), 1)},
-                                new GenericStack[]{new GenericStack(what, 1)}),
-                        grid.getPivot().getLevel(), false), amount);
+                return Object2LongMaps.singleton(AEItems.PROCESSING_PATTERN.asItem()
+                        .decode(PatternDetailsHelper.encodeProcessingPattern(
+                                new GenericStack[] { new GenericStack(AEItemKey.of(Blocks.DIRT), 1) },
+                                new GenericStack[] { new GenericStack(what, 1) }),
+                                grid.getPivot().getLevel(), false),
+                        amount);
             }
         }, Util.backgroundExecutor());
     }

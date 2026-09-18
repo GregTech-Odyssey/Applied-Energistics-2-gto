@@ -21,7 +21,6 @@ package appeng.client.render.cablebus;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -30,10 +29,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.Weigher;
-
 import com.gto.fastcollection.map.enums.Enum2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import it.unimi.dsi.fastutil.objects.Reference2IntMap;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,6 +51,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.IDynamicBakedModel;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
+
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 
 import appeng.api.parts.IPartModel;
 import appeng.api.util.AECableType;
@@ -297,7 +297,8 @@ public class CableBusBakedModel implements IDynamicBakedModel {
 
         // Render all internal connections to attachments
         var attachmentConnections = renderState.getAttachmentConnections();
-        for (ObjectIterator<Reference2IntMap.Entry<Direction>> it = attachmentConnections.reference2IntEntrySet().fastIterator(); it.hasNext(); ) {
+        for (ObjectIterator<Reference2IntMap.Entry<Direction>> it = attachmentConnections.reference2IntEntrySet()
+                .fastIterator(); it.hasNext();) {
             var e = it.next();
             int distance = e.getIntValue();
             var facing = e.getKey();

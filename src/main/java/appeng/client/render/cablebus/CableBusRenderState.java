@@ -19,13 +19,13 @@
 package appeng.client.render.cablebus;
 
 import java.util.ArrayList;
-import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
 import com.gto.fastcollection.map.enums.Enum2IntMap;
 import com.gto.fastcollection.map.enums.Enum2ObjectMap;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;

@@ -23,12 +23,11 @@
 
 package appeng.api.networking.crafting;
 
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
-import it.unimi.dsi.fastutil.objects.Object2LongMap;
 
 /**
  * Result of a {@linkplain ICraftingService#beginCraftingCalculation crafting job calculation}. Do not edit any of the

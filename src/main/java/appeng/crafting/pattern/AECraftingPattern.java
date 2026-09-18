@@ -18,11 +18,8 @@
 
 package appeng.crafting.pattern;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
 import java.util.Objects;
 
-import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.NonNullList;
@@ -39,6 +36,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.objects.Reference2BooleanOpenHashMap;
 
 import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.crafting.IPatternDetails;

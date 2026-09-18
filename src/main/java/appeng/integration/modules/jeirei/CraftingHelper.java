@@ -1,12 +1,12 @@
 package appeng.integration.modules.jeirei;
 
 import java.util.Comparator;
-import java.util.Map;
 
-import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
+
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.core.AELog;

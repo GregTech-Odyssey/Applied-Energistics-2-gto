@@ -20,13 +20,9 @@ package appeng.items.tools;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Set;
 
-import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import it.unimi.dsi.fastutil.objects.Reference2IntMap;
-import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.ChatFormatting;
@@ -51,6 +47,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import it.unimi.dsi.fastutil.objects.Reference2IntMap;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import appeng.api.implementations.items.IMemoryCard;
 import appeng.api.implementations.items.MemoryCardMessages;
@@ -202,7 +202,8 @@ public class MemoryCardItem extends AEBaseItem implements IMemoryCard, DyeableLe
             for (int i = 0; i < upgrades.size(); i++) {
                 upgrades.setItemDirect(i, ItemStack.EMPTY);
             }
-            for (ObjectIterator<Reference2IntMap.Entry<Item>> it = desiredUpgrades.reference2IntEntrySet().fastIterator(); it.hasNext(); ) {
+            for (ObjectIterator<Reference2IntMap.Entry<Item>> it = desiredUpgrades.reference2IntEntrySet()
+                    .fastIterator(); it.hasNext();) {
                 var entry = it.next();
                 upgrades.addItems(new ItemStack(entry.getKey(), entry.getIntValue()));
             }
