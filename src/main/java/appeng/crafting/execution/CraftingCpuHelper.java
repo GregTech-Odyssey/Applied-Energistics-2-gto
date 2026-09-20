@@ -115,7 +115,7 @@ public class CraftingCpuHelper {
             long remainingMultiplier = inputs[x].getMultiplier();
             for (var template : getValidItemTemplates(sourceInv, inputs[x], level)) {
                 long extracted = extractTemplates(sourceInv, template, remainingMultiplier);
-                list.add(template.what(), extracted * template.amount());
+                list.add(template.what(), saturatedMultiply(extracted, template.amount()));
 
                 // Container items!
                 var containerItem = inputs[x].getRemainingKey(template.what());
@@ -184,14 +184,14 @@ public class CraftingCpuHelper {
      * Extract a whole number of templates, and return how many were extracted.
      */
     public static long extractTemplates(ICraftingInventory inv, GenericStack template, long multiplier) {
-        long maxTotal = template.amount() * multiplier;
+        long maxTotal = saturatedMultiply(template.amount(), multiplier);
         // Extract as much as possible.
         var extracted = inv.extract(template.what(), maxTotal, Actionable.SIMULATE);
         if (extracted == 0)
             return 0;
         // Adjust to have a whole number of templates.
         multiplier = extracted / template.amount();
-        maxTotal = template.amount() * multiplier;
+        maxTotal = saturatedMultiply(template.amount(), multiplier);
         if (maxTotal == 0)
             return 0;
         extracted = inv.extract(template.what(), maxTotal, Actionable.MODULATE);
@@ -199,6 +199,14 @@ public class CraftingCpuHelper {
             throw new IllegalStateException("Failed to correctly extract whole number. Invalid simulation!");
         }
         return multiplier;
+    }
+
+    private static long saturatedMultiply(long a, long b) {
+        try {
+            return Math.multiplyExact(a, b);
+        } catch (ArithmeticException e) {
+            return Long.MAX_VALUE;
+        }
     }
 
     private CraftingCpuHelper() {
