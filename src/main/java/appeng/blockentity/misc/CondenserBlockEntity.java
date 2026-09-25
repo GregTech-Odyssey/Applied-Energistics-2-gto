@@ -35,7 +35,6 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import appeng.api.config.CondenserOutput;
 import appeng.api.config.Settings;
-import appeng.api.implementations.items.IStorageComponent;
 import appeng.api.inventories.BaseInternalInventory;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.inventories.TrashFluidHandler;
@@ -48,6 +47,7 @@ import appeng.api.util.IConfigurableObject;
 import appeng.blockentity.AEBaseInvBlockEntity;
 import appeng.capabilities.Capabilities;
 import appeng.core.definitions.AEItems;
+import appeng.items.materials.StorageComponentItem;
 import appeng.util.ConfigManager;
 import appeng.util.inv.AppEngInternalInventory;
 import appeng.util.inv.CombinedInternalInventory;
@@ -103,10 +103,8 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
 
     public double getStorage() {
         final ItemStack is = this.storageSlot.getStackInSlot(0);
-        if (!is.isEmpty() && is.getItem() instanceof IStorageComponent sc) {
-            if (sc.isStorageComponent(is)) {
-                return sc.getBytes(is) * BYTE_MULTIPLIER;
-            }
+        if (!is.isEmpty() && is.getItem() instanceof StorageComponentItem sc) {
+            return sc.getBytes() * BYTE_MULTIPLIER;
         }
         return 0;
     }

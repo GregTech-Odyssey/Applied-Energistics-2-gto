@@ -165,7 +165,7 @@ allprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url = 'https://maven.gtodyssey.com/releases' }
+        maven { url = 'https://gtodyssey.com/maven/releases' }
         maven {
             url "https://maven.shedaniel.me/"
             content {
@@ -511,7 +511,7 @@ publishing {
     repositories {
         maven {
             name = 'gtodysseyRepository'
-            url = 'https://maven.gtodyssey.com/releases'
+            url = 'https://gtodyssey.com/maven/releases'
             credentials {
                 username = findProperty('gtodysseyRepositoryUsername') ?: ''
                 password = findProperty('gtodysseyRepositoryPassword') ?: ''

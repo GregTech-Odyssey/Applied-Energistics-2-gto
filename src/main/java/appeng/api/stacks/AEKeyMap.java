@@ -382,6 +382,37 @@ public final class AEKeyMap<K extends AEKey> extends Reference2LongOpenHashMap<K
         return 0;
     }
 
+    public long extract(final AEKey k, final long amount, final long limit) {
+        if (k == null || amount < 1) {
+            return 0;
+        }
+        final Object[] key = this.key;
+        final int mask = this.mask;
+        int pos;
+        Object curr;
+        if ((curr = key[pos = k.mix & mask]) != null) {
+            do {
+                if (curr == k) {
+                    final long[] value = this.value;
+                    final long oldValue = value[pos];
+                    final long extractable = oldValue - limit;
+                    if (extractable <= 0)
+                        return 0;
+                    if (amount < extractable) {
+                        value[pos] = oldValue - amount;
+                        return amount;
+                    }
+                    if (limit == 0) {
+                        return removeEntry(pos);
+                    }
+                    value[pos] = limit;
+                    return extractable;
+                }
+            } while ((curr = key[pos = (pos + 1) & mask]) != null);
+        }
+        return 0;
+    }
+
     public void putAll(AEKeyMap<K> map) {
         this.ensureCapacity(map.size);
         map.fastForEach(this::set);

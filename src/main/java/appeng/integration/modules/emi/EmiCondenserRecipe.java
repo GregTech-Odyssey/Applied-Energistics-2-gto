@@ -19,12 +19,12 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
 
 import appeng.api.config.CondenserOutput;
-import appeng.api.implementations.items.IStorageComponent;
 import appeng.blockentity.misc.CondenserBlockEntity;
 import appeng.core.AppEng;
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
 import appeng.core.localization.ButtonToolTips;
+import appeng.items.materials.StorageComponentItem;
 
 /**
  * Virtual recipe used to represent the types of {@link CondenserOutput} that actually produce can output.
@@ -90,8 +90,8 @@ class EmiCondenserRecipe extends BasicEmiRecipe {
 
     private void addViableComponent(CondenserOutput condenserOutput, List<EmiStack> viableComponents,
             ItemLike item) {
-        IStorageComponent comp = (IStorageComponent) item.asItem();
-        int storage = comp.getBytes(item.asItem().getDefaultInstance()) * CondenserBlockEntity.BYTE_MULTIPLIER;
+        StorageComponentItem comp = (StorageComponentItem) item.asItem();
+        long storage = comp.getBytes() * CondenserBlockEntity.BYTE_MULTIPLIER;
         if (storage >= condenserOutput.requiredPower) {
             viableComponents.add(EmiStack.of(item));
         }

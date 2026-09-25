@@ -29,7 +29,6 @@ import appeng.api.features.GridLinkables;
 import appeng.api.features.IGridLinkableHandler;
 import appeng.api.ids.AETags;
 import appeng.api.implementations.items.ISpatialStorageCell;
-import appeng.api.implementations.items.IStorageComponent;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.ICellWorkbenchItem;
@@ -41,6 +40,7 @@ import appeng.blockentity.qnb.QuantumBridgeBlockEntity;
 import appeng.client.gui.Icon;
 import appeng.core.definitions.AEItems;
 import appeng.crafting.pattern.EncodedPatternItem;
+import appeng.items.materials.StorageComponentItem;
 import appeng.util.Platform;
 
 /**
@@ -152,15 +152,13 @@ public class RestrictedInputSlot extends AppEngSlot {
                 return stack.getItem() instanceof ICellWorkbenchItem
                         && ((ICellWorkbenchItem) stack.getItem()).isEditable(stack);
             case STORAGE_COMPONENT:
-                return stack.getItem() instanceof IStorageComponent
-                        && ((IStorageComponent) stack.getItem()).isStorageComponent(stack);
+                return stack.getItem() instanceof StorageComponentItem;
             case TRASH:
                 if (StorageCells.isCellHandled(stack)) {
                     return false;
                 }
 
-                return !(stack.getItem() instanceof IStorageComponent
-                        && ((IStorageComponent) stack.getItem()).isStorageComponent(stack));
+                return !(stack.getItem() instanceof StorageComponentItem);
             case GRID_LINKABLE_ITEM: {
                 var handler = GridLinkables.get(stack.getItem());
                 return handler != null && handler.canLink(stack);
