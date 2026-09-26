@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -36,6 +37,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
 import appeng.api.config.Actionable;
+import appeng.api.config.AdvancedBlockingMode;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.Settings;
 import appeng.api.networking.GridFlags;
@@ -49,6 +51,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.storage.MEStorage;
@@ -78,10 +81,14 @@ public class InterfaceLogic
         IUpgradeableObject,
         IConfigurableObject,
         IStatusTracked {
+    private static final ResourceLocation PROGRAMMED_CIRCUIT = new ResourceLocation("gtceu", "programmed_circuit");
+
     @Nullable
     private InterfaceInventory localInvHandler;
     @Nullable
     private MEStorage networkStorage;
+    @Nullable
+    private AEItemKey advancedBlockingPattern;
 
     protected final InterfaceLogicHost host;
     protected final IManagedGridNode mainNode;
@@ -127,6 +134,7 @@ public class InterfaceLogic
         this.upgrades = UpgradeInventories.forMachine(is, 1, this::onUpgradesChanged);
         this.craftingTracker = new MultiCraftingTracker(this, slots);
         this.cm.registerSetting(Settings.FUZZY_MODE, FuzzyMode.IGNORE_ALL);
+        this.cm.registerSetting(Settings.ADVANCED_BLOCKING_MODE, AdvancedBlockingMode.DEFAULT);
         this.plannedWork = new GenericStack[slots];
 
         getConfig().useRegisteredCapacities();
@@ -247,8 +255,13 @@ public class InterfaceLogic
     }
 
     public void gridChanged() {
-        this.networkStorage = mainNode.getGrid().getStorageService().getInventory();
+        var networkStorage = mainNode.getGrid().getStorageService().getInventory();
 
+        if (this.networkStorage != networkStorage) {
+            this.advancedBlockingPattern = null;
+        }
+
+        this.networkStorage = networkStorage;
         this.notifyNeighbors();
     }
 
@@ -278,6 +291,43 @@ public class InterfaceLogic
         }
 
         return networkStorage;
+    }
+
+    @Nullable
+    public MEStorage getNetworkStorage() {
+        return networkStorage;
+    }
+
+    public boolean canStartAdvancedBlockingPattern(AEItemKey patternDefinition) {
+        if (patternDefinition.equals(this.advancedBlockingPattern)) {
+            return true;
+        }
+
+        var networkStorage = this.networkStorage;
+        if (networkStorage == null) {
+            return false;
+        }
+
+        for (var entry : networkStorage.getAvailableStacks()) {
+            if (entry.getLongValue() <= 0) {
+                continue;
+            }
+
+            var key = entry.getKey();
+            if (key instanceof AEItemKey itemKey
+                    && PROGRAMMED_CIRCUIT.equals(itemKey.getId())) {
+                continue;
+            }
+
+            return false;
+        }
+
+        this.advancedBlockingPattern = null;
+        return true;
+    }
+
+    public void setAdvancedBlockingPattern(AEItemKey patternDefinition) {
+        this.advancedBlockingPattern = patternDefinition;
     }
 
     /**
@@ -543,6 +593,10 @@ public class InterfaceLogic
         if (!upgrades.isInstalled(AEItems.CRAFTING_CARD)) {
             // Cancel crafting if the crafting card is removed
             this.cancelCrafting();
+        }
+
+        if (!upgrades.isInstalled(AEItems.ADVANCED_BLOCKING_CARD)) {
+            this.advancedBlockingPattern = null;
         }
 
         // Update plan in case fuzzy card was inserted or removed

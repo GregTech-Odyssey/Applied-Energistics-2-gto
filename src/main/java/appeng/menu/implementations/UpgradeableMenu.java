@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Applied Energistics 2.  If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-
 package appeng.menu.implementations;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -24,6 +23,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.level.ItemLike;
 
+import appeng.api.config.AdvancedBlockingMode;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.RedstoneMode;
 import appeng.api.config.SchedulingMode;
@@ -54,6 +54,10 @@ public abstract class UpgradeableMenu<T extends IUpgradeableObject> extends AEBa
     public YesNo cMode = YesNo.NO;
     @GuiSync(6)
     public SchedulingMode schedulingMode = SchedulingMode.DEFAULT;
+    // Keep this ID clear of all UpgradeableMenu subclasses in AE2-GTO and
+    // ExtendedAE 1.4.17. ExtendedAE currently uses IDs through 11.
+    @GuiSync(12)
+    public AdvancedBlockingMode advancedBlockingMode = AdvancedBlockingMode.DEFAULT;
 
     private final ToolboxMenu toolbox;
 
@@ -67,7 +71,6 @@ public abstract class UpgradeableMenu<T extends IUpgradeableObject> extends AEBa
         // since some blocks, such as the cell workbench, have a variable number of
         // upgrades depending on the inserted cell
         this.setupInventorySlots();
-
         // Upgrade slots MUST be added before the config slots that depend on them.
         // Otherwise, the client might reject the initial server-sent config slot content because it doesn't
         // know about the expanded capacity when it receives them.
@@ -96,7 +99,6 @@ public abstract class UpgradeableMenu<T extends IUpgradeableObject> extends AEBa
 
     protected final void addExpandableConfigSlots(GenericStackInv config, int rows, int cols, int optionalRows) {
         var inv = config.createMenuWrapper();
-
         for (int y = 0; y < rows + optionalRows; y++) {
             for (int x = 0; x < cols; x++) {
                 int invIdx = y * cols + x;
@@ -116,7 +118,15 @@ public abstract class UpgradeableMenu<T extends IUpgradeableObject> extends AEBa
     @Override
     public void broadcastChanges() {
         if (isServerSide() && getHost() instanceof IConfigurableObject configurableObject) {
-            this.loadSettingsFromHost(configurableObject.getConfigManager());
+            var configManager = configurableObject.getConfigManager();
+            this.loadSettingsFromHost(configManager);
+
+            // Some addon menus (notably ExtendedAE's ContainerExInterface) override
+            // loadSettingsFromHost without calling super. Keep the Advanced Blocking
+            // mode sync here so those menus cannot accidentally skip it.
+            if (configManager.hasSetting(Settings.ADVANCED_BLOCKING_MODE)) {
+                this.setAdvancedBlockingMode(configManager.getSetting(Settings.ADVANCED_BLOCKING_MODE));
+            }
         }
 
         toolbox.tick();
@@ -128,7 +138,6 @@ public abstract class UpgradeableMenu<T extends IUpgradeableObject> extends AEBa
                 }
             }
         }
-
         this.standardDetectAndSendChanges();
     }
 
@@ -184,6 +193,14 @@ public abstract class UpgradeableMenu<T extends IUpgradeableObject> extends AEBa
 
     private void setSchedulingMode(SchedulingMode schedulingMode) {
         this.schedulingMode = schedulingMode;
+    }
+
+    public AdvancedBlockingMode getAdvancedBlockingMode() {
+        return this.advancedBlockingMode;
+    }
+
+    private void setAdvancedBlockingMode(AdvancedBlockingMode advancedBlockingMode) {
+        this.advancedBlockingMode = advancedBlockingMode;
     }
 
     public final T getHost() {

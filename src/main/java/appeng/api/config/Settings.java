@@ -20,7 +20,6 @@
  * IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
  * CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-
 package appeng.api.config;
 
 import java.util.EnumSet;
@@ -67,6 +66,8 @@ public final class Settings {
     public static final Setting<RelativeDirection> IO_DIRECTION = register("io_direction", RelativeDirection.LEFT,
             RelativeDirection.RIGHT);
     public static final Setting<YesNo> BLOCKING_MODE = register("blocking_mode", YesNo.YES, YesNo.NO);
+    public static final Setting<AdvancedBlockingMode> ADVANCED_BLOCKING_MODE = register("advanced_blocking_mode",
+            AdvancedBlockingMode.class);
     public static final Setting<LockCraftingMode> LOCK_CRAFTING_MODE = register("lock_crafting_mode",
             LockCraftingMode.class);
     public static final Setting<OperationMode> OPERATION_MODE = register("operation_mode", OperationMode.class);
@@ -77,7 +78,6 @@ public final class Settings {
             TerminalStyle.MEDIUM, TerminalStyle.TALL, TerminalStyle.FULL);
     public static final Setting<ShowPatternProviders> TERMINAL_SHOW_PATTERN_PROVIDERS = register(
             "show_pattern_providers", ShowPatternProviders.class);
-
     public static final Setting<CopyMode> COPY_MODE = register("copy_mode", CopyMode.class);
     public static final Setting<YesNo> PATTERN_ACCESS_TERMINAL = register("pattern_access_terminal", YesNo.YES,
             YesNo.NO);
@@ -92,7 +92,6 @@ public final class Settings {
     public static final Setting<YesNo> INSCRIBER_SEPARATE_SIDES = register("inscriber_separate_sides", YesNo.NO,
             YesNo.YES);
     public static final Setting<YesNo> AUTO_EXPORT = register("auto_export", YesNo.NO, YesNo.YES);
-
     public static final Setting<YesNo> INSCRIBER_BUFFER_SIZE = register("inscriber_buffer_size", YesNo.NO, YesNo.YES);
 
     public static Setting<?> getOrThrow(String name) {

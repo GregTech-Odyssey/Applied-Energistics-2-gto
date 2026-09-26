@@ -219,6 +219,7 @@ public final class AEItems {
     public static final ItemDefinition<Item> SPEED_CARD = item("Acceleration Card", AEItemIds.SPEED_CARD, Upgrades::createUpgradeCardItem);
     public static final ItemDefinition<Item> INVERTER_CARD = item("Inverter Card", AEItemIds.INVERTER_CARD, Upgrades::createUpgradeCardItem);
     public static final ItemDefinition<Item> CRAFTING_CARD = item("Crafting Card", AEItemIds.CRAFTING_CARD, Upgrades::createUpgradeCardItem);
+    public static final ItemDefinition<Item> ADVANCED_BLOCKING_CARD = item("Advanced Blocking Card", AEItemIds.ADVANCED_BLOCKING_CARD, Upgrades::createUpgradeCardItem);
     public static final ItemDefinition<Item> EQUAL_DISTRIBUTION_CARD = item("Equal Distribution Card", AEItemIds.EQUAL_DISTRIBUTION_CARD, Upgrades::createUpgradeCardItem);
     public static final ItemDefinition<EnergyCardItem> ENERGY_CARD = item("Energy Card", AEItemIds.ENERGY_CARD, p -> new EnergyCardItem(p, 1));
     public static final ItemDefinition<MaterialItem> SPATIAL_2_CELL_COMPONENT = item("2³ Spatial Component", AEItemIds.SPATIAL_2_CELL_COMPONENT, MaterialItem::new);
