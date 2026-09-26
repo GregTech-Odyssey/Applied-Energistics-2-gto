@@ -867,6 +867,7 @@
   "item.ae2.charged_staff": "Charged Staff",
   "item.ae2.color_applicator": "Color Applicator",
   "item.ae2.conversion_monitor": "ME Conversion Monitor",
+  "item.ae2.advanced_blocking_card": "Advanced Blocking Card",
   "item.ae2.crafting_card": "Crafting Card",
   "item.ae2.crafting_pattern": "Crafting Pattern",
   "item.ae2.crafting_terminal": "ME Crafting Terminal",
@@ -1132,5 +1133,8 @@
   "waila.ae2.Showing": "Showing",
   "waila.ae2.Stored": "Stored: %s / %s",
   "waila.ae2.Suppressed": "Suppressed",
-  "waila.ae2.Unlocked": "Unlocked"
+  "waila.ae2.Unlocked": "Unlocked",
+  "gui.ae2.advanced_blocking_mode": "Advanced Blocking Mode",
+  "gui.ae2.advanced_blocking_mode.default": "Default: blocks only when recipe-relevant items or fluids are present in the subnet. Programmed circuits are ignored.",
+  "gui.ae2.advanced_blocking_mode.loose": "Loose: blocks when any item or fluid is present anywhere in the subnet."
 }

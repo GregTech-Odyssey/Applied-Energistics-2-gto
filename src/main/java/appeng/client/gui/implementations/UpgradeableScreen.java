@@ -15,22 +15,30 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with Applied Energistics 2.  If not, see <http://www.gnu.org/licenses/lgpl>.
  */
-
 package appeng.client.gui.implementations;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
+import appeng.api.config.AdvancedBlockingMode;
+import appeng.api.config.Settings;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.upgrades.Upgrades;
 import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.Icon;
 import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.widgets.ServerSettingToggleButton;
+import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.client.gui.widgets.ToolboxPanel;
 import appeng.client.gui.widgets.UpgradesPanel;
+import appeng.core.definitions.AEItems;
 import appeng.core.localization.GuiText;
+import appeng.helpers.InterfaceLogicHost;
 import appeng.menu.SlotSemantics;
 import appeng.menu.implementations.UpgradeableMenu;
 
@@ -40,14 +48,48 @@ import appeng.menu.implementations.UpgradeableMenu;
  */
 public class UpgradeableScreen<T extends UpgradeableMenu<?>> extends AEBaseScreen<T> {
 
+    static {
+        SettingToggleButton.registerApp(
+                Icon.BLOCKING_MODE_YES,
+                Settings.ADVANCED_BLOCKING_MODE,
+                AdvancedBlockingMode.DEFAULT,
+                Component.translatable("gui.ae2.advanced_blocking_mode"),
+                Component.translatable("gui.ae2.advanced_blocking_mode.default"));
+        SettingToggleButton.registerApp(
+                Icon.BLOCKING_MODE_NO,
+                Settings.ADVANCED_BLOCKING_MODE,
+                AdvancedBlockingMode.LOOSE,
+                Component.translatable("gui.ae2.advanced_blocking_mode"),
+                Component.translatable("gui.ae2.advanced_blocking_mode.loose"));
+    }
+
+    @Nullable
+    private final ServerSettingToggleButton<AdvancedBlockingMode> advancedBlockingModeButton;
+
     public UpgradeableScreen(T menu, Inventory playerInventory, Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
-
         this.widgets.add("upgrades", new UpgradesPanel(
                 menu.getSlots(SlotSemantics.UPGRADE),
                 this::getCompatibleUpgrades));
         if (menu.getToolbox().isPresent()) {
             this.widgets.add("toolbox", new ToolboxPanel(style, menu.getToolbox().getName()));
+        }
+
+        if (menu.getHost() instanceof InterfaceLogicHost) {
+            this.advancedBlockingModeButton = addToLeftToolbar(new ServerSettingToggleButton<>(
+                    Settings.ADVANCED_BLOCKING_MODE,
+                    AdvancedBlockingMode.DEFAULT));
+        } else {
+            this.advancedBlockingModeButton = null;
+        }
+    }
+
+    @Override
+    protected void updateBeforeRender() {
+        super.updateBeforeRender();
+        if (this.advancedBlockingModeButton != null) {
+            this.advancedBlockingModeButton.set(this.menu.getAdvancedBlockingMode());
+            this.advancedBlockingModeButton.setVisibility(this.menu.hasUpgrade(AEItems.ADVANCED_BLOCKING_CARD));
         }
     }
 

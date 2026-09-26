@@ -27,12 +27,15 @@ import com.google.common.util.concurrent.Runnables;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import appeng.api.config.Actionable;
+import appeng.api.config.AdvancedBlockingMode;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.storage.MEStorage;
@@ -74,6 +77,8 @@ public interface PatternProviderTarget {
         return null;
     }
 
+    ResourceLocation PROGRAMMED_CIRCUIT = new ResourceLocation("gtceu", "programmed_circuit");
+
     private static PatternProviderTarget wrapMeStorage(MEStorage storage, IActionSource src) {
         return new PatternProviderTarget() {
             @Override
@@ -83,14 +88,38 @@ public interface PatternProviderTarget {
 
             @Override
             public boolean containsPatternInput(Set<AEKey> patternInputs) {
-                for (var stack : storage.getAvailableStacks()) {
-                    if (patternInputs.contains(stack.getKey().dropSecondary())) {
-                        return true;
-                    }
-                }
-                return false;
+                return PatternProviderTarget.isBlocked(storage, patternInputs, null, AdvancedBlockingMode.DEFAULT);
             }
         };
+    }
+
+    static boolean isBlocked(MEStorage storage, Set<AEKey> patternInputs, @Nullable MEStorage advancedBlockingStorage,
+            AdvancedBlockingMode advancedBlockingMode) {
+        if (advancedBlockingStorage != null) {
+            for (var stack : advancedBlockingStorage.getAvailableStacks()) {
+                var key = stack.getKey();
+
+                if (advancedBlockingMode == AdvancedBlockingMode.LOOSE) {
+                    return true;
+                }
+
+                if (key instanceof AEItemKey itemKey && PROGRAMMED_CIRCUIT.equals(itemKey.getId())) {
+                    continue;
+                }
+
+                if (patternInputs.contains(key.dropSecondary())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        for (var stack : storage.getAvailableStacks()) {
+            if (patternInputs.contains(stack.getKey().dropSecondary())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     long insert(AEKey what, long amount, Actionable type);

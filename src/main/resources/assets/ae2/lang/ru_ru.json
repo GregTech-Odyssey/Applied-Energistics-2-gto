@@ -734,6 +734,7 @@
   "item.ae2.charged_certus_quartz_crystal": "Заряженный кристалл истинного кварца",
   "item.ae2.charged_staff": "Заряженный посох",
   "item.ae2.color_applicator": "Аппликатор цвета",
+  "item.ae2.advanced_blocking_card": "Продвинутая карта блокировки",
   "item.ae2.conversion_monitor": "МЭ монитор превращения",
   "item.ae2.crafting_card": "Карта изготовления",
   "item.ae2.crafting_pattern": "Шаблон изготовления",
@@ -997,5 +998,8 @@
   "waila.ae2.P2PUnlinked": "Не сопряжённый",
   "waila.ae2.Showing": "Показ",
   "waila.ae2.Stored": "Хранится: %s / %s",
-  "waila.ae2.Unlocked": "Разблокировано"
+  "waila.ae2.Unlocked": "Разблокировано",
+  "gui.ae2.advanced_blocking_mode": "Расширенная блокировка",
+  "gui.ae2.advanced_blocking_mode.default": "Обычный режим: блокирует только если в подсети есть предметы или жидкости текущего рецепта. Программируемые схемы игнорируются.",
+  "gui.ae2.advanced_blocking_mode.loose": "Свободный режим: блокирует при наличии любого предмета или жидкости в подсети."
 }

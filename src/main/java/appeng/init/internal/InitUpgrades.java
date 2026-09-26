@@ -20,6 +20,11 @@ package appeng.init.internal;
 
 import java.util.List;
 
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ItemLike;
+import net.minecraftforge.registries.ForgeRegistries;
+
 import appeng.api.upgrades.Upgrades;
 import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
@@ -45,6 +50,14 @@ public final class InitUpgrades {
         Upgrades.add(AEItems.CRAFTING_CARD, AEBlocks.INTERFACE, 1, interfaceGroup);
         Upgrades.add(AEItems.FUZZY_CARD, AEParts.INTERFACE, 1, interfaceGroup);
         Upgrades.add(AEItems.FUZZY_CARD, AEBlocks.INTERFACE, 1, interfaceGroup);
+        Upgrades.add(AEItems.ADVANCED_BLOCKING_CARD, AEParts.INTERFACE, 1, interfaceGroup);
+        Upgrades.add(AEItems.ADVANCED_BLOCKING_CARD, AEBlocks.INTERFACE, 1, interfaceGroup);
+        addOptionalUpgrade(AEItems.ADVANCED_BLOCKING_CARD, "expatternprovider", "ex_interface", 1, interfaceGroup);
+        addOptionalUpgrade(AEItems.ADVANCED_BLOCKING_CARD, "expatternprovider", "ex_interface_part", 1, interfaceGroup);
+        addOptionalUpgrade(AEItems.ADVANCED_BLOCKING_CARD, "expatternprovider", "oversize_interface", 1,
+                interfaceGroup);
+        addOptionalUpgrade(AEItems.ADVANCED_BLOCKING_CARD, "expatternprovider", "oversize_interface_part", 1,
+                interfaceGroup);
 
         // IO Port!
         Upgrades.add(AEItems.SPEED_CARD, AEBlocks.IO_PORT, 3);
@@ -149,6 +162,13 @@ public final class InitUpgrades {
         // Vibration Chamber
         Upgrades.add(AEItems.ENERGY_CARD, AEBlocks.VIBRATION_CHAMBER, 3);
         Upgrades.add(AEItems.SPEED_CARD, AEBlocks.VIBRATION_CHAMBER, 3);
+    }
+
+    private static void addOptionalUpgrade(ItemLike upgradeCard, String namespace, String path, int max, String group) {
+        var machine = ForgeRegistries.ITEMS.getValue(new ResourceLocation(namespace, path));
+        if (machine != null && machine != Items.AIR) {
+            Upgrades.add(upgradeCard, machine, max, group);
+        }
     }
 
 }
