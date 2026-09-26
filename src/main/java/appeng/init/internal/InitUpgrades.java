@@ -52,12 +52,35 @@ public final class InitUpgrades {
         Upgrades.add(AEItems.FUZZY_CARD, AEBlocks.INTERFACE, 1, interfaceGroup);
         Upgrades.add(AEItems.ADVANCED_BLOCKING_CARD, AEParts.INTERFACE, 1, interfaceGroup);
         Upgrades.add(AEItems.ADVANCED_BLOCKING_CARD, AEBlocks.INTERFACE, 1, interfaceGroup);
-        addOptionalUpgrade(AEItems.ADVANCED_BLOCKING_CARD, "expatternprovider", "ex_interface", 1, interfaceGroup);
-        addOptionalUpgrade(AEItems.ADVANCED_BLOCKING_CARD, "expatternprovider", "ex_interface_part", 1, interfaceGroup);
-        addOptionalUpgrade(AEItems.ADVANCED_BLOCKING_CARD, "expatternprovider", "oversize_interface", 1,
-                interfaceGroup);
-        addOptionalUpgrade(AEItems.ADVANCED_BLOCKING_CARD, "expatternprovider", "oversize_interface_part", 1,
-                interfaceGroup);
+
+        String extendedInterfaceGroup = "block.expatternprovider.ex_interface";
+        String oversizeInterfaceGroup = "block.expatternprovider.oversize_interface";
+
+        addOptionalUpgrade(
+                AEItems.ADVANCED_BLOCKING_CARD,
+                "expatternprovider",
+                "ex_interface",
+                1,
+                extendedInterfaceGroup);
+        addOptionalUpgrade(
+                AEItems.ADVANCED_BLOCKING_CARD,
+                "expatternprovider",
+                "ex_interface_part",
+                1,
+                extendedInterfaceGroup);
+
+        addOptionalUpgrade(
+                AEItems.ADVANCED_BLOCKING_CARD,
+                "expatternprovider",
+                "oversize_interface",
+                1,
+                oversizeInterfaceGroup);
+        addOptionalUpgrade(
+                AEItems.ADVANCED_BLOCKING_CARD,
+                "expatternprovider",
+                "oversize_interface_part",
+                1,
+                oversizeInterfaceGroup);
 
         // IO Port!
         Upgrades.add(AEItems.SPEED_CARD, AEBlocks.IO_PORT, 3);
