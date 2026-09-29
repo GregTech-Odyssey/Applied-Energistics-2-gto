@@ -6,6 +6,7 @@
   "compatibilityLevel": "JAVA_11",
   "mixins": [
     "AnvilMenuMixin",
+    "BlockMixin",
     "EarlyStartupMixin",
     "EnchantmentHelperMixin",
     "FluidMixin",

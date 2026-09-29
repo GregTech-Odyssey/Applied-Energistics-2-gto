@@ -17,24 +17,39 @@ public class ItemMixin implements IAEItem {
     @Unique
     private int ae2$uid;
     @Unique
-    private AEItemKey ae2$itemKey;
+    private volatile AEItemKey ae2$itemKey;
     @Unique
-    private WeakValueHashCache<CompoundTag, AEItemKey> ae2$cache;
+    private volatile WeakValueHashCache<CompoundTag, AEItemKey> ae2$cache;
 
     @Override
     public int ae2$getUid() {
         var id = ae2$uid;
         if (id == 0) {
-            ae2$uid = id = IUnique.ID.incrementAndGet();
+            ae2$setUid();
+            id = ae2$uid;
         }
         return id;
+    }
+
+    @Override
+    public void ae2$setUid() {
+        synchronized (IUnique.LOCK) {
+            if (ae2$uid == 0) {
+                ae2$uid = IUnique.ID.incrementAndGet();
+            }
+        }
     }
 
     @Override
     public AEItemKey ae2$getAEKey() {
         var key = ae2$itemKey;
         if (key == null) {
-            ae2$itemKey = key = new AEItemKey((Item) (Object) this, null);
+            synchronized (IUnique.LOCK) {
+                key = ae2$itemKey;
+                if (key == null) {
+                    ae2$itemKey = key = new AEItemKey((Item) (Object) this, null);
+                }
+            }
         }
         return key;
     }
@@ -43,7 +58,12 @@ public class ItemMixin implements IAEItem {
     public WeakValueHashCache<CompoundTag, AEItemKey> ae2$getTagAEKeyCache() {
         var cache = this.ae2$cache;
         if (cache == null) {
-            cache = this.ae2$cache = new WeakValueHashCache<>(t -> new AEItemKey((Item) (Object) this, t));
+            synchronized (IUnique.LOCK) {
+                cache = this.ae2$cache;
+                if (cache == null) {
+                    cache = this.ae2$cache = new WeakValueHashCache<>(t -> new AEItemKey((Item) (Object) this, t));
+                }
+            }
         }
         return cache;
     }
