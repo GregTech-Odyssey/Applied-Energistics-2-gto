@@ -4,6 +4,9 @@ import com.gto.fastcollection.cache.WeakValueHashCache;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
@@ -21,50 +24,45 @@ public class ItemMixin implements IAEItem {
     @Unique
     private volatile WeakValueHashCache<CompoundTag, AEItemKey> ae2$cache;
 
-    @Override
-    public int ae2$getUid() {
-        var id = ae2$uid;
-        if (id == 0) {
-            ae2$setUid();
-            id = ae2$uid;
-        }
-        return id;
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void onConstructed(CallbackInfo ci) {
+        ae2$uid = IUnique.ID.getAndIncrement();
     }
 
     @Override
-    public void ae2$setUid() {
-        synchronized (IUnique.LOCK) {
-            if (ae2$uid == 0) {
-                ae2$uid = IUnique.ID.incrementAndGet();
-            }
-        }
+    public int ae2$getUid() {
+        return ae2$uid;
     }
 
     @Override
     public AEItemKey ae2$getAEKey() {
         var key = ae2$itemKey;
-        if (key == null) {
-            synchronized (IUnique.LOCK) {
-                key = ae2$itemKey;
-                if (key == null) {
-                    ae2$itemKey = key = new AEItemKey((Item) (Object) this, null);
-                }
-            }
+        if (key != null) {
+            return key;
         }
-        return key;
+        key = new AEItemKey((Item) (Object) this, null);
+        synchronized (this) {
+            if (ae2$itemKey == null) {
+                ae2$itemKey = key;
+                return key;
+            }
+            return ae2$itemKey;
+        }
     }
 
     @Override
     public WeakValueHashCache<CompoundTag, AEItemKey> ae2$getTagAEKeyCache() {
-        var cache = this.ae2$cache;
-        if (cache == null) {
-            synchronized (IUnique.LOCK) {
-                cache = this.ae2$cache;
-                if (cache == null) {
-                    cache = this.ae2$cache = new WeakValueHashCache<>(t -> new AEItemKey((Item) (Object) this, t));
-                }
-            }
+        var cache = ae2$cache;
+        if (cache != null) {
+            return cache;
         }
-        return cache;
+        cache = new WeakValueHashCache<>(t -> new AEItemKey((Item) (Object) this, t));
+        synchronized (this) {
+            if (ae2$cache == null) {
+                ae2$cache = cache;
+                return cache;
+            }
+            return ae2$cache;
+        }
     }
 }

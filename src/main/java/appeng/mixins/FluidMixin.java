@@ -4,6 +4,9 @@ import com.gto.fastcollection.cache.WeakValueHashCache;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.material.Fluid;
@@ -17,54 +20,49 @@ public class FluidMixin implements IAEFluid {
     @Unique
     private int ae2$uid;
     @Unique
-    private volatile AEFluidKey ae2$itemKey;
+    private volatile AEFluidKey ae2$fluidKey;
     @Unique
     private volatile WeakValueHashCache<CompoundTag, AEFluidKey> ae2$cache;
 
-    @Override
-    public int ae2$getUid() {
-        var id = ae2$uid;
-        if (id == 0) {
-            ae2$setUid();
-            id = ae2$uid;
-        }
-        return id;
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void onConstructed(CallbackInfo ci) {
+        ae2$uid = IUnique.ID.getAndIncrement();
     }
 
     @Override
-    public void ae2$setUid() {
-        synchronized (IUnique.LOCK) {
-            if (ae2$uid == 0) {
-                ae2$uid = IUnique.ID.incrementAndGet();
-            }
-        }
+    public int ae2$getUid() {
+        return ae2$uid;
     }
 
     @Override
     public AEFluidKey ae2$getAEKey() {
-        var key = ae2$itemKey;
-        if (key == null) {
-            synchronized (IUnique.LOCK) {
-                key = ae2$itemKey;
-                if (key == null) {
-                    ae2$itemKey = key = new AEFluidKey((Fluid) (Object) this, null);
-                }
-            }
+        var key = ae2$fluidKey;
+        if (key != null) {
+            return key;
         }
-        return key;
+        key = new AEFluidKey((Fluid) (Object) this, null);
+        synchronized (this) {
+            if (ae2$fluidKey == null) {
+                ae2$fluidKey = key;
+                return key;
+            }
+            return ae2$fluidKey;
+        }
     }
 
     @Override
     public WeakValueHashCache<CompoundTag, AEFluidKey> ae2$getTagAEKeyCache() {
-        var cache = this.ae2$cache;
-        if (cache == null) {
-            synchronized (IUnique.LOCK) {
-                cache = this.ae2$cache;
-                if (cache == null) {
-                    cache = this.ae2$cache = new WeakValueHashCache<>(t -> new AEFluidKey((Fluid) (Object) this, t));
-                }
-            }
+        var cache = ae2$cache;
+        if (cache != null) {
+            return cache;
         }
-        return cache;
+        cache = new WeakValueHashCache<>(t -> new AEFluidKey((Fluid) (Object) this, t));
+        synchronized (this) {
+            if (ae2$cache == null) {
+                ae2$cache = cache;
+                return cache;
+            }
+            return ae2$cache;
+        }
     }
 }

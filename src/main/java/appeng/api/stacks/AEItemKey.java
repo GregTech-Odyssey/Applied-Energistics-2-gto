@@ -43,7 +43,7 @@ public final class AEItemKey extends AEKey {
     public AEItemKey(Item item, @Nullable CompoundTag internedTag) {
         this.item = item;
         this.internedTag = internedTag;
-        this.uid = ((IUnique) item).ae2$getUid();
+        this.uid = IUnique.getUid(item);
     }
 
     public static AEItemKey of(ItemLike item) {

@@ -2,24 +2,31 @@ package appeng.hooks;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.minecraft.core.registries.BuiltInRegistries;
+import org.jetbrains.annotations.Range;
+
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
 
 public interface IUnique {
 
     AtomicInteger ID = new AtomicInteger(1);
 
-    Object LOCK = new Object();
-
-    int ae2$getUid();
-
-    void ae2$setUid();
-
-    static void assignAll() {
-        for (var block : BuiltInRegistries.BLOCK)
-            ((IUnique) block).ae2$setUid();
-        for (var item : BuiltInRegistries.ITEM)
-            ((IUnique) item).ae2$setUid();
-        for (var fluid : BuiltInRegistries.FLUID)
-            ((IUnique) fluid).ae2$setUid();
+    @Range(from = 1, to = Integer.MAX_VALUE)
+    static int getUid(Item item) {
+        return ((IUnique) item).ae2$getUid();
     }
+
+    @Range(from = 1, to = Integer.MAX_VALUE)
+    static int getUid(Fluid fluid) {
+        return ((IUnique) fluid).ae2$getUid();
+    }
+
+    @Range(from = 1, to = Integer.MAX_VALUE)
+    static int getUid(Block block) {
+        return ((IUnique) block).ae2$getUid();
+    }
+
+    @Range(from = 1, to = Integer.MAX_VALUE)
+    int ae2$getUid();
 }

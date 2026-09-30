@@ -61,7 +61,6 @@ import appeng.api.stacks.AEKeyTypesInternal;
 import appeng.core.definitions.AEItems;
 import appeng.core.sync.BasePacket;
 import appeng.core.sync.network.NetworkHandler;
-import appeng.hooks.IUnique;
 import appeng.hooks.SkyStoneBreakSpeed;
 import appeng.hooks.WrenchHook;
 import appeng.hooks.ticking.TickHandler;
@@ -195,7 +194,6 @@ public abstract class AppEngBase implements AppEng {
      * Runs after all mods have had time to run their registrations into registries.
      */
     public void postRegistrationInitialization() {
-        IUnique.assignAll();
         // This has to be here because it relies on caps and god knows when those are available...
         InitP2PAttunements.init();
 

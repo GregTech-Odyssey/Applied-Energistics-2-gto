@@ -44,7 +44,7 @@ public final class AEFluidKey extends AEKey {
     public AEFluidKey(@NotNull Fluid fluid, @Nullable CompoundTag tag) {
         this.fluid = fluid;
         this.internedTag = tag;
-        this.uid = ((IUnique) fluid).ae2$getUid();
+        this.uid = IUnique.getUid(fluid);
     }
 
     public static AEFluidKey of(Fluid fluid) {

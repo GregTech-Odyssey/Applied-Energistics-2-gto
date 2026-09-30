@@ -2,6 +2,9 @@ package appeng.mixins;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.world.level.block.Block;
 
@@ -12,22 +15,13 @@ public class BlockMixin implements IUnique {
     @Unique
     private int ae2$uid;
 
-    @Override
-    public int ae2$getUid() {
-        var id = ae2$uid;
-        if (id == 0) {
-            ae2$setUid();
-            id = ae2$uid;
-        }
-        return id;
+    @Inject(method = "<init>", at = @At("TAIL"))
+    private void onConstructed(CallbackInfo ci) {
+        ae2$uid = IUnique.ID.getAndIncrement();
     }
 
     @Override
-    public void ae2$setUid() {
-        synchronized (IUnique.LOCK) {
-            if (ae2$uid == 0) {
-                ae2$uid = IUnique.ID.incrementAndGet();
-            }
-        }
+    public int ae2$getUid() {
+        return ae2$uid;
     }
 }
