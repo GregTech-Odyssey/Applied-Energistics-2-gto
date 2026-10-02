@@ -17,6 +17,14 @@ import gto_ae.api.util.DirectionalGlobalPos;
 
 public class FacilityManagement implements IFacilityManagement {
 
+    private static final String TAG_IO_FILTER_INV = "ioFilterInv";
+    private static final String TAG_FACILITY_FILTER_INV = "facilityFilterInv";
+    private static final String TAG_FILTER_MODE = "filterMode";
+    private static final String TAG_HAS_WORKING_STATUS = "hasWorkingStatus";
+    private static final String TAG_WORKING_STATUS = "workingStatus";
+    private static final String TAG_SAVED_VIEW = "savedView";
+    private static final String TAG_SAVED_VIEW_POS = "p";
+
     private final IFacilityManagementHost host;
     private IO filterMode = IO.NONE;
     @Nullable
@@ -86,14 +94,14 @@ public class FacilityManagement implements IFacilityManagement {
     }
 
     public void serializeNBT(CompoundTag tag) {
-        ioFilterInv.writeToChildTag(tag, "ioFilterInv");
-        facilityFilterInv.writeToChildTag(tag, "facilityFilterInv");
-        tag.putString("filterMode", filterMode.name());
+        ioFilterInv.writeToChildTag(tag, TAG_IO_FILTER_INV);
+        facilityFilterInv.writeToChildTag(tag, TAG_FACILITY_FILTER_INV);
+        tag.putString(TAG_FILTER_MODE, filterMode.name());
         if (workingStatus == null) {
-            tag.putBoolean("hasWorkingStatus", false);
+            tag.putBoolean(TAG_HAS_WORKING_STATUS, false);
         } else {
-            tag.putBoolean("hasWorkingStatus", true);
-            tag.putString("workingStatus", workingStatus.name());
+            tag.putBoolean(TAG_HAS_WORKING_STATUS, true);
+            tag.putString(TAG_WORKING_STATUS, workingStatus.name());
         }
         writeSavedView(tag);
     }
@@ -101,11 +109,11 @@ public class FacilityManagement implements IFacilityManagement {
     public void deserializeNBT(CompoundTag tag) {
         isLoading = true;
         try {
-            ioFilterInv.readFromChildTag(tag, "ioFilterInv");
-            facilityFilterInv.readFromChildTag(tag, "facilityFilterInv");
-            filterMode = IO.valueOf(tag.getString("filterMode"));
-            if (tag.getBoolean("hasWorkingStatus")) {
-                workingStatus = WorkingStatus.valueOf(tag.getString("workingStatus"));
+            ioFilterInv.readFromChildTag(tag, TAG_IO_FILTER_INV);
+            facilityFilterInv.readFromChildTag(tag, TAG_FACILITY_FILTER_INV);
+            filterMode = readFilterMode(tag);
+            if (tag.getBoolean(TAG_HAS_WORKING_STATUS)) {
+                workingStatus = readWorkingStatus(tag);
             } else {
                 workingStatus = null;
             }
@@ -133,19 +141,36 @@ public class FacilityManagement implements IFacilityManagement {
         ListTag list = new ListTag();
         for (DirectionalGlobalPos pos : savedView) {
             CompoundTag posTag = new CompoundTag();
-            DirectionalGlobalPos.writeToTag(posTag, "p", pos);
+            DirectionalGlobalPos.writeToTag(posTag, TAG_SAVED_VIEW_POS, pos);
             list.add(posTag);
         }
-        tag.put("savedView", list);
+        tag.put(TAG_SAVED_VIEW, list);
     }
 
     private void readSavedView(CompoundTag tag) {
         savedView = new HashSet<>();
-        ListTag list = tag.getList("savedView", 10);
+        ListTag list = tag.getList(TAG_SAVED_VIEW, 10);
         for (int i = 0; i < list.size(); i++) {
             CompoundTag posTag = list.getCompound(i);
-            DirectionalGlobalPos pos = DirectionalGlobalPos.readFromTag(posTag, "p");
+            DirectionalGlobalPos pos = DirectionalGlobalPos.readFromTag(posTag, TAG_SAVED_VIEW_POS);
             savedView.add(pos);
+        }
+    }
+
+    private static IO readFilterMode(CompoundTag tag) {
+        try {
+            return IO.valueOf(tag.getString(TAG_FILTER_MODE));
+        } catch (IllegalArgumentException ignored) {
+            return IO.NONE;
+        }
+    }
+
+    @Nullable
+    private static WorkingStatus readWorkingStatus(CompoundTag tag) {
+        try {
+            return WorkingStatus.valueOf(tag.getString(TAG_WORKING_STATUS));
+        } catch (IllegalArgumentException ignored) {
+            return null;
         }
     }
 }
