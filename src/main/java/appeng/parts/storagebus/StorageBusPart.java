@@ -71,6 +71,7 @@ import appeng.me.helpers.MachineSource;
 import appeng.me.storage.CompositeStorage;
 import appeng.me.storage.ITickingMonitor;
 import appeng.me.storage.MEInventoryHandler;
+import appeng.me.storage.NetworkStorage;
 import appeng.me.storage.NullInventory;
 import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
@@ -297,6 +298,7 @@ public class StorageBusPart extends UpgradeablePart
         if (isClientSide()) {
             return; // Part is not part of level yet or its client-side
         }
+        NetworkStorage.markTopologyChanged();
 
         MEStorage foundMonitor = null;
         Map<AEKeyType, MEStorage> foundExternalApi = Collections.emptyMap();
@@ -338,6 +340,7 @@ public class StorageBusPart extends UpgradeablePart
 
         var wasSleeping = this.monitor == null;
         var wasRegistered = this.hasRegisteredCellToNetwork();
+        var wasNetworkLink = this.handler.getDelegate() instanceof NetworkStorage;
 
         if (foundMonitor != null) {
             if (getMainNode().getGrid().getStorageService().getInventory() == foundMonitor) {
@@ -391,7 +394,8 @@ public class StorageBusPart extends UpgradeablePart
             });
         }
 
-        if (wasRegistered != this.hasRegisteredCellToNetwork()) {
+        if (wasRegistered != this.hasRegisteredCellToNetwork()
+                || wasNetworkLink != (this.handler.getDelegate() instanceof NetworkStorage)) {
             remountStorage();
         }
     }

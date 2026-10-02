@@ -40,6 +40,7 @@ public class MEInventoryHandler extends DelegatingMEInventory {
     protected boolean gettingAvailableContent = false;
 
     protected final KeyCounter cache = new KeyCounter();
+    private final KeyCounter filterCache = new KeyCounter();
 
     public MEInventoryHandler(MEStorage inventory) {
         super(inventory);
@@ -115,7 +116,7 @@ public class MEInventoryHandler extends DelegatingMEInventory {
                 super.getAvailableStacks(out);
             } else {
                 var mode = this.partitionListMode;
-                var cache = this.cache;
+                var cache = this.filterCache;
                 cache.clear();
                 super.getAvailableStacks(cache);
                 if (mode == IncludeExclude.WHITELIST && list.isStrict() && list.size() < cache.size()) {

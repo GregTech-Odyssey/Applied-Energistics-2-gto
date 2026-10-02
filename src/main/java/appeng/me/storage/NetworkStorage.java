@@ -19,6 +19,7 @@
 package appeng.me.storage;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 import com.google.common.base.Preconditions;
 
@@ -56,6 +57,14 @@ public final class NetworkStorage implements MEStorage {
     @Nullable
     private ArrayList<QueuedOperation> queuedOperations;
     public final KeyCounter cache;
+    private final KeyCounter queryContent = new KeyCounter();
+    private boolean queryContentReady;
+    private final ReferenceOpenHashSet<MEStorage> networkLinks = new ReferenceOpenHashSet<>();
+    private long topologyVersion = -1;
+    private boolean topologyShared;
+    private boolean firstMountExclusive;
+    long enteredEpoch = -1;
+    private Object[] mountTokens = new Object[0];
 
     public NetworkStorage() {
         this.priorityInventory = new ObjectArrayList<>();
@@ -93,6 +102,9 @@ public final class NetworkStorage implements MEStorage {
                 }
             }
             storages.put(inventory, identity);
+            if (StorageQuery.isNetworkLink(inventory))
+                networkLinks.add(inventory);
+            StorageQuery.topologyChanged();
             priorityInventory.add(operation);
             priorityInventory.sort(MountOperation.PRIORITY_SORTER);
             inventory.onMount(this);
@@ -116,6 +128,8 @@ public final class NetworkStorage implements MEStorage {
                     }
                 }
                 priorityInventory.removeIf(obj -> obj.storage == inventory);
+                networkLinks.remove(inventory);
+                StorageQuery.topologyChanged();
                 inventory.onUnmount(this);
             }
         }
@@ -176,6 +190,9 @@ public final class NetworkStorage implements MEStorage {
         if (mountsInUse) {
             return 0;
         }
+        if (StorageQuery.owned() || (!networkLinks.isEmpty() && sharedTopology())) {
+            return extractTracked(what, amount, mode, source);
+        }
         var extracted = 0L;
         this.mountsInUse = true;
         try {
@@ -193,20 +210,239 @@ public final class NetworkStorage implements MEStorage {
         return extracted;
     }
 
+    private long extractTracked(AEKey what, long amount, Actionable mode, IActionSource source) {
+        var query = StorageQuery.current();
+        var last = priorityInventory.size() - 1;
+        if (query != null && query.extractDepth > 0) {
+            if (!query.sameExtract(what, mode)) {
+                return extractFrom(what, amount, mode, source, null, last);
+            }
+            if (!query.enter(this)) {
+                return 0;
+            }
+            query.extractDepth++;
+            try {
+                return extractFrom(what, amount, mode, source, query, last);
+            } finally {
+                query.extractDepth--;
+            }
+        }
+        if (networkLinks.isEmpty() || !sharedTopology()) {
+            return extractFrom(what, amount, mode, source, null, last);
+        }
+        var extracted = 0L;
+        var start = last;
+        Object firstToken = null;
+        var first = last >= 0 ? priorityInventory.get(last).storage : null;
+        if (firstMountExclusive && first != null && !isQueuedForRemoval(first)) {
+            this.mountsInUse = true;
+            try {
+                extracted = first.extract(what, amount, mode, source);
+            } finally {
+                this.mountsInUse = false;
+            }
+            if (extracted >= amount) {
+                flushQueuedOperations();
+                return extracted;
+            }
+            if (extracted > 0 || StorageQuery.extractsUnfiltered(first)) {
+                firstToken = mountToken(last);
+            }
+            start = last - 1;
+        }
+        if ((query = StorageQuery.acquire()) == null) {
+            return extracted + extractFrom(what, amount - extracted, mode, source, null, start);
+        }
+        query.beginExtract(what, mode);
+        try {
+            if (firstToken instanceof NetworkStorage network) {
+                query.enter(network);
+            } else if (firstToken != null && extracted > 0 && mode == Actionable.SIMULATE) {
+                query.markDrained(firstToken);
+            }
+            return extracted + extractFrom(what, amount - extracted, mode, source, query, start);
+        } finally {
+            query.endExtract();
+            StorageQuery.release();
+        }
+    }
+
+    private long extractFrom(AEKey what, long amount, Actionable mode, IActionSource source,
+            @Nullable StorageQuery query, int start) {
+        var extracted = 0L;
+        var tracked = query != null && mode == Actionable.SIMULATE;
+        this.mountsInUse = true;
+        try {
+            for (int i = start; i >= 0 && extracted < amount; i--) {
+                var inv = priorityInventory.get(i).storage;
+                if (isQueuedForRemoval(inv)) {
+                    continue;
+                }
+                if (!tracked) {
+                    extracted += inv.extract(what, amount - extracted, mode, source);
+                    continue;
+                }
+                var token = query.hasDrained() ? mountToken(i) : null;
+                if (token != null && query.isDrained(token)) {
+                    continue;
+                }
+                var got = inv.extract(what, amount - extracted, mode, source);
+                if (got > 0) {
+                    extracted += got;
+                    if (token == null)
+                        token = mountToken(i);
+                    if (token != null)
+                        query.markDrained(token);
+                }
+            }
+        } finally {
+            this.mountsInUse = false;
+        }
+        flushQueuedOperations();
+        return extracted;
+    }
+
+    @Nullable
+    private Object mountToken(int index) {
+        if (topologyVersion != StorageQuery.topologyVersion() || mountTokens.length != priorityInventory.size()) {
+            sharedTopology();
+        }
+        var tokens = mountTokens;
+        return index < tokens.length ? tokens[index] : null;
+    }
+
     @Override
     public void getAvailableStacks(KeyCounter out) {
         if (getInUse) {
             return;
         }
+        if (StorageQuery.owned() || (!networkLinks.isEmpty() && sharedTopology())) {
+            getAvailableStacksTracked(out);
+            return;
+        }
         getInUse = true;
         try {
-            if (priorityInventory.isEmpty()) {
-                return;
-            }
             priorityInventory.forEach(entry -> entry.storage.getAvailableStacks(out));
         } finally {
             getInUse = false;
         }
+    }
+
+    private void getAvailableStacksTracked(KeyCounter out) {
+        var query = StorageQuery.current();
+        if (query != null && query.readDepth > 0) {
+            if (query.needsCache(this)) {
+                if (!queryContentReady) {
+                    queryContent.clear();
+                    fill(queryContent, query);
+                    queryContentReady = true;
+                    query.filled(this);
+                }
+                out.addAll(queryContent);
+            } else {
+                fill(out, query);
+            }
+            return;
+        }
+        if (networkLinks.isEmpty() || !sharedTopology() || (query = StorageQuery.acquire()) == null) {
+            getInUse = true;
+            try {
+                priorityInventory.forEach(entry -> entry.storage.getAvailableStacks(out));
+            } finally {
+                getInUse = false;
+            }
+            return;
+        }
+        query.readDepth = 1;
+        try {
+            scanMounts(query);
+            fill(out, query);
+        } finally {
+            query.readDepth = 0;
+            query.endRead();
+            StorageQuery.release();
+        }
+    }
+
+    public static void markTopologyChanged() {
+        StorageQuery.topologyChanged();
+    }
+
+    private boolean sharedTopology() {
+        var version = StorageQuery.topologyVersion();
+        if (topologyVersion != version || mountTokens.length != priorityInventory.size()) {
+            var tokens = new Object[priorityInventory.size()];
+            for (int i = 0; i < tokens.length; i++) {
+                tokens[i] = StorageQuery.tokenOf(priorityInventory.get(i).storage);
+            }
+            var reached = StorageQuery.reachCounts(this);
+            topologyShared = StorageQuery.anyShared(reached);
+            firstMountExclusive = tokens.length > 0
+                    && StorageQuery.exclusiveSubtree(tokens[tokens.length - 1], reached);
+            mountTokens = tokens;
+            topologyVersion = version;
+        }
+        return topologyShared;
+    }
+
+    void forEachMount(Consumer<MEStorage> action) {
+        for (var entry : priorityInventory) {
+            action.accept(entry.storage);
+        }
+    }
+
+    private void scanMounts(StorageQuery query) {
+        if (!query.scan(this))
+            return;
+        for (var entry : priorityInventory) {
+            var storage = entry.storage;
+            if (storage instanceof MEInventoryHandler handler && !handler.allowExtraction)
+                continue;
+            var token = StorageQuery.tokenOf(storage);
+            if (token == null)
+                continue;
+            query.reach(token, StorageQuery.isTransparent(storage));
+            if (token instanceof NetworkStorage nested)
+                nested.scanMounts(query);
+        }
+    }
+
+    private void fill(KeyCounter out, StorageQuery query) {
+        getInUse = true;
+        try {
+            for (var entry : priorityInventory) {
+                var storage = entry.storage;
+                var token = query.anyShared ? StorageQuery.tokenOf(storage) : null;
+                if (token == null || !query.isShared(token)) {
+                    storage.getAvailableStacks(out);
+                    continue;
+                }
+                if (query.isFull(token))
+                    continue;
+                var transparent = StorageQuery.isTransparent(storage);
+                if (transparent && !query.hasEmitted(token)) {
+                    storage.getAvailableStacks(out);
+                    query.markFull(token);
+                    continue;
+                }
+                var temp = query.borrow();
+                try {
+                    storage.getAvailableStacks(temp);
+                    query.addOnce(token, temp, out);
+                } finally {
+                    query.release(temp);
+                }
+                if (transparent)
+                    query.markFull(token);
+            }
+        } finally {
+            getInUse = false;
+        }
+    }
+
+    void clearQueryContent() {
+        queryContent.clear();
+        queryContentReady = false;
     }
 
     @Override
