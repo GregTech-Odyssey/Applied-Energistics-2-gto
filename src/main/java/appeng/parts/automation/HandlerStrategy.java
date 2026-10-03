@@ -52,6 +52,9 @@ public abstract class HandlerStrategy<C, S> {
 
         @Override
         public long insert(IItemHandler handler, AEKey what, long amount, Actionable mode) {
+            if (handler instanceof ExternalStorageFacade.DirectKeyHandler directKeyHandler) {
+                return what instanceof AEItemKey && amount > 0 ? directKeyHandler.insertKey(what, amount, mode) : 0;
+            }
             if (what instanceof AEItemKey itemKey) {
                 var intAmount = Ints.saturatedCast(amount);
                 if (handler instanceof ExternalStorageFacade.MEStorageItemHandler meStorageItemHandler) {
@@ -87,6 +90,9 @@ public abstract class HandlerStrategy<C, S> {
 
         @Override
         public long insert(IFluidHandler handler, AEKey what, long amount, Actionable mode) {
+            if (handler instanceof ExternalStorageFacade.DirectKeyHandler directKeyHandler) {
+                return what instanceof AEFluidKey && amount > 0 ? directKeyHandler.insertKey(what, amount, mode) : 0;
+            }
             if (what instanceof AEFluidKey fluidKey && amount > 0) {
                 var intAmount = Ints.saturatedCast(amount);
                 if (handler instanceof ExternalStorageFacade.MEStorageFluidHandler meStorageFluidHandler) {

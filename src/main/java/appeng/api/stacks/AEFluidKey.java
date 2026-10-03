@@ -38,7 +38,7 @@ public final class AEFluidKey extends AEKey {
 
     // cache
     @Nullable
-    private FluidStack readOnlyStack;
+    private volatile FluidStack readOnlyStack;
 
     @ApiStatus.Internal
     public AEFluidKey(@NotNull Fluid fluid, @Nullable CompoundTag tag) {
@@ -175,9 +175,11 @@ public final class AEFluidKey extends AEKey {
     public FluidStack getReadOnlyStack() {
         var stack = readOnlyStack;
         if (stack == null) {
-            stack = readOnlyStack = toStack(1);
+            stack = toStack(1);
+            readOnlyStack = stack;
         } else if (stack.isEmpty()) {
-            stack = readOnlyStack = toStack(1);
+            stack = toStack(1);
+            readOnlyStack = stack;
             AELog.error("Something destroyed the read-only fluidStack of {}", this);
         }
         return stack;

@@ -19,6 +19,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.common.extensions.IForgeItem;
 
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
@@ -27,6 +28,17 @@ import appeng.hooks.IUnique;
 
 public final class AEItemKey extends AEKey {
 
+    private static final ClassValue<Boolean> SHARE_TAG_OVERRIDDEN = new ClassValue<>() {
+        @Override
+        protected Boolean computeValue(Class<?> type) {
+            try {
+                return type.getMethod("getShareTag", ItemStack.class).getDeclaringClass() != IForgeItem.class;
+            } catch (NoSuchMethodException e) {
+                return true;
+            }
+        }
+    };
+
     public final Item item;
     public final int uid;
     @Nullable
@@ -34,10 +46,10 @@ public final class AEItemKey extends AEKey {
 
     // cache
     @Nullable
-    private ItemStack readOnlyStack;
-    private int maxStackSize = -1;
-    private int fuzzySearchValue = -1;
-    private int fuzzySearchMaxValue = -1;
+    private volatile ItemStack readOnlyStack;
+    private int maxStackSize;
+    private int fuzzySearchValue;
+    private int fuzzySearchMaxValue;
 
     @ApiStatus.Internal
     public AEItemKey(Item item, @Nullable CompoundTag internedTag) {
@@ -118,11 +130,13 @@ public final class AEItemKey extends AEKey {
     public ItemStack getReadOnlyStack() {
         var stack = readOnlyStack;
         if (stack == null) {
-            stack = readOnlyStack = new ItemStack(item, 1);
+            stack = new ItemStack(item, 1);
             stack.setTag(internedTag);
+            readOnlyStack = stack;
         } else if (stack.isEmpty()) {
-            stack = readOnlyStack = new ItemStack(item, 1);
+            stack = new ItemStack(item, 1);
             stack.setTag(internedTag);
+            readOnlyStack = stack;
             AELog.error("Something destroyed the read-only itemstack of {}", this);
         }
         return stack;
@@ -187,10 +201,10 @@ public final class AEItemKey extends AEKey {
     @Override
     public int getFuzzySearchValue() {
         int ret = fuzzySearchValue;
-        if (ret == -1) {
-            fuzzySearchValue = ret = getReadOnlyStack().getDamageValue();
+        if (ret == 0) {
+            fuzzySearchValue = ret = getReadOnlyStack().getDamageValue() + 1;
         }
-        return ret;
+        return ret - 1;
     }
 
     /**
@@ -199,10 +213,10 @@ public final class AEItemKey extends AEKey {
     @Override
     public int getFuzzySearchMaxValue() {
         int ret = fuzzySearchMaxValue;
-        if (ret == -1) {
-            fuzzySearchMaxValue = ret = getReadOnlyStack().getMaxDamage();
+        if (ret == 0) {
+            fuzzySearchMaxValue = ret = getReadOnlyStack().getMaxDamage() + 1;
         }
-        return ret;
+        return ret - 1;
     }
 
     @Override
@@ -267,12 +281,19 @@ public final class AEItemKey extends AEKey {
 
     public int getMaxStackSize() {
         int ret = maxStackSize;
-
-        if (ret == -1) {
-            maxStackSize = ret = getReadOnlyStack().getMaxStackSize();
+        if (ret == 0) {
+            maxStackSize = ret = computeMaxStackSize();
         }
-
         return ret;
+    }
+
+    private int computeMaxStackSize() {
+        if (internedTag == null) {
+            return Math.max(1, getReadOnlyStack().getMaxStackSize());
+        }
+        var probe = new ItemStack(item, 1);
+        probe.setTag(internedTag);
+        return Math.max(1, probe.getMaxStackSize());
     }
 
     @Override
@@ -280,7 +301,7 @@ public final class AEItemKey extends AEKey {
         data.writeVarInt(Item.getId(item));
         CompoundTag compoundTag = null;
         if (item.canBeDepleted() || item.shouldOverrideMultiplayerNbt()) {
-            compoundTag = item.getShareTag(toStack());
+            compoundTag = SHARE_TAG_OVERRIDDEN.get(item.getClass()) ? item.getShareTag(toStack()) : internedTag;
         }
         data.writeNbt(compoundTag);
     }

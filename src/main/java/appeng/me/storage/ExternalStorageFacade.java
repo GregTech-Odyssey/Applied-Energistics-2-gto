@@ -50,6 +50,12 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
     public abstract AEKeyType getKeyType();
 
+    void notifyChange() {
+        if (this.changeListener != null) {
+            this.changeListener.run();
+        }
+    }
+
     @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         var inserted = insertExternal(what, Ints.saturatedCast(amount), mode);
@@ -84,12 +90,18 @@ public abstract class ExternalStorageFacade implements MEStorage {
     public abstract boolean containsAnyFuzzy(Set<AEKey> keys);
 
     public static ExternalStorageFacade of(IFluidHandler handler) {
+        if (handler instanceof DirectKeyHandler directKeyHandler) {
+            return new DirectKeyFacade(directKeyHandler, AEKeyType.fluids());
+        }
         return handler instanceof MEStorageFluidHandler meStorageFluidHandler
                 ? new FluidHandlerMEFacade(meStorageFluidHandler)
                 : new FluidHandlerFacade(handler);
     }
 
     public static ExternalStorageFacade of(IItemHandler handler) {
+        if (handler instanceof DirectKeyHandler directKeyHandler) {
+            return new DirectKeyFacade(directKeyHandler, AEKeyType.items());
+        }
         return handler instanceof MEStorageItemHandler meStorageItemHandler
                 ? new ItemHandlerMEFacade(meStorageItemHandler)
                 : new ItemHandlerFacade(handler);
@@ -97,6 +109,112 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
     public void setExtractableOnly(boolean extractableOnly) {
 
+    }
+
+    public interface DirectKeyHandler {
+        int getKeySlots();
+
+        @Nullable
+        AEKey getKeyInSlot(int slot);
+
+        long getAmountInSlot(int slot);
+
+        long insertKey(AEKey what, long amount, Actionable mode);
+
+        long extractKey(AEKey what, long amount, Actionable mode);
+    }
+
+    private static final class DirectKeyFacade extends ExternalStorageFacade {
+
+        private final DirectKeyHandler handler;
+        private final AEKeyType keyType;
+
+        private DirectKeyFacade(DirectKeyHandler handler, AEKeyType keyType) {
+            this.handler = handler;
+            this.keyType = keyType;
+        }
+
+        @Override
+        public int getSlots() {
+            return handler.getKeySlots();
+        }
+
+        @Nullable
+        @Override
+        public GenericStack getStackInSlot(int slot) {
+            var key = handler.getKeyInSlot(slot);
+            if (key == null) {
+                return null;
+            }
+            var amount = handler.getAmountInSlot(slot);
+            return amount > 0 ? new GenericStack(key, amount) : null;
+        }
+
+        @Override
+        public AEKeyType getKeyType() {
+            return keyType;
+        }
+
+        @Override
+        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+            if (what.getType() != keyType || amount <= 0) {
+                return 0;
+            }
+            var inserted = handler.insertKey(what, amount, mode);
+            if (inserted > 0 && mode == Actionable.MODULATE) {
+                notifyChange();
+            }
+            return inserted;
+        }
+
+        @Override
+        public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+            if (what.getType() != keyType || amount <= 0) {
+                return 0;
+            }
+            var extracted = handler.extractKey(what, amount, mode);
+            if (extracted > 0 && mode == Actionable.MODULATE) {
+                notifyChange();
+            }
+            return extracted;
+        }
+
+        @Override
+        protected int insertExternal(AEKey what, int amount, Actionable mode) {
+            return (int) insert(what, amount, mode, null);
+        }
+
+        @Override
+        protected int extractExternal(AEKey what, int amount, Actionable mode) {
+            return (int) extract(what, amount, mode, null);
+        }
+
+        @Override
+        public boolean containsAnyFuzzy(Set<AEKey> keys) {
+            var slots = handler.getKeySlots();
+            for (int i = 0; i < slots; i++) {
+                var key = handler.getKeyInSlot(i);
+                if (key != null && handler.getAmountInSlot(i) > 0 && keys.contains(key.dropSecondary())) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public void getAvailableStacks(KeyCounter out) {
+            var slots = handler.getKeySlots();
+            for (int i = 0; i < slots; i++) {
+                var key = handler.getKeyInSlot(i);
+                if (key == null) {
+                    continue;
+                }
+                var amount = handler.getAmountInSlot(i);
+                if (amount > 0) {
+                    out.add(key, amount);
+                }
+            }
+        }
     }
 
     public interface MEStorageItemHandler {
