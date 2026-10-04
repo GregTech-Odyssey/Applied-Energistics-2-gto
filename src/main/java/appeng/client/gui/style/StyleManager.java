@@ -46,6 +46,7 @@ public final class StyleManager {
 
     private static final Map<String, ScreenStyle> styleCache = new HashMap<>();
     public static final String PROP_INCLUDES = "includes";
+    private static final String TOOLBOX_STYLE = "/screens/common/toolbox.json";
 
     private static ResourceManager resourceManager;
 
@@ -171,6 +172,11 @@ public final class StyleManager {
         }
     }
 
+    private static boolean hasEntry(JsonObject document, String group, String key) {
+        var element = document.get(group);
+        return element != null && element.isJsonObject() && element.getAsJsonObject().has(key);
+    }
+
     private static ScreenStyle loadStyleDocInternal(String path) throws IOException {
 
         ScreenStyle style = styleCache.get(path);
@@ -181,6 +187,11 @@ public final class StyleManager {
         Set<String> resourcePacks = new HashSet<>();
         try {
             JsonObject document = loadMergedJsonTree(path, new HashSet<>(), resourcePacks);
+            if (!hasEntry(document, "images", "toolbox") || !hasEntry(document, "slots", "TOOLBOX")
+                    || !hasEntry(document, "widgets", "toolbox")) {
+                var toolbox = loadMergedJsonTree(TOOLBOX_STYLE, new HashSet<>(), resourcePacks);
+                document = combineLayers(List.of(toolbox, document));
+            }
 
             style = ScreenStyle.GSON.fromJson(document, ScreenStyle.class);
 

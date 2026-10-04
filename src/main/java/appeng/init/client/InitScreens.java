@@ -23,10 +23,13 @@ import java.util.Map;
 
 import com.google.common.annotations.VisibleForTesting;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -67,6 +70,7 @@ import appeng.client.gui.me.networktool.NetworkToolScreen;
 import appeng.client.gui.me.patternaccess.PatternAccessTermScreen;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.style.StyleManager;
+import appeng.core.AELog;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.implementations.*;
 import appeng.menu.me.common.MEStorageMenu;
@@ -177,9 +181,19 @@ public final class InitScreens {
             String stylePath) {
         MENU_STYLES.put(type, stylePath);
         MenuScreens.<M, U>register(type, (menu, playerInv, title) -> {
-            var style = StyleManager.loadStyleDoc(stylePath);
+            try {
+                var style = StyleManager.loadStyleDoc(stylePath);
 
-            return factory.create(menu, playerInv, title, style);
+                return factory.create(menu, playerInv, title, style);
+            } catch (RuntimeException e) {
+                AELog.error(e,
+                        "Failed to open screen " + BuiltInRegistries.MENU.getKey(type) + " with style " + stylePath);
+                var connection = Minecraft.getInstance().getConnection();
+                if (connection != null) {
+                    connection.send(new ServerboundContainerClosePacket(menu.containerId));
+                }
+                throw e;
+            }
         });
     }
 
