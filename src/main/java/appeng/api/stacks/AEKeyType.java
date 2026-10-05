@@ -37,6 +37,8 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 
+import it.unimi.dsi.fastutil.HashCommon;
+
 import appeng.api.storage.AEKeyFilter;
 import appeng.util.ReadableNumberConverter;
 
@@ -50,6 +52,7 @@ public abstract class AEKeyType {
     private final Class<? extends AEKey> keyClass;
     private final AEKeyFilter filter;
     private final Component description;
+    public final int mix = HashCommon.mix(System.identityHashCode(this));
 
     public AEKeyType(ResourceLocation id, Class<? extends AEKey> keyClass, Component description) {
         Preconditions.checkArgument(!keyClass.equals(AEKey.class), "Can't register a key type for AEKey itself");

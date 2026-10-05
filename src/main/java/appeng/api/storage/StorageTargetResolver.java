@@ -203,7 +203,7 @@ public final class StorageTargetResolver {
             var typedStorage = typed.forKeyType(type);
             return typedStorage == null ? none() : hit(Tier.STORAGE, typedStorage);
         }
-        return access != StorageAccess.EXTRACT ? hit(Tier.STORAGE, storage) : null;
+        return hit(Tier.STORAGE, storage);
     }
 
     private void forgetEpoch() {
