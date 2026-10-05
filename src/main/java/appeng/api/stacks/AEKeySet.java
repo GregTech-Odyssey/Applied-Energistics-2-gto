@@ -25,7 +25,7 @@ public final class AEKeySet<K extends AEKey> extends ReferenceOpenHashSet<K> {
         if (k instanceof AEKey what) {
             return AEKeyHash.find(key, mask, what) >= 0;
         }
-        return super.contains(k);
+        return false;
     }
 
     @Override
@@ -59,6 +59,6 @@ public final class AEKeySet<K extends AEKey> extends ReferenceOpenHashSet<K> {
             }
             return true;
         }
-        return super.remove(k);
+        return false;
     }
 }

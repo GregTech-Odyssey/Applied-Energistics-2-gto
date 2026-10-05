@@ -23,9 +23,9 @@ public class ItemMixin implements IAEItem {
     @Unique
     private volatile AEItemKey ae2$itemKey;
     @Unique
-    private volatile WeakValueHashCache<CompoundTag, AEItemKey> ae2$cache;
+    private volatile AEItemKey ae2$defaultKey;
     @Unique
-    private AEItemKey ae2$defaultKey;
+    private volatile WeakValueHashCache<CompoundTag, AEItemKey> ae2$cache;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onConstructed(CallbackInfo ci) {
@@ -72,8 +72,14 @@ public class ItemMixin implements IAEItem {
             var cache = ae2$getTagAEKeyCache();
             key = cache.getCache(tag, cache.createFunction());
         }
-        ae2$defaultKey = key;
-        return key;
+        synchronized (this) {
+            var existing = ae2$defaultKey;
+            if (existing != null) {
+                return existing;
+            }
+            ae2$defaultKey = key;
+            return key;
+        }
     }
 
     @Override

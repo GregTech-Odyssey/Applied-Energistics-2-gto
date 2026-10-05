@@ -38,7 +38,7 @@ public final class AEFluidKey extends AEKey {
 
     // cache
     @Nullable
-    private volatile FluidStack readOnlyStack;
+    private FluidStack readOnlyStack;
 
     @ApiStatus.Internal
     public AEFluidKey(@NotNull Fluid fluid, @Nullable CompoundTag tag) {

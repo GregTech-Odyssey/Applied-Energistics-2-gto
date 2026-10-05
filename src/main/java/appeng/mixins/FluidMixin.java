@@ -23,7 +23,7 @@ public class FluidMixin implements IAEFluid {
     @Unique
     private volatile AEFluidKey ae2$fluidKey;
     @Unique
-    private AEFluidKey ae2$sourceKey;
+    private volatile AEFluidKey ae2$sourceKey;
     @Unique
     private volatile WeakValueHashCache<CompoundTag, AEFluidKey> ae2$cache;
 
@@ -67,8 +67,14 @@ public class FluidMixin implements IAEFluid {
         Object self = this;
         var key = self instanceof FlowingFluid flowing ? ((IAEFluid) flowing.getSource()).ae2$getAEKey()
                 : ae2$getAEKey();
-        ae2$sourceKey = key;
-        return key;
+        synchronized (this) {
+            var existing = ae2$sourceKey;
+            if (existing != null) {
+                return existing;
+            }
+            ae2$sourceKey = key;
+            return key;
+        }
     }
 
     @Override

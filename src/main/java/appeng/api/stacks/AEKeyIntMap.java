@@ -22,7 +22,7 @@ public final class AEKeyIntMap<K extends AEKey> extends Reference2IntOpenHashMap
             final int pos = AEKeyHash.find(key, mask, what);
             return pos >= 0 ? value[pos] : defRetValue;
         }
-        return super.getInt(k);
+        return defRetValue;
     }
 
     @Override
@@ -31,7 +31,7 @@ public final class AEKeyIntMap<K extends AEKey> extends Reference2IntOpenHashMap
             final int pos = AEKeyHash.find(key, mask, what);
             return pos >= 0 ? value[pos] : defaultValue;
         }
-        return super.getOrDefault(k, defaultValue);
+        return defaultValue;
     }
 
     @Override
@@ -39,7 +39,7 @@ public final class AEKeyIntMap<K extends AEKey> extends Reference2IntOpenHashMap
         if (k instanceof AEKey what) {
             return AEKeyHash.find(key, mask, what) >= 0;
         }
-        return super.containsKey(k);
+        return false;
     }
 
     @Override
@@ -81,7 +81,7 @@ public final class AEKeyIntMap<K extends AEKey> extends Reference2IntOpenHashMap
             final int pos = AEKeyHash.find(key, mask, what);
             return pos >= 0 ? removeAt(pos) : defRetValue;
         }
-        return super.removeInt(k);
+        return defRetValue;
     }
 
     @Override

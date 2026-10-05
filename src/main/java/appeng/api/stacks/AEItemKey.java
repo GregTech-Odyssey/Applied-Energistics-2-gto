@@ -46,10 +46,10 @@ public final class AEItemKey extends AEKey {
 
     // cache
     @Nullable
-    private volatile ItemStack readOnlyStack;
+    private ItemStack readOnlyStack;
     private int maxStackSize;
-    private int fuzzySearchValue;
-    private int fuzzySearchMaxValue;
+    private int fuzzySearchValue = -1;
+    private int fuzzySearchMaxValue = -1;
 
     @ApiStatus.Internal
     public AEItemKey(Item item, @Nullable CompoundTag internedTag) {
@@ -206,10 +206,10 @@ public final class AEItemKey extends AEKey {
     @Override
     public int getFuzzySearchValue() {
         int ret = fuzzySearchValue;
-        if (ret == 0) {
+        if (ret == -1) {
             fuzzySearchValue = ret = getReadOnlyStack().getDamageValue() + 1;
         }
-        return ret - 1;
+        return ret;
     }
 
     /**
@@ -218,10 +218,10 @@ public final class AEItemKey extends AEKey {
     @Override
     public int getFuzzySearchMaxValue() {
         int ret = fuzzySearchMaxValue;
-        if (ret == 0) {
+        if (ret == -1) {
             fuzzySearchMaxValue = ret = getReadOnlyStack().getMaxDamage() + 1;
         }
-        return ret - 1;
+        return ret;
     }
 
     @Override
