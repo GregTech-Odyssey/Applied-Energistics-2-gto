@@ -45,7 +45,7 @@ import appeng.api.crafting.IPatternDetails.IInput;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.blockentity.crafting.IMolecularAssemblerSupportedPattern;
@@ -453,7 +453,7 @@ public class AECraftingPattern implements IPatternDetails, IMolecularAssemblerSu
             return item;
         }
 
-        var containedFluid = ContainerItemStrategies.getContainedStack(itemKey.toStack(), AEKeyType.fluids());
+        var containedFluid = ContainerItemStrategies.getContainedStack(itemKey.toStack(), AEKeyTypes.FLUIDS);
         // Milk is not natively a fluid container, but it might be made one by other mods
         var isBucket = itemKey.getItem() instanceof BucketItem || itemKey.getItem() instanceof MilkBucketItem;
 

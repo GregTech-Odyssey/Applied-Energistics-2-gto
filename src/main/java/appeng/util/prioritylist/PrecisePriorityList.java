@@ -21,13 +21,13 @@ package appeng.util.prioritylist;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyMap;
+import appeng.api.stacks.AEKeyLongMap;
 import appeng.api.stacks.KeyCounter;
 
 public class PrecisePriorityList implements IPartitionList {
 
     @UnmodifiableView
-    private final AEKeyMap<AEKey> list;
+    private final AEKeyLongMap<AEKey> list;
 
     public PrecisePriorityList(KeyCounter in) {
         this.list = in.getMap();

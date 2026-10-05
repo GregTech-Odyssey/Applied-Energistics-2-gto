@@ -156,7 +156,7 @@ public class PatternProviderPart extends AEBasePart implements PatternProviderLo
 
     @Override
     public void onNeighborChanged(BlockGetter level, BlockPos pos, BlockPos neighbor) {
-        logic.updateRedstoneState();
+        logic.onNeighborChanged();
     }
 
     @Override

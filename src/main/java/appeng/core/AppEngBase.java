@@ -206,8 +206,8 @@ public abstract class AppEngBase implements AppEng {
     }
 
     public void registerKeyTypes() {
-        AEKeyTypes.register(AEKeyType.items());
-        AEKeyTypes.register(AEKeyType.fluids());
+        AEKeyTypes.register(AEKeyTypes.ITEMS);
+        AEKeyTypes.register(AEKeyTypes.FLUIDS);
     }
 
     public void registerCommands(RegisterCommandsEvent evt) {

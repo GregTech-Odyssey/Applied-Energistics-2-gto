@@ -52,24 +52,34 @@ public final class AEFluidKey extends AEKey {
         return aeFluid.ae2$getAEKey();
     }
 
+    public static AEFluidKey ofSource(Fluid fluid) {
+        return ((IAEFluid) fluid).ae2$getSourceAEKey();
+    }
+
     public static AEFluidKey of(Fluid fluid, @Nullable CompoundTag tag) {
-        var aeFluid = (IAEFluid) fluid;
-        if (tag == null || tag.isEmpty()) {
-            return aeFluid.ae2$getAEKey();
-        }
-        var cache = aeFluid.ae2$getTagAEKeyCache();
-        return cache.getCache(tag, cache.createFunction(), IdentityTag.COPY);
+        return tag == null ? ((IAEFluid) fluid).ae2$getAEKey() : ofTagged(fluid, tag);
     }
 
     @Nullable
     public static AEFluidKey of(FluidStack fluidVariant) {
-        var fluid = fluidVariant.getFluid();
-        if (fluid == Fluids.EMPTY) {
-            return null;
-        }
-        var aeFluid = (IAEFluid) fluid;
         var tag = fluidVariant.getTag();
-        if (tag == null || tag.isEmpty()) {
+        return tag == null ? ofUntagged(fluidVariant.getFluid()) : ofTagged(fluidVariant, tag);
+    }
+
+    @Nullable
+    private static AEFluidKey ofUntagged(Fluid fluid) {
+        return fluid == Fluids.EMPTY ? null : ((IAEFluid) fluid).ae2$getAEKey();
+    }
+
+    @Nullable
+    private static AEFluidKey ofTagged(FluidStack fluidVariant, CompoundTag tag) {
+        var fluid = fluidVariant.getFluid();
+        return fluid == Fluids.EMPTY ? null : ofTagged(fluid, tag);
+    }
+
+    private static AEFluidKey ofTagged(Fluid fluid, CompoundTag tag) {
+        var aeFluid = (IAEFluid) fluid;
+        if (tag.isEmpty()) {
             return aeFluid.ae2$getAEKey();
         }
         var cache = aeFluid.ae2$getTagAEKeyCache();
@@ -110,7 +120,7 @@ public final class AEFluidKey extends AEKey {
 
     @Override
     public AEFluidKey dropSecondary() {
-        return of(fluid);
+        return ((IAEFluid) fluid).ae2$getAEKey();
     }
 
     public static AEFluidKey fromTag(CompoundTag tag) {

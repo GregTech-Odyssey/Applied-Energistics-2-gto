@@ -27,7 +27,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
 
@@ -103,7 +103,7 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
             }
 
             if (!simulate) {
-                deductTransportCost(amount - remainder, AEKeyType.items());
+                deductTransportCost(amount - remainder, AEKeyTypes.ITEMS);
             }
 
             if (remainder == stack.getCount()) {
@@ -160,7 +160,7 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
                 ItemStack result = input.get().extractItem(slot, amount, simulate);
 
                 if (!simulate) {
-                    deductTransportCost(result.getCount(), AEKeyType.items());
+                    deductTransportCost(result.getCount(), AEKeyTypes.ITEMS);
                 }
 
                 return result;

@@ -23,6 +23,9 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyIntMap;
+import appeng.api.stacks.AEKeyObjectMap;
+import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.AEKeyFilter;
 import appeng.hooks.ticking.TickHandler;
@@ -33,12 +36,12 @@ import appeng.hooks.ticking.TickHandler;
 public class NetworkCraftingProviders {
     private final Map<IGridNode, ProviderState> craftingProviders = new Reference2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<IPatternDetails, CraftingProviderList> craftingMethods = new O2OOpenCacheHashMap<>();
-    private final Reference2ObjectOpenHashMap<AEKey, PatternsForKey> craftableItems = new Reference2ObjectOpenHashMap<>();
+    private final AEKeyObjectMap<AEKey, PatternsForKey> craftableItems = new AEKeyObjectMap<>();
     /**
      * Used for looking up craftable alternatives using fuzzy search (i.e. ignore NBT).
      */
     private final KeyCounter craftableItemsList = new KeyCounter();
-    private final Reference2IntOpenHashMap<AEKey> emitableItems = new Reference2IntOpenHashMap<>();
+    private final AEKeyIntMap<AEKey> emitableItems = new AEKeyIntMap<>();
 
     private final Set<AEKey> craftableKeys = craftableItems.keySet();
     private final Set<AEKey> emittableKeys = emitableItems.keySet();
@@ -70,7 +73,7 @@ public class NetworkCraftingProviders {
     }
 
     public Set<AEKey> getCraftables(AEKeyFilter filter) {
-        var result = new ReferenceOpenHashSet<AEKey>();
+        var result = new AEKeySet<AEKey>();
 
         // add craftable items!
         this.craftableItems.keySet().forEach(stack -> {
@@ -149,20 +152,20 @@ public class NetworkCraftingProviders {
 
     private static class ProviderState {
         private final ICraftingProvider provider;
-        private final Set<AEKey> emitableItems;
+        private final AEKeySet<AEKey> emitableItems;
         private final List<IPatternDetails> patterns;
         private final int priority;
 
         private ProviderState(ICraftingProvider provider) {
             this.provider = provider;
-            this.emitableItems = new ReferenceOpenHashSet<>(provider.getEmitableItems());
+            this.emitableItems = new AEKeySet<>(provider.getEmitableItems());
             this.patterns = new ArrayList<>(provider.getAvailablePatterns());
             this.priority = provider.getPatternPriority();
         }
 
         private void mount(NetworkCraftingProviders methods) {
             for (var emitable : emitableItems) {
-                methods.emitableItems.merge(emitable, 1, Integer::sum);
+                methods.emitableItems.addTo(emitable, 1);
             }
             for (var pattern : patterns) {
                 // output -> pattern (for simulation)
@@ -182,7 +185,9 @@ public class NetworkCraftingProviders {
 
         private void unmount(NetworkCraftingProviders methods) {
             for (var emitable : emitableItems) {
-                methods.emitableItems.compute(emitable, (key, cnt) -> cnt == 1 ? null : cnt - 1);
+                if (methods.emitableItems.addTo(emitable, -1) == 1) {
+                    methods.emitableItems.removeInt(emitable);
+                }
             }
             for (var pattern : patterns) {
                 var primaryOutput = pattern.getPrimaryOutput();

@@ -66,6 +66,7 @@ import appeng.api.implementations.blockentities.IColorableBlockEntity;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.IBasicCellItem;
 import appeng.api.upgrades.IUpgradeInventory;
@@ -502,7 +503,7 @@ public class ColorApplicatorItem extends AEBasePoweredItem
 
     @Override
     public AEKeyType getKeyType() {
-        return AEKeyType.items();
+        return AEKeyTypes.ITEMS;
     }
 
     @Override

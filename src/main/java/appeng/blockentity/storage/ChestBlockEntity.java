@@ -60,6 +60,7 @@ import appeng.api.networking.IGridNodeListener;
 import appeng.api.networking.events.GridPowerStorageStateChanged;
 import appeng.api.networking.events.GridPowerStorageStateChanged.PowerEventType;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.orientation.BlockOrientation;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
@@ -67,6 +68,7 @@ import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
 import appeng.api.storage.ITerminalHost;
 import appeng.api.storage.MEStorage;
+import appeng.api.storage.MEStorageHost;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.StorageHelper;
 import appeng.api.storage.SupplierStorage;
@@ -93,7 +95,7 @@ import appeng.util.inv.filter.IAEItemFilter;
 
 public class ChestBlockEntity extends AENetworkPowerBlockEntity
         implements IMEChest, ITerminalHost, IPriorityHost, IColorableBlockEntity,
-        ServerTickingBlockEntity, IStorageProvider {
+        ServerTickingBlockEntity, IStorageProvider, MEStorageHost {
 
     private static final Logger LOG = LoggerFactory.getLogger(ChestBlockEntity.class);
 
@@ -118,6 +120,7 @@ public class ChestBlockEntity extends AENetworkPowerBlockEntity
     private ChestMonitorHandler cellHandler;
     private IFluidHandler fluidHandler;
     private SupplierStorage supplierStorage;
+    private int storageEpoch;
     private double idlePowerUsage;
 
     public ChestBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState blockState) {
@@ -440,6 +443,7 @@ public class ChestBlockEntity extends AENetworkPowerBlockEntity
             this.cellHandler = null;
             this.supplierStorage = null;
             this.isCached = false; // recalculate the storage cell.
+            this.storageEpoch++;
 
             IStorageProvider.requestUpdate(getMainNode());
 
@@ -509,6 +513,7 @@ public class ChestBlockEntity extends AENetworkPowerBlockEntity
         this.cellHandler = null;
         this.supplierStorage = null;
         this.isCached = false; // recalculate the storage cell.
+        this.storageEpoch++;
 
         IStorageProvider.requestUpdate(getMainNode());
     }
@@ -604,12 +609,24 @@ public class ChestBlockEntity extends AENetworkPowerBlockEntity
     }
 
     @Nullable
-    public MEStorage getMEStorage(Direction side) {
+    @Override
+    public MEStorage getMEStorage(@Nullable Direction side) {
         if (side != getFront()) {
             return getInventory();
         } else {
             return null;
         }
+    }
+
+    @Override
+    public int storageEpoch() {
+        return storageEpoch;
+    }
+
+    @Override
+    protected void onOrientationChanged(BlockOrientation orientation) {
+        super.onOrientationChanged(orientation);
+        storageEpoch++;
     }
 
     private class FluidHandler implements IFluidHandler, IFluidTank {
@@ -744,7 +761,10 @@ public class ChestBlockEntity extends AENetworkPowerBlockEntity
             return (LazyOptional<T>) LazyOptional.of(() -> this.fluidHandler);
         }
         if (capability == Capabilities.STORAGE && facing != getFront()) {
-            return (LazyOptional<T>) LazyOptional.of(this::getInventory);
+            var storage = getInventory();
+            if (storage != null) {
+                return (LazyOptional<T>) LazyOptional.of(() -> storage);
+            }
         }
         return super.getCapability(capability, facing);
     }

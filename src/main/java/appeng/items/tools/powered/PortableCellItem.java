@@ -35,6 +35,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.cells.IBasicCellItem;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.UpgradeInventories;
@@ -103,7 +104,7 @@ public class PortableCellItem extends AbstractPortableCell implements IBasicCell
 
     @Override
     public IUpgradeInventory getUpgrades(ItemStack is) {
-        return UpgradeInventories.forItem(is, this.keyType == AEKeyType.items() ? 4 : 3, super::onUpgradesChanged);
+        return UpgradeInventories.forItem(is, this.keyType == AEKeyTypes.ITEMS ? 4 : 3, super::onUpgradesChanged);
     }
 
     @Override

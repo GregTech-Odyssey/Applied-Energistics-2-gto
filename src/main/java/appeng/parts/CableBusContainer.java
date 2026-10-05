@@ -428,6 +428,11 @@ public class CableBusContainer implements AEMultiBlockEntity, ICableBusContainer
     }
 
     @Override
+    public void partStorageChanged() {
+        this.tcb.partStorageChanged();
+    }
+
+    @Override
     public boolean hasRedstone() {
         if (this.hasRedstone == YesNo.UNDECIDED) {
             this.updateRedstone();

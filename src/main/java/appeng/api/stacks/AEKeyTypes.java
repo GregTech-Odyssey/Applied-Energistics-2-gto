@@ -34,6 +34,9 @@ import net.minecraft.resources.ResourceLocation;
  * additional key types during initialization using {@link #register(AEKeyType)}.
  */
 public final class AEKeyTypes {
+    public static final AEKeyType ITEMS = AEKeyType.items();
+    public static final AEKeyType FLUIDS = AEKeyType.fluids();
+
     private AEKeyTypes() {
     }
 

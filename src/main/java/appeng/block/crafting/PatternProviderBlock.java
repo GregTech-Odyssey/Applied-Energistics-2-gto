@@ -61,7 +61,7 @@ public class PatternProviderBlock extends AEBaseEntityBlock<PatternProviderBlock
         super.neighborChanged(state, level, pos, block, fromPos, isMoving);
         var be = this.getBlockEntity(level, pos);
         if (be != null) {
-            be.getLogic().updateRedstoneState();
+            be.getLogic().onNeighborChanged();
         }
     }
 

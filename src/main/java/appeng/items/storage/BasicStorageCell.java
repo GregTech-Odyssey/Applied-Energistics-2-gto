@@ -39,6 +39,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import appeng.api.config.FuzzyMode;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.CellState;
 import appeng.api.storage.cells.IBasicCellItem;
@@ -122,7 +123,7 @@ public class BasicStorageCell extends AEBaseItem implements IBasicCellItem, AETo
 
     @Override
     public IUpgradeInventory getUpgrades(ItemStack is) {
-        return UpgradeInventories.forItem(is, keyType == AEKeyType.items() ? 4 : 3);
+        return UpgradeInventories.forItem(is, keyType == AEKeyTypes.ITEMS ? 4 : 3);
     }
 
     @Override

@@ -12,6 +12,7 @@ import net.minecraft.world.item.ItemStack;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.stacks.GenericStack;
 import appeng.helpers.externalstorage.GenericStackInv;
 
@@ -47,7 +48,7 @@ public class ConfigMenuInventory implements InternalInventory {
 
     @Override
     public int getSlotLimit(int slot) {
-        return (int) Math.min(Integer.MAX_VALUE, inv.getCapacity(AEKeyType.items()));
+        return (int) Math.min(Integer.MAX_VALUE, inv.getCapacity(AEKeyTypes.ITEMS));
     }
 
     @Override

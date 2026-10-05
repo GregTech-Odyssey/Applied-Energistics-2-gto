@@ -1,6 +1,6 @@
 package appeng.api.config;
 
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.AEKeyFilter;
 
 /**
@@ -8,8 +8,8 @@ import appeng.api.storage.AEKeyFilter;
  */
 public enum TypeFilter {
     ALL(AEKeyFilter.none()),
-    ITEMS(AEKeyType.items().filter()),
-    FLUIDS(AEKeyType.fluids().filter());
+    ITEMS(AEKeyTypes.ITEMS.filter()),
+    FLUIDS(AEKeyTypes.FLUIDS.filter());
 
     private final AEKeyFilter filter;
 

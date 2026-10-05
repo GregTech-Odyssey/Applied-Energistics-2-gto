@@ -21,6 +21,7 @@ import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyIntMap;
 import appeng.api.stacks.GenericStack;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.InventoryActionPacket;
@@ -225,7 +226,7 @@ public final class EncodingHelper {
                 .map(GridInventoryEntry::getWhat)
                 .toList();
 
-        var result = new Reference2IntOpenHashMap<AEKey>(orderedEntries.size());
+        var result = new AEKeyIntMap<AEKey>(orderedEntries.size());
         for (int i = 0; i < orderedEntries.size(); i++) {
             result.put(orderedEntries.get(i), i);
         }

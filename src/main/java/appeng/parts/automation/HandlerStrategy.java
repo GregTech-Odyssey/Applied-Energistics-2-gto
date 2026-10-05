@@ -15,6 +15,7 @@ import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.me.storage.ExternalStorageFacade;
 
 public abstract class HandlerStrategy<C, S> {
@@ -39,7 +40,7 @@ public abstract class HandlerStrategy<C, S> {
 
     public abstract long insert(C handler, AEKey what, long amount, Actionable mode);
 
-    public static final HandlerStrategy<IItemHandler, ItemStack> ITEMS = new HandlerStrategy<>(AEKeyType.items()) {
+    public static final HandlerStrategy<IItemHandler, ItemStack> ITEMS = new HandlerStrategy<>(AEKeyTypes.ITEMS) {
         @Override
         public boolean isSupported(AEKey what) {
             return AEItemKey.is(what);
@@ -52,19 +53,21 @@ public abstract class HandlerStrategy<C, S> {
 
         @Override
         public long insert(IItemHandler handler, AEKey what, long amount, Actionable mode) {
+            if (amount <= 0) {
+                return 0;
+            }
             if (handler instanceof ExternalStorageFacade.DirectKeyHandler directKeyHandler) {
-                return what instanceof AEItemKey && amount > 0 ? directKeyHandler.insertKey(what, amount, mode) : 0;
+                return directKeyHandler.insertKey(what, amount, mode);
             }
-            if (what instanceof AEItemKey itemKey) {
-                var intAmount = Ints.saturatedCast(amount);
-                if (handler instanceof ExternalStorageFacade.MEStorageItemHandler meStorageItemHandler) {
-                    return meStorageItemHandler.insertExternal(itemKey, intAmount, mode);
-                }
-                var stack = itemKey.toStack(intAmount);
-                var remainder = ItemHandlerHelper.insertItem(handler, stack, mode.isSimulate());
-                return amount - remainder.getCount();
+            if (!(what instanceof AEItemKey itemKey)) {
+                return 0;
             }
-            return 0;
+            var intAmount = Ints.saturatedCast(amount);
+            if (handler instanceof ExternalStorageFacade.MEStorageItemHandler meStorageItemHandler) {
+                return meStorageItemHandler.insertExternal(itemKey, intAmount, mode);
+            }
+            var remainder = ItemHandlerHelper.insertItem(handler, itemKey.toStack(intAmount), mode.isSimulate());
+            return intAmount - remainder.getCount();
         }
 
         @org.jetbrains.annotations.Nullable
@@ -77,7 +80,7 @@ public abstract class HandlerStrategy<C, S> {
         }
     };
 
-    public static final HandlerStrategy<IFluidHandler, FluidStack> FLUIDS = new HandlerStrategy<>(AEKeyType.fluids()) {
+    public static final HandlerStrategy<IFluidHandler, FluidStack> FLUIDS = new HandlerStrategy<>(AEKeyTypes.FLUIDS) {
         @Override
         public boolean isSupported(AEKey what) {
             return AEFluidKey.is(what);
@@ -90,17 +93,20 @@ public abstract class HandlerStrategy<C, S> {
 
         @Override
         public long insert(IFluidHandler handler, AEKey what, long amount, Actionable mode) {
+            if (amount <= 0) {
+                return 0;
+            }
             if (handler instanceof ExternalStorageFacade.DirectKeyHandler directKeyHandler) {
-                return what instanceof AEFluidKey && amount > 0 ? directKeyHandler.insertKey(what, amount, mode) : 0;
+                return directKeyHandler.insertKey(what, amount, mode);
             }
-            if (what instanceof AEFluidKey fluidKey && amount > 0) {
-                var intAmount = Ints.saturatedCast(amount);
-                if (handler instanceof ExternalStorageFacade.MEStorageFluidHandler meStorageFluidHandler) {
-                    return meStorageFluidHandler.insertExternal(fluidKey, intAmount, mode);
-                }
-                return handler.fill(fluidKey.toStack(intAmount), mode.getFluidAction());
+            if (!(what instanceof AEFluidKey fluidKey)) {
+                return 0;
             }
-            return 0;
+            var intAmount = Ints.saturatedCast(amount);
+            if (handler instanceof ExternalStorageFacade.MEStorageFluidHandler meStorageFluidHandler) {
+                return meStorageFluidHandler.insertExternal(fluidKey, intAmount, mode);
+            }
+            return handler.fill(fluidKey.toStack(intAmount), mode.getFluidAction());
         }
 
         @Override

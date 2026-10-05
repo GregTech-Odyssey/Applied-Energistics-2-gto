@@ -28,7 +28,7 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
         super(size, DEFAULT_LOAD_FACTOR);
     }
 
-    public AEKeyBigMap(AEKeyMap<K> map) {
+    public AEKeyBigMap(AEKeyLongMap<K> map) {
         super(map.size(), DEFAULT_LOAD_FACTOR);
         map.fastForEach((k, v) -> set(k, BigInteger.valueOf(v)));
     }
@@ -53,124 +53,54 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
         if (k == null) {
             return BigInteger.ZERO;
         }
-        final Object[] key = this.key;
-        final Object[] value = this.value;
-        final int mask = this.mask;
-        int pos;
-        Object curr;
-        if ((curr = key[pos = k.mix & mask]) != null) {
-            do
-                if (curr == k) {
-                    final BigInteger oldValue = (BigInteger) value[pos];
-                    value[pos] = v;
-                    return oldValue;
-                }
-            while ((curr = key[pos = (pos + 1) & mask]) != null);
+        final int pos = AEKeyHash.find(key, mask, k);
+        if (pos >= 0) {
+            final Object[] value = this.value;
+            final BigInteger oldValue = (BigInteger) value[pos];
+            value[pos] = v;
+            return oldValue;
         }
-        key[pos] = k;
-        value[pos] = v;
-        if (size++ >= maxFill) {
-            rehash(arraySize(size + 1, f));
-        }
+        insertAt(-pos - 1, k, v);
         return BigInteger.ZERO;
     }
 
     @Override
     public BigInteger remove(final Object k) {
-        if (k == null) {
+        if (!(k instanceof AEKey what)) {
             return BigInteger.ZERO;
         }
-        final Object[] key = this.key;
-        final int mask = this.mask;
-        Object curr;
-        int pos;
-        if ((curr = key[pos = ((AEKey) k).mix & mask]) == null) {
-            return BigInteger.ZERO;
-        } else if (k == curr) {
-            return this.removeEntry(pos);
-        } else {
-            while ((curr = key[pos = pos + 1 & mask]) != null) {
-                if (k == curr) {
-                    return this.removeEntry(pos);
-                }
-            }
-            return BigInteger.ZERO;
-        }
-
+        final int pos = AEKeyHash.find(key, mask, what);
+        return pos >= 0 ? removeAt(pos) : BigInteger.ZERO;
     }
 
     public BigInteger addTo(final AEKey k, final BigInteger incr) {
         if (k == null) {
             return BigInteger.ZERO;
         }
-        final Object[] key = this.key;
-        final Object[] value = this.value;
-        final int mask = this.mask;
-        int pos;
-        Object curr;
-        if ((curr = key[pos = k.mix & mask]) != null) {
-            do
-                if (curr == k) {
-                    final BigInteger oldValue = (BigInteger) value[pos];
-                    final BigInteger newValue = oldValue.add(incr);
-                    value[pos] = newValue;
-                    return oldValue;
-                }
-            while ((curr = key[pos = (pos + 1) & mask]) != null);
+        final int pos = AEKeyHash.find(key, mask, k);
+        if (pos >= 0) {
+            final Object[] value = this.value;
+            final BigInteger oldValue = (BigInteger) value[pos];
+            value[pos] = oldValue.add(incr);
+            return oldValue;
         }
-        key[pos] = k;
-        value[pos] = incr;
-        if (size++ >= maxFill) {
-            rehash(arraySize(size + 1, f));
-        }
+        insertAt(-pos - 1, k, incr);
         return BigInteger.ZERO;
     }
 
     @Override
     public BigInteger get(final Object k) {
-        if (k == null) {
+        if (!(k instanceof AEKey what)) {
             return BigInteger.ZERO;
         }
-        final Object[] key = this.key;
+        final int pos = AEKeyHash.find(key, mask, what);
         final Object[] value = this.value;
-        final int mask = this.mask;
-        Object curr;
-        int pos;
-        if ((curr = key[pos = ((AEKey) k).mix & mask]) == null) {
-            return BigInteger.ZERO;
-        } else if (k == curr) {
-            return (BigInteger) value[pos];
-        } else {
-            while ((curr = key[pos = (pos + 1) & mask]) != null) {
-                if (k == curr) {
-                    return (BigInteger) value[pos];
-                }
-            }
-            return BigInteger.ZERO;
-        }
+        return pos >= 0 ? (BigInteger) value[pos] : BigInteger.ZERO;
     }
 
     @Override
     public boolean containsKey(final Object k) {
-        if (k == null) {
-            return false;
-        }
-        final Object[] key = this.key;
-        final int mask = this.mask;
-        Object curr;
-        int pos;
-        if ((curr = key[pos = ((AEKey) k).mix & mask]) == null) {
-            return false;
-        } else if (k == curr) {
-            return true;
-        } else {
-            while ((curr = key[pos = (pos + 1) & mask]) != null) {
-                if (k == curr) {
-                    return true;
-                }
-            }
-            return false;
-        }
+        return k instanceof AEKey what && AEKeyHash.find(key, mask, what) >= 0;
     }
 
     @Override
@@ -179,94 +109,37 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
     }
 
     public boolean contains(final AEKey k) {
-        if (k == null) {
-            return false;
-        }
-        final Object[] key = this.key;
-        final int mask = this.mask;
-        Object curr;
-        int pos;
-        if ((curr = key[pos = k.mix & mask]) == null) {
-            return false;
-        } else if (k == curr) {
-            return true;
-        } else {
-            while ((curr = key[pos = (pos + 1) & mask]) != null) {
-                if (k == curr) {
-                    return true;
-                }
-            }
-            return false;
-        }
+        return k != null && AEKeyHash.find(key, mask, k) >= 0;
     }
 
     public long getLongAmount(final AEKey k) {
         if (k == null) {
             return 0;
         }
-        final Object[] key = this.key;
+        final int pos = AEKeyHash.find(key, mask, k);
         final Object[] value = this.value;
-        final int mask = this.mask;
-        Object curr;
-        int pos;
-        if ((curr = key[pos = k.mix & mask]) == null) {
-            return 0;
-        } else if (k == curr) {
-            return saturateToLong((BigInteger) value[pos]);
-        } else {
-            while ((curr = key[pos = (pos + 1) & mask]) != null) {
-                if (k == curr) {
-                    return saturateToLong((BigInteger) value[pos]);
-                }
-            }
-            return 0;
-        }
+        return pos >= 0 ? saturateToLong((BigInteger) value[pos]) : 0;
     }
 
     public BigInteger getAmount(final AEKey k) {
         if (k == null) {
             return BigInteger.ZERO;
         }
-        final Object[] key = this.key;
+        final int pos = AEKeyHash.find(key, mask, k);
         final Object[] value = this.value;
-        final int mask = this.mask;
-        Object curr;
-        int pos;
-        if ((curr = key[pos = k.mix & mask]) == null) {
-            return BigInteger.ZERO;
-        } else if (k == curr) {
-            return (BigInteger) value[pos];
-        } else {
-            while ((curr = key[pos = (pos + 1) & mask]) != null) {
-                if (k == curr) {
-                    return (BigInteger) value[pos];
-                }
-            }
-            return BigInteger.ZERO;
-        }
+        return pos >= 0 ? (BigInteger) value[pos] : BigInteger.ZERO;
     }
 
     public void set(final AEKey k, final BigInteger v) {
         if (k == null) {
             return;
         }
-        final Object[] key = this.key;
-        final Object[] value = this.value;
-        final int mask = this.mask;
-        int pos;
-        Object curr;
-        if ((curr = key[pos = k.mix & mask]) != null) {
-            do
-                if (curr == k) {
-                    value[pos] = v;
-                    return;
-                }
-            while ((curr = key[pos = (pos + 1) & mask]) != null);
-        }
-        key[pos] = k;
-        value[pos] = v;
-        if (size++ >= maxFill) {
-            rehash(arraySize(size + 1, f));
+        final int pos = AEKeyHash.find(key, mask, k);
+        if (pos >= 0) {
+            final Object[] value = this.value;
+            value[pos] = v;
+        } else {
+            insertAt(-pos - 1, k, v);
         }
     }
 
@@ -274,25 +147,12 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
         if (k == null || amount.signum() <= 0) {
             return;
         }
-        final Object[] key = this.key;
-        final Object[] value = this.value;
-        final int mask = this.mask;
-        int pos;
-        Object curr;
-        if ((curr = key[pos = k.mix & mask]) != null) {
-            do
-                if (curr == k) {
-                    final BigInteger oldValue = (BigInteger) value[pos];
-                    final BigInteger newValue = oldValue.add(amount);
-                    value[pos] = newValue;
-                    return;
-                }
-            while ((curr = key[pos = (pos + 1) & mask]) != null);
-        }
-        key[pos] = k;
-        value[pos] = amount;
-        if (size++ >= maxFill) {
-            rehash(arraySize(size + 1, f));
+        final int pos = AEKeyHash.find(key, mask, k);
+        if (pos >= 0) {
+            final Object[] value = this.value;
+            value[pos] = ((BigInteger) value[pos]).add(amount);
+        } else {
+            insertAt(-pos - 1, k, amount);
         }
     }
 
@@ -300,35 +160,23 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
         if (k == null || amount.signum() <= 0 || limit.signum() <= 0) {
             return BigInteger.ZERO;
         }
-        final Object[] key = this.key;
-        final Object[] value = this.value;
-        final int mask = this.mask;
-        int pos;
-        Object curr;
-        if ((curr = key[pos = k.mix & mask]) != null) {
-            do
-                if (curr == k) {
-                    final BigInteger oldValue = (BigInteger) value[pos];
-                    if (oldValue.compareTo(limit) >= 0) {
-                        return BigInteger.ZERO;
-                    }
-                    final BigInteger newValue = oldValue.add(amount);
-                    if (newValue.compareTo(limit) > 0) {
-                        value[pos] = limit;
-                        return limit.subtract(oldValue);
-                    } else {
-                        value[pos] = newValue;
-                        return amount;
-                    }
-                }
-            while ((curr = key[pos = (pos + 1) & mask]) != null);
+        final int pos = AEKeyHash.find(key, mask, k);
+        if (pos >= 0) {
+            final Object[] value = this.value;
+            final BigInteger oldValue = (BigInteger) value[pos];
+            if (oldValue.compareTo(limit) >= 0) {
+                return BigInteger.ZERO;
+            }
+            final BigInteger newValue = oldValue.add(amount);
+            if (newValue.compareTo(limit) > 0) {
+                value[pos] = limit;
+                return limit.subtract(oldValue);
+            }
+            value[pos] = newValue;
+            return amount;
         }
         final BigInteger toInsert = amount.compareTo(limit) > 0 ? limit : amount;
-        key[pos] = k;
-        value[pos] = toInsert;
-        if (size++ >= maxFill) {
-            rehash(arraySize(size + 1, f));
-        }
+        insertAt(-pos - 1, k, toInsert);
         return toInsert;
     }
 
@@ -336,54 +184,38 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
         if (k == null || amount.signum() <= 0) {
             return BigInteger.ZERO;
         }
-        final Object[] key = this.key;
-        final Object[] value = this.value;
-        final int mask = this.mask;
-        int pos;
-        Object curr;
-        if ((curr = key[pos = k.mix & mask]) != null) {
-            do
-                if (curr == k) {
-                    final BigInteger oldValue = (BigInteger) value[pos];
-                    if (oldValue.compareTo(amount) > 0) {
-                        value[pos] = oldValue.subtract(amount);
-                        return amount;
-                    } else {
-                        return removeEntry(pos);
-                    }
-                }
-            while ((curr = key[pos = (pos + 1) & mask]) != null);
+        final int pos = AEKeyHash.find(key, mask, k);
+        if (pos < 0) {
+            return BigInteger.ZERO;
         }
-        return BigInteger.ZERO;
+        final Object[] value = this.value;
+        final BigInteger oldValue = (BigInteger) value[pos];
+        if (oldValue.compareTo(amount) > 0) {
+            value[pos] = oldValue.subtract(amount);
+            return amount;
+        }
+        return removeAt(pos);
     }
 
     public long extractLong(final AEKey k, final long amount) {
         if (k == null || amount < 1) {
             return 0;
         }
-        final Object[] key = this.key;
-        final Object[] value = this.value;
-        final int mask = this.mask;
-        int pos;
-        Object curr;
-        if ((curr = key[pos = k.mix & mask]) != null) {
-            do
-                if (curr == k) {
-                    final var bigAmount = BigInteger.valueOf(amount);
-                    final BigInteger oldValue = (BigInteger) value[pos];
-                    if (oldValue.compareTo(bigAmount) > 0) {
-                        value[pos] = oldValue.subtract(bigAmount);
-                        return amount;
-                    } else {
-                        return saturateToLong(removeEntry(pos));
-                    }
-                }
-            while ((curr = key[pos = (pos + 1) & mask]) != null);
+        final int pos = AEKeyHash.find(key, mask, k);
+        if (pos < 0) {
+            return 0;
         }
-        return 0;
+        final Object[] value = this.value;
+        final var bigAmount = BigInteger.valueOf(amount);
+        final BigInteger oldValue = (BigInteger) value[pos];
+        if (oldValue.compareTo(bigAmount) > 0) {
+            value[pos] = oldValue.subtract(bigAmount);
+            return amount;
+        }
+        return saturateToLong(removeAt(pos));
     }
 
-    public void putAll(AEKeyMap<K> map) {
+    public void putAll(AEKeyLongMap<K> map) {
         this.ensureCapacity(map.size());
         map.fastForEach((k, v) -> set(k, BigInteger.valueOf(v)));
     }
@@ -451,15 +283,24 @@ public final class AEKeyBigMap<K extends AEKey> extends Reference2ReferenceOpenH
         }
     }
 
-    private BigInteger removeEntry(final int pos) {
+    private void insertAt(final int pos, final AEKey k, final BigInteger v) {
+        final Object[] key = this.key;
+        final Object[] value = this.value;
+        key[pos] = k;
+        value[pos] = v;
+        if (size++ >= maxFill) {
+            rehash(arraySize(size + 1, f));
+        }
+    }
+
+    private BigInteger removeAt(final int pos) {
         final Object[] value = this.value;
         final BigInteger oldValue = (BigInteger) value[pos];
         --this.size;
         this.shiftKeys(pos);
-        if (this.n > this.minN && this.size < this.maxFill / 4 && this.n > 16) {
+        if (this.n > this.minN && this.size < this.maxFill / 4 && this.n > DEFAULT_INITIAL_SIZE) {
             this.rehash(this.n / 2);
         }
-
         return oldValue;
     }
 

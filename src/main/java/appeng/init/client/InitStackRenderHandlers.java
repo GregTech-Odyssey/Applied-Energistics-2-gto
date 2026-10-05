@@ -45,7 +45,7 @@ import appeng.api.client.AEKeyRenderHandler;
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.client.gui.style.FluidBlitter;
 import appeng.util.Platform;
 
@@ -56,8 +56,8 @@ public class InitStackRenderHandlers {
     }
 
     public static void init() {
-        AEKeyRendering.register(AEKeyType.items(), AEItemKey.class, new ItemKeyRenderHandler());
-        AEKeyRendering.register(AEKeyType.fluids(), AEFluidKey.class, new FluidKeyRenderHandler());
+        AEKeyRendering.register(AEKeyTypes.ITEMS, AEItemKey.class, new ItemKeyRenderHandler());
+        AEKeyRendering.register(AEKeyTypes.FLUIDS, AEFluidKey.class, new FluidKeyRenderHandler());
     }
 
     private static class ItemKeyRenderHandler implements AEKeyRenderHandler<AEItemKey> {

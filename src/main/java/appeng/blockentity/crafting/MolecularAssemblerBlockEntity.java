@@ -29,11 +29,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.api.distmarker.Dist;
@@ -57,6 +57,7 @@ import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.storage.ExternalStorageLookup;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.upgrades.UpgradeInventories;
@@ -96,6 +97,8 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
     private final IUpgradeInventory upgrades;
     private boolean isPowered = false;
     private Direction pushDirection = null;
+    @Nullable
+    private ExternalStorageLookup[] outputs;
     private ItemStack myPattern = ItemStack.EMPTY;
     private IMolecularAssemblerSupportedPattern myPlan = null;
     private double progress = 0;
@@ -514,26 +517,24 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
     }
 
     private ItemStack pushTo(ItemStack output, Direction d) {
-        if (output.isEmpty()) {
+        if (output.isEmpty() || !(this.getLevel() instanceof ServerLevel level)) {
             return output;
         }
 
-        final BlockEntity te = this.getLevel().getBlockEntity(this.worldPosition.relative(d));
-
-        if (te == null) {
-            return output;
+        var outputs = this.outputs;
+        if (outputs == null) {
+            this.outputs = outputs = new ExternalStorageLookup[6];
         }
-
-        var adaptor = InternalInventory.wrapExternal(te, d.getOpposite());
-        if (adaptor == null) {
-            return output;
+        var lookup = outputs[d.get3DDataValue()];
+        if (lookup == null) {
+            outputs[d.get3DDataValue()] = lookup = ExternalStorageLookup.create(level,
+                    this.worldPosition.relative(d), d.getOpposite());
         }
 
         final int size = output.getCount();
-        output = adaptor.addItems(output);
-        final int newSize = output.isEmpty() ? 0 : output.getCount();
+        output = lookup.insert(output);
 
-        if (size != newSize) {
+        if (size != output.getCount()) {
             this.saveChanges();
         }
 

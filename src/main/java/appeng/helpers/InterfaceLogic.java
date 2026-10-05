@@ -104,6 +104,7 @@ public class InterfaceLogic
      * True if the interface is configured to stock certain types of resources.
      */
     private boolean hasConfig = false;
+    private int storageEpoch;
     private final ConfigInventory storage;
     private WorkingStatus status = WorkingStatus.IDLE;
     private final ThroughputCounter throughputCounter = new ThroughputCounter();
@@ -143,7 +144,11 @@ public class InterfaceLogic
     }
 
     private void readConfig() {
-        this.hasConfig = !this.config.isEmpty();
+        var hasConfig = !this.config.isEmpty();
+        if (this.hasConfig != hasConfig) {
+            this.hasConfig = hasConfig;
+            exposedStorageChanged();
+        }
         updatePlan();
         this.notifyNeighbors();
     }
@@ -247,9 +252,22 @@ public class InterfaceLogic
     }
 
     public void gridChanged() {
-        this.networkStorage = mainNode.getGrid().getStorageService().getInventory();
+        var networkStorage = mainNode.getGrid().getStorageService().getInventory();
+        if (this.networkStorage != networkStorage) {
+            this.networkStorage = networkStorage;
+            exposedStorageChanged();
+        }
 
         this.notifyNeighbors();
+    }
+
+    public int storageEpoch() {
+        return storageEpoch;
+    }
+
+    private void exposedStorageChanged() {
+        storageEpoch++;
+        host.exposedStorageChanged();
     }
 
     @Override
@@ -637,7 +655,8 @@ public class InterfaceLogic
         if (capabilityClass == Capabilities.GENERIC_INTERNAL_INV) {
             return LazyOptional.of(this::getStorage).cast();
         } else if (capabilityClass == Capabilities.STORAGE) {
-            return LazyOptional.of(this::getInventory).cast();
+            var inventory = getInventory();
+            return inventory == null ? LazyOptional.empty() : LazyOptional.of(() -> inventory).cast();
         } else {
             return LazyOptional.empty();
         }

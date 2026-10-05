@@ -33,7 +33,7 @@ import appeng.api.config.*;
 import appeng.api.features.HotkeyAction;
 import appeng.api.implementations.menuobjects.IPortableTerminal;
 import appeng.api.implementations.menuobjects.ItemMenuHost;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.MEStorage;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.IBasicCellItem;
@@ -108,9 +108,9 @@ public class PortableCellMenuHost extends ItemMenuHost implements IPortableTermi
 
     public String getCloseHotkey() {
         if (item instanceof IBasicCellItem cellItem) {
-            if (cellItem.getKeyType().equals(AEKeyType.items())) {
+            if (cellItem.getKeyType().equals(AEKeyTypes.ITEMS)) {
                 return HotkeyAction.PORTABLE_ITEM_CELL;
-            } else if (cellItem.getKeyType().equals(AEKeyType.fluids())) {
+            } else if (cellItem.getKeyType().equals(AEKeyTypes.FLUIDS)) {
                 return HotkeyAction.PORTABLE_FLUID_CELL;
             }
         }

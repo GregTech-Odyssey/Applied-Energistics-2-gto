@@ -21,11 +21,15 @@ package appeng.helpers;
 import com.google.common.collect.ImmutableSet;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 import appeng.api.networking.crafting.ICraftingLink;
+import appeng.api.storage.MEStorage;
+import appeng.api.storage.MEStorageHost;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.util.IConfigManager;
@@ -49,7 +53,8 @@ public interface InterfaceLogicHost extends IConfigurableObject,
         IUpgradeableObject,
         IPriorityHost,
         IConfigInvHost,
-        IStatusTracked {
+        IStatusTracked,
+        MEStorageHost {
     /**
      * @return The block entity that is in-world and hosts the interface.
      */
@@ -58,6 +63,20 @@ public interface InterfaceLogicHost extends IConfigurableObject,
     void saveChanges();
 
     InterfaceLogic getInterfaceLogic();
+
+    @Nullable
+    @Override
+    default MEStorage getMEStorage(@Nullable Direction side) {
+        return getInterfaceLogic().getInventory();
+    }
+
+    @Override
+    default int storageEpoch() {
+        return getInterfaceLogic().storageEpoch();
+    }
+
+    default void exposedStorageChanged() {
+    }
 
     default MenuLocator getLocator() {
         switch (this) {

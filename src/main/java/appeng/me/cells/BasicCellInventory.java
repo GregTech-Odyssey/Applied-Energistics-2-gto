@@ -58,7 +58,7 @@ public class BasicCellInventory implements StorageCell {
     private int maxItemTypes;
     private short storedItems;
     private long storedItemCount;
-    private AEKeyMap<AEKey> storedAmounts;
+    private AEKeyLongMap<AEKey> storedAmounts;
     private final ItemStack i;
     private final IBasicCellItem cellType;
     private final long maxItemsPerType; // max items per type, basically infinite unless there is a distribution card.
@@ -177,9 +177,9 @@ public class BasicCellInventory implements StorageCell {
         return cellType.storableInStorageCell() || getAvailableStacks().isEmpty();
     }
 
-    protected AEKeyMap<AEKey> getCellItems() {
+    protected AEKeyLongMap<AEKey> getCellItems() {
         if (this.storedAmounts == null) {
-            this.storedAmounts = new AEKeyMap<>();
+            this.storedAmounts = new AEKeyLongMap<>();
             this.loadCellItems();
         }
 

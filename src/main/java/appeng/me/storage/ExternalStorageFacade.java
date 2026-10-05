@@ -21,19 +21,23 @@ import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.storage.KeyTypedStorage;
 import appeng.api.storage.MEStorage;
 import appeng.core.AELog;
 import appeng.core.localization.GuiText;
+import appeng.hooks.IAEItem;
 
 /**
  * Adapts external platform storage to behave like an {@link MEStorage}.
  */
-public abstract class ExternalStorageFacade implements MEStorage {
+public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
     @Nullable
     private Runnable changeListener;
+    protected boolean extractableOnly;
 
     public void setChangeListener(@Nullable Runnable listener) {
         this.changeListener = listener;
@@ -80,8 +84,27 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
     @Override
     public Component getDescription() {
-        return GuiText.ExternalStorage.text(AEKeyType.fluids().getDescription());
+        return GuiText.ExternalStorage.text(getKeyType().getDescription());
     }
+
+    @Override
+    public final boolean supportsKeyType(AEKeyType type) {
+        return type == getKeyType();
+    }
+
+    @Nullable
+    @Override
+    public final MEStorage forKeyType(AEKeyType type) {
+        return type == getKeyType() ? this : null;
+    }
+
+    @Override
+    public final boolean containsAny(Set<AEKey> primaryKeys) {
+        return containsAnyFuzzy(primaryKeys);
+    }
+
+    @Override
+    public abstract boolean isEmpty();
 
     protected abstract int insertExternal(AEKey what, int amount, Actionable mode);
 
@@ -91,7 +114,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
     public static ExternalStorageFacade of(IFluidHandler handler) {
         if (handler instanceof DirectKeyHandler directKeyHandler) {
-            return new DirectKeyFacade(directKeyHandler, AEKeyType.fluids());
+            return new DirectKeyFacade(directKeyHandler, AEKeyTypes.FLUIDS);
         }
         return handler instanceof MEStorageFluidHandler meStorageFluidHandler
                 ? new FluidHandlerMEFacade(meStorageFluidHandler)
@@ -100,7 +123,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
     public static ExternalStorageFacade of(IItemHandler handler) {
         if (handler instanceof DirectKeyHandler directKeyHandler) {
-            return new DirectKeyFacade(directKeyHandler, AEKeyType.items());
+            return new DirectKeyFacade(directKeyHandler, AEKeyTypes.ITEMS);
         }
         return handler instanceof MEStorageItemHandler meStorageItemHandler
                 ? new ItemHandlerMEFacade(meStorageItemHandler)
@@ -108,7 +131,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
     }
 
     public void setExtractableOnly(boolean extractableOnly) {
-
+        this.extractableOnly = extractableOnly;
     }
 
     public interface DirectKeyHandler {
@@ -142,12 +165,9 @@ public abstract class ExternalStorageFacade implements MEStorage {
         @Nullable
         @Override
         public GenericStack getStackInSlot(int slot) {
-            var key = handler.getKeyInSlot(slot);
-            if (key == null) {
-                return null;
-            }
+            var handler = this.handler;
             var amount = handler.getAmountInSlot(slot);
-            return amount > 0 ? new GenericStack(key, amount) : null;
+            return amount > 0 ? new GenericStack(handler.getKeyInSlot(slot), amount) : null;
         }
 
         @Override
@@ -157,7 +177,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
         @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
-            if (what.getType() != keyType || amount <= 0) {
+            if (amount <= 0) {
                 return 0;
             }
             var inserted = handler.insertKey(what, amount, mode);
@@ -169,7 +189,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
         @Override
         public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-            if (what.getType() != keyType || amount <= 0) {
+            if (amount <= 0) {
                 return 0;
             }
             var extracted = handler.extractKey(what, amount, mode);
@@ -191,10 +211,10 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
         @Override
         public boolean containsAnyFuzzy(Set<AEKey> keys) {
+            var handler = this.handler;
             var slots = handler.getKeySlots();
             for (int i = 0; i < slots; i++) {
-                var key = handler.getKeyInSlot(i);
-                if (key != null && handler.getAmountInSlot(i) > 0 && keys.contains(key.dropSecondary())) {
+                if (handler.getAmountInSlot(i) > 0 && keys.contains(handler.getKeyInSlot(i).dropSecondary())) {
                     return true;
                 }
             }
@@ -202,17 +222,36 @@ public abstract class ExternalStorageFacade implements MEStorage {
         }
 
         @Override
-        public void getAvailableStacks(KeyCounter out) {
+        public boolean isEmpty() {
+            var handler = this.handler;
             var slots = handler.getKeySlots();
             for (int i = 0; i < slots; i++) {
-                var key = handler.getKeyInSlot(i);
-                if (key == null) {
+                if (handler.getAmountInSlot(i) > 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
+        public void getAvailableStacks(KeyCounter out) {
+            getAvailableStacks(out, extractableOnly);
+        }
+
+        @Override
+        public void getAvailableStacks(KeyCounter out, boolean extractableOnly) {
+            var handler = this.handler;
+            var slots = handler.getKeySlots();
+            for (int i = 0; i < slots; i++) {
+                var amount = handler.getAmountInSlot(i);
+                if (amount <= 0) {
                     continue;
                 }
-                var amount = handler.getAmountInSlot(i);
-                if (amount > 0) {
-                    out.add(key, amount);
+                var key = handler.getKeyInSlot(i);
+                if (extractableOnly && handler.extractKey(key, 1, Actionable.SIMULATE) <= 0) {
+                    continue;
                 }
+                out.add(key, amount);
             }
         }
     }
@@ -277,7 +316,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
         @Override
         public final AEKeyType getKeyType() {
-            return AEKeyType.items();
+            return AEKeyTypes.ITEMS;
         }
 
         @Override
@@ -391,6 +430,18 @@ public abstract class ExternalStorageFacade implements MEStorage {
         }
 
         @Override
+        public final boolean isEmpty() {
+            var handler = this.handler;
+            var slots = handler.getSlots();
+            for (int i = 0; i < slots; i++) {
+                if (!handler.getStackInSlot(i).isEmpty()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        @Override
         public final boolean containsAnyFuzzy(Set<AEKey> keys) {
             var slots = handler.getSlots();
             for (int i = 0; i < slots; i++) {
@@ -398,7 +449,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
                 var item = stack.getItem();
                 if (item == Items.AIR)
                     continue;
-                if (keys.contains(AEItemKey.of(item)))
+                if (keys.contains(((IAEItem) item).ae2$getAEKey()))
                     return true;
             }
             return false;
@@ -463,7 +514,7 @@ public abstract class ExternalStorageFacade implements MEStorage {
 
         @Override
         public final AEKeyType getKeyType() {
-            return AEKeyType.fluids();
+            return AEKeyTypes.FLUIDS;
         }
 
         @Override
@@ -491,6 +542,18 @@ public abstract class ExternalStorageFacade implements MEStorage {
             }
 
             return gathered.getAmount();
+        }
+
+        @Override
+        public final boolean isEmpty() {
+            var handler = this.handler;
+            var tanks = handler.getTanks();
+            for (int i = 0; i < tanks; i++) {
+                if (!handler.getFluidInTank(i).isEmpty()) {
+                    return false;
+                }
+            }
+            return true;
         }
 
         @Override

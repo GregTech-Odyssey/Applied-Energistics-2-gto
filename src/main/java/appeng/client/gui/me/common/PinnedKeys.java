@@ -23,9 +23,8 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.loading.FMLPaths;
 
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyObjectMap;
 import appeng.core.AELog;
 import appeng.core.AppEng;
 
@@ -43,7 +42,7 @@ public final class PinnedKeys {
     private static final Comparator<Map.Entry<AEKey, PinInfo>> TIME_COMPARATOR = Comparator
             .comparing(e -> e.getValue().since);
 
-    private static final Map<AEKey, PinInfo> pinned = new Reference2ObjectOpenHashMap<>(CRAFTING_MAX_PINNED);
+    private static final AEKeyObjectMap<AEKey, PinInfo> pinned = new AEKeyObjectMap<>(CRAFTING_MAX_PINNED);
     private static final EnumMap<PinReason, Map<AEKey, PinInfo>> pinnedByReason = createPinnedByReason();
     @Nullable
     private static File clientCacheOverride;
@@ -67,7 +66,7 @@ public final class PinnedKeys {
     private static EnumMap<PinReason, Map<AEKey, PinInfo>> createPinnedByReason() {
         var result = new EnumMap<PinReason, Map<AEKey, PinInfo>>(PinReason.class);
         for (var reason : PinReason.values()) {
-            result.put(reason, new Reference2ObjectOpenHashMap<>());
+            result.put(reason, new AEKeyObjectMap<>());
         }
         return result;
     }

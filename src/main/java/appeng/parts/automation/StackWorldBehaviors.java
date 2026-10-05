@@ -20,6 +20,7 @@ import appeng.api.behaviors.PlacementStrategy;
 import appeng.api.behaviors.StackExportStrategy;
 import appeng.api.behaviors.StackImportStrategy;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.AEKeyFilter;
 import appeng.util.CowMap;
 
@@ -32,16 +33,16 @@ public final class StackWorldBehaviors {
     private static final CowMap<AEKeyType, PickupStrategy.Factory> pickupStrategies = CowMap.identityHashMap();
 
     static {
-        registerImportStrategy(AEKeyType.items(), StorageImportStrategy::createItem);
-        registerImportStrategy(AEKeyType.fluids(), StorageImportStrategy::createFluid);
-        registerExportStrategy(AEKeyType.items(), StorageExportStrategy::createItem);
-        registerExportStrategy(AEKeyType.fluids(), StorageExportStrategy::createFluid);
-        registerExternalStorageStrategy(AEKeyType.items(), ForgeExternalStorageStrategy::createItem);
-        registerExternalStorageStrategy(AEKeyType.fluids(), ForgeExternalStorageStrategy::createFluid);
-        registerPlacementStrategy(AEKeyType.fluids(), FluidPlacementStrategy::new);
-        registerPlacementStrategy(AEKeyType.items(), ItemPlacementStrategy::new);
-        registerPickupStrategy(AEKeyType.fluids(), FluidPickupStrategy::new);
-        registerPickupStrategy(AEKeyType.items(), ItemPickupStrategy::new);
+        registerImportStrategy(AEKeyTypes.ITEMS, StorageImportStrategy::createItem);
+        registerImportStrategy(AEKeyTypes.FLUIDS, StorageImportStrategy::createFluid);
+        registerExportStrategy(AEKeyTypes.ITEMS, StorageExportStrategy::createItem);
+        registerExportStrategy(AEKeyTypes.FLUIDS, StorageExportStrategy::createFluid);
+        registerExternalStorageStrategy(AEKeyTypes.ITEMS, ForgeExternalStorageStrategy::createItem);
+        registerExternalStorageStrategy(AEKeyTypes.FLUIDS, ForgeExternalStorageStrategy::createFluid);
+        registerPlacementStrategy(AEKeyTypes.FLUIDS, FluidPlacementStrategy::new);
+        registerPlacementStrategy(AEKeyTypes.ITEMS, ItemPlacementStrategy::new);
+        registerPickupStrategy(AEKeyTypes.FLUIDS, FluidPickupStrategy::new);
+        registerPickupStrategy(AEKeyTypes.ITEMS, ItemPickupStrategy::new);
     }
 
     private StackWorldBehaviors() {
@@ -110,6 +111,18 @@ public final class StackWorldBehaviors {
                 externalStorageStrategies.getMap().size());
         for (var entry : externalStorageStrategies.getMap().entrySet()) {
             strategies.put(entry.getKey(), entry.getValue().create(level, fromPos, fromSide));
+        }
+        return strategies;
+    }
+
+    public static Map<AEKeyType, ExternalStorageStrategy> createExtraExternalStorageStrategies(ServerLevel level,
+            BlockPos fromPos, Direction fromSide) {
+        var strategies = new IdentityHashMap<AEKeyType, ExternalStorageStrategy>();
+        for (var entry : externalStorageStrategies.getMap().entrySet()) {
+            var type = entry.getKey();
+            if (type != AEKeyTypes.ITEMS && type != AEKeyTypes.FLUIDS) {
+                strategies.put(type, entry.getValue().create(level, fromPos, fromSide));
+            }
         }
         return strategies;
     }

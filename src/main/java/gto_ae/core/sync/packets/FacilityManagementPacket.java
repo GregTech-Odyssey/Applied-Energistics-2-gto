@@ -12,7 +12,7 @@ import it.unimi.dsi.fastutil.objects.Reference2LongMaps;
 
 import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyMap;
+import appeng.api.stacks.AEKeyLongMap;
 import appeng.core.sync.BasePacket;
 
 import gto_ae.api.util.DirectionalGlobalPos;
@@ -40,7 +40,7 @@ public class FacilityManagementPacket extends BasePacket {
             var throughputCounter = ThroughputCounter.readFromBuffer(stream);
             var group = PatternContainerGroup.readFromPacket(stream);
 
-            AEKeyMap<AEKey> configuredSetting = new AEKeyMap<>();
+            AEKeyLongMap<AEKey> configuredSetting = new AEKeyLongMap<>();
             int settingSize = stream.readInt();
             for (int i = 0; i < settingSize; i++) {
                 var key = AEKey.readKey(stream);

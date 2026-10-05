@@ -89,6 +89,14 @@ public class InterfacePart extends AEBasePart implements InterfaceLogicHost {
     }
 
     @Override
+    public void exposedStorageChanged() {
+        var host = getHost();
+        if (host != null) {
+            host.partStorageChanged();
+        }
+    }
+
+    @Override
     protected IManagedGridNode createMainNode() {
         return GridHelper.createManagedNode(this, NODE_LISTENER);
     }

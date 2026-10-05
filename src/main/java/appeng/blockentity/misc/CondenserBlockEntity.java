@@ -40,7 +40,7 @@ import appeng.api.inventories.InternalInventory;
 import appeng.api.inventories.TrashFluidHandler;
 import appeng.api.inventories.TrashItemHandler;
 import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.MEStorage;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
@@ -266,7 +266,7 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
         public int fill(FluidStack resource, FluidAction action) {
             int amount = resource.isEmpty() ? 0 : Math.min(resource.getAmount(), AEFluidKey.AMOUNT_BUCKET);
             if (amount > 0 && action == FluidAction.EXECUTE) {
-                var transferFactor = (double) AEKeyType.fluids().getAmountPerOperation();
+                var transferFactor = (double) AEKeyTypes.FLUIDS.getAmountPerOperation();
                 CondenserBlockEntity.this.addPower(amount / transferFactor);
             }
             return amount;

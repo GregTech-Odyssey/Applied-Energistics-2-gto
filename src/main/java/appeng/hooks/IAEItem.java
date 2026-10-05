@@ -10,5 +10,7 @@ public interface IAEItem extends IUnique {
 
     AEItemKey ae2$getAEKey();
 
+    AEItemKey ae2$getDefaultAEKey();
+
     WeakValueHashCache<CompoundTag, AEItemKey> ae2$getTagAEKeyCache();
 }

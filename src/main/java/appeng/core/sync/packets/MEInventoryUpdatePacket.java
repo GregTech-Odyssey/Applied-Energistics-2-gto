@@ -32,9 +32,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
@@ -118,7 +117,7 @@ public class MEInventoryUpdatePacket extends BasePacket {
                 KeyCounter networkStorage,
                 Set<AEKey> craftables,
                 KeyCounter requestables) {
-            var keys = new ReferenceOpenHashSet<AEKey>();
+            var keys = new AEKeySet<AEKey>();
             keys.addAll(networkStorage.keySet());
             keys.addAll(craftables);
             keys.addAll(requestables.keySet());

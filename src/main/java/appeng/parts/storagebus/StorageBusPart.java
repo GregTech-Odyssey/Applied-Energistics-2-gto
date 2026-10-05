@@ -18,9 +18,6 @@
 
 package appeng.parts.storagebus;
 
-import java.util.Collections;
-import java.util.Map;
-
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -35,10 +32,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-
-import appeng.api.behaviors.ExternalStorageStrategy;
 import appeng.api.config.AccessRestriction;
+import appeng.api.config.Actionable;
 import appeng.api.config.FuzzyMode;
 import appeng.api.config.IncludeExclude;
 import appeng.api.config.Setting;
@@ -54,13 +49,17 @@ import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.KeyCounter;
+import appeng.api.storage.ExternalStorageLookup;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
 import appeng.api.storage.MEStorage;
+import appeng.api.storage.MEStorageHost;
+import appeng.api.storage.StorageAccess;
+import appeng.api.storage.StorageTargetResolver;
 import appeng.api.util.AECableType;
 import appeng.api.util.IConfigManager;
-import appeng.capabilities.Capabilities;
 import appeng.core.AppEng;
 import appeng.core.definitions.AEItems;
 import appeng.core.settings.TickRates;
@@ -68,7 +67,6 @@ import appeng.helpers.IConfigInvHost;
 import appeng.helpers.IPriorityHost;
 import appeng.items.parts.PartModels;
 import appeng.me.helpers.MachineSource;
-import appeng.me.storage.CompositeStorage;
 import appeng.me.storage.ITickingMonitor;
 import appeng.me.storage.MEInventoryHandler;
 import appeng.me.storage.NetworkStorage;
@@ -77,9 +75,7 @@ import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
 import appeng.menu.implementations.StorageBusMenu;
 import appeng.menu.locator.MenuLocators;
-import appeng.parts.PartAdjacentApi;
 import appeng.parts.PartModel;
-import appeng.parts.automation.StackWorldBehaviors;
 import appeng.parts.automation.UpgradeablePart;
 import appeng.util.ConfigInventory;
 import appeng.util.Platform;
@@ -110,21 +106,22 @@ public class StorageBusPart extends UpgradeablePart
      * cell-change notifications, we instead use a handler that will exist as long as this storage bus exists, while
      * changing the underlying inventory.
      */
-    private final StorageBusInventory handler = new StorageBusInventory(NullInventory.INSTANCE);
+    private final StorageBusInventory handler = new StorageBusInventory(this);
     @Nullable
     private Component handlerDescription;
-    private final PartAdjacentApi<MEStorage> adjacentStorageAccessor;
     @Nullable
-    private Map<AEKeyType, ExternalStorageStrategy> externalStorageStrategies;
+    private ExternalStorageLookup lookup;
+    private final Runnable externalChangeListener = this::invalidateOnExternalStorageChange;
     private boolean wasOnline = false;
     private int priority = 0;
+    private boolean retargeting;
+    private boolean remountPending;
 
     private PendingUpdateStatus updateStatus = PendingUpdateStatus.FAST_UPDATE;
     private ITickingMonitor monitor = null;
 
     public StorageBusPart(IPartItem<?> partItem) {
         super(partItem);
-        this.adjacentStorageAccessor = new PartAdjacentApi<>(this, Capabilities.STORAGE);
         this.getConfigManager().registerSetting(Settings.ACCESS, AccessRestriction.READ_WRITE);
         this.getConfigManager().registerSetting(Settings.FUZZY_MODE, FuzzyMode.IGNORE_ALL);
         this.getConfigManager().registerSetting(Settings.STORAGE_FILTER, StorageFilter.EXTRACTABLE_ONLY);
@@ -194,6 +191,7 @@ public class StorageBusPart extends UpgradeablePart
         super.removeFromWorld();
         handler.onUnmount(null);
         handler.identity = null;
+        handler.track(null);
     }
 
     @Override
@@ -242,7 +240,8 @@ public class StorageBusPart extends UpgradeablePart
     @Override
     public final void onNeighborChanged(BlockGetter level, BlockPos pos, BlockPos neighbor) {
         if (pos.relative(getSide()).equals(neighbor)) {
-            var te = adjacentStorageAccessor.getBlockEntity();
+            var lookup = lookup();
+            var te = lookup == null ? null : lookup.getBlockEntity();
             if (te == null) {
                 handler.identity = null;
                 // In case the TE was destroyed, we have to update the target handler immediately.
@@ -265,6 +264,11 @@ public class StorageBusPart extends UpgradeablePart
             this.updateTarget(false);
         }
 
+        if (this.remountPending) {
+            this.remountPending = false;
+            remountStorage();
+        }
+
         if (this.monitor != null) {
             return this.monitor.onTick();
         }
@@ -281,7 +285,8 @@ public class StorageBusPart extends UpgradeablePart
     }
 
     private boolean hasRegisteredCellToNetwork() {
-        return getMainNode().isOnline() && !(this.handler.getDelegate() instanceof NullInventory);
+        return getMainNode().isOnline()
+                && (this.handler.host != null || !(this.handler.getDelegate() instanceof NullInventory));
     }
 
     public Component getConnectedToDescription() {
@@ -299,25 +304,30 @@ public class StorageBusPart extends UpgradeablePart
             return; // Part is not part of level yet or its client-side
         }
         NetworkStorage.markTopologyChanged();
+        var wasRegistered = this.hasRegisteredCellToNetwork();
 
         MEStorage foundMonitor = null;
-        Map<AEKeyType, MEStorage> foundExternalApi = Collections.emptyMap();
+        MEStorage foundExternal = null;
+        MEStorageHost host = null;
 
         // If the target position is not ticking, don't search for a target.
         if (Platform.areBlockEntitiesTicking(getLevel(), getBlockEntity().getBlockPos().relative(getSide()))) {
             // In any case we don't need any further update
             this.updateStatus = PendingUpdateStatus.NO_UPDATE;
-            var be = adjacentStorageAccessor.getBlockEntity();
+            var lookup = lookup();
+            var be = lookup == null ? null : lookup.getBlockEntity();
             if (be != null) {
                 handler.identity = be;
-                // Prioritize a handler to directly link to another ME network
-                foundMonitor = adjacentStorageAccessor.find();
-                if (foundMonitor == null) {
-                    // Query all available external APIs
-                    // TODO: If a filter is configured, we might want to only query external APIs for compatible key
-                    // spaces
-                    foundExternalApi = new Reference2ReferenceOpenHashMap<>(2);
-                    findExternalStorages(foundExternalApi);
+                lookup.refresh();
+                lookup.configure(isExtractableOnly(), externalChangeListener);
+                var found = lookup.findAll(StorageAccess.FULL);
+                if (lookup.tier() == StorageTargetResolver.Tier.STORAGE) {
+                    foundMonitor = found;
+                } else {
+                    foundExternal = found;
+                }
+                if (be instanceof MEStorageHost h) {
+                    host = h;
                 }
             } else {
                 handler.identity = null;
@@ -326,12 +336,10 @@ public class StorageBusPart extends UpgradeablePart
             // Try again in the future...
             this.updateStatus = PendingUpdateStatus.SLOW_UPDATE;
         }
+        handler.track(host);
 
-        if (!forceFullUpdate && this.handler.getDelegate() instanceof CompositeStorage compositeStorage
-                && !foundExternalApi.isEmpty()) {
-            // Just update the inventory reference, the ticking monitor will take care of the rest.
-            compositeStorage.setStorages(foundExternalApi);
-            handlerDescription = compositeStorage.getDescription();
+        if (!forceFullUpdate && foundExternal != null && foundExternal == this.handler.getDelegate()) {
+            handlerDescription = foundExternal.getDescription();
             return;
         } else if (!forceFullUpdate && foundMonitor == this.handler.getDelegate()) {
             // Monitor didn't change, nothing to do!
@@ -339,7 +347,6 @@ public class StorageBusPart extends UpgradeablePart
         }
 
         var wasSleeping = this.monitor == null;
-        var wasRegistered = this.hasRegisteredCellToNetwork();
         var wasNetworkLink = this.handler.getDelegate() instanceof NetworkStorage;
 
         if (foundMonitor != null) {
@@ -354,8 +361,8 @@ public class StorageBusPart extends UpgradeablePart
             newInventory = foundMonitor;
             this.checkStorageBusOnInterface();
             handlerDescription = newInventory.getDescription();
-        } else if (!foundExternalApi.isEmpty()) {
-            newInventory = new CompositeStorage(foundExternalApi);
+        } else if (foundExternal != null) {
+            newInventory = foundExternal;
             handlerDescription = newInventory.getDescription();
         } else {
             newInventory = NullInventory.INSTANCE;
@@ -396,12 +403,38 @@ public class StorageBusPart extends UpgradeablePart
 
         if (wasRegistered != this.hasRegisteredCellToNetwork()
                 || wasNetworkLink != (this.handler.getDelegate() instanceof NetworkStorage)) {
-            remountStorage();
+            if (retargeting) {
+                remountPending = true;
+                invalidateOnExternalStorageChange();
+            } else {
+                remountPending = false;
+                remountStorage();
+            }
+        }
+    }
+
+    private void retarget() {
+        retargeting = true;
+        try {
+            updateTarget(false);
+        } finally {
+            retargeting = false;
         }
     }
 
     private boolean isExtractableOnly() {
         return this.getConfigManager().getSetting(Settings.STORAGE_FILTER) == StorageFilter.EXTRACTABLE_ONLY;
+    }
+
+    @Nullable
+    private ExternalStorageLookup lookup() {
+        var lookup = this.lookup;
+        if (lookup == null && getLevel() instanceof ServerLevel level) {
+            var side = getSide();
+            this.lookup = lookup = ExternalStorageLookup.create(level,
+                    getHost().getBlockEntity().getBlockPos().relative(side), side.getOpposite());
+        }
+        return lookup;
     }
 
     private IPartitionList createFilter() {
@@ -415,18 +448,6 @@ public class StorageBusPart extends UpgradeablePart
             filterBuilder.add(config.getKey(x));
         }
         return filterBuilder.build();
-    }
-
-    private void findExternalStorages(Map<AEKeyType, MEStorage> storages) {
-        var extractableOnly = isExtractableOnly();
-        for (var entry : getExternalStorageStrategies().entrySet()) {
-            var wrapper = entry.getValue().createWrapper(
-                    extractableOnly,
-                    this::invalidateOnExternalStorageChange);
-            if (wrapper != null) {
-                storages.put(entry.getKey(), wrapper);
-            }
-        }
     }
 
     private void invalidateOnExternalStorageChange() {
@@ -464,14 +485,74 @@ public class StorageBusPart extends UpgradeablePart
 
         @Nullable
         private Object identity;
+        @Nullable
+        private final StorageBusPart part;
+        @Nullable
+        private MEStorageHost host;
+        private int epoch;
 
         public StorageBusInventory(MEStorage inventory) {
             super(inventory);
+            this.part = null;
+        }
+
+        private StorageBusInventory(StorageBusPart part) {
+            super(NullInventory.INSTANCE);
+            this.part = part;
         }
 
         public void setAccessRestriction(AccessRestriction setting) {
             setAllowExtraction(setting.isAllowExtraction());
             setAllowInsertion(setting.isAllowInsertion());
+        }
+
+        private void track(@Nullable MEStorageHost host) {
+            var epoch = host == null ? -1 : host.storageEpoch();
+            if (epoch < 0) {
+                if (this.host != null) {
+                    this.host = null;
+                }
+                return;
+            }
+            this.epoch = epoch;
+            if (this.host != host) {
+                this.host = host;
+            }
+        }
+
+        private void checkTarget() {
+            var host = this.host;
+            if (host != null && part != null) {
+                int epoch = host.storageEpoch();
+                if (epoch != this.epoch) {
+                    this.epoch = epoch;
+                    part.retarget();
+                }
+            }
+        }
+
+        @Override
+        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+            checkTarget();
+            return super.insert(what, amount, mode, source);
+        }
+
+        @Override
+        public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+            checkTarget();
+            return super.extract(what, amount, mode, source);
+        }
+
+        @Override
+        public void getAvailableStacks(KeyCounter out) {
+            checkTarget();
+            super.getAvailableStacks(out);
+        }
+
+        @Override
+        public boolean isPreferredStorageFor(AEKey input, IActionSource source) {
+            checkTarget();
+            return super.isPreferredStorageFor(input, source);
         }
 
         @Override
@@ -510,17 +591,6 @@ public class StorageBusPart extends UpgradeablePart
         } else {
             return MODELS_OFF;
         }
-    }
-
-    private Map<AEKeyType, ExternalStorageStrategy> getExternalStorageStrategies() {
-        if (externalStorageStrategies == null) {
-            var host = getHost().getBlockEntity();
-            this.externalStorageStrategies = StackWorldBehaviors.createExternalStorageStrategies(
-                    (ServerLevel) host.getLevel(),
-                    host.getBlockPos().relative(getSide()),
-                    getSide().getOpposite());
-        }
-        return externalStorageStrategies;
     }
 
     private enum PendingUpdateStatus {

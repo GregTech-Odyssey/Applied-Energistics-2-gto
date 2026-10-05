@@ -28,13 +28,13 @@ public class ContainerItemStrategies {
     private static final CowMap<AEKeyType, ContainerItemStrategy<?, ?>> strategies = CowMap.identityHashMap();
 
     static {
-        register(AEKeyType.fluids(), AEFluidKey.class, new FluidContainerItemStrategy());
+        register(AEKeyTypes.FLUIDS, AEFluidKey.class, new FluidContainerItemStrategy());
     }
 
     public static <T extends AEKey> void register(AEKeyType type, Class<T> keyClass,
             ContainerItemStrategy<T, ?> strategy) {
         Preconditions.checkArgument(type.getKeyClass() == keyClass, "%s != %s", type.getKeyClass(), keyClass);
-        Preconditions.checkArgument(type != AEKeyType.items(), "Can't register container items for AEItemKey");
+        Preconditions.checkArgument(type != AEKeyTypes.ITEMS, "Can't register container items for AEItemKey");
 
         strategies.putIfAbsent(type, strategy);
     }

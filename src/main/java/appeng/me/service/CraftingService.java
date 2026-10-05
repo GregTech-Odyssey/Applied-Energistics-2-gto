@@ -64,6 +64,8 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyObjectMap;
+import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.AEKeyFilter;
@@ -110,12 +112,12 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
     private final NetworkCraftingProviders craftingProviders = new NetworkCraftingProviders();
     private final Map<UUID, CraftingLinkNexus> craftingLinks = new O2OOpenCacheHashMap<>();
     private final Multimap<AEKey, StackWatcher<ICraftingWatcherNode>> interests = Multimaps
-            .newSetMultimap(new Reference2ReferenceOpenHashMap<>(), ReferenceOpenHashSet::new);
+            .newSetMultimap(new AEKeyObjectMap<>(), ReferenceOpenHashSet::new);
     private final InterestManager<StackWatcher<ICraftingWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final IEnergyService energyGrid;
-    private final Set<AEKey> currentlyCrafting = new ReferenceOpenHashSet<>();
-    private final Set<AEKey> currentlyCraftable = new ReferenceOpenHashSet<>();
+    private final AEKeySet<AEKey> currentlyCrafting = new AEKeySet<>();
+    private final AEKeySet<AEKey> currentlyCraftable = new AEKeySet<>();
     private long lastProcessedCraftingLogicChangeTick;
     private long lastProcessedCraftableChangeTick;
     private boolean updateList = false;
@@ -154,7 +156,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             lastProcessedCraftingLogicChangeTick = latestChange;
 
             Set<AEKey> previouslyCrafting = currentlyCrafting.isEmpty() ? Set.of()
-                    : new ReferenceOpenHashSet<>(currentlyCrafting);
+                    : new AEKeySet<>(currentlyCrafting);
             this.currentlyCrafting.clear();
 
             for (var cpu : this.craftingCPUClusters) {
@@ -164,7 +166,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             // Notify watchers about items no longer being crafted, but only if there can be changes and there are
             // watchers
             if (!interests.isEmpty() && !(previouslyCrafting.isEmpty() && currentlyCrafting.isEmpty())) {
-                var changed = new ReferenceOpenHashSet<AEKey>();
+                var changed = new AEKeySet<AEKey>();
                 changed.addAll(Sets.difference(previouslyCrafting, currentlyCrafting));
                 changed.addAll(Sets.difference(currentlyCrafting, previouslyCrafting));
                 for (var what : changed) {
@@ -186,14 +188,14 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
             if (!currentlyCraftable.isEmpty() || !craftingProviders.getCraftableKeys().isEmpty()
                     || !craftingProviders.getEmittableKeys().isEmpty()) {
                 Set<AEKey> previouslyCraftable = currentlyCraftable.isEmpty() ? Set.of()
-                        : new ReferenceOpenHashSet<>(currentlyCraftable);
+                        : new AEKeySet<>(currentlyCraftable);
                 this.currentlyCraftable.clear();
                 currentlyCraftable.addAll(craftingProviders.getCraftableKeys());
                 currentlyCraftable.addAll(craftingProviders.getEmittableKeys());
 
                 // Only perform the change tracking if there are watchers
                 if (!interests.isEmpty()) {
-                    var changedCraftable = new ReferenceOpenHashSet<AEKey>();
+                    var changedCraftable = new AEKeySet<AEKey>();
                     changedCraftable.addAll(Sets.difference(previouslyCraftable, currentlyCraftable));
                     changedCraftable.addAll(Sets.difference(currentlyCraftable, previouslyCraftable));
                     for (var what : changedCraftable) {

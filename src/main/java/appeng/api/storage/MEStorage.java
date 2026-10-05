@@ -39,7 +39,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyMap;
+import appeng.api.stacks.AEKeyLongMap;
 import appeng.api.stacks.KeyCounter;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.storage.NetworkStorage;
@@ -200,11 +200,11 @@ public interface MEStorage {
         public boolean updateCache() {
             lastTick = TickHandler.INSTANCE.tickCounter;
             needUpdate = false;
-            AEKeyMap<AEKey> tmp;
+            AEKeyLongMap<AEKey> tmp;
             var counter = keyCounter;
             if (counter == null) {
                 keyCounter = counter = new KeyCounter();
-                tmp = AEKeyMap.EMPTY;
+                tmp = AEKeyLongMap.EMPTY;
             } else {
                 tmp = counter.getMap().clone();
                 counter.clear();

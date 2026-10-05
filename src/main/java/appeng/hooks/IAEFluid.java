@@ -10,6 +10,8 @@ public interface IAEFluid extends IUnique {
 
     AEFluidKey ae2$getAEKey();
 
+    AEFluidKey ae2$getSourceAEKey();
+
     WeakValueHashCache<CompoundTag, AEFluidKey> ae2$getTagAEKeyCache();
 
 }

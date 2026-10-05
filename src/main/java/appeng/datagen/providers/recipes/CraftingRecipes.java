@@ -17,7 +17,7 @@ import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.common.crafting.DifferenceIngredient;
 
 import appeng.api.ids.AETags;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.util.AEColor;
 import appeng.core.AppEng;
 import appeng.core.definitions.AEBlocks;
@@ -899,9 +899,9 @@ public class CraftingRecipes extends AE2RecipeProvider {
 
     private void portableCell(Consumer<FinishedRecipe> consumer, ItemDefinition<PortableCellItem> cell) {
         ItemDefinition<?> housing;
-        if (cell.asItem().getKeyType() == AEKeyType.items()) {
+        if (cell.asItem().getKeyType() == AEKeyTypes.ITEMS) {
             housing = AEItems.ITEM_CELL_HOUSING;
-        } else if (cell.asItem().getKeyType() == AEKeyType.fluids()) {
+        } else if (cell.asItem().getKeyType() == AEKeyTypes.FLUIDS) {
             housing = AEItems.FLUID_CELL_HOUSING;
         } else {
             throw new RuntimeException("No housing known for " + cell.asItem().getKeyType());

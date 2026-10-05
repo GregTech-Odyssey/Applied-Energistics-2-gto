@@ -31,6 +31,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -55,6 +56,9 @@ import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.orientation.RelativeSide;
+import appeng.api.stacks.AEKeyTypes;
+import appeng.api.storage.ExternalStorageLookup;
+import appeng.api.storage.StorageAccess;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.upgrades.UpgradeInventories;
@@ -102,6 +106,8 @@ public class InscriberBlockEntity extends AENetworkPowerBlockEntity
     private final AppEngInternalInventory topItemHandler = new AppEngInternalInventory(this, 1, 64, baseFilter);
     private final AppEngInternalInventory bottomItemHandler = new AppEngInternalInventory(this, 1, 64, baseFilter);
     private final AppEngInternalInventory sideItemHandler = new AppEngInternalInventory(this, 2, 64, baseFilter);
+    @Nullable
+    private ExternalStorageLookup[] outputs;
     // Combined internally visible inventories
     private final InternalInventory inv = new CombinedInternalInventory(this.topItemHandler,
             this.bottomItemHandler, this.sideItemHandler);
@@ -392,12 +398,23 @@ public class InscriberBlockEntity extends AENetworkPowerBlockEntity
             pushSides.remove(this.getTop().getOpposite());
         }
 
+        if (!(level instanceof ServerLevel serverLevel)) {
+            return false;
+        }
+        var outputs = this.outputs;
+        if (outputs == null) {
+            this.outputs = outputs = new ExternalStorageLookup[6];
+        }
         for (var dir : pushSides) {
-            var target = InternalInventory.wrapExternal(level, getBlockPos().relative(dir), dir.getOpposite());
+            var target = outputs[dir.get3DDataValue()];
+            if (target == null) {
+                outputs[dir.get3DDataValue()] = target = ExternalStorageLookup.create(serverLevel,
+                        getBlockPos().relative(dir), dir.getOpposite());
+            }
 
-            if (target != null) {
+            if (target.find(AEKeyTypes.ITEMS, StorageAccess.INSERT) != null) {
                 int startItems = this.sideItemHandler.getStackInSlot(1).getCount();
-                this.sideItemHandler.insertItem(1, target.addItems(this.sideItemHandler.extractItem(1, 64, false)),
+                this.sideItemHandler.insertItem(1, target.insert(this.sideItemHandler.extractItem(1, 64, false)),
                         false);
                 int endItems = this.sideItemHandler.getStackInSlot(1).getCount();
 

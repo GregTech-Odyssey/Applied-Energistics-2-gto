@@ -7,13 +7,13 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.jetbrains.annotations.Nullable;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
 import appeng.parts.storagebus.StorageBusPart;
@@ -41,8 +41,8 @@ final class StorageQuery {
     private final Reference2IntOpenHashMap<Object> reached = new Reference2IntOpenHashMap<>();
     private final ReferenceOpenHashSet<NetworkStorage> scanned = new ReferenceOpenHashSet<>();
     private final ReferenceOpenHashSet<Object> filteredReach = new ReferenceOpenHashSet<>();
-    private final Reference2ObjectOpenHashMap<Object, ObjectOpenHashSet<AEKey>> emitted = new Reference2ObjectOpenHashMap<>();
-    private final ArrayList<ObjectOpenHashSet<AEKey>> setPool = new ArrayList<>();
+    private final Reference2ObjectOpenHashMap<Object, AEKeySet<AEKey>> emitted = new Reference2ObjectOpenHashMap<>();
+    private final ArrayList<AEKeySet<AEKey>> setPool = new ArrayList<>();
     private final ArrayList<KeyCounter> counterPool = new ArrayList<>();
     private final ArrayList<NetworkStorage> filledNetworks = new ArrayList<>();
     private final ReferenceOpenHashSet<Object> drained = new ReferenceOpenHashSet<>();
@@ -218,7 +218,7 @@ final class StorageQuery {
     void addOnce(Object token, KeyCounter source, KeyCounter out) {
         var keys = emitted.get(token);
         if (keys == null) {
-            keys = setPool.isEmpty() ? new ObjectOpenHashSet<>() : setPool.remove(setPool.size() - 1);
+            keys = setPool.isEmpty() ? new AEKeySet<>() : setPool.remove(setPool.size() - 1);
             emitted.put(token, keys);
         }
         for (var entry : source) {

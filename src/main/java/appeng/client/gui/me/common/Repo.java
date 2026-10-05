@@ -34,16 +34,14 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ReferenceSet;
 
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
 import appeng.api.config.ViewItems;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyObjectMap;
+import appeng.api.stacks.AEKeySet;
 import appeng.client.gui.me.search.RepoSearch;
 import appeng.client.gui.widgets.IScrollSource;
 import appeng.client.gui.widgets.ISortSource;
@@ -74,8 +72,8 @@ public class Repo implements IClientRepo {
     private boolean hasPower;
 
     private final BiMap<Long, GridInventoryEntry> entries = HashBiMap.create();
-    private final Reference2ObjectMap<AEKey, GridInventoryEntry> byKey = new Reference2ObjectOpenHashMap<>();
-    private final ReferenceSet<AEKey> craftableKeys = new ReferenceOpenHashSet<>();
+    private final AEKeyObjectMap<AEKey, GridInventoryEntry> byKey = new AEKeyObjectMap<>();
+    private final AEKeySet<AEKey> craftableKeys = new AEKeySet<>();
     private final ArrayList<GridInventoryEntry> view = new ArrayList<>();
     private final ArrayList<GridInventoryEntry> craftingPinnedRow = new ArrayList<>();
     private final ArrayList<GridInventoryEntry> manualPinnedView = new ArrayList<>();
@@ -322,7 +320,7 @@ public class Repo implements IClientRepo {
      * Computes free slot indices by AEKey. Used to replace removed items by items that are visually indistinguishable.
      */
     private Map<AEKey, IntList> getFreeSlots(List<GridInventoryEntry> slots) {
-        Map<AEKey, IntList> freeSlots = new HashMap<>();
+        Map<AEKey, IntList> freeSlots = new AEKeyObjectMap<>();
 
         for (int i = 0; i < slots.size(); ++i) {
             var entry = slots.get(i);

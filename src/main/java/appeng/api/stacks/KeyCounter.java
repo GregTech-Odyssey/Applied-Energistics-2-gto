@@ -30,6 +30,7 @@ import java.util.function.ObjLongConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import it.unimi.dsi.fastutil.Hash;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongCollection;
 import it.unimi.dsi.fastutil.longs.LongLists;
@@ -44,7 +45,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
 
     public static final KeyCounter EMPTY = new KeyCounter();
 
-    private AEKeyMap<AEKey> map;
+    private AEKeyLongMap<AEKey> map;
 
     private Int2ObjectOpenHashMap<VariantCounter> fuzzyMap;
 
@@ -53,7 +54,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     public KeyCounter() {
     }
 
-    public KeyCounter(AEKeyMap<AEKey> map) {
+    public KeyCounter(AEKeyLongMap<AEKey> map) {
         this.map = map;
     }
 
@@ -71,9 +72,9 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         return copy;
     }
 
-    public AEKeyMap<AEKey> getMap() {
+    public AEKeyLongMap<AEKey> getMap() {
         if (map == null) {
-            return AEKeyMap.EMPTY;
+            return AEKeyLongMap.EMPTY;
         }
         return map;
     }
@@ -226,7 +227,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         var size = m.size();
         var map = this.map;
         if (map == null) {
-            this.map = map = new AEKeyMap<>(size);
+            this.map = map = new AEKeyLongMap<>(size);
         }
         map.removeAll(m);
         fuzzyUpdate = true;
@@ -235,7 +236,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     public void add(AEKey key, long amount) {
         var map = this.map;
         if (map == null) {
-            this.map = map = new AEKeyMap<>();
+            this.map = map = new AEKeyLongMap<>();
         }
         map.addTo(key, amount);
         fuzzyUpdate = true;
@@ -244,7 +245,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     public void remove(AEKey key, long amount) {
         var map = this.map;
         if (map == null) {
-            this.map = map = new AEKeyMap<>();
+            this.map = map = new AEKeyLongMap<>();
         }
         map.addTo(key, -amount);
         fuzzyUpdate = true;
@@ -262,7 +263,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     public void set(AEKey key, long amount) {
         var map = this.map;
         if (map == null) {
-            this.map = map = new AEKeyMap<>();
+            this.map = map = new AEKeyLongMap<>();
         }
         map.set(key, amount);
         fuzzyUpdate = true;
@@ -383,11 +384,16 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
     }
 
     public void ensureCapacity(int capacity) {
+        sized(capacity);
+    }
+
+    private AEKeyLongMap<AEKey> sized(int capacity) {
         var map = this.map;
         if (map == null) {
-            this.map = map = new AEKeyMap<>();
+            return this.map = new AEKeyLongMap<>(Math.max(capacity, Hash.DEFAULT_INITIAL_SIZE));
         }
         map.ensureCapacity(capacity);
+        return map;
     }
 
     public void addAll(AEKeyBigMap<AEKey> other) {
@@ -395,38 +401,26 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         if (size < 1) {
             return;
         }
-        var map = this.map;
-        if (map == null) {
-            this.map = map = new AEKeyMap<>();
-        }
-        map.ensureCapacity(size);
+        var map = sized(size);
         other.fastForEachLong(map::insert);
         fuzzyUpdate = true;
     }
 
-    public void addAll(AEKeyMap<AEKey> other) {
+    public void addAll(AEKeyLongMap<AEKey> other) {
         var size = other.size();
         if (size < 1) {
             return;
         }
-        var map = this.map;
-        if (map == null) {
-            this.map = map = new AEKeyMap<>();
-        }
-        map.ensureCapacity(size);
+        var map = sized(size);
         other.fastForEach(map::insert);
         fuzzyUpdate = true;
     }
 
-    public void addAll(int size, Consumer<AEKeyMap<AEKey>> consumer) {
+    public void addAll(int size, Consumer<AEKeyLongMap<AEKey>> consumer) {
         if (size < 1) {
             return;
         }
-        var map = this.map;
-        if (map == null) {
-            this.map = map = new AEKeyMap<>();
-        }
-        map.ensureCapacity(size);
+        var map = sized(size);
         consumer.accept(map);
         fuzzyUpdate = true;
     }

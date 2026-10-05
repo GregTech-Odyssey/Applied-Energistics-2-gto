@@ -59,29 +59,34 @@ public final class AEItemKey extends AEKey {
     }
 
     public static AEItemKey of(ItemLike item) {
-        var aeItem = (IAEItem) item.asItem();
-        return aeItem.ae2$getAEKey();
+        return ((IAEItem) item.asItem()).ae2$getDefaultAEKey();
     }
 
     public static AEItemKey of(ItemLike item, @Nullable CompoundTag tag) {
         var i = item.asItem();
-        var aeItem = (IAEItem) i;
-        if (tag == null || tag.isEmpty()) {
-            return aeItem.ae2$getAEKey();
-        }
-        var cache = aeItem.ae2$getTagAEKeyCache();
-        return cache.getCache(tag, cache.createFunction(), IdentityTag.COPY);
+        return tag == null ? ((IAEItem) i).ae2$getAEKey() : ofTagged(i, tag);
     }
 
     @Nullable
     public static AEItemKey of(ItemStack stack) {
-        var item = stack.getItem();
-        if (item == Items.AIR) {
-            return null;
-        }
-        var aeItem = (IAEItem) item;
         var tag = stack.getTag();
-        if (tag == null || tag.isEmpty()) {
+        return tag == null ? ofUntagged(stack.getItem()) : ofTagged(stack, tag);
+    }
+
+    @Nullable
+    private static AEItemKey ofUntagged(Item item) {
+        return item == Items.AIR ? null : ((IAEItem) item).ae2$getAEKey();
+    }
+
+    @Nullable
+    private static AEItemKey ofTagged(ItemStack stack, CompoundTag tag) {
+        var item = stack.getItem();
+        return item == Items.AIR ? null : ofTagged(item, tag);
+    }
+
+    private static AEItemKey ofTagged(Item item, CompoundTag tag) {
+        var aeItem = (IAEItem) item;
+        if (tag.isEmpty()) {
             return aeItem.ae2$getAEKey();
         }
         var cache = aeItem.ae2$getTagAEKeyCache();
@@ -112,7 +117,7 @@ public final class AEItemKey extends AEKey {
 
     @Override
     public AEItemKey dropSecondary() {
-        return of(item);
+        return ((IAEItem) item).ae2$getAEKey();
     }
 
     public boolean matches(ItemStack stack) {
@@ -309,10 +314,13 @@ public final class AEItemKey extends AEKey {
     public static AEItemKey fromPacket(FriendlyByteBuf data) {
         var item = Item.byId(data.readVarInt());
         var shareTag = data.readNbt();
+        var aeItem = (IAEItem) item;
+        if (shareTag == null || shareTag.isEmpty()) {
+            return aeItem.ae2$getAEKey();
+        }
         var stack = new ItemStack(item);
         stack.readShareTag(shareTag);
         var tag = stack.getTag();
-        var aeItem = (IAEItem) item;
         if (tag == null || tag.isEmpty()) {
             return aeItem.ae2$getAEKey();
         }

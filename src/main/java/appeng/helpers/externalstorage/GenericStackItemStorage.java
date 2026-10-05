@@ -10,7 +10,7 @@ import net.minecraftforge.items.IItemHandler;
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.util.Platform;
 
 /**
@@ -65,7 +65,7 @@ public class GenericStackItemStorage implements IItemHandler {
 
     @Override
     public int getSlotLimit(int slot) {
-        return Ints.saturatedCast(inv.getCapacity(AEKeyType.items()));
+        return Ints.saturatedCast(inv.getCapacity(AEKeyTypes.ITEMS));
     }
 
     @Override

@@ -25,6 +25,7 @@ import appeng.api.implementations.menuobjects.IMenuItem;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.StorageHelper;
 import appeng.api.storage.cells.CellState;
@@ -260,7 +261,7 @@ public abstract class AbstractPortableCell extends AEBasePoweredItem
         var inserted = (int) insert(player,
                 cellStack,
                 key,
-                AEKeyType.items(),
+                AEKeyTypes.ITEMS,
                 otherStack.getCount(),
                 Actionable.MODULATE);
         if (inserted > 0) {

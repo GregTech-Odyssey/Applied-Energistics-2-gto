@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import appeng.api.stacks.AEItemKey;
 import appeng.hooks.IAEItem;
@@ -23,6 +24,8 @@ public class ItemMixin implements IAEItem {
     private volatile AEItemKey ae2$itemKey;
     @Unique
     private volatile WeakValueHashCache<CompoundTag, AEItemKey> ae2$cache;
+    @Unique
+    private AEItemKey ae2$defaultKey;
 
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onConstructed(CallbackInfo ci) {
@@ -37,32 +40,58 @@ public class ItemMixin implements IAEItem {
     @Override
     public AEItemKey ae2$getAEKey() {
         var key = ae2$itemKey;
-        if (key != null) {
+        return key != null ? key : ae2$createAEKey();
+    }
+
+    @Unique
+    private AEItemKey ae2$createAEKey() {
+        var key = new AEItemKey((Item) (Object) this, null);
+        synchronized (this) {
+            var existing = ae2$itemKey;
+            if (existing != null) {
+                return existing;
+            }
+            ae2$itemKey = key;
             return key;
         }
-        key = new AEItemKey((Item) (Object) this, null);
-        synchronized (this) {
-            if (ae2$itemKey == null) {
-                ae2$itemKey = key;
-                return key;
-            }
-            return ae2$itemKey;
+    }
+
+    @Override
+    public AEItemKey ae2$getDefaultAEKey() {
+        var key = ae2$defaultKey;
+        return key != null ? key : ae2$initDefaultAEKey();
+    }
+
+    @Unique
+    private AEItemKey ae2$initDefaultAEKey() {
+        var tag = new ItemStack((Item) (Object) this).getTag();
+        AEItemKey key;
+        if (tag == null || tag.isEmpty()) {
+            key = ae2$getAEKey();
+        } else {
+            var cache = ae2$getTagAEKeyCache();
+            key = cache.getCache(tag, cache.createFunction());
         }
+        ae2$defaultKey = key;
+        return key;
     }
 
     @Override
     public WeakValueHashCache<CompoundTag, AEItemKey> ae2$getTagAEKeyCache() {
         var cache = ae2$cache;
-        if (cache != null) {
-            return cache;
-        }
-        cache = new WeakValueHashCache<>(t -> new AEItemKey((Item) (Object) this, t));
+        return cache != null ? cache : ae2$createTagAEKeyCache();
+    }
+
+    @Unique
+    private WeakValueHashCache<CompoundTag, AEItemKey> ae2$createTagAEKeyCache() {
+        var cache = new WeakValueHashCache<CompoundTag, AEItemKey>(t -> new AEItemKey((Item) (Object) this, t));
         synchronized (this) {
-            if (ae2$cache == null) {
-                ae2$cache = cache;
-                return cache;
+            var existing = ae2$cache;
+            if (existing != null) {
+                return existing;
             }
-            return ae2$cache;
+            ae2$cache = cache;
+            return cache;
         }
     }
 }

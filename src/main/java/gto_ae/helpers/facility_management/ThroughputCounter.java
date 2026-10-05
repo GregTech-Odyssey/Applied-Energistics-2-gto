@@ -3,7 +3,7 @@ package gto_ae.helpers.facility_management;
 import net.minecraft.network.FriendlyByteBuf;
 
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyMap;
+import appeng.api.stacks.AEKeyLongMap;
 import appeng.core.AEConfig;
 
 /**
@@ -40,7 +40,7 @@ public class ThroughputCounter {
     private long lastRefreshTime = 0;
     private long lastRefreshInterval = 0;
     private ThroughputCounter immutableView = null;
-    public final AEKeyMap<AEKey> map = new AEKeyMap<>();
+    public final AEKeyLongMap<AEKey> map = new AEKeyLongMap<>();
 
     public void add(AEKey key, long count) {
         if (count == 0) {

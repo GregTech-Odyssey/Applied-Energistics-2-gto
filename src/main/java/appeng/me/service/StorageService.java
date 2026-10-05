@@ -36,7 +36,8 @@ import appeng.api.networking.IGridServiceProvider;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.networking.storage.IStorageWatcherNode;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyMap;
+import appeng.api.stacks.AEKeyLongMap;
+import appeng.api.stacks.AEKeyObjectMap;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
@@ -57,7 +58,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     private final List<ProviderState> globalProviders = new ArrayList<>();
     private final Set<UpdateRequester> requesters = new ReferenceOpenHashSet<>();
     private final SetMultimap<AEKey, StackWatcher<IStorageWatcherNode>> interests = Multimaps
-            .newSetMultimap(new Reference2ReferenceOpenHashMap<>(), ReferenceOpenHashSet::new);
+            .newSetMultimap(new AEKeyObjectMap<>(), ReferenceOpenHashSet::new);
     private final InterestManager<StackWatcher<IStorageWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final NetworkStorage storage;
@@ -69,7 +70,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
      * Private cached amounts, to ensure that we send correct change notifications even if
      * {@link #cachedAvailableStacks} is modified by mistake.
      */
-    private final AEKeyMap<AEKey> cachedAvailableAmounts = new AEKeyMap<>();
+    private final AEKeyLongMap<AEKey> cachedAvailableAmounts = new AEKeyLongMap<>();
     private volatile boolean cachedStacksNeedUpdate = true;
     private boolean watcherUpdate = false;
 

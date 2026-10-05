@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import appeng.api.networking.IStackWatcher;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeySet;
 
 /**
  * Maintain my interests, and a global watch list, they should always be fully synchronized.
@@ -16,7 +17,7 @@ public class StackWatcher<T> implements IStackWatcher, IStorageService.UpdateReq
 
     private final InterestManager<StackWatcher<T>> interestManager;
     private final T myHost;
-    private final Set<AEKey> myInterests = new ReferenceOpenHashSet<>();
+    private final AEKeySet<AEKey> myInterests = new AEKeySet<>();
     private boolean destroyed = false;
 
     public StackWatcher(InterestManager<StackWatcher<T>> interestManager, T host) {

@@ -10,6 +10,7 @@ import net.minecraft.world.Container;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.util.CowMap;
 
 /**
@@ -20,8 +21,8 @@ public class GenericSlotCapacities {
     private static final CowMap<AEKeyType, Long> map = CowMap.identityHashMap();
 
     static {
-        register(AEKeyType.items(), (long) Container.LARGE_MAX_STACK_SIZE);
-        register(AEKeyType.fluids(), 4L * AEFluidKey.AMOUNT_BUCKET);
+        register(AEKeyTypes.ITEMS, (long) Container.LARGE_MAX_STACK_SIZE);
+        register(AEKeyTypes.FLUIDS, 4L * AEFluidKey.AMOUNT_BUCKET);
     }
 
     public static void register(AEKeyType type, Long capacity) {

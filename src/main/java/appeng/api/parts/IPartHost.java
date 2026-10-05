@@ -175,6 +175,9 @@ public interface IPartHost extends ICustomCableConnection {
 
     void partChanged();
 
+    default void partStorageChanged() {
+    }
+
     /**
      * Check if the part host currently has redstone power greater than 0. This value is cached internally.
      *

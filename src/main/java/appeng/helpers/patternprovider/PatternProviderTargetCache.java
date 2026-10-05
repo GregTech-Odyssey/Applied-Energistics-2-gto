@@ -1,80 +1,46 @@
 package appeng.helpers.patternprovider;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
-import java.util.Set;
-
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
-import appeng.api.behaviors.ExternalStorageStrategy;
-import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyType;
-import appeng.api.storage.MEStorage;
-import appeng.capabilities.Capabilities;
-import appeng.me.storage.CompositeStorage;
-import appeng.parts.automation.StackWorldBehaviors;
-import appeng.util.BlockApiCache;
+import appeng.api.storage.ExternalStorageLookup;
+import appeng.api.storage.StorageAccess;
 
-class PatternProviderTargetCache {
-    private final BlockApiCache<MEStorage> cache;
-    private final Direction direction;
+public final class PatternProviderTargetCache {
+    private final ExternalStorageLookup lookup;
     private final IActionSource src;
-    private final Map<AEKeyType, ExternalStorageStrategy> strategies;
+    @Nullable
+    private MEStorageTarget target;
 
-    PatternProviderTargetCache(ServerLevel l, BlockPos pos, Direction direction, IActionSource src) {
-        this.cache = BlockApiCache.create(Capabilities.STORAGE, l, pos);
-        this.direction = direction;
+    public PatternProviderTargetCache(ServerLevel l, BlockPos pos, Direction direction, IActionSource src) {
+        this.lookup = ExternalStorageLookup.create(l, pos, direction);
         this.src = src;
-        this.strategies = StackWorldBehaviors.createExternalStorageStrategies(l, pos, direction);
+    }
+
+    public void refresh() {
+        lookup.refresh();
     }
 
     @Nullable
-    PatternProviderTarget find() {
-        // our capability first: allows any storage channel
-        var meStorage = cache.find(direction);
-        if (meStorage != null) {
-            return wrapMeStorage(meStorage);
-        }
-
-        // otherwise fall back to the platform capability
-        var externalStorages = new IdentityHashMap<AEKeyType, MEStorage>(2);
-        for (var entry : strategies.entrySet()) {
-            var wrapper = entry.getValue().createWrapper(false, () -> {
-            });
-            if (wrapper != null) {
-                externalStorages.put(entry.getKey(), wrapper);
-            }
-        }
-
-        if (externalStorages.size() > 0) {
-            return wrapMeStorage(new CompositeStorage(externalStorages));
-        }
-
-        return null;
+    public BlockEntity targetBlockEntity() {
+        return lookup.getBlockEntity();
     }
 
-    private PatternProviderTarget wrapMeStorage(MEStorage storage) {
-        return new PatternProviderTarget() {
-            @Override
-            public long insert(AEKey what, long amount, Actionable type) {
-                return storage.insert(what, amount, type, src);
-            }
-
-            @Override
-            public boolean containsPatternInput(Set<AEKey> patternInputs) {
-                for (var stack : storage.getAvailableStacks()) {
-                    if (patternInputs.contains(stack.getKey().dropSecondary())) {
-                        return true;
-                    }
-                }
-                return false;
-            }
-        };
+    @Nullable
+    public MEStorageTarget find() {
+        var storage = lookup.findAll(StorageAccess.FULL);
+        if (storage == null) {
+            return null;
+        }
+        var target = this.target;
+        if (target == null || target.storage() != storage) {
+            this.target = target = new MEStorageTarget(storage, src);
+        }
+        return target;
     }
 }

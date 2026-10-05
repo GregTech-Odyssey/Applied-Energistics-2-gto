@@ -27,7 +27,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
 
@@ -104,7 +104,7 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
             }
 
             if (action == FluidAction.EXECUTE) {
-                deductTransportCost(total, AEKeyType.fluids());
+                deductTransportCost(total, AEKeyTypes.FLUIDS);
             }
 
             return total;
@@ -162,7 +162,7 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
                 FluidStack result = input.get().drain(resource, action);
 
                 if (action.execute()) {
-                    deductTransportCost(result.getAmount(), AEKeyType.fluids());
+                    deductTransportCost(result.getAmount(), AEKeyTypes.FLUIDS);
                 }
 
                 return result;
@@ -175,7 +175,7 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
                 FluidStack result = input.get().drain(maxDrain, action);
 
                 if (action.execute()) {
-                    deductTransportCost(result.getAmount(), AEKeyType.fluids());
+                    deductTransportCost(result.getAmount(), AEKeyTypes.FLUIDS);
                 }
 
                 return result;

@@ -11,7 +11,7 @@ import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.config.Actionable;
 import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 
 /**
  * Exposes a {@link GenericInternalInventory} as the platforms external fluid storage interface.
@@ -40,7 +40,7 @@ public class GenericStackFluidStorage implements IFluidHandler {
 
     @Override
     public int getTankCapacity(int tank) {
-        return Ints.saturatedCast(inv.getCapacity(AEKeyType.fluids()));
+        return Ints.saturatedCast(inv.getCapacity(AEKeyTypes.FLUIDS));
     }
 
     @Override

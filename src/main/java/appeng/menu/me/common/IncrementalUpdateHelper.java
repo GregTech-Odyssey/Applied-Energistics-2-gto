@@ -19,7 +19,6 @@
 package appeng.menu.me.common;
 
 import java.util.Iterator;
-import java.util.Set;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 
@@ -30,9 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.world.item.ItemStack;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeySet;
 
 /**
  * This utility class helps menus that need to send a list of information that is grouped by {@link AEKey} to the client
@@ -49,7 +47,7 @@ public class IncrementalUpdateHelper implements Iterable<AEKey> {
      */
     private final BiMap<AEKey, Long> mapping;
 
-    private final Set<AEKey> changes = new ReferenceOpenHashSet<>();
+    private final AEKeySet<AEKey> changes = new AEKeySet<>();
 
     private long serial;
 

@@ -39,8 +39,6 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.config.Actionable;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.config.Setting;
@@ -61,6 +59,7 @@ import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.util.IConfigManager;
@@ -104,7 +103,7 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
      * Keeps track of the inputs of all the patterns. When blocking mode is enabled, if any of these is contained in the
      * target, the pattern won't be pushed. Always contains keys with the secondary component dropped.
      */
-    private final Set<AEKey> patternInputs = new ReferenceOpenHashSet<>();
+    private final Set<AEKey> patternInputs = new AEKeySet<>();
     // Pattern sending logic
     private final List<GenericStack> sendList = new ArrayList<>();
     private Direction sendDirection;
@@ -458,16 +457,21 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
 
     @Nullable
     private PatternProviderTarget findAdapter(Direction side) {
-        if (targetCaches[side.get3DDataValue()] == null) {
+        return getTargetCache(side).find();
+    }
+
+    public PatternProviderTargetCache getTargetCache(Direction side) {
+        var index = side.get3DDataValue();
+        var cache = targetCaches[index];
+        if (cache == null) {
             var thisBe = host.getBlockEntity();
-            targetCaches[side.get3DDataValue()] = new PatternProviderTargetCache(
+            targetCaches[index] = cache = new PatternProviderTargetCache(
                     (ServerLevel) thisBe.getLevel(),
                     thisBe.getBlockPos().relative(side),
                     side.getOpposite(),
                     actionSource);
         }
-
-        return targetCaches[side.get3DDataValue()].find();
+        return cache;
     }
 
     private boolean adapterAcceptsAll(PatternProviderTarget target, KeyCounter[] inputHolder) {
@@ -765,6 +769,15 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
     @Nullable
     public IGrid getGrid() {
         return mainNode.getGrid();
+    }
+
+    public void onNeighborChanged() {
+        updateRedstoneState();
+        for (var cache : targetCaches) {
+            if (cache != null) {
+                cache.refresh();
+            }
+        }
     }
 
     public void updateRedstoneState() {

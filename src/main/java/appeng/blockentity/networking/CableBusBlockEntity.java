@@ -48,21 +48,26 @@ import appeng.api.parts.IFacadeContainer;
 import appeng.api.parts.IPart;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.SelectedPart;
+import appeng.api.storage.MEStorage;
+import appeng.api.storage.MEStorageHost;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
 import appeng.api.util.DimensionalBlockPos;
 import appeng.blockentity.AEBaseBlockEntity;
+import appeng.capabilities.Capabilities;
 import appeng.client.render.cablebus.CableBusRenderState;
 import appeng.core.AppEng;
 import appeng.helpers.AEMultiBlockEntity;
 import appeng.parts.CableBusContainer;
 import appeng.util.Platform;
 
-public class CableBusBlockEntity extends AEBaseBlockEntity implements AEMultiBlockEntity {
+public class CableBusBlockEntity extends AEBaseBlockEntity implements AEMultiBlockEntity, MEStorageHost {
 
     private CableBusContainer cb = new CableBusContainer(this);
 
     private int oldLV = -1; // on re-calculate light when it changes
+
+    private int storageEpoch;
 
     public CableBusBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState blockState) {
         super(blockEntityType, pos, blockState);
@@ -234,6 +239,7 @@ public class CableBusBlockEntity extends AEBaseBlockEntity implements AEMultiBlo
     @Override
     public void clearContainer() {
         this.setCableBus(new CableBusContainer(this));
+        storageEpoch++;
     }
 
     @Override
@@ -254,7 +260,13 @@ public class CableBusBlockEntity extends AEBaseBlockEntity implements AEMultiBlo
 
     @Override
     public void partChanged() {
+        storageEpoch++;
         this.notifyNeighbors();
+    }
+
+    @Override
+    public void partStorageChanged() {
+        storageEpoch++;
     }
 
     @Override
@@ -321,6 +333,34 @@ public class CableBusBlockEntity extends AEBaseBlockEntity implements AEMultiBlo
         }
 
         return super.getCapability(capabilityClass, partLocation);
+    }
+
+    @Nullable
+    @Override
+    public MEStorage getMEStorage(@Nullable Direction side) {
+        if (this.getPart(side) instanceof MEStorageHost host) {
+            return host.getMEStorage(side);
+        }
+        return getCapability(Capabilities.STORAGE, side).orElse(null);
+    }
+
+    @Nullable
+    @Override
+    public MEStorage getAnyMEStorage() {
+        var storage = getMEStorage(null);
+        var directions = Platform.DIRECTIONS_WITH_NULL;
+        for (int i = 0; storage == null && i < directions.length; i++) {
+            var side = directions[i];
+            if (side != null) {
+                storage = getMEStorage(side);
+            }
+        }
+        return storage;
+    }
+
+    @Override
+    public int storageEpoch() {
+        return storageEpoch;
     }
 
     @Override
