@@ -2,6 +2,7 @@ package appeng.api.storage;
 
 import java.lang.ref.WeakReference;
 
+import appeng.me.storage.NetworkStorage;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.Direction;
@@ -193,17 +194,24 @@ public final class StorageTargetResolver {
 
     @Nullable
     private Tier storageTier(@Nullable MEStorage storage, @Nullable AEKeyType type, StorageAccess access) {
-        if (storage == null) {
-            return null;
-        }
-        if (storage instanceof KeyTypedStorage typed) {
-            if (type == null) {
-                return hit(Tier.STORAGE, storage);
+        switch (storage) {
+            case null -> {
+                return null;
             }
-            var typedStorage = typed.forKeyType(type);
-            return typedStorage == null ? none() : hit(Tier.STORAGE, typedStorage);
+            case KeyTypedStorage typed -> {
+                if (type == null) {
+                    return hit(Tier.STORAGE, storage);
+                }
+                var typedStorage = typed.forKeyType(type);
+                return typedStorage == null ? none() : hit(Tier.STORAGE, typedStorage);
+            }
+            case NetworkStorage ignored when access == StorageAccess.EXTRACT -> {
+                return null;
+            }
+            default -> {
+                return  hit(Tier.STORAGE, storage);
+            }
         }
-        return hit(Tier.STORAGE, storage);
     }
 
     private void forgetEpoch() {
