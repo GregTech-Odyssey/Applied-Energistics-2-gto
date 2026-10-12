@@ -28,17 +28,6 @@ import appeng.hooks.IUnique;
 
 public final class AEItemKey extends AEKey {
 
-    private static final ClassValue<Boolean> SHARE_TAG_OVERRIDDEN = new ClassValue<>() {
-        @Override
-        protected Boolean computeValue(Class<?> type) {
-            try {
-                return type.getMethod("getShareTag", ItemStack.class).getDeclaringClass() != IForgeItem.class;
-            } catch (NoSuchMethodException e) {
-                return true;
-            }
-        }
-    };
-
     public final Item item;
     public final int uid;
     @Nullable
@@ -304,11 +293,7 @@ public final class AEItemKey extends AEKey {
     @Override
     public void writeToPacket(FriendlyByteBuf data) {
         data.writeVarInt(Item.getId(item));
-        CompoundTag compoundTag = null;
-        if (item.canBeDepleted() || item.shouldOverrideMultiplayerNbt()) {
-            compoundTag = SHARE_TAG_OVERRIDDEN.get(item.getClass()) ? item.getShareTag(toStack()) : internedTag;
-        }
-        data.writeNbt(compoundTag);
+        data.writeNbt(getReadOnlyStack().getShareTag());
     }
 
     public static AEItemKey fromPacket(FriendlyByteBuf data) {

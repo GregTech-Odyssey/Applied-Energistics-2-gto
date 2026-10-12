@@ -123,7 +123,8 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
     @Override
     @Nullable
     public AEKey getKey(int slot) {
-        return stacks[slot] != null ? stacks[slot].what() : null;
+        var stack = stacks[slot];
+        return stack != null ?stack.what() : null;
     }
 
     @Override
@@ -154,7 +155,7 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
 
         var currentWhat = getKey(slot);
         var currentAmount = getAmount(slot);
-        if (currentWhat == null || currentWhat.equals(what)) {
+        if (currentWhat == null || currentWhat==what) {
             var newAmount = Math.min(currentAmount + amount, getMaxAmount(what));
             if (newAmount > currentAmount) {
                 if (mode == Actionable.MODULATE) {
@@ -174,7 +175,7 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
         Preconditions.checkArgument(amount >= 0, "amount >= 0");
 
         var currentWhat = getKey(slot);
-        if (!canExtract() || currentWhat == null || !currentWhat.equals(what)) {
+        if (!canExtract() || currentWhat == null || currentWhat!=what) {
             // Can't extract from empty slot or mismatched type
             return 0;
         }
@@ -389,7 +390,7 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
         // logic here to just shove it into the first potential slot
         if (this.mode == Mode.CONFIG_TYPES) {
             int freeSlot = -1;
-            for (int i = 0; i < stacks.length; i++) {
+            for (int i = 0,len = stacks.length; i <len; i++) {
                 var key = getKey(i);
                 if (key == what) {
                     return 0;
@@ -404,7 +405,7 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
         }
 
         var inserted = 0L;
-        for (int i = 0; i < stacks.length && inserted < amount; i++) {
+        for (int i = 0,len = stacks.length; i <len && inserted < amount; i++) {
             inserted += insert(i, what, amount - inserted, mode);
         }
         return inserted;
@@ -416,7 +417,7 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
         Preconditions.checkArgument(amount >= 0, "amount >= 0");
 
         var extracted = 0L;
-        for (int i = 0; i < stacks.length && extracted < amount; i++) {
+        for (int i = 0,len = stacks.length ; i < len&& extracted < amount; i++) {
             extracted += extract(i, what, amount - extracted, mode);
         }
         return extracted;

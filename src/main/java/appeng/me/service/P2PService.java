@@ -18,13 +18,16 @@
 
 package appeng.me.service;
 
-import java.util.HashMap;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Stream;
 
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectFunction;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenCustomHashMap;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
@@ -60,8 +63,9 @@ public class P2PService implements IGridService, IGridServiceProvider {
     }
 
     private final IGrid myGrid;
-    private final HashMap<Short, P2PTunnelPart> inputs = new HashMap<>();
-    private final Multimap<Short, P2PTunnelPart> outputs = LinkedHashMultimap.create();
+    private final Short2ObjectOpenHashMap<P2PTunnelPart> inputs = new Short2ObjectOpenHashMap<>();
+    private final Short2ObjectOpenHashMap<ArrayList<P2PTunnelPart>> outputs =new  Short2ObjectOpenHashMap<>();
+    private final Short2ObjectOpenHashMap<Reference2ReferenceOpenHashMap<Class<?>,List<P2PTunnelPart>>> outputByClass =new  Short2ObjectOpenHashMap<>();
     private final Random frequencyGenerator;
 
     public P2PService(IGrid g) {
@@ -86,12 +90,14 @@ public class P2PService implements IGridService, IGridServiceProvider {
             }
 
             if (tunnel.isOutput()) {
-                this.outputs.remove(tunnel.getFrequency(), tunnel);
+                var outputs = this.outputs.get(tunnel.getFrequency());
+                if (outputs!=null) outputs.remove(tunnel);
             } else {
                 this.inputs.remove(tunnel.getFrequency());
             }
 
             this.updateTunnel(tunnel.getFrequency(), !tunnel.isOutput(), false);
+            outputByClass.clear();
         }
     }
 
@@ -105,12 +111,13 @@ public class P2PService implements IGridService, IGridServiceProvider {
             // AELog.info( "add-" + (t.output ? "output: " : "input: ") + t.freq );
 
             if (tunnel.isOutput()) {
-                this.outputs.put(tunnel.getFrequency(), tunnel);
+                this.outputs.computeIfAbsent(tunnel.getFrequency(), k->new ArrayList<>()).add(tunnel);
             } else {
                 this.inputs.put(tunnel.getFrequency(), tunnel);
             }
 
             this.updateTunnel(tunnel.getFrequency(), !tunnel.isOutput(), false);
+            outputByClass.clear();
         }
     }
 
@@ -135,9 +142,8 @@ public class P2PService implements IGridService, IGridServiceProvider {
     }
 
     public void updateFreq(P2PTunnelPart t, short newFrequency) {
-        if (this.outputs.containsValue(t)) {
-            this.outputs.remove(t.getFrequency(), t);
-        }
+        var outputs = this.outputs.get(t.getFrequency());
+        if (outputs!=null) outputs.remove(t);
 
         if (this.inputs.containsValue(t)) {
             this.inputs.remove(t.getFrequency());
@@ -147,7 +153,7 @@ public class P2PService implements IGridService, IGridServiceProvider {
         t.setFrequency(newFrequency);
 
         if (t.isOutput()) {
-            this.outputs.put(t.getFrequency(), t);
+            this.outputs.computeIfAbsent(t.getFrequency(), k->new ArrayList<>()).add(t);
         } else {
             this.inputs.put(t.getFrequency(), t);
         }
@@ -158,6 +164,7 @@ public class P2PService implements IGridService, IGridServiceProvider {
         }
         this.updateTunnel(newFrequency, true, true);
         this.updateTunnel(newFrequency, false, true);
+        outputByClass.clear();
     }
 
     public short newFrequency() {
@@ -176,17 +183,32 @@ public class P2PService implements IGridService, IGridServiceProvider {
         return newFrequency;
     }
 
-    public <T extends P2PTunnelPart<T>> Stream<T> getOutputs(short freq, Class<T> c) {
-        // Check that a matching input exists for the requested type
-        var input = this.inputs.get(freq);
-        if (!c.isInstance(input)) {
-            return Stream.empty();
-        }
+    private static Short2ObjectFunction<Reference2ReferenceOpenHashMap<Class<?>,List<P2PTunnelPart>>> MAPPING_FUNCTION=f->new Reference2ReferenceOpenHashMap<>();
 
-        return this.outputs.get(freq)
-                .stream()
-                .filter(c::isInstance)
-                .map(c::cast);
+    public <T extends P2PTunnelPart<T>> List<T> getOutputs(short freq, Class<T> c) {
+        var map =outputByClass.computeIfAbsent(freq, MAPPING_FUNCTION);
+        var list = map.get(c);
+        if (list == null) {
+            // Check that a matching input exists for the requested type
+            var input = this.inputs.get(freq);
+            if (c.isInstance(input)) {
+                var outputs = this.outputs.get(freq);
+                if (outputs == null) {
+                    list = Collections.emptyList();
+                } else {
+                    list = new ArrayList<>(outputs.size());
+                    for (var output : outputs) {
+                        if (c.isInstance(output)) {
+                            list.add(output);
+                        }
+                    }
+                }
+            } else {
+                list = Collections.emptyList();
+            }
+            map.put(c, list);
+        }
+        return (List) list;
     }
 
     public P2PTunnelPart getInput(short freq) {

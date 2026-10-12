@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -23,13 +24,13 @@ import appeng.util.SearchInventoryEvent;
  */
 @OnlyIn(Dist.CLIENT)
 public final class PendingCraftingJobs {
-    private static final Map<UUID, PendingJob> jobs = new HashMap<>();
+    private static final Map<UUID, PendingJob> jobs = new Object2ObjectOpenHashMap<>();
 
     private PendingCraftingJobs() {
     }
 
     public static boolean hasPendingJob(AEKey what) {
-        return jobs.entrySet().stream().anyMatch(s -> s.getValue().what.equals(what));
+        return jobs.values().stream().anyMatch(s -> s.what==what);
     }
 
     public static void clearPendingJobs() {

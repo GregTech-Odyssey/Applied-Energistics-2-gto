@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
 
@@ -98,7 +99,7 @@ public final class GridServices {
      * This is used by AE2 internally to initialize the services for a grid.
      */
     static GridServiceContainer createServices(IGrid g) {
-        var services = new IdentityHashMap<Class<?>, IGridServiceProvider>(registry.size());
+        var services = new Reference2ReferenceOpenHashMap<Class<?>, IGridServiceProvider>(registry.size());
         var serverStartTickServices = new ArrayList<IGridServiceProvider>(registry.size());
         var levelStartTickServices = new ArrayList<IGridServiceProvider>(registry.size());
         var levelEndTickServices = new ArrayList<IGridServiceProvider>(registry.size());

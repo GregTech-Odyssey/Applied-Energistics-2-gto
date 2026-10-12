@@ -2,6 +2,7 @@ package appeng.util;
 
 import java.util.Set;
 
+import appeng.api.stacks.*;
 import com.google.common.base.Preconditions;
 
 import org.jetbrains.annotations.Nullable;
@@ -12,10 +13,6 @@ import net.minecraft.world.level.material.Fluid;
 import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
 
 import appeng.api.config.Actionable;
-import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.GenericStack;
 import appeng.api.storage.AEKeyFilter;
 import appeng.helpers.externalstorage.GenericStackInv;
 import appeng.helpers.externalstorage.GenericStackInv.Mode;
@@ -114,7 +111,7 @@ public class ConfigInventory extends GenericStackInv {
     }
 
     public Set<AEKey> keySet() {
-        var result = new ReferenceLinkedOpenHashSet<AEKey>();
+        var result = new AEKeySet<>();
         for (int i = 0; i < stacks.length; i++) {
             var what = getKey(i);
             if (what != null) {

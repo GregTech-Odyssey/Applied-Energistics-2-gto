@@ -18,6 +18,7 @@
 
 package appeng.parts.p2p;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -86,17 +87,13 @@ public abstract class P2PTunnelPart<T extends P2PTunnelPart<T>> extends AEBasePa
     }
 
     public List<T> getOutputs() {
-        return getOutputStream().toList();
-    }
-
-    public Stream<T> getOutputStream() {
         if (this.getMainNode().isOnline()) {
             var grid = getMainNode().getGrid();
             if (grid != null) {
                 return P2PService.get(grid).getOutputs(this.getFrequency(), this.getClass());
             }
         }
-        return Stream.empty();
+        return Collections.emptyList();
     }
 
     @Override

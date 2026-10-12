@@ -24,6 +24,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
@@ -79,7 +80,7 @@ import appeng.util.helpers.ItemComparisonHelper;
 public class AEBaseBlockEntity extends BlockEntity
         implements Nameable, ISegmentedInventory, Clearable {
 
-    private static final Map<BlockEntityType<?>, Item> REPRESENTATIVE_ITEMS = new HashMap<>();
+    private static final Map<BlockEntityType<?>, Item> REPRESENTATIVE_ITEMS = new Reference2ReferenceOpenHashMap<>();
     @Nullable
     private Component customName;
     private boolean setChangedQueued = false;

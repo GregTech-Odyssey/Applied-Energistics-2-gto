@@ -20,6 +20,7 @@ package appeng.me.cells;
 
 import java.util.Set;
 
+import appeng.api.stacks.AEKeySet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 
@@ -34,12 +35,12 @@ import appeng.api.storage.cells.StorageCell;
 import appeng.items.contents.CellConfig;
 
 class CreativeCellInventory implements StorageCell {
-    private final Set<AEKey> configured;
+    private final AEKeySet<AEKey> configured;
     private final ItemStack stack;
     private final AvailableStacksCache cache;
 
     protected CreativeCellInventory(ItemStack o) {
-        this.configured = new ReferenceOpenHashSet<>();
+        this.configured = new AEKeySet<>();
         this.stack = o;
 
         var cc = CellConfig.create(o);

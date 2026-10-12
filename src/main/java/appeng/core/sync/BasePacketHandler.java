@@ -22,6 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.network.FriendlyByteBuf;
 
 import appeng.core.sync.packets.*;
@@ -31,7 +32,7 @@ import gto_ae.core.sync.packets.FacilityClearPacket;
 import gto_ae.core.sync.packets.FacilityManagementPacket;
 
 public class BasePacketHandler {
-    private static final Map<Class<? extends BasePacket>, PacketTypes> REVERSE_LOOKUP = new HashMap<>();
+    private static final Map<Class<? extends BasePacket>, PacketTypes> REVERSE_LOOKUP = new Reference2ReferenceOpenHashMap<>();
 
     public enum PacketTypes {
         COMPASS_REQUEST(CompassRequestPacket.class, CompassRequestPacket::new),

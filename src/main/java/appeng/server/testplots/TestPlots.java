@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+import appeng.api.stacks.*;
 import com.google.common.collect.Sets;
 
 import org.jetbrains.annotations.Nullable;
@@ -51,10 +52,6 @@ import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.parts.PartHelper;
-import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.GenericStack;
-import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.StorageCells;
 import appeng.api.util.AEColor;
 import appeng.blockentity.crafting.MolecularAssemblerBlockEntity;
@@ -656,8 +653,8 @@ public final class TestPlots {
             PatternProviderPart current = patternProviders.next();
             var craftingRecipes = node.getLevel().getRecipeManager().getAllRecipesFor(RecipeType.CRAFTING);
 
-            Set<AEItemKey> neededIngredients = new ReferenceOpenHashSet<>();
-            Set<AEItemKey> providedResults = new ReferenceOpenHashSet<>();
+            Set<AEItemKey> neededIngredients = new AEKeySet<>();
+            Set<AEItemKey> providedResults = new AEKeySet<>();
 
             for (var recipe : craftingRecipes) {
                 if (recipe.isSpecial()) {

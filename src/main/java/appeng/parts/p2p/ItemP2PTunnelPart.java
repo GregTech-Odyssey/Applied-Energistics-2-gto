@@ -69,7 +69,8 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
         public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
             int remainder = stack.getCount();
 
-            final int outputTunnels = ItemP2PTunnelPart.this.getOutputs().size();
+            var outputs = ItemP2PTunnelPart.this.getOutputs();
+            final int outputTunnels = outputs.size();
             final int amount = stack.getCount();
 
             if (outputTunnels == 0 || amount == 0) {
@@ -79,7 +80,7 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
             final int amountPerOutput = amount / outputTunnels;
             int overflow = amountPerOutput == 0 ? amount : amount % amountPerOutput;
 
-            for (ItemP2PTunnelPart target : ItemP2PTunnelPart.this.getOutputs()) {
+            for (ItemP2PTunnelPart target : outputs) {
                 try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
                     final IItemHandler output = capabilityGuard.get();
                     final int toSend = amountPerOutput + overflow;

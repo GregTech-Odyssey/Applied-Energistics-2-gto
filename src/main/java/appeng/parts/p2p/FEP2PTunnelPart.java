@@ -60,7 +60,8 @@ public class FEP2PTunnelPart extends CapabilityP2PTunnelPart<FEP2PTunnelPart, IE
         public int receiveEnergy(int maxReceive, boolean simulate) {
             int total = 0;
 
-            final int outputTunnels = FEP2PTunnelPart.this.getOutputs().size();
+            var outputs = FEP2PTunnelPart.this.getOutputs();
+            final int outputTunnels = outputs.size();
 
             if (outputTunnels == 0 | maxReceive == 0) {
                 return 0;
@@ -69,7 +70,7 @@ public class FEP2PTunnelPart extends CapabilityP2PTunnelPart<FEP2PTunnelPart, IE
             final int amountPerOutput = maxReceive / outputTunnels;
             int overflow = amountPerOutput == 0 ? maxReceive : maxReceive % amountPerOutput;
 
-            for (FEP2PTunnelPart target : FEP2PTunnelPart.this.getOutputs()) {
+            for (FEP2PTunnelPart target : outputs) {
                 try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
                     final IEnergyStorage output = capabilityGuard.get();
                     final int toSend = amountPerOutput + overflow;
