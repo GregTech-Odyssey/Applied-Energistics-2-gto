@@ -96,8 +96,8 @@ public class P2PService implements IGridService, IGridServiceProvider {
                 this.inputs.remove(tunnel.getFrequency());
             }
 
-            this.updateTunnel(tunnel.getFrequency(), !tunnel.isOutput(), false);
             outputByClass.clear();
+            this.updateTunnel(tunnel.getFrequency(), !tunnel.isOutput(), false);
         }
     }
 
@@ -116,18 +116,21 @@ public class P2PService implements IGridService, IGridServiceProvider {
                 this.inputs.put(tunnel.getFrequency(), tunnel);
             }
 
-            this.updateTunnel(tunnel.getFrequency(), !tunnel.isOutput(), false);
             outputByClass.clear();
+            this.updateTunnel(tunnel.getFrequency(), !tunnel.isOutput(), false);
         }
     }
 
     private void updateTunnel(short freq, boolean updateOutputs, boolean configChange) {
         if (updateOutputs) {
-            for (P2PTunnelPart p : this.outputs.get(freq)) {
-                if (configChange) {
-                    p.onTunnelConfigChange();
+            var outputs = this.outputs.get(freq);
+            if (outputs != null) {
+                for (P2PTunnelPart p : outputs) {
+                    if (configChange) {
+                        p.onTunnelConfigChange();
+                    }
+                    p.onTunnelNetworkChange();
                 }
-                p.onTunnelNetworkChange();
             }
         }
         if (!updateOutputs) {
@@ -158,13 +161,13 @@ public class P2PService implements IGridService, IGridServiceProvider {
             this.inputs.put(t.getFrequency(), t);
         }
 
+        outputByClass.clear();
         if (oldFrequency != newFrequency) {
             this.updateTunnel(oldFrequency, true, true);
             this.updateTunnel(oldFrequency, false, true);
         }
         this.updateTunnel(newFrequency, true, true);
         this.updateTunnel(newFrequency, false, true);
-        outputByClass.clear();
     }
 
     public short newFrequency() {

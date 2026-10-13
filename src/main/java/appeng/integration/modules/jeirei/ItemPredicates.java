@@ -54,6 +54,7 @@ public final class ItemPredicates {
                 AEBlocks.DEBUG_ENERGY_GEN.isSameAs(stack) ||
                 AEBlocks.DEBUG_ITEM_GEN.isSameAs(stack) ||
                 AEBlocks.DEBUG_PHANTOM_NODE.isSameAs(stack) ||
+                AEBlocks.DEBUG_CHUNK_LOADER.isSameAs(stack) ||
                 AEItems.DEBUG_CARD.isSameAs(stack) ||
                 AEItems.DEBUG_ERASER.isSameAs(stack) ||
                 AEItems.DEBUG_METEORITE_PLACER.isSameAs(stack) ||
