@@ -59,11 +59,18 @@ public abstract class P2PTunnelPart<T extends P2PTunnelPart<T>> extends AEBasePa
 
     private boolean output;
     private short freq;
+    private T[] inputs;
+    private List<T> outputs;
 
     public P2PTunnelPart(IPartItem<?> partItem) {
         super(partItem);
         this.getMainNode().setIdlePowerUsage(this.getPowerDrainPerTick());
         this.getMainNode().setFlags(GridFlags.REQUIRE_CHANNEL);
+    }
+
+    public void update() {
+        inputs = null;
+        outputs = null;
     }
 
     protected float getPowerDrainPerTick() {
@@ -72,25 +79,36 @@ public abstract class P2PTunnelPart<T extends P2PTunnelPart<T>> extends AEBasePa
 
     @Nullable
     public T getInput() {
-        if (this.getFrequency() == 0) {
-            return null;
-        }
+      var inputs = this.getInputs();
+      if (inputs.length == 0) {
+          return null;
+      }
+      return  inputs[0];
+    }
 
-        var grid = getMainNode().getGrid();
-        if (grid != null) {
-            var tunnel = P2PService.get(grid).getInput(this.getFrequency());
-            if (this.getClass().isInstance(tunnel)) {
-                return (T) tunnel;
+    public T[] getInputs() {
+        if (this.freq != 0) {
+            var grid = getMainNode().getGrid();
+            if (grid != null) {
+                var inputs = this.inputs;
+                if (inputs == null) {
+                    inputs = this.inputs = (T[]) P2PService.get(grid).getInputs(this.freq, this.getClass());
+                }
+                return inputs;
             }
         }
-        return null;
+        return (T[]) P2PService.EMPTY;
     }
 
     public List<T> getOutputs() {
         if (this.getMainNode().isOnline()) {
             var grid = getMainNode().getGrid();
             if (grid != null) {
-                return P2PService.get(grid).getOutputs(this.getFrequency(), this.getClass());
+                var outputs = this.outputs;
+                if (outputs==null) {
+                     outputs = this.outputs = P2PService.get(grid).getOutputs(this.freq, this.getClass());
+                }
+                return outputs;
             }
         }
         return Collections.emptyList();
@@ -331,7 +349,7 @@ public abstract class P2PTunnelPart<T extends P2PTunnelPart<T>> extends AEBasePa
         });
     }
 
-    public short getFrequency() {
+    public final short getFrequency() {
         return this.freq;
     }
 
