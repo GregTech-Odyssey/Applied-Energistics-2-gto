@@ -114,6 +114,10 @@ public abstract class P2PTunnelPart<T extends P2PTunnelPart<T>> extends AEBasePa
         return Collections.emptyList();
     }
 
+    public Stream<T> getOutputStream() {
+        return getOutputs().stream();
+    }
+
     @Override
     public void getBoxes(IPartCollisionHelper bch) {
         bch.addBox(5, 5, 12, 11, 11, 13);
