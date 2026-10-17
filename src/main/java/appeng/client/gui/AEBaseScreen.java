@@ -40,6 +40,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.ComponentRenderUtils;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -68,7 +69,11 @@ import appeng.api.parts.IPart;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
+import appeng.api.storage.ITerminalHost;
+import appeng.client.Hotkeys;
 import appeng.client.Point;
+import appeng.core.sync.network.NetworkHandler;
+import appeng.core.sync.packets.HotkeyPacket;
 import appeng.client.gui.layout.SlotGridLayout;
 import appeng.client.gui.style.BackgroundGenerator;
 import appeng.client.gui.style.ScreenStyle;
@@ -536,6 +541,22 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
             this.focusChangedToSomething = true;
         }
         super.setFocused(listener);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (menu.getTarget() instanceof ITerminalHost host && !(getFocused() instanceof EditBox)) {
+            var hotkey = Hotkeys.findHotkey(keyCode, scanCode);
+            if (hotkey != null) {
+                if (hotkey.name().equals(host.getCloseHotkey())) {
+                    getPlayer().closeContainer();
+                } else {
+                    NetworkHandler.instance().sendToServer(new HotkeyPacket(hotkey));
+                }
+                return true;
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
     @Override

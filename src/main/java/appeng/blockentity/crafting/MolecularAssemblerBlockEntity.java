@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.util.Mth;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -88,6 +89,27 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
      * Identifies the sub-inventory used by molecular assemblers to store the input items for the crafting process.
      */
     public static final ResourceLocation INV_MAIN = AppEng.makeId("molecular_assembler");
+
+    public static final int MAX_PROGRESS = 100;
+
+    public static int getProgressPerTick(int speedCards) {
+        return switch (speedCards) {
+            case 1 -> 13;
+            case 2 -> 17;
+            case 3 -> 20;
+            case 4 -> 25;
+            case 5 -> 50;
+            default -> 10;
+        };
+    }
+
+    public static double getPowerFactor(int speedCards) {
+        return getProgressPerTick(speedCards) / 10.0;
+    }
+
+    public static int getTicksPerCraft(int speedCards) {
+        return Mth.positiveCeilDiv(MAX_PROGRESS, getProgressPerTick(speedCards));
+    }
 
     private final CraftingContainer craftingInv;
     private final AppEngInternalInventory gridInv = new AppEngInternalInventory(this, 9 + 1, 1);
@@ -418,17 +440,11 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
         }
 
         this.reboot = false;
-        int speed = 10;
-        switch (this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {
-            case 0 -> this.progress += this.userPower(ticksSinceLastCall, speed = 10, 1.0);
-            case 1 -> this.progress += this.userPower(ticksSinceLastCall, speed = 13, 1.3);
-            case 2 -> this.progress += this.userPower(ticksSinceLastCall, speed = 17, 1.7);
-            case 3 -> this.progress += this.userPower(ticksSinceLastCall, speed = 20, 2.0);
-            case 4 -> this.progress += this.userPower(ticksSinceLastCall, speed = 25, 2.5);
-            case 5 -> this.progress += this.userPower(ticksSinceLastCall, speed = 50, 5.0);
-        }
+        int cards = this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD);
+        int speed = getProgressPerTick(cards);
+        this.progress += this.userPower(ticksSinceLastCall, speed, getPowerFactor(cards));
 
-        if (this.progress >= 100) {
+        if (this.progress >= MAX_PROGRESS) {
             for (int x = 0; x < this.craftingInv.getContainerSize(); x++) {
                 this.craftingInv.setItem(x, this.gridInv.getStackInSlot(x));
             }

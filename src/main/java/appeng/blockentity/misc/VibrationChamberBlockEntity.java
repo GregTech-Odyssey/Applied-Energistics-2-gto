@@ -364,7 +364,11 @@ public class VibrationChamberBlockEntity extends AENetworkInvBlockEntity impleme
     }
 
     public double getMaxEnergyRate() {
-        return baseMaxEnergyRate + baseMaxEnergyRate * this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD) / 2.0f;
+        return getMaxEnergyRate(baseMaxEnergyRate, this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD));
+    }
+
+    public static double getMaxEnergyRate(double baseMaxEnergyRate, int speedCards) {
+        return baseMaxEnergyRate + baseMaxEnergyRate * speedCards / 2.0f;
     }
 
     private static class FuelSlotFilter implements IAEItemFilter {

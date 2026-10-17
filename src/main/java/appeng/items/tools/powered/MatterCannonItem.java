@@ -98,7 +98,11 @@ public class MatterCannonItem extends AEBasePoweredItem implements IBasicCellIte
     /**
      * AE energy units consumer per shot fired.
      */
-    private static final int ENERGY_PER_SHOT = 1600;
+    public static final int ENERGY_PER_SHOT = 1600;
+
+    public static int getShotPower(int speedCards) {
+        return 1 + speedCards;
+    }
 
     public MatterCannonItem(Item.Properties props) {
         super(AEConfig.instance().getMatterCannonBattery(), props);
@@ -152,11 +156,8 @@ public class MatterCannonItem extends AEBasePoweredItem implements IBasicCellIte
             return true;
         }
 
-        int shotPower = 1;
         var cu = getUpgrades(stack);
-        if (cu != null) {
-            shotPower += cu.getInstalledUpgrades(AEItems.SPEED_CARD);
-        }
+        int shotPower = getShotPower(cu != null ? cu.getInstalledUpgrades(AEItems.SPEED_CARD) : 0);
         shotPower = Math.min(shotPower, (int) req.getLongValue());
 
         if (getAECurrentPower(stack) < ENERGY_PER_SHOT) {

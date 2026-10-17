@@ -58,12 +58,18 @@ public class StorageImportStrategy implements StackImportStrategy {
         var source = context.getActionSource();
         var inverted = context.isInverted();
         var stats = context.getStats();
+        var amountPerOperation = keyType.getAmountPerOperation();
+        long remaining = (long) context.getOperationsRemaining() * amountPerOperation;
         for (var entry : available) {
+            if (remaining <= 0) {
+                break;
+            }
             var what = entry.getKey();
             if (context.isInFilter(what) == inverted) {
                 continue;
             }
-            var amount = adjacentStorage.extract(what, entry.getLongValue(), Actionable.SIMULATE, source);
+            var amount = adjacentStorage.extract(what, Math.min(entry.getLongValue(), remaining), Actionable.SIMULATE,
+                    source);
             if (amount <= 0) {
                 continue;
             }
@@ -86,7 +92,8 @@ public class StorageImportStrategy implements StackImportStrategy {
             }
             if (inserted > 0) {
                 stats.add(what, inserted);
-                context.reduceOperationsRemaining(1);
+                context.reduceOperationsRemaining(Math.max(1, inserted / amountPerOperation));
+                remaining -= inserted;
             }
         }
         return false;

@@ -86,7 +86,22 @@ import appeng.util.inv.filter.IAEItemFilter;
  */
 public class InscriberBlockEntity extends AENetworkPowerBlockEntity
         implements IGridTickable, IUpgradeableObject, IConfigurableObject {
-    private static final int MAX_PROCESSING_STEPS = 200;
+    public static final int MAX_PROCESSING_STEPS = 200;
+    public static final int SMASH_STEPS = 16;
+
+    public static int getSpeedFactor(int speedCards) {
+        return switch (speedCards) {
+            case 1 -> 3;
+            case 2 -> 5;
+            case 3 -> 10;
+            case 4 -> 50;
+            default -> 2;
+        };
+    }
+
+    public static int getTicksPerCraft(int speedCards) {
+        return MAX_PROCESSING_STEPS / getSpeedFactor(speedCards) + 1 + SMASH_STEPS;
+    }
 
     private final IUpgradeInventory upgrades;
     private final ConfigManager configManager;
@@ -329,7 +344,7 @@ public class InscriberBlockEntity extends AENetworkPowerBlockEntity
                     }
                 }
                 this.saveChanges();
-            } else if (this.finalStep == 16) {
+            } else if (this.finalStep == SMASH_STEPS) {
                 this.finalStep = 0;
                 this.setSmash(false);
                 this.markForUpdate();
@@ -339,14 +354,7 @@ public class InscriberBlockEntity extends AENetworkPowerBlockEntity
                 IEnergyService eg = grid.getEnergyService();
                 IEnergySource src = this;
 
-                // Note: required ticks = 16 + ceil(MAX_PROCESSING_STEPS / speedFactor)
-                final int speedFactor = switch (this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {
-                    default -> 2; // 116 ticks
-                    case 1 -> 3; // 83 ticks
-                    case 2 -> 5; // 56 ticks
-                    case 3 -> 10; // 36 ticks
-                    case 4 -> 50; // 20 ticks
-                };
+                final int speedFactor = getSpeedFactor(this.upgrades.getInstalledUpgrades(AEItems.SPEED_CARD));
                 final int powerConsumption = 10 * speedFactor;
                 final double powerThreshold = powerConsumption - 0.01;
                 double powerReq = this.extractAEPower(powerConsumption, Actionable.SIMULATE, PowerMultiplier.CONFIG);

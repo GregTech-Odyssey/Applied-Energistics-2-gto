@@ -259,6 +259,19 @@ public class IOPortBlockEntity extends AENetworkInvBlockEntity
         return new TickingRequest(TickRates.IOPort, !this.hasWork(), false);
     }
 
+    public static long getOperationsForSpeedCards(int speedCards) {
+        return 256L * switch (speedCards) {
+            case 1 -> 2;
+            case 2 -> 4;
+            case 3 -> 8;
+            default -> 1;
+        };
+    }
+
+    protected long getOperationsPerTick() {
+        return getOperationsForSpeedCards(upgrades.getInstalledUpgrades(AEItems.SPEED_CARD));
+    }
+
     @Override
     public TickRateModulation tickingRequest(IGridNode node, int ticksSinceLastCall) {
         if (!this.getMainNode().isActive()) {
@@ -266,13 +279,7 @@ public class IOPortBlockEntity extends AENetworkInvBlockEntity
         }
 
         TickRateModulation ret = TickRateModulation.SLEEP;
-        long itemsToMove = 256;
-
-        switch (upgrades.getInstalledUpgrades(AEItems.SPEED_CARD)) {
-            case 1 -> itemsToMove *= 2;
-            case 2 -> itemsToMove *= 4;
-            case 3 -> itemsToMove *= 8;
-        }
+        long itemsToMove = getOperationsPerTick();
 
         var grid = getMainNode().getGrid();
         if (grid == null) {

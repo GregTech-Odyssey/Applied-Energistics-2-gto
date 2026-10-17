@@ -191,14 +191,26 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
         return Math.min(18 + getInstalledUpgrades(AEItems.CAPACITY_CARD) * 9, this.getConfig().size());
     }
 
-    protected int getOperationsPerTick() {
-        return switch (getInstalledUpgrades(AEItems.SPEED_CARD)) {
+    public static int getOperationsForSpeedCards(int speedCards) {
+        return switch (speedCards) {
             default -> 1;
             case 1 -> 8;
             case 2 -> 32;
             case 3 -> 64;
             case 4 -> 96;
         };
+    }
+
+    protected int getOperationsPerTick() {
+        return getOperationsForSpeedCards(getInstalledUpgrades(AEItems.SPEED_CARD));
+    }
+
+    public int getOperationsPerWorkCall() {
+        return getOperationsPerTick();
+    }
+
+    public final TickRates getTickRates() {
+        return tickRates;
     }
 
     @Override
@@ -223,7 +235,15 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
         // Reset a potential redstone pulse trigger
         this.pendingPulse = false;
 
-        var hasDoneWork = this.doBusWork(node.getGrid());
+        var grid = node.getGrid();
+        var hasDoneWork = this.doBusWork(grid);
+        if (hasDoneWork && !isInPulseMode()) {
+            for (int i = getWorkRepeats(); i > 1; i--) {
+                if (!this.doBusWork(grid)) {
+                    break;
+                }
+            }
+        }
         lastWorkingStatus = hasDoneWork
                 ? (ticksSinceLastCall == tickRates.getMin() ? WorkingStatus.BUSY : WorkingStatus.WORKING)
                 : WorkingStatus.IDLE;
@@ -314,6 +334,10 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
         } else {
             return super.isSleeping();
         }
+    }
+
+    public final int getWorkRepeats() {
+        return Math.max(1, tickRates.getMin() / tickRates.getDefaultMin());
     }
 
     protected abstract boolean doBusWork(IGrid grid);
