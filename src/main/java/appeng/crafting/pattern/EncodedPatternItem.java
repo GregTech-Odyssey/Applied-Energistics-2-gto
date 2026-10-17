@@ -181,7 +181,7 @@ public abstract class EncodedPatternItem extends AEBaseItem {
 
             var primaryInputTemplate = anIn.getPossibleInputs()[0];
             var primaryInput = new GenericStack(primaryInputTemplate.what(),
-                    primaryInputTemplate.amount() * anIn.getMultiplier());
+                    saturatedMultiply(primaryInputTemplate.amount(), anIn.getMultiplier()));
             lines.add(Component.empty().append(first ? with : and).append(getStackComponent(primaryInput)));
             first = false;
         }
@@ -198,6 +198,14 @@ public abstract class EncodedPatternItem extends AEBaseItem {
         var amountInfo = stack.what().formatAmount(stack.amount(), AmountFormat.FULL);
         var displayName = stack.what().getDisplayName();
         return Component.literal(amountInfo + " x ").append(displayName);
+    }
+
+    private static long saturatedMultiply(long a, long b) {
+        try {
+            return Math.multiplyExact(a, b);
+        } catch (ArithmeticException e) {
+            return Long.MAX_VALUE;
+        }
     }
 
     /**
