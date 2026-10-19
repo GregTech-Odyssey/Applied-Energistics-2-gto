@@ -1,19 +1,12 @@
 package appeng.api.storage;
 
-import java.lang.ref.WeakReference;
-
 import appeng.me.storage.NetworkStorage;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.common.util.NonNullConsumer;
 
 import appeng.api.stacks.AEKeyType;
-import appeng.api.stacks.AEKeyTypes;
-import appeng.capabilities.Capabilities;
 import appeng.me.storage.ExternalStorageFacade;
 
 /**
@@ -29,31 +22,13 @@ public final class StorageTargetResolver {
         FORGE
     }
 
-    private static final int RECHECK_HITS = 64;
-
     private Tier tier = Tier.NONE;
     @Nullable
     private Object raw;
     @Nullable
-    private BlockEntity noStorage;
+    private BlockEntityTargets.Entry storageEntry;
     @Nullable
-    private Direction noStorageSide;
-    private int noStorageHits;
-    @Nullable
-    private BlockEntity handlerBe;
-    @Nullable
-    private Direction handlerSide;
-    @Nullable
-    private AEKeyType handlerType;
-    @Nullable
-    private LazyOptional<?> handlerOptional;
-    @Nullable
-    private Object handler;
-    private Tier handlerTier = Tier.NONE;
-    private boolean handlerTrusted;
-    private int handlerHits;
-    @Nullable
-    private Invalidation invalidation;
+    private BlockEntityTargets.Entry handlerEntry;
     @Nullable
     private MEStorageHost epochHost;
     @Nullable
@@ -103,12 +78,11 @@ public final class StorageTargetResolver {
     }
 
     public void forget() {
-        if (noStorage != null) {
-            noStorage = null;
+        if (storageEntry != null) {
+            storageEntry = null;
         }
-        if (handlerBe != null) {
-            handlerBe = null;
-            forgetHandler();
+        if (handlerEntry != null) {
+            handlerEntry = null;
         }
         forgetEpoch();
     }
@@ -222,106 +196,27 @@ public final class StorageTargetResolver {
     }
 
     private Tier handlerOf(BlockEntity be, @Nullable Direction targetSide, AEKeyType type) {
-        if (be == handlerBe && targetSide == handlerSide && type == handlerType && --handlerHits > 0) {
-            var handler = this.handler;
-            if (handler == null) {
+        var entry = handlerEntry;
+        if (entry == null || !entry.matches(be, targetSide, type)) {
+            entry = BlockEntityTargets.handler(be, targetSide, type);
+            if (entry == null) {
                 return none();
             }
-            if (handlerTrusted) {
-                return hit(handlerTier, handler);
-            }
+            handlerEntry = entry;
         }
-        return queryHandler(be, targetSide, type);
-    }
-
-    private Tier queryHandler(BlockEntity be, @Nullable Direction targetSide, AEKeyType type) {
-        LazyOptional<?> optional;
-        if (type == AEKeyTypes.ITEMS) {
-            optional = be.getCapability(ForgeCapabilities.ITEM_HANDLER, targetSide);
-        } else if (type == AEKeyTypes.FLUIDS) {
-            optional = be.getCapability(ForgeCapabilities.FLUID_HANDLER, targetSide);
-        } else {
-            return none();
-        }
-        if (be != handlerBe || targetSide != handlerSide || type != handlerType) {
-            handlerBe = be;
-            handlerSide = targetSide;
-            handlerType = type;
-            forgetHandler();
-        }
-        handlerHits = RECHECK_HITS;
-        var handler = optional.orElse(null);
+        var handler = entry.get();
         if (handler == null) {
-            forgetHandler();
             return none();
         }
-        if (optional != handlerOptional) {
-            handlerOptional = optional;
-            handlerTrusted = false;
-        } else if (!handlerTrusted) {
-            trust(optional);
-        }
-        if (this.handler != handler) {
-            this.handler = handler;
-            handlerTier = handler instanceof ExternalStorageFacade.DirectKeyHandler ? Tier.DIRECT : Tier.FORGE;
-        }
-        return hit(handlerTier, handler);
-    }
-
-    private void forgetHandler() {
-        if (handlerOptional != null) {
-            handlerOptional = null;
-        }
-        if (handler != null) {
-            handler = null;
-        }
-        handlerTrusted = false;
-    }
-
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    private void trust(LazyOptional<?> optional) {
-        var invalidation = this.invalidation;
-        if (invalidation == null) {
-            this.invalidation = invalidation = new Invalidation(this);
-        }
-        handlerTrusted = true;
-        optional.addListener((NonNullConsumer) invalidation);
+        return hit(handler instanceof ExternalStorageFacade.DirectKeyHandler ? Tier.DIRECT : Tier.FORGE, handler);
     }
 
     @Nullable
     private MEStorage storageOf(BlockEntity be, @Nullable Direction targetSide) {
-        if (be == noStorage && targetSide == noStorageSide && --noStorageHits > 0) {
-            return null;
+        var entry = storageEntry;
+        if (entry == null || !entry.matches(be, targetSide, null)) {
+            storageEntry = entry = BlockEntityTargets.storage(be, targetSide);
         }
-        return storageCapability(be, targetSide);
-    }
-
-    @Nullable
-    private MEStorage storageCapability(BlockEntity be, @Nullable Direction targetSide) {
-        var storage = be.getCapability(Capabilities.STORAGE, targetSide).orElse(null);
-        if (storage == null) {
-            noStorage = be;
-            noStorageSide = targetSide;
-            noStorageHits = RECHECK_HITS;
-        } else if (noStorage != null) {
-            noStorage = null;
-        }
-        return storage;
-    }
-
-    private static final class Invalidation extends WeakReference<StorageTargetResolver>
-            implements NonNullConsumer<LazyOptional<?>> {
-
-        private Invalidation(StorageTargetResolver resolver) {
-            super(resolver);
-        }
-
-        @Override
-        public void accept(LazyOptional<?> optional) {
-            var resolver = get();
-            if (resolver != null && resolver.handlerOptional == optional) {
-                resolver.handlerTrusted = false;
-            }
-        }
+        return (MEStorage) entry.get();
     }
 }

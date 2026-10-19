@@ -311,6 +311,24 @@ public final class NetworkStorage implements MEStorage {
         return index < tokens.length ? tokens[index] : null;
     }
 
+    public boolean usesTrackedQuery() {
+        return StorageQuery.owned() || (!networkLinks.isEmpty() && sharedTopology());
+    }
+
+    public void readMounts(Consumer<MEStorage> visitor) {
+        if (getInUse) {
+            return;
+        }
+        getInUse = true;
+        try {
+            for (int i = 0; i < priorityInventory.size(); i++) {
+                visitor.accept(priorityInventory.get(i).storage);
+            }
+        } finally {
+            getInUse = false;
+        }
+    }
+
     @Override
     public void getAvailableStacks(KeyCounter out) {
         if (getInUse) {

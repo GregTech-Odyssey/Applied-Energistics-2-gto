@@ -33,6 +33,7 @@ import appeng.api.config.FuzzyMode;
 import appeng.api.config.IncludeExclude;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.*;
+import appeng.api.storage.MEStorage;
 import appeng.api.storage.StorageCells;
 import appeng.api.storage.cells.CellState;
 import appeng.api.storage.cells.IBasicCellItem;
@@ -64,6 +65,8 @@ public class BasicCellInventory implements StorageCell {
     private final long maxItemsPerType; // max items per type, basically infinite unless there is a distribution card.
     private final boolean hasVoidUpgrade;
     private boolean isPersisted = true;
+    private long changeVersion = MEStorage.nextChangeVersion();
+    private boolean changeVersionStale;
 
     private BasicCellInventory(IBasicCellItem cellType, ItemStack o, ISaveProvider container) {
         this.i = o;
@@ -228,7 +231,17 @@ public class BasicCellInventory implements StorageCell {
         this.isPersisted = true;
     }
 
+    @Override
+    public long getChangeVersion() {
+        if (changeVersionStale) {
+            changeVersionStale = false;
+            changeVersion = MEStorage.nextChangeVersion();
+        }
+        return changeVersion;
+    }
+
     protected void saveChanges() {
+        this.changeVersionStale = true;
         // recalculate values
         this.storedItems = (short) this.storedAmounts.size();
         this.storedItemCount = 0;

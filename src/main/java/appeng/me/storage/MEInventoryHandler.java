@@ -28,6 +28,8 @@ import appeng.util.prioritylist.DefaultPriorityList;
 import appeng.util.prioritylist.IPartitionList;
 
 public class MEInventoryHandler extends DelegatingMEInventory {
+    private long configStamp = MEStorage.nextChangeVersion();
+    private long drainedConfigStamp;
 
     protected IPartitionList partitionList = DefaultPriorityList.INSTANCE;
     protected IncludeExclude partitionListMode = IncludeExclude.WHITELIST;
@@ -47,10 +49,12 @@ public class MEInventoryHandler extends DelegatingMEInventory {
     }
 
     public void setAllowExtraction(boolean allowExtraction) {
+        this.configStamp = MEStorage.nextChangeVersion();
         this.allowExtraction = allowExtraction;
     }
 
     public void setAllowInsertion(boolean allowInsertion) {
+        this.configStamp = MEStorage.nextChangeVersion();
         this.allowInsertion = allowInsertion;
     }
 
@@ -59,6 +63,7 @@ public class MEInventoryHandler extends DelegatingMEInventory {
     }
 
     public void setWhitelist(IncludeExclude myWhitelist) {
+        this.configStamp = MEStorage.nextChangeVersion();
         this.partitionListMode = myWhitelist;
     }
 
@@ -67,15 +72,18 @@ public class MEInventoryHandler extends DelegatingMEInventory {
     }
 
     public void setPartitionList(IPartitionList myPartitionList) {
+        this.configStamp = MEStorage.nextChangeVersion();
         this.partitionList = myPartitionList;
     }
 
     public void setExtractFiltering(boolean filterOnExtraction, boolean filterAvailableContents) {
+        this.configStamp = MEStorage.nextChangeVersion();
         this.filterOnExtraction = filterOnExtraction;
         this.filterAvailableContents = filterAvailableContents;
     }
 
     public void setVoidOverflow(boolean voidOverflow) {
+        this.configStamp = MEStorage.nextChangeVersion();
         this.voidOverflow = voidOverflow;
     }
 
@@ -96,6 +104,30 @@ public class MEInventoryHandler extends DelegatingMEInventory {
         }
 
         return super.extract(what, amount, mode, source);
+    }
+
+    @Override
+    public boolean drainChanges(Object reader, java.util.function.ObjLongConsumer<AEKey> changed) {
+        if (drainedConfigStamp != configStamp) {
+            drainedConfigStamp = configStamp;
+            super.drainChanges(reader, IGNORE_CHANGES);
+            return false;
+        }
+        if (!this.allowExtraction) {
+            return super.drainChanges(reader, IGNORE_CHANGES);
+        }
+        var list = this.partitionList;
+        if (!this.filterAvailableContents || list.isEmpty()) {
+            return super.drainChanges(reader, changed);
+        }
+        var mode = this.partitionListMode;
+        return super.drainChanges(reader, (key, amount) -> changed.accept(key, list.matchesFilter(key, mode) ? amount : 0));
+    }
+
+    @Override
+    public long getChangeVersion() {
+        long v = super.getChangeVersion();
+        return v < 0 ? -1 : v ^ (configStamp * 0xC2B2AE3D27D4EB4FL);
     }
 
     @Override

@@ -167,16 +167,16 @@ public final class ExternalStorageLookup {
             return switch (resolver.resolve(be, side, type, access)) {
                 case NONE -> null;
                 case STORAGE -> (MEStorage) resolver.raw();
-                case DIRECT, FORGE -> facade(resolver.raw(), be, type);
+                case DIRECT, FORGE -> BlockEntityTargets.facade(be, side, type, resolver.raw());
             };
         }
         if (resolver.resolveAll(be, side, access) == Tier.STORAGE) {
             return (MEStorage) resolver.raw();
         }
         var items = resolver.resolveHandler(be, side, AEKeyTypes.ITEMS) == Tier.NONE ? null
-                : facade(resolver.raw(), be, AEKeyTypes.ITEMS);
+                : BlockEntityTargets.facade(be, side, AEKeyTypes.ITEMS, resolver.raw());
         var fluids = resolver.resolveHandler(be, side, AEKeyTypes.FLUIDS) == Tier.NONE ? null
-                : facade(resolver.raw(), be, AEKeyTypes.FLUIDS);
+                : BlockEntityTargets.facade(be, side, AEKeyTypes.FLUIDS, resolver.raw());
         if (items == null) {
             return fluids;
         }

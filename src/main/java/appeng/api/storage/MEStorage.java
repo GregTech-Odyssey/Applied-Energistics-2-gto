@@ -128,6 +128,20 @@ public interface MEStorage {
      *
      * @return a new list of this inventories content
      */
+    java.util.function.ObjLongConsumer<AEKey> IGNORE_CHANGES = (key, amount) -> {};
+
+    default long getChangeVersion() {
+        return -1;
+    }
+
+    default boolean drainChanges(Object reader, java.util.function.ObjLongConsumer<AEKey> changed) {
+        return false;
+    }
+
+    static long nextChangeVersion() {
+        return AvailableStacksCache.VERSIONS.incrementAndGet();
+    }
+
     default KeyCounter getAvailableStacks() {
         var result = new KeyCounter();
         getAvailableStacks(result);
@@ -166,6 +180,18 @@ public interface MEStorage {
 
     final class AvailableStacksCache {
 
+        static final java.util.concurrent.atomic.AtomicLong VERSIONS = new java.util.concurrent.atomic.AtomicLong();
+
+        private static final int JOURNAL_LIMIT = 4096;
+
+        private long version = VERSIONS.incrementAndGet();
+        private AEKey[] journal;
+        private AEKey[] journalRecent;
+        private it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<AEKey> journalUnique;
+        private int journalSize;
+        private int journalCap;
+        private Object journalReader;
+        private boolean journalOverflow = true;
         private long lastTick = -1;
         private boolean tickUpdate = true;
         private boolean needUpdate = true;
@@ -190,16 +216,98 @@ public interface MEStorage {
 
         public void markAsDirty() {
             needUpdate = true;
+            journalOverflow = true;
+        }
+
+        public void markAsDirty(AEKey key) {
+            needUpdate = true;
+            if (journalOverflow) {
+                return;
+            }
+            var recent = journalRecent;
+            int slot = key.mix & (recent.length - 1);
+            if (recent[slot] == key) {
+                return;
+            }
+            recent[slot] = key;
+            var keys = journal;
+            int n = journalSize;
+            if (n == keys.length) {
+                n = compactJournal();
+                if (n >= journalCap) {
+                    journalOverflow = true;
+                    return;
+                }
+                if (n > keys.length >> 1) {
+                    journal = keys = java.util.Arrays.copyOf(keys, keys.length << 1);
+                }
+            }
+            keys[n] = key;
+            journalSize = n + 1;
+        }
+
+        private int compactJournal() {
+            var keys = journal;
+            int n = journalSize;
+            var unique = journalUnique;
+            if (unique == null) {
+                journalUnique = unique = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(n);
+            }
+            int w = 0;
+            for (int i = 0; i < n; i++) {
+                var k = keys[i];
+                if (unique.add(k)) {
+                    keys[w++] = k;
+                }
+            }
+            java.util.Arrays.fill(keys, w, n, null);
+            unique.clear();
+            journalSize = w;
+            return w;
+        }
+
+        private void resetJournal() {
+            if (journal == null) {
+                journal = new AEKey[16];
+                journalRecent = new AEKey[256];
+            } else {
+                java.util.Arrays.fill(journal, 0, journalSize, null);
+                java.util.Arrays.fill(journalRecent, null);
+            }
+            journalSize = 0;
+            var counter = keyCounter;
+            journalCap = Math.min(JOURNAL_LIMIT, Math.max(128, counter == null ? 0 : counter.size() >> 3));
         }
 
         public void invalidateCache() {
             needUpdate = true;
             lastTick = 0;
+            journalOverflow = true;
+        }
+
+        public boolean drainChanges(Object reader, Consumer<AEKey> changed) {
+            if (tickUpdate || reader != journalReader || journalOverflow) {
+                journalReader = reader;
+                resetJournal();
+                journalOverflow = false;
+                return false;
+            }
+            if (journalSize > 0) {
+                var keys = journal;
+                for (int i = 0, n = journalSize; i < n; i++) changed.accept(keys[i]);
+                resetJournal();
+            }
+            return true;
+        }
+
+        public long getVersion() {
+            return tickUpdate || needUpdate ? -1 : version;
         }
 
         public boolean updateCache() {
             lastTick = TickHandler.INSTANCE.tickCounter;
             needUpdate = false;
+            version = VERSIONS.incrementAndGet();
             AEKeyLongMap<AEKey> tmp;
             var counter = keyCounter;
             if (counter == null) {
@@ -233,6 +341,7 @@ public interface MEStorage {
                 var tick = TickHandler.INSTANCE.tickCounter;
                 if (tick != lastTick) {
                     needUpdate = false;
+                    version = VERSIONS.incrementAndGet();
                     lastTick = tick;
                     if (counter == null) {
                         keyCounter = counter = new KeyCounter();

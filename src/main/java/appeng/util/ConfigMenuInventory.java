@@ -2,7 +2,6 @@ package appeng.util;
 
 import java.util.Objects;
 
-import com.google.common.primitives.Ints;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,8 +91,7 @@ public class ConfigMenuInventory implements InternalInventory {
         var unwrapped = GenericStack.unwrapItemStack(stack);
         if (unwrapped != null) {
             if (unwrapped.what() instanceof AEItemKey itemKey) {
-                // Let the standard logic handle wrapped items
-                stack = itemKey.toStack(Math.max(1, Ints.saturatedCast(unwrapped.amount())));
+                return inv.isAllowed(itemKey) ? new GenericStack(itemKey, Math.max(1, unwrapped.amount())) : null;
             } else {
                 // In all other cases the channel must match
                 if (inv.isAllowed(unwrapped.what())) {

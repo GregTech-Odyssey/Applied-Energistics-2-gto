@@ -64,6 +64,11 @@ class CreativeCellInventory implements StorageCell {
     }
 
     @Override
+    public long getChangeVersion() {
+        return cache.getVersion();
+    }
+
+    @Override
     public void getAvailableStacks(KeyCounter out) {
         out.addAll(cache.getAvailableStacksCache());
     }

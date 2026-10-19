@@ -76,7 +76,7 @@ public class InterfaceMenu extends UpgradeableMenu<InterfaceLogicHost> {
             var stack = getHost().getConfig().getStack(configSlot);
             if (stack != null) {
                 SetStockAmountMenu.open((ServerPlayer) getPlayer(), getLocator(), configSlot,
-                        stack.what(), (int) stack.amount());
+                        stack.what(), stack.amount());
             }
         }
     }

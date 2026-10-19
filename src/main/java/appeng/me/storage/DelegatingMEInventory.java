@@ -20,6 +20,8 @@ import appeng.api.storage.MEStorage;
  */
 public class DelegatingMEInventory implements MEStorage {
     private MEStorage delegate;
+    private long delegateStamp = MEStorage.nextChangeVersion();
+    private long drainedStamp;
 
     public DelegatingMEInventory(MEStorage delegate) {
         this.delegate = Objects.requireNonNull(delegate, "delegate");
@@ -31,6 +33,25 @@ public class DelegatingMEInventory implements MEStorage {
 
     public void setDelegate(MEStorage delegate) {
         this.delegate = delegate;
+        this.delegateStamp = MEStorage.nextChangeVersion();
+    }
+
+    @Override
+    public boolean drainChanges(Object reader, java.util.function.ObjLongConsumer<AEKey> changed) {
+        if (delegate == null) return false;
+        if (drainedStamp != delegateStamp) {
+            drainedStamp = delegateStamp;
+            delegate.drainChanges(reader, IGNORE_CHANGES);
+            return false;
+        }
+        return delegate.drainChanges(reader, changed);
+    }
+
+    @Override
+    public long getChangeVersion() {
+        if (delegate == null) return delegateStamp;
+        long v = delegate.getChangeVersion();
+        return v < 0 ? -1 : v ^ (delegateStamp * 0x9E3779B97F4A7C15L);
     }
 
     @Nullable
