@@ -9,10 +9,10 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class EmiShapelessRecipe extends EmiCraftingRecipe {
 
-	public EmiShapelessRecipe(ShapelessRecipe recipe) {
+    public EmiShapelessRecipe(ShapelessRecipe recipe) {
         super(convertIngredients(recipe),
                 EmiStack.of(EmiPort.getOutput(recipe)), EmiPort.getId(recipe));
-		EmiShapedRecipe.setRemainders(input, recipe);
+        EmiShapedRecipe.setRemainders(input, recipe);
     }
 
     private static ObjectArrayList<EmiIngredient> convertIngredients(ShapelessRecipe recipe) {
@@ -21,10 +21,10 @@ public class EmiShapelessRecipe extends EmiCraftingRecipe {
         for (var ingredient : ingredients)
             inputs.add(EmiIngredient.of(ingredient));
         return inputs;
-	}
+    }
 
-	@Override
-	public boolean canFit(int width, int height) {
-		return input.size() <= width * height;
-	}
+    @Override
+    public boolean canFit(int width, int height) {
+        return input.size() <= width * height;
+    }
 }

@@ -15,59 +15,59 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 public class EmiRepairItemRecipe extends EmiPatternCraftingRecipe {
-	public static final List<Item> TOOLS = EmiPort.getItemRegistry().stream()
-			.filter(Item::canBeDepleted).collect(Collectors.toList());
-	private final Item tool;
+    public static final List<Item> TOOLS = EmiPort.getItemRegistry().stream()
+            .filter(Item::canBeDepleted).collect(Collectors.toList());
+    private final Item tool;
 
-	public EmiRepairItemRecipe(Item tool, ResourceLocation id) {
-		super(List.of(
-				EmiStack.of(tool),
-				EmiStack.of(tool)),
-				EmiStack.of(tool), id);
-		this.tool = tool;
-	}
-	@Override
-	public SlotWidget getInputWidget(int slot, int x, int y) {
-		return new GeneratedSlotWidget(r -> {
-			List<ItemStack> items = getItems(r);
-			if (slot < 2) {
-				return EmiStack.of(items.get(slot));
-			}
-			return EmiStack.EMPTY;
+    public EmiRepairItemRecipe(Item tool, ResourceLocation id) {
+        super(List.of(
+                EmiStack.of(tool),
+                EmiStack.of(tool)),
+                EmiStack.of(tool), id);
+        this.tool = tool;
+    }
+    @Override
+    public SlotWidget getInputWidget(int slot, int x, int y) {
+        return new GeneratedSlotWidget(r -> {
+            List<ItemStack> items = getItems(r);
+            if (slot < 2) {
+                return EmiStack.of(items.get(slot));
+            }
+            return EmiStack.EMPTY;
 
-		}, unique, x, y);
-	}
+        }, unique, x, y);
+    }
 
-	@Override
-	public SlotWidget getOutputWidget(int x, int y) {
-		return new GeneratedSlotWidget(r -> EmiStack.of(getMergeItems(r)), unique, x, y);
-	}
+    @Override
+    public SlotWidget getOutputWidget(int x, int y) {
+        return new GeneratedSlotWidget(r -> EmiStack.of(getMergeItems(r)), unique, x, y);
+    }
 
-	private List<ItemStack> getItems(Random random) {
-		List<ItemStack> items = Lists.newArrayList();
-		items.add(getTool(random));
-		items.add(getTool(random));
-		return items;
-	}
+    private List<ItemStack> getItems(Random random) {
+        List<ItemStack> items = Lists.newArrayList();
+        items.add(getTool(random));
+        items.add(getTool(random));
+        return items;
+    }
 
-	private ItemStack getMergeItems(Random random) {
-		List<ItemStack> items = getItems(random);
-		ItemStack item = tool.getDefaultInstance();
-		int maxDamage = tool.getMaxDamage();
-		int damage = items.get(0).getDamageValue() - (21 * maxDamage)/20 + items.get(1).getDamageValue();
-		if (damage > 0) {
-			item.setDamageValue(damage);
-		}
-		return item;
-	}
+    private ItemStack getMergeItems(Random random) {
+        List<ItemStack> items = getItems(random);
+        ItemStack item = tool.getDefaultInstance();
+        int maxDamage = tool.getMaxDamage();
+        int damage = items.get(0).getDamageValue() - (21 * maxDamage)/20 + items.get(1).getDamageValue();
+        if (damage > 0) {
+            item.setDamageValue(damage);
+        }
+        return item;
+    }
 
-	private ItemStack getTool(Random r) {
-		ItemStack stack = tool.getDefaultInstance();
-		if (stack.getMaxDamage() <= 0) {
-			return stack;
-		}
-		int d = r.nextInt(stack.getMaxDamage());
-		stack.setDamageValue(d);
-		return stack;
-	}
+    private ItemStack getTool(Random r) {
+        ItemStack stack = tool.getDefaultInstance();
+        if (stack.getMaxDamage() <= 0) {
+            return stack;
+        }
+        int d = r.nextInt(stack.getMaxDamage());
+        stack.setDamageValue(d);
+        return stack;
+    }
 }

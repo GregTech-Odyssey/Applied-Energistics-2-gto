@@ -9,25 +9,25 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 public class TooltipWidget extends Widget {
-	private final dev.emi.emi.api.widget.Bounds bounds;
-	private final BiFunction<Integer, Integer, List<ClientTooltipComponent>> tooltipSupplier;
+    private final dev.emi.emi.api.widget.Bounds bounds;
+    private final BiFunction<Integer, Integer, List<ClientTooltipComponent>> tooltipSupplier;
 
-	public TooltipWidget(BiFunction<Integer, Integer, List<ClientTooltipComponent>> tooltipSupplier, int x, int y, int width, int height) {
-		this.bounds = new dev.emi.emi.api.widget.Bounds(x, y, width, height);
-		this.tooltipSupplier = tooltipSupplier;
-	}
+    public TooltipWidget(BiFunction<Integer, Integer, List<ClientTooltipComponent>> tooltipSupplier, int x, int y, int width, int height) {
+        this.bounds = new Bounds(x, y, width, height);
+        this.tooltipSupplier = tooltipSupplier;
+    }
 
-	@Override
-	public Bounds getBounds() {
-		return bounds;
-	}
+    @Override
+    public Bounds getBounds() {
+        return bounds;
+    }
 
-	@Override
-	public List<ClientTooltipComponent> getTooltip(int mouseX, int mouseY) {
-		return tooltipSupplier.apply(mouseX, mouseY);
-	}
+    @Override
+    public List<ClientTooltipComponent> getTooltip(int mouseX, int mouseY) {
+        return tooltipSupplier.apply(mouseX, mouseY);
+    }
 
-	@Override
-	public void render(GuiGraphics draw, int mouseX, int mouseY, float delta) {
-	}
+    @Override
+    public void render(GuiGraphics draw, int mouseX, int mouseY, float delta) {
+    }
 }

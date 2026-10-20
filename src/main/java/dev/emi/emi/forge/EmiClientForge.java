@@ -35,95 +35,95 @@ import java.util.Arrays;
 
 @Mod.EventBusSubscriber(modid = "emi", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class EmiClientForge {
-	private static final KeyMapping PRODUCTION_PLANNER_KEY = new KeyMapping(
-		"Production Planner", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "EMI");
+    private static final KeyMapping PRODUCTION_PLANNER_KEY = new KeyMapping(
+        "Production Planner", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "EMI");
 
-	@SubscribeEvent
-	public static void clientInit(FMLClientSetupEvent event) {
-		StackBatcher.EXTRA_RENDER_LAYERS.addAll(Arrays.stream(ForgeRenderTypes.values()).map(f -> f.get()).toList());
-		EmiClient.init();
-		EmiNetwork.initClient(packet -> EmiPacketHandler.CHANNEL.sendToServer(packet));
-		MinecraftForge.EVENT_BUS.addListener(EmiClientForge::recipesReloaded);
-		MinecraftForge.EVENT_BUS.addListener(EmiClientForge::tagsReloaded);
-		MinecraftForge.EVENT_BUS.addListener(EmiClientForge::renderScreenBackground);
-		MinecraftForge.EVENT_BUS.addListener(EmiClientForge::renderScreenForeground);
-		MinecraftForge.EVENT_BUS.addListener(EmiClientForge::postRenderScreen);
-		MinecraftForge.EVENT_BUS.addListener(EmiClientForge::clientTick);
-		ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
-			() -> new ConfigScreenHandler.ConfigScreenFactory((client, last) -> new ConfigScreen(last)));
-	}
+    @SubscribeEvent
+    public static void clientInit(FMLClientSetupEvent event) {
+        StackBatcher.EXTRA_RENDER_LAYERS.addAll(Arrays.stream(ForgeRenderTypes.values()).map(f -> f.get()).toList());
+        EmiClient.init();
+        EmiNetwork.initClient(packet -> EmiPacketHandler.CHANNEL.sendToServer(packet));
+        MinecraftForge.EVENT_BUS.addListener(EmiClientForge::recipesReloaded);
+        MinecraftForge.EVENT_BUS.addListener(EmiClientForge::tagsReloaded);
+        MinecraftForge.EVENT_BUS.addListener(EmiClientForge::renderScreenBackground);
+        MinecraftForge.EVENT_BUS.addListener(EmiClientForge::renderScreenForeground);
+        MinecraftForge.EVENT_BUS.addListener(EmiClientForge::postRenderScreen);
+        MinecraftForge.EVENT_BUS.addListener(EmiClientForge::clientTick);
+        ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,
+            () -> new ConfigScreenHandler.ConfigScreenFactory((client, last) -> new ConfigScreen(last)));
+    }
 
-	@SubscribeEvent
-	public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
-		event.register(PRODUCTION_PLANNER_KEY);
-	}
+    @SubscribeEvent
+    public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(PRODUCTION_PLANNER_KEY);
+    }
 
-	public static void clientTick(TickEvent.ClientTickEvent event) {
-		if (event.phase != TickEvent.Phase.END) {
-			return;
-		}
-		while (PRODUCTION_PLANNER_KEY.consumeClick()) {
-			EmiApi.viewProductionPlanner();
-		}
-	}
+    public static void clientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        while (PRODUCTION_PLANNER_KEY.consumeClick()) {
+            EmiApi.viewProductionPlanner();
+        }
+    }
 
-	@SubscribeEvent
-	public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
-		Minecraft client = Minecraft.getInstance();
-		EmiTags.registerTagModels(client.getResourceManager(), event::register);
-	}
+    @SubscribeEvent
+    public static void registerAdditionalModels(ModelEvent.RegisterAdditional event) {
+        Minecraft client = Minecraft.getInstance();
+        EmiTags.registerTagModels(client.getResourceManager(), event::register);
+    }
 
-	@SubscribeEvent
-	public static void registerResourceReloaders(RegisterClientReloadListenersEvent event) {
-		EmiData.init(event::registerReloadListener);
-	}
+    @SubscribeEvent
+    public static void registerResourceReloaders(RegisterClientReloadListenersEvent event) {
+        EmiData.init(event::registerReloadListener);
+    }
 
-	public static void recipesReloaded(RecipesUpdatedEvent event) {
-		EmiReloadManager.reloadRecipes();
-	}
+    public static void recipesReloaded(RecipesUpdatedEvent event) {
+        EmiReloadManager.reloadRecipes();
+    }
 
-	public static void tagsReloaded(TagsUpdatedEvent event) {
-		EmiReloadManager.reloadTags();
-	}
+    public static void tagsReloaded(TagsUpdatedEvent event) {
+        EmiReloadManager.reloadTags();
+    }
 
-	public static void renderScreenForeground(ContainerScreenEvent.Render.Foreground event) {
-		EmiDrawContext context = EmiDrawContext.wrap(event.getGuiGraphics());
-		AbstractContainerScreen<?> screen = event.getContainerScreen();
-		EmiScreenBase base = EmiScreenBase.of(screen);
-		if (base != null) {
-			Minecraft client = Minecraft.getInstance();
-			context.push();
-			context.matrices().translate(-screen.getGuiLeft(), -screen.getGuiTop(), 0.0);
-			EmiPort.setPositionTexShader();
-			EmiScreenManager.render(context, event.getMouseX(), event.getMouseY(), client.getFrameTime());
-			context.pop();
-		}
-	}
+    public static void renderScreenForeground(ContainerScreenEvent.Render.Foreground event) {
+        EmiDrawContext context = EmiDrawContext.wrap(event.getGuiGraphics());
+        AbstractContainerScreen<?> screen = event.getContainerScreen();
+        EmiScreenBase base = EmiScreenBase.of(screen);
+        if (base != null) {
+            Minecraft client = Minecraft.getInstance();
+            context.push();
+            context.matrices().translate(-screen.getGuiLeft(), -screen.getGuiTop(), 0.0);
+            EmiPort.setPositionTexShader();
+            EmiScreenManager.render(context, event.getMouseX(), event.getMouseY(), client.getFrameTime());
+            context.pop();
+        }
+    }
 
-	public static void renderScreenBackground(ScreenEvent.BackgroundRendered event) {
-		if (!(event.getScreen() instanceof AbstractContainerScreen<?>)) {
-			return;
-		}
-		Minecraft client = Minecraft.getInstance();
-		Window window = client.getWindow();
-		int mouseX = (int) (client.mouseHandler.xpos() * window.getGuiScaledWidth() / window.getScreenWidth());
-		int mouseY = (int) (client.mouseHandler.ypos() * window.getGuiScaledHeight() / window.getScreenHeight());
-		EmiScreenManager.drawBackground(EmiDrawContext.wrap(event.getGuiGraphics()), mouseX, mouseY, client.getFrameTime());
-	}
+    public static void renderScreenBackground(ScreenEvent.BackgroundRendered event) {
+        if (!(event.getScreen() instanceof AbstractContainerScreen<?>)) {
+            return;
+        }
+        Minecraft client = Minecraft.getInstance();
+        Window window = client.getWindow();
+        int mouseX = (int) (client.mouseHandler.xpos() * window.getGuiScaledWidth() / window.getScreenWidth());
+        int mouseY = (int) (client.mouseHandler.ypos() * window.getGuiScaledHeight() / window.getScreenHeight());
+        EmiScreenManager.drawBackground(EmiDrawContext.wrap(event.getGuiGraphics()), mouseX, mouseY, client.getFrameTime());
+    }
 
-	public static void postRenderScreen(ScreenEvent.Render.Post event) {
-		EmiDrawContext context = EmiDrawContext.wrap(event.getGuiGraphics());
-		Screen screen = event.getScreen();
-		if (!(screen instanceof AbstractContainerScreen<?>)) {
-			return;
-		}
-		EmiScreenBase base = EmiScreenBase.of(screen);
-		if (base != null) {
-			Minecraft client = Minecraft.getInstance();
-			context.push();
-			EmiPort.setPositionTexShader();
-			EmiScreenManager.drawForeground(context, event.getMouseX(), event.getMouseY(), client.getFrameTime());
-			context.pop();
-		}
-	}
+    public static void postRenderScreen(ScreenEvent.Render.Post event) {
+        EmiDrawContext context = EmiDrawContext.wrap(event.getGuiGraphics());
+        Screen screen = event.getScreen();
+        if (!(screen instanceof AbstractContainerScreen<?>)) {
+            return;
+        }
+        EmiScreenBase base = EmiScreenBase.of(screen);
+        if (base != null) {
+            Minecraft client = Minecraft.getInstance();
+            context.push();
+            EmiPort.setPositionTexShader();
+            EmiScreenManager.drawForeground(context, event.getMouseX(), event.getMouseY(), client.getFrameTime());
+            context.pop();
+        }
+    }
 }

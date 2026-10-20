@@ -20,73 +20,73 @@ import java.util.Set;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class JemiUtil {
-	
-	public static EmiIngredient getIngredient(List<ITypedIngredient<?>> ingredients) {
-		if (ingredients.isEmpty()) {
-			return EmiStack.EMPTY;
-		}
-		return EmiIngredient.of(ingredients.stream().map(JemiUtil::getStack).filter(i -> !i.isEmpty()).toList());
-	}
+    
+    public static EmiIngredient getIngredient(List<ITypedIngredient<?>> ingredients) {
+        if (ingredients.isEmpty()) {
+            return EmiStack.EMPTY;
+        }
+        return EmiIngredient.of(ingredients.stream().map(JemiUtil::getStack).filter(i -> !i.isEmpty()).toList());
+    }
 
-	public static EmiStack getStack(Object ingredient) {
-		Optional<IIngredientType> optional = (Optional<IIngredientType>) (Optional) JemiPlugin.runtime.getIngredientManager()
-			.getIngredientTypeChecked(ingredient);
-		if (optional.isPresent()) {
-			return getStack(optional.get(), ingredient);
-		}
-		return EmiStack.EMPTY;
-	}
+    public static EmiStack getStack(Object ingredient) {
+        Optional<IIngredientType> optional = (Optional<IIngredientType>) (Optional) JemiPlugin.runtime.getIngredientManager()
+            .getIngredientTypeChecked(ingredient);
+        if (optional.isPresent()) {
+            return getStack(optional.get(), ingredient);
+        }
+        return EmiStack.EMPTY;
+    }
 
-	public static EmiStack getStack(ITypedIngredient<?> ingredient) {
-		return getStack(ingredient.getType(), ingredient.getIngredient());
-	}
+    public static EmiStack getStack(ITypedIngredient<?> ingredient) {
+        return getStack(ingredient.getType(), ingredient.getIngredient());
+    }
 
-	public static EmiStack getStack(IIngredientType<?> type, Object ingredient) {
-		if (type == VanillaTypes.ITEM_STACK) {
-			return EmiStack.of((ItemStack) ingredient);
-		} else if (type == getFluidType()) {
-			return getFluidFromJei(ingredient);
-		} else {
-			IIngredientManager im = JemiPlugin.runtime.getIngredientManager();
-			IIngredientHelper helper = im.getIngredientHelper(type);
-			if (helper.isValidIngredient(ingredient)) {
-				return new dev.emi.emi.jemi.JemiStack(type, helper, im.getIngredientRenderer(type), ingredient);
-			}
-		}
-		return EmiStack.EMPTY;
-	}
+    public static EmiStack getStack(IIngredientType<?> type, Object ingredient) {
+        if (type == VanillaTypes.ITEM_STACK) {
+            return EmiStack.of((ItemStack) ingredient);
+        } else if (type == getFluidType()) {
+            return getFluidFromJei(ingredient);
+        } else {
+            IIngredientManager im = JemiPlugin.runtime.getIngredientManager();
+            IIngredientHelper helper = im.getIngredientHelper(type);
+            if (helper.isValidIngredient(ingredient)) {
+                return new JemiStack(type, helper, im.getIngredientRenderer(type), ingredient);
+            }
+        }
+        return EmiStack.EMPTY;
+    }
 
-	public static Optional<ITypedIngredient<?>> getTyped(EmiStack stack) {
-		if (stack.isEmpty()) {
-			return Optional.empty();
-		} else if (stack.getKey() instanceof Fluid f) {
-			int amount = stack.getAmount() <= 0 ? 1000 : (int) Math.min(Integer.MAX_VALUE, stack.getAmount());
-			return (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(ForgeTypes.FLUID_STACK,
-				new FluidStack(f, amount, stack.getNbt()));
-		} else if (stack instanceof JemiStack js) {
-			return JemiPlugin.runtime.getIngredientManager().getIngredientTypeChecked(js.ingredient)
-				.map(t -> (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(t, js.ingredient))
-				.orElse(Optional.empty());
-		}
-		return (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(VanillaTypes.ITEM_STACK, stack.getItemStack());
-	}
+    public static Optional<ITypedIngredient<?>> getTyped(EmiStack stack) {
+        if (stack.isEmpty()) {
+            return Optional.empty();
+        } else if (stack.getKey() instanceof Fluid f) {
+            int amount = stack.getAmount() <= 0 ? 1000 : (int) Math.min(Integer.MAX_VALUE, stack.getAmount());
+            return (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(ForgeTypes.FLUID_STACK,
+                new FluidStack(f, amount, stack.getNbt()));
+        } else if (stack instanceof JemiStack js) {
+            return JemiPlugin.runtime.getIngredientManager().getIngredientTypeChecked(js.ingredient)
+                .map(t -> (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(t, js.ingredient))
+                .orElse(Optional.empty());
+        }
+        return (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(VanillaTypes.ITEM_STACK, stack.getItemStack());
+    }
 
-	public static EmiStack getFluidFromJei(Object object) {
-		if (object instanceof FluidStack fluid) {
-			return EmiStack.of(fluid.getFluid(), fluid.getTag(), fluid.getAmount());
-		}
-		return EmiStack.EMPTY;
-	}
+    public static EmiStack getFluidFromJei(Object object) {
+        if (object instanceof FluidStack fluid) {
+            return EmiStack.of(fluid.getFluid(), fluid.getTag(), fluid.getAmount());
+        }
+        return EmiStack.EMPTY;
+    }
 
-	public static IIngredientType getFluidType() {
-		return ForgeTypes.FLUID_STACK;
-	}
+    public static IIngredientType getFluidType() {
+        return ForgeTypes.FLUID_STACK;
+    }
 
-	public static Set<String> getHandledMods() {
-		Set<String> set = Sets.newHashSet();
-		for (String mod : EmiForgePlatform.getModsWithPlugins()) {
-			set.add(mod);
-		}
-		return set;
-	}
+    public static Set<String> getHandledMods() {
+        Set<String> set = Sets.newHashSet();
+        for (String mod : EmiForgePlatform.getModsWithPlugins()) {
+            set.add(mod);
+        }
+        return set;
+    }
 }

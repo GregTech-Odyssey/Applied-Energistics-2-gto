@@ -17,57 +17,57 @@ import net.minecraft.util.profiling.ProfilerFiller;
 import java.io.InputStreamReader;
 
 public class EmiTagExclusionsLoader extends SimplePreparableReloadListener<TagExclusions>
-		implements EmiResourceReloadListener {
-	private static final Gson GSON = new Gson();
-	private static final ResourceLocation ID = EmiPort.id("emi:tag_exclusions");
+        implements EmiResourceReloadListener {
+    private static final Gson GSON = new Gson();
+    private static final ResourceLocation ID = EmiPort.id("emi:tag_exclusions");
 
-	@Override
-	public TagExclusions prepare(ResourceManager manager, ProfilerFiller profiler) {
-		TagExclusions exclusions = new TagExclusions();
-		for (ResourceLocation id : EmiPort.findResources(manager, "tag/exclusions", i -> i.endsWith(".json"))) {
-			if (!id.getNamespace().equals("emi")) {
-				continue;
-			}
-			try {
-				for (Resource resource : manager.getResourceStack(id)) {
-					InputStreamReader reader = new InputStreamReader(EmiPort.getInputStream(resource));
-					JsonObject json = GsonHelper.fromJson(GSON, reader, JsonObject.class);
-					try {
-						if (GsonHelper.getAsBoolean(json, "replace", false)) {
-							exclusions.clear();
-						}
-						for (String key : json.keySet()) {
-							ResourceLocation type = EmiPort.id(key);
-							if (GsonHelper.isArrayNode(json, key)) {
-								JsonArray arr = GsonHelper.getAsJsonArray(json, key);
-								for (JsonElement el : arr) {
-									ResourceLocation eid = EmiPort.id(el.getAsString());
-									if (key.equals("exclusions")) {
-										exclusions.add(eid);
-									} else {
-										exclusions.add(type, eid);
-									}
-								}
-							}
-						}
-					} catch (Exception e) {
-						EmiLog.error("Error loading tag exclusions", e);
-					}
-				}
-			} catch (Exception e) {
-				EmiLog.error("Error loading tag exclusions", e);
-			}
-		}
-		return exclusions;
-	}
+    @Override
+    public TagExclusions prepare(ResourceManager manager, ProfilerFiller profiler) {
+        TagExclusions exclusions = new TagExclusions();
+        for (ResourceLocation id : EmiPort.findResources(manager, "tag/exclusions", i -> i.endsWith(".json"))) {
+            if (!id.getNamespace().equals("emi")) {
+                continue;
+            }
+            try {
+                for (Resource resource : manager.getResourceStack(id)) {
+                    InputStreamReader reader = new InputStreamReader(EmiPort.getInputStream(resource));
+                    JsonObject json = GsonHelper.fromJson(GSON, reader, JsonObject.class);
+                    try {
+                        if (GsonHelper.getAsBoolean(json, "replace", false)) {
+                            exclusions.clear();
+                        }
+                        for (String key : json.keySet()) {
+                            ResourceLocation type = EmiPort.id(key);
+                            if (GsonHelper.isArrayNode(json, key)) {
+                                JsonArray arr = GsonHelper.getAsJsonArray(json, key);
+                                for (JsonElement el : arr) {
+                                    ResourceLocation eid = EmiPort.id(el.getAsString());
+                                    if (key.equals("exclusions")) {
+                                        exclusions.add(eid);
+                                    } else {
+                                        exclusions.add(type, eid);
+                                    }
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        EmiLog.error("Error loading tag exclusions", e);
+                    }
+                }
+            } catch (Exception e) {
+                EmiLog.error("Error loading tag exclusions", e);
+            }
+        }
+        return exclusions;
+    }
 
-	@Override
-	public void apply(TagExclusions exclusions, ResourceManager manager, ProfilerFiller profiler) {
-		EmiTags.exclusions = exclusions;
-	}
+    @Override
+    public void apply(TagExclusions exclusions, ResourceManager manager, ProfilerFiller profiler) {
+        EmiTags.exclusions = exclusions;
+    }
 
-	@Override
-	public ResourceLocation getEmiId() {
-		return ID;
-	}
+    @Override
+    public ResourceLocation getEmiId() {
+        return ID;
+    }
 }

@@ -10,18 +10,18 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public interface EmiRecipeManager {
-	
-	List<dev.emi.emi.api.recipe.EmiRecipeCategory> getCategories();
+    
+    List<dev.emi.emi.api.recipe.EmiRecipeCategory> getCategories();
 
-	List<EmiIngredient> getWorkstations(dev.emi.emi.api.recipe.EmiRecipeCategory category);
+    List<EmiIngredient> getWorkstations(EmiRecipeCategory category);
 
-	List<dev.emi.emi.api.recipe.EmiRecipe> getRecipes();
+    List<dev.emi.emi.api.recipe.EmiRecipe> getRecipes();
 
-	List<dev.emi.emi.api.recipe.EmiRecipe> getRecipes(EmiRecipeCategory category);
+    List<dev.emi.emi.api.recipe.EmiRecipe> getRecipes(EmiRecipeCategory category);
 
-	@Nullable dev.emi.emi.api.recipe.EmiRecipe getRecipe(ResourceLocation id);
+    @Nullable dev.emi.emi.api.recipe.EmiRecipe getRecipe(ResourceLocation id);
 
-	List<dev.emi.emi.api.recipe.EmiRecipe> getRecipesByInput(EmiStack stack);
+    List<dev.emi.emi.api.recipe.EmiRecipe> getRecipesByInput(EmiStack stack);
 
-	List<EmiRecipe> getRecipesByOutput(EmiStack stack);
+    List<EmiRecipe> getRecipesByOutput(EmiStack stack);
 }

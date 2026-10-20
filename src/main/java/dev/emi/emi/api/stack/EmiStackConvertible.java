@@ -10,25 +10,25 @@ import org.jetbrains.annotations.ApiStatus;
  */
 @ApiStatus.Experimental
 public interface EmiStackConvertible {
-	
-	/**
-	 * @return The default representation of this type as an EmiStack.
-	 *  If the type has an amount of its own, it will be used.
-	 *  Otherwise, it'll use the default amount for the stack type.
-	 */
-	@OnlyIn(Dist.CLIENT)
-	@ApiStatus.Experimental
-	default EmiStack emi() {
-		throw new IllegalStateException();
-	}
+    
+    /**
+     * @return The default representation of this type as an EmiStack.
+     *  If the type has an amount of its own, it will be used.
+     *  Otherwise, it'll use the default amount for the stack type.
+     */
+    @OnlyIn(Dist.CLIENT)
+    @ApiStatus.Experimental
+    default EmiStack emi() {
+        throw new IllegalStateException();
+    }
 
-	/**
-	 * @return The default representation of this type as an EmiStack.
-	 *  Uses the provided amount.
-	 */
-	@OnlyIn(Dist.CLIENT)
-	@ApiStatus.Experimental
-	default EmiStack emi(long amount) {
-		throw new IllegalStateException();
-	}
+    /**
+     * @return The default representation of this type as an EmiStack.
+     *  Uses the provided amount.
+     */
+    @OnlyIn(Dist.CLIENT)
+    @ApiStatus.Experimental
+    default EmiStack emi(long amount) {
+        throw new IllegalStateException();
+    }
 }

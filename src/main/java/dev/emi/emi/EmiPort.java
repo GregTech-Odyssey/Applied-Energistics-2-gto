@@ -50,174 +50,174 @@ import java.util.stream.Stream;
  * Multiversion quarantine, to avoid excessive git pain
  */
 public final class EmiPort {
-	private static final net.minecraft.util.RandomSource RANDOM = net.minecraft.util.RandomSource.create();
+    private static final net.minecraft.util.RandomSource RANDOM = net.minecraft.util.RandomSource.create();
 
-	public static MutableComponent literal(String s) {
-		return Component.literal(s);
-	}
+    public static MutableComponent literal(String s) {
+        return Component.literal(s);
+    }
 
-	public static MutableComponent literal(String s, ChatFormatting formatting) {
-		return Component.literal(s).withStyle(formatting);
-	}
+    public static MutableComponent literal(String s, ChatFormatting formatting) {
+        return Component.literal(s).withStyle(formatting);
+    }
 
-	public static MutableComponent literal(String s, ChatFormatting... formatting) {
-		return Component.literal(s).withStyle(formatting);
-	}
+    public static MutableComponent literal(String s, ChatFormatting... formatting) {
+        return Component.literal(s).withStyle(formatting);
+    }
 
-	public static MutableComponent literal(String s, Style style) {
-		return Component.literal(s).setStyle(style);
-	}
-	
-	public static MutableComponent translatable(String s) {
-		return Component.translatable(s);
-	}
-	
-	public static MutableComponent translatable(String s, ChatFormatting formatting) {
-		return Component.translatable(s).withStyle(formatting);
-	}
-	
-	public static MutableComponent translatable(String s, Object... objects) {
-		return Component.translatable(s, objects);
-	}
+    public static MutableComponent literal(String s, Style style) {
+        return Component.literal(s).setStyle(style);
+    }
+    
+    public static MutableComponent translatable(String s) {
+        return Component.translatable(s);
+    }
+    
+    public static MutableComponent translatable(String s, ChatFormatting formatting) {
+        return Component.translatable(s).withStyle(formatting);
+    }
+    
+    public static MutableComponent translatable(String s, Object... objects) {
+        return Component.translatable(s, objects);
+    }
 
-	public static MutableComponent append(MutableComponent text, Component appended) {
-		return text.append(appended);
-	}
+    public static MutableComponent append(MutableComponent text, Component appended) {
+        return text.append(appended);
+    }
 
-	public static FormattedCharSequence ordered(Component text) {
-		return text.getVisualOrderText();
-	}
+    public static FormattedCharSequence ordered(Component text) {
+        return text.getVisualOrderText();
+    }
 
-	public static Collection<ResourceLocation> findResources(ResourceManager manager, String prefix, Predicate<String> pred) {
-		return manager.listResources(prefix, i -> pred.test(i.toString())).keySet();
-	}
+    public static Collection<ResourceLocation> findResources(ResourceManager manager, String prefix, Predicate<String> pred) {
+        return manager.listResources(prefix, i -> pred.test(i.toString())).keySet();
+    }
 
-	public static InputStream getInputStream(Resource resource) {
-		try {
-			return resource.open();
-		} catch (Exception e) {
-			return null;
-		}
-	}
+    public static InputStream getInputStream(Resource resource) {
+        try {
+            return resource.open();
+        } catch (Exception e) {
+            return null;
+        }
+    }
 
-	public static BannerPattern.Builder addRandomBanner(BannerPattern.Builder patterns, Random random) {
-		return patterns.addPattern(BuiltInRegistries.BANNER_PATTERN.getHolder(random.nextInt(BuiltInRegistries.BANNER_PATTERN.size())).get(),
-			DyeColor.values()[random.nextInt(DyeColor.values().length)]);
-	}
+    public static BannerPattern.Builder addRandomBanner(BannerPattern.Builder patterns, Random random) {
+        return patterns.addPattern(BuiltInRegistries.BANNER_PATTERN.getHolder(random.nextInt(BuiltInRegistries.BANNER_PATTERN.size())).get(),
+            DyeColor.values()[random.nextInt(DyeColor.values().length)]);
+    }
 
-	public static boolean canTallFlowerDuplicate(TallFlowerBlock tallFlowerBlock) {
-		try {
-			return tallFlowerBlock.isValidBonemealTarget(null, null, null, true) && tallFlowerBlock.isBonemealSuccess(null, null, null, null);
-		} catch(Exception e) {
-			return false;
-		}
-	}
+    public static boolean canTallFlowerDuplicate(TallFlowerBlock tallFlowerBlock) {
+        try {
+            return tallFlowerBlock.isValidBonemealTarget(null, null, null, true) && tallFlowerBlock.isBonemealSuccess(null, null, null, null);
+        } catch(Exception e) {
+            return false;
+        }
+    }
 
-	public static void upload(VertexBuffer vb, BufferBuilder bldr) {
-		vb.bind();
-		vb.upload(bldr.end());
-	}
+    public static void upload(VertexBuffer vb, BufferBuilder bldr) {
+        vb.bind();
+        vb.upload(bldr.end());
+    }
 
-	public static void setShader(VertexBuffer buf, Matrix4f mat) {
-		buf.bind();
-		buf.drawWithShader(mat, RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
-	}
+    public static void setShader(VertexBuffer buf, Matrix4f mat) {
+        buf.bind();
+        buf.drawWithShader(mat, RenderSystem.getProjectionMatrix(), RenderSystem.getShader());
+    }
 
-	public static List<BakedQuad> getQuads(BakedModel model) {
-		return model.getQuads(null, null, RANDOM);
-	}
+    public static List<BakedQuad> getQuads(BakedModel model) {
+        return model.getQuads(null, null, RANDOM);
+    }
 
-	public static void draw(BufferBuilder bufferBuilder) {
-		BufferUploader.drawWithShader(bufferBuilder.end());
-	}
+    public static void draw(BufferBuilder bufferBuilder) {
+        BufferUploader.drawWithShader(bufferBuilder.end());
+    }
 
-	public static int getGuiScale(Minecraft client) {
-		return (int) client.getWindow().getGuiScale();
-	}
+    public static int getGuiScale(Minecraft client) {
+        return (int) client.getWindow().getGuiScale();
+    }
 
-	public static void setPositionTexShader() {
-		RenderSystem.setShader(GameRenderer::getPositionTexShader);
-	}
+    public static void setPositionTexShader() {
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+    }
 
-	public static void setPositionColorTexShader() {
-		RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
-	}
+    public static void setPositionColorTexShader() {
+        RenderSystem.setShader(GameRenderer::getPositionColorTexShader);
+    }
 
-	public static Registry<Item> getItemRegistry() {
-		return BuiltInRegistries.ITEM;
-	}
+    public static Registry<Item> getItemRegistry() {
+        return BuiltInRegistries.ITEM;
+    }
 
-	public static Registry<Block> getBlockRegistry() {
-		return BuiltInRegistries.BLOCK;
-	}
+    public static Registry<Block> getBlockRegistry() {
+        return BuiltInRegistries.BLOCK;
+    }
 
-	public static Registry<Fluid> getFluidRegistry() {
-		return BuiltInRegistries.FLUID;
-	}
+    public static Registry<Fluid> getFluidRegistry() {
+        return BuiltInRegistries.FLUID;
+    }
 
-	public static Registry<Potion> getPotionRegistry() {
-		return BuiltInRegistries.POTION;
-	}
+    public static Registry<Potion> getPotionRegistry() {
+        return BuiltInRegistries.POTION;
+    }
 
-	public static Registry<Enchantment> getEnchantmentRegistry() {
-		return BuiltInRegistries.ENCHANTMENT;
-	}
+    public static Registry<Enchantment> getEnchantmentRegistry() {
+        return BuiltInRegistries.ENCHANTMENT;
+    }
 
-	public static Button newButton(int x, int y, int w, int h, Component name, OnPress action) {
-		return Button.builder(name, action).pos(x, y).size(w, h).build();
-	}
+    public static Button newButton(int x, int y, int w, int h, Component name, OnPress action) {
+        return Button.builder(name, action).pos(x, y).size(w, h).build();
+    }
 
-	public static ItemStack getOutput(Recipe<?> recipe) {
-		Minecraft client = Minecraft.getInstance();
-		return recipe.getResultItem(client.level.registryAccess());
-	}
+    public static ItemStack getOutput(Recipe<?> recipe) {
+        Minecraft client = Minecraft.getInstance();
+        return recipe.getResultItem(client.level.registryAccess());
+    }
 
-	public static void focus(EditBox widget, boolean focused) {
-		widget.setFocused(focused);
-	}
+    public static void focus(EditBox widget, boolean focused) {
+        widget.setFocused(focused);
+    }
 
-	public static Stream<Item> getDisabledItems() {
-		Minecraft client = Minecraft.getInstance();
-		FeatureFlagSet fs = client.level.enabledFeatures();
-		return getItemRegistry().stream().filter(i -> !i.isEnabled(fs));
-	}
+    public static Stream<Item> getDisabledItems() {
+        Minecraft client = Minecraft.getInstance();
+        FeatureFlagSet fs = client.level.enabledFeatures();
+        return getItemRegistry().stream().filter(i -> !i.isEnabled(fs));
+    }
 
-	public static ResourceLocation getId(Recipe<?> recipe) {
-		return recipe.getId();
-	}
+    public static ResourceLocation getId(Recipe<?> recipe) {
+        return recipe.getId();
+    }
 
-	public static @Nullable Recipe<?> getRecipe(ResourceLocation id) {
-		Minecraft client = Minecraft.getInstance();
-		if (client.level != null && id != null) {
-			RecipeManager manager = client.level.getRecipeManager();
-			if (manager != null) {
-				return manager.byKey(id).orElse(null);
-			}
-		}
-		return null;
-	}
+    public static @Nullable Recipe<?> getRecipe(ResourceLocation id) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.level != null && id != null) {
+            RecipeManager manager = client.level.getRecipeManager();
+            if (manager != null) {
+                return manager.byKey(id).orElse(null);
+            }
+        }
+        return null;
+    }
 
-	public static Comparison compareStrict() {
-		return Comparison.compareNbt();
-	}
+    public static Comparison compareStrict() {
+        return Comparison.compareNbt();
+    }
 
-	public static ItemStack setPotion(ItemStack stack, Potion potion) {
-		return PotionUtils.setPotion(stack, potion);
-	}
+    public static ItemStack setPotion(ItemStack stack, Potion potion) {
+        return PotionUtils.setPotion(stack, potion);
+    }
 
-	public static CompoundTag emptyExtraData() {
-		return null;
-	}
+    public static CompoundTag emptyExtraData() {
+        return null;
+    }
 
-	public static ResourceLocation id(String id) {
-		return new ResourceLocation(id);
-	}
+    public static ResourceLocation id(String id) {
+        return new ResourceLocation(id);
+    }
 
-	public static ResourceLocation id(String namespace, String path) {
-		return new ResourceLocation(namespace, path);
-	}
+    public static ResourceLocation id(String namespace, String path) {
+        return new ResourceLocation(namespace, path);
+    }
 
-	public static void applyModelViewMatrix() {
-		RenderSystem.applyModelViewMatrix();
-	}
+    public static void applyModelViewMatrix() {
+        RenderSystem.applyModelViewMatrix();
+    }
 }

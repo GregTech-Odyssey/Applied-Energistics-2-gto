@@ -17,86 +17,86 @@ import java.util.List;
 import java.util.Random;
 
 public class EmiAnvilRepairItemRecipe implements EmiRecipe {
-	private final Item tool;
-	private final ResourceLocation id;
-	private final int uniq = EmiUtil.RANDOM.nextInt();
+    private final Item tool;
+    private final ResourceLocation id;
+    private final int uniq = EmiUtil.RANDOM.nextInt();
 
-	public EmiAnvilRepairItemRecipe(Item tool, ResourceLocation id) {
-		this.tool = tool;
-		this.id = id;
-	}
+    public EmiAnvilRepairItemRecipe(Item tool, ResourceLocation id) {
+        this.tool = tool;
+        this.id = id;
+    }
 
-	@Override
-	public EmiRecipeCategory getCategory() {
-		return VanillaEmiRecipeCategories.ANVIL_REPAIRING;
-	}
+    @Override
+    public EmiRecipeCategory getCategory() {
+        return VanillaEmiRecipeCategories.ANVIL_REPAIRING;
+    }
 
-	@Override
-	public ResourceLocation getId() {
-		return id;
-	}
+    @Override
+    public ResourceLocation getId() {
+        return id;
+    }
 
-	@Override
-	public List<EmiIngredient> getInputs() {
-		return List.of(EmiStack.of(tool), EmiStack.of(tool));
-	}
+    @Override
+    public List<EmiIngredient> getInputs() {
+        return List.of(EmiStack.of(tool), EmiStack.of(tool));
+    }
 
-	@Override
-	public List<EmiStack> getOutputs() {
-		return List.of(EmiStack.of(tool));
-	}
+    @Override
+    public List<EmiStack> getOutputs() {
+        return List.of(EmiStack.of(tool));
+    }
 
-	@Override
-	public boolean supportsRecipeTree() {
-		return false;
-	}
+    @Override
+    public boolean supportsRecipeTree() {
+        return false;
+    }
 
-	@Override
-	public int getDisplayWidth() {
-		return 125;
-	}
+    @Override
+    public int getDisplayWidth() {
+        return 125;
+    }
 
-	@Override
-	public int getDisplayHeight() {
-		return 18;
-	}
+    @Override
+    public int getDisplayHeight() {
+        return 18;
+    }
 
-	@Override
-	public void addWidgets(WidgetHolder widgets) {
-		widgets.addTexture(EmiTexture.PLUS, 27, 3);
-		widgets.addTexture(EmiTexture.EMPTY_ARROW, 75, 1);
-		int notUniq= uniq;
-		widgets.addGeneratedSlot(r -> getItem(r, 0), notUniq, 0, 0);
-		widgets.addGeneratedSlot(r -> getItem(r, 1), notUniq, 49, 0);
-		widgets.addGeneratedSlot(r -> getItem(r, 2), notUniq, 107, 0).recipeContext(this);
-	}
+    @Override
+    public void addWidgets(WidgetHolder widgets) {
+        widgets.addTexture(EmiTexture.PLUS, 27, 3);
+        widgets.addTexture(EmiTexture.EMPTY_ARROW, 75, 1);
+        int notUniq= uniq;
+        widgets.addGeneratedSlot(r -> getItem(r, 0), notUniq, 0, 0);
+        widgets.addGeneratedSlot(r -> getItem(r, 1), notUniq, 49, 0);
+        widgets.addGeneratedSlot(r -> getItem(r, 2), notUniq, 107, 0).recipeContext(this);
+    }
 
-	protected EmiStack getItem(Random random, int item) {
-		List<ItemStack> items = Lists.newArrayList();
-		items.add(getTool(random));
-		items.add(getTool(random));
-		items.add(getMergeItems(items));
-		
-		return EmiStack.of(items.get(item));
-	}
+    protected EmiStack getItem(Random random, int item) {
+        List<ItemStack> items = Lists.newArrayList();
+        items.add(getTool(random));
+        items.add(getTool(random));
+        items.add(getMergeItems(items));
+        
+        return EmiStack.of(items.get(item));
+    }
 
-	private ItemStack getMergeItems(List<ItemStack> items) {
-		ItemStack item = tool.getDefaultInstance();
-		int maxDamage = tool.getMaxDamage();
-		int damage = items.get(0).getDamageValue() - (21 * maxDamage)/20 + items.get(1).getDamageValue();
-		if (damage > 0) {
-			item.setDamageValue(damage);
-		}
-		return item;
-	}
+    private ItemStack getMergeItems(List<ItemStack> items) {
+        ItemStack item = tool.getDefaultInstance();
+        int maxDamage = tool.getMaxDamage();
+        int damage = items.get(0).getDamageValue() - (21 * maxDamage)/20 + items.get(1).getDamageValue();
+        if (damage > 0) {
+            item.setDamageValue(damage);
+        }
+        return item;
+    }
 
-	private ItemStack getTool(Random r) {
-		ItemStack stack = tool.getDefaultInstance();
-		if (stack.getMaxDamage() <= 0) {
-			return stack;
-		}
-		int d = r.nextInt(stack.getMaxDamage());
-		stack.setDamageValue(d);
-		return stack;
-	}
+    private ItemStack getTool(Random r) {
+        ItemStack stack = tool.getDefaultInstance();
+        if (stack.getMaxDamage() <= 0) {
+            return stack;
+        }
+        int d = r.nextInt(stack.getMaxDamage());
+        stack.setDamageValue(d);
+        return stack;
+    }
 }

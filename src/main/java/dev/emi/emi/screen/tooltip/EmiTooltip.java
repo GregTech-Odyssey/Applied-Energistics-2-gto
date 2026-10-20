@@ -10,22 +10,22 @@ import java.util.Arrays;
 import java.util.List;
 
 public class EmiTooltip {
-	public static final DecimalFormat TEXT_FORMAT = new DecimalFormat("0.##");
-	
-	public static ClientTooltipComponent chance(String type, float chance) {
-		return ClientTooltipComponent.create(EmiPort.ordered(
-			EmiPort.translatable("tooltip.emi.chance." + type,
-				TEXT_FORMAT.format(chance * 100))
-					.withStyle(ChatFormatting.GOLD)));
-	}
+    public static final DecimalFormat TEXT_FORMAT = new DecimalFormat("0.##");
+    
+    public static ClientTooltipComponent chance(String type, float chance) {
+        return ClientTooltipComponent.create(EmiPort.ordered(
+            EmiPort.translatable("tooltip.emi.chance." + type,
+                TEXT_FORMAT.format(chance * 100))
+                    .withStyle(ChatFormatting.GOLD)));
+    }
 
-	public static List<ClientTooltipComponent> splitTranslate(String key) {
-		return Arrays.stream(I18n.get(key).split("\n"))
-			.map(s -> ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(s)))).toList();
-	}
+    public static List<ClientTooltipComponent> splitTranslate(String key) {
+        return Arrays.stream(I18n.get(key).split("\n"))
+            .map(s -> ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(s)))).toList();
+    }
 
-	public static List<ClientTooltipComponent> splitTranslate(String key, Object... objects) {
-		return Arrays.stream(I18n.get(key, objects).split("\n"))
-			.map(s -> ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(s)))).toList();
-	}
+    public static List<ClientTooltipComponent> splitTranslate(String key, Object... objects) {
+        return Arrays.stream(I18n.get(key, objects).split("\n"))
+            .map(s -> ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(s)))).toList();
+    }
 }

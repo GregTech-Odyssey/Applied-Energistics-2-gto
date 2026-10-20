@@ -6,6 +6,6 @@ import net.minecraft.client.gui.screens.Screen;
 import java.util.function.Consumer;
 
 public interface EmiExclusionArea<T extends Screen> {
-	
-	void addExclusionArea(T screen, Consumer<Bounds> consumer);
+    
+    void addExclusionArea(T screen, Consumer<Bounds> consumer);
 }

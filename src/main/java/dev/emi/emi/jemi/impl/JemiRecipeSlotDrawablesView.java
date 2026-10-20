@@ -8,8 +8,8 @@ import java.util.List;
 
 public class JemiRecipeSlotDrawablesView implements IRecipeSlotDrawablesView {
 
-	@Override
-	public @Unmodifiable List<IRecipeSlotDrawable> getSlots() {
-		return List.of();
-	}
+    @Override
+    public @Unmodifiable List<IRecipeSlotDrawable> getSlots() {
+        return List.of();
+    }
 }

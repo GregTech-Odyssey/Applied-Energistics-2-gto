@@ -12,18 +12,18 @@ public final class EmiCraftingToolCompat {
     private static Predicate<Item> toolPredicate = item -> false;
     private static ToLongFunction<ItemStack> craftingUses = stack -> -1;
 
-	private EmiCraftingToolCompat() {
-	}
+    private EmiCraftingToolCompat() {
+    }
 
     /** Called during EMI registration; the uses function must only read its shared stack argument. */
     public static void setGtToolSupport(@NotNull Predicate<Item> predicate, @NotNull ToLongFunction<ItemStack> uses) {
         toolPredicate = predicate;
         craftingUses = uses;
-	}
+    }
 
     public static boolean isGtTool(@NotNull EmiStack stack) {
         return !stack.isEmpty() && stack.getKey() instanceof Item item && toolPredicate.test(item);
-	}
+    }
 
     public static boolean isGtTool(@NotNull ItemStack stack) {
         return !stack.isEmpty() && toolPredicate.test(stack.getItem());
@@ -31,7 +31,7 @@ public final class EmiCraftingToolCompat {
 
     public static boolean isReusable(@NotNull EmiStack stack) {
         if (stack.isEmpty())
-			return false;
+            return false;
         if (isGtTool(stack))
             return true;
         var remainder = stack.getRemainder();
@@ -53,14 +53,14 @@ public final class EmiCraftingToolCompat {
         if (expected.isEmpty() || actual.isEmpty())
             return false;
         if (expected.isEqual(actual))
-			return true;
+            return true;
         return expected.getKey().equals(actual.getKey())
                 && (isReusable(expected) || isGtTool(expected) && isGtTool(actual));
     }
 
     public static boolean matches(@NotNull ItemStack expected, @NotNull ItemStack actual) {
         if (expected.isEmpty() || actual.isEmpty())
-			return false;
+            return false;
         return ItemStack.isSameItemSameTags(expected, actual)
                 || expected.getItem() == actual.getItem() && isGtTool(expected) && isGtTool(actual);
     }

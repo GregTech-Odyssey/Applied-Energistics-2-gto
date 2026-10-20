@@ -9,47 +9,47 @@ import net.minecraft.network.chat.FormattedText;
 import java.util.List;
 
 public class JemiScrollBoxWidget implements IScrollBoxWidget {
-	private static final int SCROLL_BAR_WIDTH = 18;
-	public int x, y;
-	public int width, height;
+    private static final int SCROLL_BAR_WIDTH = 18;
+    public int x, y;
+    public int width, height;
 
-	public JemiScrollBoxWidget(int x, int y, int width, int height) {
-		this.x = x;
-		this.y = y;
-		this.width = width + SCROLL_BAR_WIDTH;
-		this.height = height;
-	}
+    public JemiScrollBoxWidget(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width + SCROLL_BAR_WIDTH;
+        this.height = height;
+    }
 
-	@Override
-	public ScreenPosition getPosition() {
-		return new ScreenPosition(x, y);
-	}
+    @Override
+    public ScreenPosition getPosition() {
+        return new ScreenPosition(x, y);
+    }
 
-	@Override
-	public ScreenRectangle getArea() {
-		return new ScreenRectangle(getPosition(), width, height);
-	}
+    @Override
+    public ScreenRectangle getArea() {
+        return new ScreenRectangle(getPosition(), width, height);
+    }
 
-	@Override
-	public int getContentAreaWidth() {
-		return width - SCROLL_BAR_WIDTH;
-	}
+    @Override
+    public int getContentAreaWidth() {
+        return width - SCROLL_BAR_WIDTH;
+    }
 
-	@Override
-	public int getContentAreaHeight() {
-		return height;
-	}
+    @Override
+    public int getContentAreaHeight() {
+        return height;
+    }
 
-	@Override
-	public IScrollBoxWidget setContents(IDrawable contents) {
-		// Unimplemented
-		return this;
-	}
+    @Override
+    public IScrollBoxWidget setContents(IDrawable contents) {
+        // Unimplemented
+        return this;
+    }
 
-	@Override
-	public IScrollBoxWidget setContents(List<FormattedText> text) {
-		// Unimplemented
-		return this;
-	}
-	
+    @Override
+    public IScrollBoxWidget setContents(List<FormattedText> text) {
+        // Unimplemented
+        return this;
+    }
+    
 }

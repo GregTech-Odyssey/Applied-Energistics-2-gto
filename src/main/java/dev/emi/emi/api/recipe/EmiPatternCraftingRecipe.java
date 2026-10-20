@@ -12,34 +12,34 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
 public abstract class EmiPatternCraftingRecipe extends EmiCraftingRecipe {
-	protected final int unique = EmiUtil.RANDOM.nextInt();
-	
-	public EmiPatternCraftingRecipe(List<EmiIngredient> input, EmiStack output, ResourceLocation id) {
-		super(input, output, id);
-	}
-	
-	public EmiPatternCraftingRecipe(List<EmiIngredient> input, EmiStack output, ResourceLocation id, boolean shapeless) {
-		super(input, output, id, shapeless);
-	}
+    protected final int unique = EmiUtil.RANDOM.nextInt();
+    
+    public EmiPatternCraftingRecipe(List<EmiIngredient> input, EmiStack output, ResourceLocation id) {
+        super(input, output, id);
+    }
+    
+    public EmiPatternCraftingRecipe(List<EmiIngredient> input, EmiStack output, ResourceLocation id, boolean shapeless) {
+        super(input, output, id, shapeless);
+    }
 
-	public abstract SlotWidget getInputWidget(int slot, int x, int y);
+    public abstract SlotWidget getInputWidget(int slot, int x, int y);
 
-	public abstract SlotWidget getOutputWidget(int x, int y);
+    public abstract SlotWidget getOutputWidget(int x, int y);
 
-	@Override
-	public void addWidgets(WidgetHolder widgets) {
-		widgets.addTexture(EmiTexture.EMPTY_ARROW, 60, 18);
-		if (shapeless) {
-			widgets.addTexture(EmiTexture.SHAPELESS, 97, 0);
-		}
-		for (int i = 0; i < 9; i++) {
-			widgets.add(getInputWidget(i, i % 3 * 18, i / 3 * 18));
-		}
-		widgets.add(getOutputWidget(92, 14).large(true).recipeContext(this));
-	}
+    @Override
+    public void addWidgets(WidgetHolder widgets) {
+        widgets.addTexture(EmiTexture.EMPTY_ARROW, 60, 18);
+        if (shapeless) {
+            widgets.addTexture(EmiTexture.SHAPELESS, 97, 0);
+        }
+        for (int i = 0; i < 9; i++) {
+            widgets.add(getInputWidget(i, i % 3 * 18, i / 3 * 18));
+        }
+        widgets.add(getOutputWidget(92, 14).large(true).recipeContext(this));
+    }
 
-	@Override
-	public boolean supportsRecipeTree() {
-		return false;
-	}
+    @Override
+    public boolean supportsRecipeTree() {
+        return false;
+    }
 }

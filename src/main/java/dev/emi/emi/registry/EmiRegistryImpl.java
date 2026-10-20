@@ -36,134 +36,134 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 public class EmiRegistryImpl implements EmiRegistry {
-	private static final Minecraft client = Minecraft.getInstance();
+    private static final Minecraft client = Minecraft.getInstance();
 
-	@Override
-	public <T extends Screen> void addScreenBoundsProvider(Class<T> clazz, EmiScreenBoundsProvider<T> provider) {
-		EmiScreenBase.addScreenBoundsProvider(clazz, provider);
-	}
+    @Override
+    public <T extends Screen> void addScreenBoundsProvider(Class<T> clazz, EmiScreenBoundsProvider<T> provider) {
+        EmiScreenBase.addScreenBoundsProvider(clazz, provider);
+    }
 
-	@Override
-	public void addGenericScreenBoundsProvider(EmiScreenBoundsProvider<Screen> provider) {
-		EmiScreenBase.addGenericScreenBoundsProvider(provider);
-	}
+    @Override
+    public void addGenericScreenBoundsProvider(EmiScreenBoundsProvider<Screen> provider) {
+        EmiScreenBase.addGenericScreenBoundsProvider(provider);
+    }
 
-	@Override
-	public boolean isStackDisabled(EmiIngredient stack) {
-		return EmiHidden.isDisabled(stack);
-	}
+    @Override
+    public boolean isStackDisabled(EmiIngredient stack) {
+        return EmiHidden.isDisabled(stack);
+    }
 
-	@Override
-	public RecipeManager getRecipeManager() {
-		return client.level.getRecipeManager();
-	}
+    @Override
+    public RecipeManager getRecipeManager() {
+        return client.level.getRecipeManager();
+    }
 
-	@Override
-	public void addCategory(EmiRecipeCategory category) {
-		dev.emi.emi.registry.EmiRecipes.addCategory(category);
-	}
+    @Override
+    public void addCategory(EmiRecipeCategory category) {
+        EmiRecipes.addCategory(category);
+    }
 
-	@Override
-	public void addWorkstation(EmiRecipeCategory category, EmiIngredient workstation) {
-		dev.emi.emi.registry.EmiRecipes.addWorkstation(category, workstation);
-	}
+    @Override
+    public void addWorkstation(EmiRecipeCategory category, EmiIngredient workstation) {
+        EmiRecipes.addWorkstation(category, workstation);
+    }
 
-	@Override
-	public void addRecipe(EmiRecipe recipe) {
-		if (recipe.getInputs() == null) {
-			EmiReloadLog.warn("Recipe " + recipe.getId() + " provides null inputs and cannot be added");
-		} else if (recipe.getOutputs() == null) {
-			EmiReloadLog.warn("Recipe " + recipe.getId() + " provides null outputs and cannot be added");
-		} else {
-			dev.emi.emi.registry.EmiRecipes.addRecipe(recipe);
-		}
-	}
+    @Override
+    public void addRecipe(EmiRecipe recipe) {
+        if (recipe.getInputs() == null) {
+            EmiReloadLog.warn("Recipe " + recipe.getId() + " provides null inputs and cannot be added");
+        } else if (recipe.getOutputs() == null) {
+            EmiReloadLog.warn("Recipe " + recipe.getId() + " provides null outputs and cannot be added");
+        } else {
+            EmiRecipes.addRecipe(recipe);
+        }
+    }
 
-	@Override
-	public void removeRecipes(Predicate<EmiRecipe> predicate) {
-		dev.emi.emi.registry.EmiRecipes.invalidators.add(predicate);
-	}
+    @Override
+    public void removeRecipes(Predicate<EmiRecipe> predicate) {
+        EmiRecipes.invalidators.add(predicate);
+    }
 
-	@Override
-	public void addDeferredRecipes(Consumer<Consumer<EmiRecipe>> consumer) {
-		dev.emi.emi.registry.EmiRecipes.lateRecipes.add(consumer);
-	}
+    @Override
+    public void addDeferredRecipes(Consumer<Consumer<EmiRecipe>> consumer) {
+        EmiRecipes.lateRecipes.add(consumer);
+    }
 
-	@Override
-	public void addEmiStack(EmiStack stack) {
-		dev.emi.emi.registry.EmiStackList.stacks.add(stack);
-	}
+    @Override
+    public void addEmiStack(EmiStack stack) {
+        EmiStackList.stacks.add(stack);
+    }
 
-	@Override
-	public void addEmiStackAfter(EmiStack stack, Predicate<EmiStack> predicate) {
-		ListIterator<EmiStack> listIterator = dev.emi.emi.registry.EmiStackList.stacks.listIterator();
-		while (listIterator.hasNext()) {
-			EmiStack candidate = listIterator.next();
-			if (predicate.test(candidate)) {
-				listIterator.add(stack);
-				return;
-			}
-		}
-	}
+    @Override
+    public void addEmiStackAfter(EmiStack stack, Predicate<EmiStack> predicate) {
+        ListIterator<EmiStack> listIterator = dev.emi.emi.registry.EmiStackList.stacks.listIterator();
+        while (listIterator.hasNext()) {
+            EmiStack candidate = listIterator.next();
+            if (predicate.test(candidate)) {
+                listIterator.add(stack);
+                return;
+            }
+        }
+    }
 
-	@Override
-	public void removeEmiStacks(Predicate<EmiStack> predicate) {
-		dev.emi.emi.registry.EmiStackList.invalidators.add(predicate);
-	}
+    @Override
+    public void removeEmiStacks(Predicate<EmiStack> predicate) {
+        EmiStackList.invalidators.add(predicate);
+    }
 
-	@Override
-	public <T extends EmiIngredient> void addIngredientSerializer(Class<T> clazz, EmiIngredientSerializer<T> serializer) {
-		dev.emi.emi.registry.EmiIngredientSerializers.BY_CLASS.put(clazz, serializer);
-		EmiIngredientSerializers.BY_TYPE.put(serializer.getType(), serializer);
-	}
+    @Override
+    public <T extends EmiIngredient> void addIngredientSerializer(Class<T> clazz, EmiIngredientSerializer<T> serializer) {
+        EmiIngredientSerializers.BY_CLASS.put(clazz, serializer);
+        EmiIngredientSerializers.BY_TYPE.put(serializer.getType(), serializer);
+    }
 
-	@Override
-	public <T extends Screen> void addExclusionArea(Class<T> clazz, EmiExclusionArea<T> area) {
-		dev.emi.emi.registry.EmiExclusionAreas.fromClass.computeIfAbsent(clazz, c -> Lists.newArrayList()).add(area);
-	}
+    @Override
+    public <T extends Screen> void addExclusionArea(Class<T> clazz, EmiExclusionArea<T> area) {
+        EmiExclusionAreas.fromClass.computeIfAbsent(clazz, c -> Lists.newArrayList()).add(area);
+    }
 
-	@Override
-	public void addGenericExclusionArea(EmiExclusionArea<Screen> area) {
-		EmiExclusionAreas.generic.add(area);
-	}
+    @Override
+    public void addGenericExclusionArea(EmiExclusionArea<Screen> area) {
+        EmiExclusionAreas.generic.add(area);
+    }
 
-	@Override
-	public <T extends Screen> void addDragDropHandler(Class<T> clazz, EmiDragDropHandler<T> handler) {
-		dev.emi.emi.registry.EmiDragDropHandlers.fromClass.computeIfAbsent(clazz, c -> Lists.newArrayList()).add(handler);
-	}
+    @Override
+    public <T extends Screen> void addDragDropHandler(Class<T> clazz, EmiDragDropHandler<T> handler) {
+        EmiDragDropHandlers.fromClass.computeIfAbsent(clazz, c -> Lists.newArrayList()).add(handler);
+    }
 
-	@Override
-	public void addGenericDragDropHandler(EmiDragDropHandler<Screen> handler) {
-		EmiDragDropHandlers.generic.add(handler);
-	}
+    @Override
+    public void addGenericDragDropHandler(EmiDragDropHandler<Screen> handler) {
+        EmiDragDropHandlers.generic.add(handler);
+    }
 
-	@Override
-	public <T extends Screen> void addStackProvider(Class<T> clazz, EmiStackProvider<T> provider) {
-		dev.emi.emi.registry.EmiStackProviders.fromClass.computeIfAbsent(clazz, c -> Lists.newArrayList()).add(provider);
-	}
+    @Override
+    public <T extends Screen> void addStackProvider(Class<T> clazz, EmiStackProvider<T> provider) {
+        EmiStackProviders.fromClass.computeIfAbsent(clazz, c -> Lists.newArrayList()).add(provider);
+    }
 
-	@Override
-	public void addGenericStackProvider(EmiStackProvider<Screen> provider) {
-		EmiStackProviders.generic.add(provider);
-	}
-	
-	@Override
-	public <T extends AbstractContainerMenu> void addRecipeHandler(MenuType<T> type, EmiRecipeHandler<T> handler) {
-		EmiRecipeFiller.handlers.computeIfAbsent(type, (c) -> Lists.newArrayList()).add(handler);
-	}
+    @Override
+    public void addGenericStackProvider(EmiStackProvider<Screen> provider) {
+        EmiStackProviders.generic.add(provider);
+    }
+    
+    @Override
+    public <T extends AbstractContainerMenu> void addRecipeHandler(MenuType<T> type, EmiRecipeHandler<T> handler) {
+        EmiRecipeFiller.handlers.computeIfAbsent(type, (c) -> Lists.newArrayList()).add(handler);
+    }
 
-	@Override
-	public void setDefaultComparison(Object key, Function<Comparison, Comparison> comparison) {
-		dev.emi.emi.registry.EmiComparisonDefaults.comparisons.put(key, comparison.apply(EmiComparisonDefaults.get(key)));
-	}
+    @Override
+    public void setDefaultComparison(Object key, Function<Comparison, Comparison> comparison) {
+        EmiComparisonDefaults.comparisons.put(key, comparison.apply(EmiComparisonDefaults.get(key)));
+    }
 
-	@Override
-	public void addAlias(EmiIngredient stack, Component text) {
-		EmiStackList.registryAliases.add(new EmiAlias.Baked(List.of(stack), List.of(text)));
-	}
+    @Override
+    public void addAlias(EmiIngredient stack, Component text) {
+        EmiStackList.registryAliases.add(new EmiAlias.Baked(List.of(stack), List.of(text)));
+    }
 
-	@Override
-	public void addRecipeDecorator(EmiRecipeDecorator decorator) {
-		EmiRecipes.decorators.add(decorator);
-	}
+    @Override
+    public void addRecipeDecorator(EmiRecipeDecorator decorator) {
+        EmiRecipes.decorators.add(decorator);
+    }
 }

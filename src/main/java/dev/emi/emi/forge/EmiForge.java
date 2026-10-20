@@ -13,22 +13,22 @@ import net.minecraftforge.network.PacketDistributor;
 @Mod("emi")
 public class EmiForge {
 
-	public EmiForge() {
-		EmiPacketHandler.init();
-		EmiNetwork.initServer((player, packet) -> {
-			EmiPacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
-		});
-		MinecraftForge.EVENT_BUS.addListener(this::registerCommands);
-		MinecraftForge.EVENT_BUS.addListener(this::playerConnect);
-	}
+    public EmiForge() {
+        EmiPacketHandler.init();
+        EmiNetwork.initServer((player, packet) -> {
+            EmiPacketHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+        });
+        MinecraftForge.EVENT_BUS.addListener(this::registerCommands);
+        MinecraftForge.EVENT_BUS.addListener(this::playerConnect);
+    }
 
-	public void registerCommands(RegisterCommandsEvent event) {
-		EmiCommands.registerCommands(event.getDispatcher());
-	}
+    public void registerCommands(RegisterCommandsEvent event) {
+        EmiCommands.registerCommands(event.getDispatcher());
+    }
 
-	public void playerConnect(PlayerEvent.PlayerLoggedInEvent event) {
-		if (event.getEntity() instanceof ServerPlayer spe) {
-			EmiNetwork.sendToClient(spe, new PingS2CPacket());
-		}
-	}
+    public void playerConnect(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer spe) {
+            EmiNetwork.sendToClient(spe, new PingS2CPacket());
+        }
+    }
 }

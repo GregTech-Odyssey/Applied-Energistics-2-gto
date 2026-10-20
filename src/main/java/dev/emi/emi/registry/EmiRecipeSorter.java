@@ -11,38 +11,38 @@ public class EmiRecipeSorter {
     private static final Reference2ObjectOpenHashMap<EmiRecipe, IntArrayList> inputCache = new Reference2ObjectOpenHashMap<>();
     private static final Reference2ObjectOpenHashMap<EmiRecipe, IntArrayList> outputCache = new Reference2ObjectOpenHashMap<>();
 
-	public static IntList getInput(EmiRecipe recipe) {
+    public static IntList getInput(EmiRecipe recipe) {
         IntArrayList list = inputCache.get(recipe);
-		if (list == null) {
-			list = bakedList(recipe.getInputs());
-			inputCache.put(recipe, list);
-		}
-		return list;
-	}
+        if (list == null) {
+            list = bakedList(recipe.getInputs());
+            inputCache.put(recipe, list);
+        }
+        return list;
+    }
 
-	public static IntList getOutput(EmiRecipe recipe) {
+    public static IntList getOutput(EmiRecipe recipe) {
         IntArrayList list = outputCache.get(recipe);
-		if (list == null) {
-			list = bakedList(recipe.getOutputs());
-			outputCache.put(recipe, list);
-		}
-		return list;
-	}
+        if (list == null) {
+            list = bakedList(recipe.getOutputs());
+            outputCache.put(recipe, list);
+        }
+        return list;
+    }
 
-	public static void clear() {
-		inputCache.clear();
-		outputCache.clear();
-	}
+    public static void clear() {
+        inputCache.clear();
+        outputCache.clear();
+    }
 
     private static IntArrayList bakedList(List<? extends EmiIngredient> stacks) {
         var list = new IntArrayList(stacks.size());
-		for (EmiIngredient stack : stacks) {
-			if (stack.isEmpty()) {
-				continue;
-			}
-			int value = EmiStackList.getIndex(stack.getEmiStacks().get(0));
-			list.add(value);
-		}
-		return list;
-	}
+        for (EmiIngredient stack : stacks) {
+            if (stack.isEmpty()) {
+                continue;
+            }
+            int value = EmiStackList.getIndex(stack.getEmiStacks().get(0));
+            list.add(value);
+        }
+        return list;
+    }
 }

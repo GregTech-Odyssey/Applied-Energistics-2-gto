@@ -4,7 +4,7 @@ import net.minecraft.network.chat.Component;
 
 public interface ConfigEnum {
 
-	String getName();
+    String getName();
 
-	Component getText();
+    Component getText();
 }

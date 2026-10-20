@@ -7,18 +7,18 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 public interface WidgetTooltipHolder<T> {
-	
-	T tooltip(BiFunction<Integer, Integer, List<ClientTooltipComponent>> tooltipSupplier);
+    
+    T tooltip(BiFunction<Integer, Integer, List<ClientTooltipComponent>> tooltipSupplier);
 
-	default T tooltip(List<ClientTooltipComponent> tooltip) {
-		return tooltip((mx, my) -> tooltip);
-	}
+    default T tooltip(List<ClientTooltipComponent> tooltip) {
+        return tooltip((mx, my) -> tooltip);
+    }
 
-	default T tooltipText(BiFunction<Integer, Integer, List<Component>> tooltipSupplier) {
-		return tooltip((x, y) -> tooltipSupplier.apply(x, y).stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).toList());
-	}
+    default T tooltipText(BiFunction<Integer, Integer, List<Component>> tooltipSupplier) {
+        return tooltip((x, y) -> tooltipSupplier.apply(x, y).stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).toList());
+    }
 
-	default T tooltipText(List<Component> tooltip) {
-		return tooltip(tooltip.stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).toList());
-	}
+    default T tooltipText(List<Component> tooltip) {
+        return tooltip(tooltip.stream().map(Component::getVisualOrderText).map(ClientTooltipComponent::create).toList());
+    }
 }

@@ -30,6 +30,8 @@ sourceSets {
         }
     }
     test {
+        // EMI integration tests exercise the same optional JEI API used to compile the adapters.
+        compileClasspath += sourceSets.main.compileClasspath
     }
     buildtools
 }
@@ -66,7 +68,7 @@ dependencies {
     guideExportOnly("org.bytedeco:ffmpeg-platform:6.0-1.5.9")
 
     // compile against provided APIs
-    modCompileOnly "mezz.jei:jei-${jei_minecraft_version}-common:${jei_version}"
+    modCompileOnly "mezz.jei:jei-${jei_minecraft_version}-common-api:${jei_version}"
     modCompileOnly "mezz.jei:jei-${jei_minecraft_version}-forge:${jei_version}"
 
     modRuntimeOnly "mezz.jei:jei-${jei_minecraft_version}-forge:${jei_version}"

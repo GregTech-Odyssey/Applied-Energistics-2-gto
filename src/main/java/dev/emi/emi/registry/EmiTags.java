@@ -27,19 +27,19 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 public class EmiTags {
-	public static final InheritanceMap<EmiRegistryAdapter<?>> ADAPTERS_BY_CLASS = new InheritanceMap<>(
+    public static final InheritanceMap<EmiRegistryAdapter<?>> ADAPTERS_BY_CLASS = new InheritanceMap<>(
             new Reference2ObjectOpenHashMap<>());
-	public static final Reference2ObjectOpenHashMap<Registry<?>, EmiRegistryAdapter<?>> ADAPTERS_BY_REGISTRY = new Reference2ObjectOpenHashMap<>();
-	public static final ResourceLocation HIDDEN_FROM_RECIPE_VIEWERS = EmiPort.id("forge", "hidden_from_recipe_viewers");
-	public static final Reference2ObjectOpenHashMap<TagKey<?>, ResourceLocation> MODELED_TAGS = new Reference2ObjectOpenHashMap<>();
+    public static final Reference2ObjectOpenHashMap<Registry<?>, EmiRegistryAdapter<?>> ADAPTERS_BY_REGISTRY = new Reference2ObjectOpenHashMap<>();
+    public static final ResourceLocation HIDDEN_FROM_RECIPE_VIEWERS = EmiPort.id("forge", "hidden_from_recipe_viewers");
+    public static final Reference2ObjectOpenHashMap<TagKey<?>, ResourceLocation> MODELED_TAGS = new Reference2ObjectOpenHashMap<>();
     private static final O2OOpenCacheHashMap<Set<?>, ObjectArrayList<EmiTagKey<?>>> CACHED_TAGS = new O2OOpenCacheHashMap<>();
-	private static final Reference2ObjectOpenHashMap<EmiTagKey<?>, List<?>> TAG_VALUES = new Reference2ObjectOpenHashMap<>();
+    private static final Reference2ObjectOpenHashMap<EmiTagKey<?>, List<?>> TAG_VALUES = new Reference2ObjectOpenHashMap<>();
     private static final O2OOpenCacheHashMap<ResourceLocation, ObjectArrayList<EmiTagKey<?>>> SORTED_TAGS = new O2OOpenCacheHashMap<>();
-	public static final List<EmiTagKey<?>> TAGS = Lists.newArrayList();
-	public static TagExclusions exclusions = new TagExclusions();
+    public static final List<EmiTagKey<?>> TAGS = Lists.newArrayList();
+    public static TagExclusions exclusions = new TagExclusions();
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <T> List<EmiStack> getValues(EmiTagKey<T> key) {
+    public static <T> List<EmiStack> getValues(EmiTagKey<T> key) {
         var values = (List<T>) TAG_VALUES.get(key);
         if (values == null)
             return Collections.emptyList();
@@ -50,10 +50,10 @@ public class EmiTags {
         for (var value : values)
             stacks.add(adapter.of(value, EmiPort.emptyExtraData(), 1));
         return stacks;
-	}
+    }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <T> List<EmiStack> getRawValues(EmiTagKey<T> key) {
+    public static <T> List<EmiStack> getRawValues(EmiTagKey<T> key) {
         var registry = key.registry();
         var values = key.getList();
         var stacks = new ObjectArrayList<EmiStack>(values.size());
@@ -66,12 +66,12 @@ public class EmiTags {
                 return Collections.emptyList();
             for (var value : values)
                 stacks.add(adapter.of(value, EmiPort.emptyExtraData(), 1));
-		}
+        }
         return stacks;
-	}
+    }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <T> EmiIngredient getIngredient(Class<T> clazz, List<EmiStack> stacks, long amount) {
+    public static <T> EmiIngredient getIngredient(Class<T> clazz, List<EmiStack> stacks, long amount) {
         var map = new Reference2ObjectOpenHashMap<T, EmiStack>(stacks.size());
         EmiStack first = null;
         for (var stack : stacks) {
@@ -83,32 +83,32 @@ public class EmiTags {
             first = stack;
         }
         if (map.isEmpty())
-			return EmiStack.EMPTY;
+            return EmiStack.EMPTY;
         if (map.size() == 1)
             return first.copy().setAmount(amount);
         var adapter = (EmiRegistryAdapter<T>) ADAPTERS_BY_CLASS.get(clazz);
         if (adapter == null)
-			return new ListEmiIngredient(stacks, amount);
+            return new ListEmiIngredient(stacks, amount);
         var keys = (ObjectArrayList<EmiTagKey<T>>) (Object) CACHED_TAGS.get(map.keySet());
-		if (keys != null) {
+        if (keys != null) {
             for (var key : keys)
                 for (var value : key.getList())
                     map.remove(value);
-		} else {
+        } else {
             keys = new ObjectArrayList<>();
             // keySet is consumed below, so the cache needs an independent, stable key snapshot.
             var original = new ReferenceOpenHashSet<>(map.keySet());
             for (var key : getTags(adapter.getRegistry())) {
                 var values = key.getList();
                 if (values.size() < 2)
-					continue;
-				if (map.keySet().containsAll(values)) {
+                    continue;
+                if (map.keySet().containsAll(values)) {
                     for (var value : values)
                         map.remove(value);
-					keys.add(key);
-				}
+                    keys.add(key);
+                }
                 if (map.isEmpty())
-					break;
+                    break;
             }
             CACHED_TAGS.put(original, (ObjectArrayList) keys);
         }
@@ -122,18 +122,18 @@ public class EmiTags {
         for (var key : keys)
             alternatives.add(tagIngredient(key, 1));
         return new ListEmiIngredient(alternatives, amount);
-	}
+    }
 
-	private static EmiIngredient tagIngredient(EmiTagKey<?> key, long amount) {
-		List<?> list = TAG_VALUES.get(key);
-		if (list == null || list.isEmpty()) {
-			return EmiStack.EMPTY;
-		} else if (list.size() == 1) {
+    private static EmiIngredient tagIngredient(EmiTagKey<?> key, long amount) {
+        List<?> list = TAG_VALUES.get(key);
+        if (list == null || list.isEmpty()) {
+            return EmiStack.EMPTY;
+        } else if (list.size() == 1) {
             return singleTagStack(key, list.getFirst(), amount);
-		} else {
-			return new TagEmiIngredient(key, amount);
-		}
-	}
+        } else {
+            return new TagEmiIngredient(key, amount);
+        }
+    }
 
     @SuppressWarnings("unchecked")
     private static <T> EmiStack singleTagStack(EmiTagKey<T> key, Object value, long amount) {
@@ -141,51 +141,51 @@ public class EmiTags {
     }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	public static <T> List<EmiTagKey<T>> getTags(Registry<T> registry) {
+    public static <T> List<EmiTagKey<T>> getTags(Registry<T> registry) {
         var tags = SORTED_TAGS.get(registry.key().location());
         return tags == null ? Collections.emptyList() : (List<EmiTagKey<T>>) (List) tags;
-	}
+    }
 
-	public static void registerTagModels(ResourceManager manager, Consumer<ResourceLocation> consumer) {
-		EmiTags.MODELED_TAGS.clear();
-		for (ResourceLocation id : EmiPort.findResources(manager, "models/tag", s -> s.endsWith(".json"))) {
-			String path = id.getPath();
-			path = path.substring(11, path.length() - 5);
-			String[] parts = path.split("/");
-			if (parts.length > 1) {
+    public static void registerTagModels(ResourceManager manager, Consumer<ResourceLocation> consumer) {
+        EmiTags.MODELED_TAGS.clear();
+        for (ResourceLocation id : EmiPort.findResources(manager, "models/tag", s -> s.endsWith(".json"))) {
+            String path = id.getPath();
+            path = path.substring(11, path.length() - 5);
+            String[] parts = path.split("/");
+            if (parts.length > 1) {
                 TagKey<?> key = TagKey.create(ResourceKey.createRegistryKey(EmiPort.id("minecraft", parts[0])),
                         EmiPort.id(id.getNamespace(), path.substring(1 + parts[0].length())));
-				ResourceLocation mid = EmiPort.id(id.getNamespace(), "tag/" + path);
-				EmiTags.MODELED_TAGS.put(key, mid);
-				consumer.accept(mid);
-			}
-		}
-		for (ResourceLocation id : EmiPort.findResources(manager, "models/item/tags", s -> s.endsWith(".json"))) {
-			String path = id.getPath();
-			path = path.substring(0, path.length() - 5);
-			String[] parts = path.substring(17).split("/");
-			if (id.getNamespace().equals("emi") && parts.length > 1) {
-				ResourceLocation mid = new ModelResourceLocation(id.getNamespace(), path.substring(12), "inventory");
+                ResourceLocation mid = EmiPort.id(id.getNamespace(), "tag/" + path);
+                EmiTags.MODELED_TAGS.put(key, mid);
+                consumer.accept(mid);
+            }
+        }
+        for (ResourceLocation id : EmiPort.findResources(manager, "models/item/tags", s -> s.endsWith(".json"))) {
+            String path = id.getPath();
+            path = path.substring(0, path.length() - 5);
+            String[] parts = path.substring(17).split("/");
+            if (id.getNamespace().equals("emi") && parts.length > 1) {
+                ResourceLocation mid = new ModelResourceLocation(id.getNamespace(), path.substring(12), "inventory");
                 EmiTags.MODELED_TAGS.put(TagKey.create(EmiPort.getItemRegistry().key(),
                         EmiPort.id(parts[0], path.substring(18 + parts[0].length()))), mid);
-				consumer.accept(mid);
-			}
-		}
-	}
+                consumer.accept(mid);
+            }
+        }
+    }
 
-	public static void reload() {
-		EmiTagKey.reload();
-		TAGS.clear();
-		SORTED_TAGS.clear();
-		TAG_VALUES.clear();
-		CACHED_TAGS.clear();
-		for (Registry<?> registry : ADAPTERS_BY_REGISTRY.keySet()) {
-			reloadTags(registry);
-		}
-	}
+    public static void reload() {
+        EmiTagKey.reload();
+        TAGS.clear();
+        SORTED_TAGS.clear();
+        TAG_VALUES.clear();
+        CACHED_TAGS.clear();
+        for (Registry<?> registry : ADAPTERS_BY_REGISTRY.keySet()) {
+            reloadTags(registry);
+        }
+    }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	private static <T> void reloadTags(Registry<T> registry) {
+    private static <T> void reloadTags(Registry<T> registry) {
         var hidden = EmiTagKey.of(registry, HIDDEN_FROM_RECIPE_VIEWERS).getSet();
         var rid = registry.key().location();
         var tags = new ObjectArrayList<EmiTagKey<T>>();
@@ -195,8 +195,8 @@ public class EmiTags {
             if (!exclusions.contains(rid, key.id()) && !hidden.containsAll(key.getList()))
                 tags.add(key);
         }
-		logUntranslatedTags(tags);
-		tags = consolodateTags(tags);
+        logUntranslatedTags(tags);
+        tags = consolodateTags(tags);
         var adapter = (EmiRegistryAdapter<T>) ADAPTERS_BY_REGISTRY.get(registry);
         for (var key : tags) {
             var original = key.getList();
@@ -204,43 +204,43 @@ public class EmiTags {
             for (var value : original) {
                 if (!EmiHidden.isDisabled(adapter.of(value, EmiPort.emptyExtraData(), 1)))
                     visible.add(value);
-			}
+            }
             TAG_VALUES.put(key, visible.isEmpty() ? original : visible);
-		}
+        }
         var byName = tags.clone();
         byName.sort(Comparator.comparing(EmiTagKey::idString));
         TAGS.addAll(byName);
         tags.sort((a, b) -> Integer.compare(b.getList().size(), a.getList().size()));
         SORTED_TAGS.put(rid, (ObjectArrayList) tags);
-	}
+    }
 
-	@SuppressWarnings("unchecked")
-	private static <T> EmiStack stackFromKey(EmiTagKey<T> key, T t) {
-		EmiRegistryAdapter<T> adapter = (EmiRegistryAdapter<T>) ADAPTERS_BY_REGISTRY.get(key.registry());
-		if (adapter != null) {
-			return adapter.of(t, EmiPort.emptyExtraData(), 1);
-		}
-		throw new UnsupportedOperationException("Unsupported tag registry " + key);
-	}
+    @SuppressWarnings("unchecked")
+    private static <T> EmiStack stackFromKey(EmiTagKey<T> key, T t) {
+        EmiRegistryAdapter<T> adapter = (EmiRegistryAdapter<T>) ADAPTERS_BY_REGISTRY.get(key.registry());
+        if (adapter != null) {
+            return adapter.of(t, EmiPort.emptyExtraData(), 1);
+        }
+        throw new UnsupportedOperationException("Unsupported tag registry " + key);
+    }
 
-	private static <T> void logUntranslatedTags(List<EmiTagKey<T>> tags) {
-		if (EmiConfig.logUntranslatedTags) {
+    private static <T> void logUntranslatedTags(List<EmiTagKey<T>> tags) {
+        if (EmiConfig.logUntranslatedTags) {
             var untranslated = new ObjectArrayList<String>(tags.size());
-			for (EmiTagKey<T> tag : tags) {
-				if (!tag.hasTranslation()) {
-					untranslated.add(tag.id().toString());
-				}
-			}
-			if (!untranslated.isEmpty()) {
+            for (EmiTagKey<T> tag : tags) {
+                if (!tag.hasTranslation()) {
+                    untranslated.add(tag.id().toString());
+                }
+            }
+            if (!untranslated.isEmpty()) {
                 untranslated.sort(Comparator.naturalOrder());
                 for (String tag : untranslated) {
-					EmiReloadLog.warn("Untranslated tag #" + tag);
-				}
+                    EmiReloadLog.warn("Untranslated tag #" + tag);
+                }
                 EmiReloadLog.info(
                         " Tag warning can be disabled in the config, EMI docs describe how to add a translation or exclude tags.");
-			}
-		}
-	}
+            }
+        }
+    }
 
     private static <T> ObjectArrayList<EmiTagKey<T>> consolodateTags(ObjectArrayList<EmiTagKey<T>> tags) {
         var map = new O2OOpenCacheHashMap<Set<T>, EmiTagKey<T>>(tags.size());
@@ -250,28 +250,28 @@ public class EmiTags {
             map.put(values, original == null ? key : betterTag(key, original));
         }
         return new ObjectArrayList<>(map.values());
-	}
+    }
 
     private static <T> EmiTagKey<T> betterTag(EmiTagKey<T> a, EmiTagKey<T> b) {
-		if (a.hasTranslation() != b.hasTranslation()) {
-			return a.hasTranslation() ? a : b;
-		}
-		if (a.hasCustomModel() != b.hasCustomModel()) {
-			return a.hasCustomModel() ? a : b;
-		}
-		String an = a.id().getNamespace();
-		String bn = b.id().getNamespace();
-		if (!an.equals(bn)) {
-			if (an.equals("minecraft")) {
-				return a;
-			} else if (bn.equals("minecraft")) {
-				return b;
-			} else if (an.equals("forge")) {
-				return a;
-			} else if (bn.equals("forge")) {
-				return b;
-			}
-		}
+        if (a.hasTranslation() != b.hasTranslation()) {
+            return a.hasTranslation() ? a : b;
+        }
+        if (a.hasCustomModel() != b.hasCustomModel()) {
+            return a.hasCustomModel() ? a : b;
+        }
+        String an = a.id().getNamespace();
+        String bn = b.id().getNamespace();
+        if (!an.equals(bn)) {
+            if (an.equals("minecraft")) {
+                return a;
+            } else if (bn.equals("minecraft")) {
+                return b;
+            } else if (an.equals("forge")) {
+                return a;
+            } else if (bn.equals("forge")) {
+                return b;
+            }
+        }
         return a.idString().length() <= b.idString().length() ? a : b;
-	}
+    }
 }

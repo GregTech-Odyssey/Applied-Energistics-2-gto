@@ -5,24 +5,24 @@ import dev.emi.emi.config.ConfigEnum;
 import net.minecraft.network.chat.Component;
 
 public enum IndexSource implements ConfigEnum {
-	CREATIVE("creative"),
-	REGISTERED("registered"),
-	CREATIVE_PLUS_REGISTERED("creative-plus-registered"),
-	;
+    CREATIVE("creative"),
+    REGISTERED("registered"),
+    CREATIVE_PLUS_REGISTERED("creative-plus-registered"),
+    ;
 
-	public final String name;
+    public final String name;
 
-	private IndexSource(String name) {
-		this.name = name;
-	}
+    private IndexSource(String name) {
+        this.name = name;
+    }
 
-	@Override
-	public String getName() {
-		return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
-	@Override
-	public Component getText() {
-		return EmiPort.translatable("emi.index_source." + name.replace("-", "_"));
-	}
+    @Override
+    public Component getText() {
+        return EmiPort.translatable("emi.index_source." + name.replace("-", "_"));
+    }
 }

@@ -9,13 +9,13 @@ import net.minecraft.resources.ResourceLocation;
 
 public class FluidEmiStackSerializer implements EmiStackSerializer<FluidEmiStack> {
 
-	@Override
-	public String getType() {
-		return "fluid";
-	}
+    @Override
+    public String getType() {
+        return "fluid";
+    }
 
-	@Override
-	public EmiStack create(ResourceLocation id, CompoundTag nbt, long amount) {
-		return EmiStack.of(EmiPort.getFluidRegistry().get(id), nbt, amount);
-	}
+    @Override
+    public EmiStack create(ResourceLocation id, CompoundTag nbt, long amount) {
+        return EmiStack.of(EmiPort.getFluidRegistry().get(id), nbt, amount);
+    }
 }

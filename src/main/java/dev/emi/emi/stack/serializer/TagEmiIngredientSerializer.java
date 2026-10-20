@@ -17,59 +17,59 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class TagEmiIngredientSerializer implements EmiIngredientSerializer<TagEmiIngredient> {
-	static final Pattern STACK_REGEX = Pattern.compile("^#([\\w_\\-.:]+):([\\w_\\-.]+):([\\w_\\-./]+)(\\{.*\\})?$");
+    static final Pattern STACK_REGEX = Pattern.compile("^#([\\w_\\-.:]+):([\\w_\\-.]+):([\\w_\\-./]+)(\\{.*\\})?$");
 
-	@Override
-	public String getType() {
-		return "tag";
-	}
+    @Override
+    public String getType() {
+        return "tag";
+    }
 
-	@Override
-	public EmiIngredient deserialize(JsonElement element) {
-		if (GsonHelper.isStringValue(element)) {
-			String s = element.getAsString();
-			Matcher m = STACK_REGEX.matcher(s);
-			if (m.matches()) {
-				ResourceLocation registry = EmiPort.id(m.group(1));
-				ResourceLocation id = EmiPort.id(m.group(2), m.group(3));
-				return EmiIngredient.of(TagKey.create(ResourceKey.createRegistryKey(registry), id), 1);
-			}
-		} else if (element.isJsonObject()) {
-			JsonObject json = element.getAsJsonObject();
-			ResourceLocation registry = EmiPort.id(json.get("registry").getAsString());
-			ResourceLocation id = EmiPort.id(json.get("id").getAsString());
-			long amount = GsonHelper.getAsLong(json, "amount", 1);
-			float chance = GsonHelper.getAsFloat(json, "chance", 1);
-			EmiIngredient stack = EmiIngredient.of(TagKey.create(ResourceKey.createRegistryKey(registry), id), amount);
-			if (chance != 1) {
-				stack.setChance(chance);
-			}
-			return stack;
-		}
-		return EmiStack.EMPTY;
-	}
+    @Override
+    public EmiIngredient deserialize(JsonElement element) {
+        if (GsonHelper.isStringValue(element)) {
+            String s = element.getAsString();
+            Matcher m = STACK_REGEX.matcher(s);
+            if (m.matches()) {
+                ResourceLocation registry = EmiPort.id(m.group(1));
+                ResourceLocation id = EmiPort.id(m.group(2), m.group(3));
+                return EmiIngredient.of(TagKey.create(ResourceKey.createRegistryKey(registry), id), 1);
+            }
+        } else if (element.isJsonObject()) {
+            JsonObject json = element.getAsJsonObject();
+            ResourceLocation registry = EmiPort.id(json.get("registry").getAsString());
+            ResourceLocation id = EmiPort.id(json.get("id").getAsString());
+            long amount = GsonHelper.getAsLong(json, "amount", 1);
+            float chance = GsonHelper.getAsFloat(json, "chance", 1);
+            EmiIngredient stack = EmiIngredient.of(TagKey.create(ResourceKey.createRegistryKey(registry), id), amount);
+            if (chance != 1) {
+                stack.setChance(chance);
+            }
+            return stack;
+        }
+        return EmiStack.EMPTY;
+    }
 
-	@Override
-	public JsonElement serialize(TagEmiIngredient stack) {
-		if (stack.getAmount() == 1 && stack.getChance() == 1) {
-			String type = switch(stack.key.registry().location().toString()) {
-				case "minecraft:item" -> "item";
-				case "minecraft:fluid" -> "fluid";
-				default -> null;
-			};
-			return new JsonPrimitive("#" + type + ":" + stack.key.location());
-		} else {
-			JsonObject json = new JsonObject();
-			json.addProperty("type", "tag");
-			json.addProperty("registry", stack.key.registry().location().toString());
-			json.addProperty("id", stack.key.location().toString());
-			if (stack.getAmount() != 1) {
-				json.addProperty("amount", stack.getAmount());
-			}
-			if (stack.getChance() != 1) {
-				json.addProperty("chance", stack.getChance());
-			}
-			return json;
-		}
-	}
+    @Override
+    public JsonElement serialize(TagEmiIngredient stack) {
+        if (stack.getAmount() == 1 && stack.getChance() == 1) {
+            String type = switch(stack.key.registry().location().toString()) {
+                case "minecraft:item" -> "item";
+                case "minecraft:fluid" -> "fluid";
+                default -> null;
+            };
+            return new JsonPrimitive("#" + type + ":" + stack.key.location());
+        } else {
+            JsonObject json = new JsonObject();
+            json.addProperty("type", "tag");
+            json.addProperty("registry", stack.key.registry().location().toString());
+            json.addProperty("id", stack.key.location().toString());
+            if (stack.getAmount() != 1) {
+                json.addProperty("amount", stack.getAmount());
+            }
+            if (stack.getChance() != 1) {
+                json.addProperty("chance", stack.getChance());
+            }
+            return json;
+        }
+    }
 }

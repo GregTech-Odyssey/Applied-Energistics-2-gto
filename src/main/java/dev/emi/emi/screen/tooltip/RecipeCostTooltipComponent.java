@@ -17,102 +17,102 @@ import java.util.List;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class RecipeCostTooltipComponent implements EmiTooltipComponent {
-	private static final Component COST = EmiPort.translatable("emi.cost_per");
-	private final List<Node> nodes = Lists.newArrayList();
-	public final MaterialTree tree;
-	private int maxWidth = 0;
+    private static final Component COST = EmiPort.translatable("emi.cost_per");
+    private final List<Node> nodes = Lists.newArrayList();
+    public final MaterialTree tree;
+    private int maxWidth = 0;
 
-	public RecipeCostTooltipComponent(EmiRecipe recipe) {
-		tree = new MaterialTree(recipe);
-		tree.batches = tree.cost.getIdealBatch(tree.goal, 1, 1);
-		tree.calculateCost();
-		addNodes();
-	}
+    public RecipeCostTooltipComponent(EmiRecipe recipe) {
+        tree = new MaterialTree(recipe);
+        tree.batches = tree.cost.getIdealBatch(tree.goal, 1, 1);
+        tree.calculateCost();
+        addNodes();
+    }
 
-	public boolean shouldDisplay() {
-		return !nodes.isEmpty();
-	}
+    public boolean shouldDisplay() {
+        return !nodes.isEmpty();
+    }
 
-	public void addNodes() {
-		double batches = tree.batches;
+    public void addNodes() {
+        double batches = tree.batches;
         var costs = new ObjectArrayList<FlatMaterialCost>(tree.cost.costs.size() + tree.cost.chanceCosts.size());
         costs.addAll(tree.cost.costs.values());
         costs.addAll(tree.cost.chanceCosts.values());
         costs.sort((a, b) -> Integer.compare(
                 EmiStackList.getIndex(a.ingredient.getEmiStacks().get(0)),
                 EmiStackList.getIndex(b.ingredient.getEmiStacks().get(0))));
-		for (FlatMaterialCost cost : costs) {
-			if (cost instanceof ChanceMaterialCost cmc) {
-				nodes.add(new Node(cost.ingredient, cost.amount / batches * cmc.chance, true));
-			} else {
-				nodes.add(new Node(cost.ingredient, cost.amount / batches, false));
-			}
-		}
-		positionNodes();
-	}
+        for (FlatMaterialCost cost : costs) {
+            if (cost instanceof ChanceMaterialCost cmc) {
+                nodes.add(new Node(cost.ingredient, cost.amount / batches * cmc.chance, true));
+            } else {
+                nodes.add(new Node(cost.ingredient, cost.amount / batches, false));
+            }
+        }
+        positionNodes();
+    }
 
-	public void positionNodes() {
-		int wrapWidth = getWrapWidth();
-		int padding = 8;
-		int x = 0;
-		int y = 10;
-		maxWidth = 0;
-		for (Node node : nodes) {
-			int width = 16 + EmiRenderHelper.getAmountOverflow(node.text);
-			if (x + width > wrapWidth) {
-				x = 0;
-				y += 18;
-			}
-			maxWidth = Math.max(maxWidth, x + width);
-			node.x = x;
-			node.y = y;
-			x += width + padding;
-		}
-	}
+    public void positionNodes() {
+        int wrapWidth = getWrapWidth();
+        int padding = 8;
+        int x = 0;
+        int y = 10;
+        maxWidth = 0;
+        for (Node node : nodes) {
+            int width = 16 + EmiRenderHelper.getAmountOverflow(node.text);
+            if (x + width > wrapWidth) {
+                x = 0;
+                y += 18;
+            }
+            maxWidth = Math.max(maxWidth, x + width);
+            node.x = x;
+            node.y = y;
+            x += width + padding;
+        }
+    }
 
-	public int getWrapWidth() {
-		return 160;
-	}
+    public int getWrapWidth() {
+        return 160;
+    }
 
-	@Override
-	public int getHeight() {
-		if (!nodes.isEmpty()) {
-			return nodes.get(nodes.size() - 1).y + 18;
-		}
-		return 10;
-	}
+    @Override
+    public int getHeight() {
+        if (!nodes.isEmpty()) {
+            return nodes.get(nodes.size() - 1).y + 18;
+        }
+        return 10;
+    }
 
-	@Override
-	public int getWidth(Font textRenderer) {
-		return Math.max(textRenderer.width(COST), maxWidth);
-	}
+    @Override
+    public int getWidth(Font textRenderer) {
+        return Math.max(textRenderer.width(COST), maxWidth);
+    }
 
-	@Override
-	public void drawTooltip(EmiDrawContext context, TooltipRenderData render) {
-		for (Node node : nodes) {
-			context.drawStack(node.stack, node.x, node.y, ~EmiIngredient.RENDER_AMOUNT);
-			EmiRenderHelper.renderAmount(context, node.x, node.y, node.text);
-		}
-	}
+    @Override
+    public void drawTooltip(EmiDrawContext context, TooltipRenderData render) {
+        for (Node node : nodes) {
+            context.drawStack(node.stack, node.x, node.y, ~EmiIngredient.RENDER_AMOUNT);
+            EmiRenderHelper.renderAmount(context, node.x, node.y, node.text);
+        }
+    }
 
-	@Override
-	public void drawTooltipText(TextRenderData text) {
-		text.draw(COST, 0, 0, ChatFormatting.GRAY.getColor(), true);
-	}
+    @Override
+    public void drawTooltipText(TextRenderData text) {
+        text.draw(COST, 0, 0, ChatFormatting.GRAY.getColor(), true);
+    }
 
-	private static class Node {
-		public final EmiIngredient stack;
-		public final Component text;
-		public int x, y;
+    private static class Node {
+        public final EmiIngredient stack;
+        public final Component text;
+        public int x, y;
 
-		public Node(EmiIngredient stack, double amount, boolean chanced) {
-			this.stack = stack;
-			if (chanced) {
+        public Node(EmiIngredient stack, double amount, boolean chanced) {
+            this.stack = stack;
+            if (chanced) {
                 text = EmiPort.append(EmiPort.literal("≈"), EmiRenderHelper.getAmountText(stack, amount))
                         .withStyle(ChatFormatting.GOLD);
-			} else {
-				text = EmiRenderHelper.getAmountText(stack, amount);
-			}
-		}
-	}
+            } else {
+                text = EmiRenderHelper.getAmountText(stack, amount);
+            }
+        }
+    }
 }

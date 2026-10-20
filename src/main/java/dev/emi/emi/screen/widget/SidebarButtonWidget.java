@@ -15,43 +15,43 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 public class SidebarButtonWidget extends SizedButtonWidget {
-	private final SidebarPanel panel;
+    private final SidebarPanel panel;
 
-	public SidebarButtonWidget(int x, int y, int width, int height, SidebarPanel panel) {
-		super(x, y, width, height, 0, 0, () -> {
-			return panel.pages.pages.size() > 0;
-		}, null, () -> 0, () -> {
-			List<Component> list = Lists.newArrayList();
-			list.add(panel.getType().getText());
-			list.add(panel.getType().getDescription());
-			if (panel.getType() == SidebarType.FAVORITES && EmiConfig.favorite.isBound()) {
-				list.add(EmiPort.translatable("emi.sidebar.favorite_stack", EmiConfig.favorite.getBindText()).withStyle(ChatFormatting.GRAY));
-			}
-			if (panel.pages.pages.size() > 1) {
-				list.add(EmiPort.translatable("emi.sidebar.cycle", EmiBind.LEFT_CLICK.getBindText()).withStyle(ChatFormatting.GRAY));
-			}
-			return list;
-		});
-		this.panel = panel;
-		texture = EmiRenderHelper.WIDGETS;
-	}
+    public SidebarButtonWidget(int x, int y, int width, int height, SidebarPanel panel) {
+        super(x, y, width, height, 0, 0, () -> {
+            return panel.pages.pages.size() > 0;
+        }, null, () -> 0, () -> {
+            List<Component> list = Lists.newArrayList();
+            list.add(panel.getType().getText());
+            list.add(panel.getType().getDescription());
+            if (panel.getType() == SidebarType.FAVORITES && EmiConfig.favorite.isBound()) {
+                list.add(EmiPort.translatable("emi.sidebar.favorite_stack", EmiConfig.favorite.getBindText()).withStyle(ChatFormatting.GRAY));
+            }
+            if (panel.pages.pages.size() > 1) {
+                list.add(EmiPort.translatable("emi.sidebar.cycle", EmiBind.LEFT_CLICK.getBindText()).withStyle(ChatFormatting.GRAY));
+            }
+            return list;
+        });
+        this.panel = panel;
+        texture = EmiRenderHelper.WIDGETS;
+    }
 
-	@Override
-	public void onPress() {
-		panel.cycleType(EmiInput.isShiftDown() ? -1 : 1);
-	}
+    @Override
+    public void onPress() {
+        panel.cycleType(EmiInput.isShiftDown() ? -1 : 1);
+    }
 
-	@Override
-	protected int getU(int mouseX, int mouseY) {
-		return panel.getType().u;
-	}
+    @Override
+    protected int getU(int mouseX, int mouseY) {
+        return panel.getType().u;
+    }
 
-	@Override
-	protected int getV(int mouseX, int mouseY) {
-		this.v = panel.getType().v;
-		if (!this.active) {
-			return super.getV(mouseX, mouseY) - height * 2;
-		}
-		return super.getV(mouseX, mouseY);
-	}
+    @Override
+    protected int getV(int mouseX, int mouseY) {
+        this.v = panel.getType().v;
+        if (!this.active) {
+            return super.getV(mouseX, mouseY) - height * 2;
+        }
+        return super.getV(mouseX, mouseY);
+    }
 }

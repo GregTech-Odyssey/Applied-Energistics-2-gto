@@ -17,61 +17,61 @@ import java.util.Optional;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class JemiIngredientConsumer implements IIngredientConsumer {
-	public List<EmiIngredient> stacks = Lists.newArrayList();
+    public List<EmiIngredient> stacks = Lists.newArrayList();
 
-	@Override
-	public <I> IIngredientConsumer addIngredients(IIngredientType<I> ingredientType, List<@Nullable I> ingredients) {
-		for (I i : ingredients) {
-			addIngredient(ingredientType, i);
-		}
-		return this;
-	}
+    @Override
+    public <I> IIngredientConsumer addIngredients(IIngredientType<I> ingredientType, List<@Nullable I> ingredients) {
+        for (I i : ingredients) {
+            addIngredient(ingredientType, i);
+        }
+        return this;
+    }
 
-	@Override
-	public <I> IIngredientConsumer addIngredient(IIngredientType<I> ingredientType, I ingredient) {
-		stacks.add(JemiUtil.getStack(ingredientType, ingredient));
-		return this;
-	}
+    @Override
+    public <I> IIngredientConsumer addIngredient(IIngredientType<I> ingredientType, I ingredient) {
+        stacks.add(JemiUtil.getStack(ingredientType, ingredient));
+        return this;
+    }
 
-	@Override
-	public IIngredientConsumer addIngredientsUnsafe(List<?> ingredients) {
-		for (Object o : ingredients) {
-			stacks.add(JemiUtil.getStack(o));
-		}
-		return this;
-	}
+    @Override
+    public IIngredientConsumer addIngredientsUnsafe(List<?> ingredients) {
+        for (Object o : ingredients) {
+            stacks.add(JemiUtil.getStack(o));
+        }
+        return this;
+    }
 
-	@Override
-	public IIngredientConsumer addTypedIngredients(List<ITypedIngredient<?>> ingredients) {
-		for (ITypedIngredient i : ingredients) {
-			addIngredient(i.getType(), i.getIngredient());
-		}
-		return this;
-	}
+    @Override
+    public IIngredientConsumer addTypedIngredients(List<ITypedIngredient<?>> ingredients) {
+        for (ITypedIngredient i : ingredients) {
+            addIngredient(i.getType(), i.getIngredient());
+        }
+        return this;
+    }
 
-	@Override
-	public IIngredientConsumer addOptionalTypedIngredients(List<Optional<ITypedIngredient<?>>> ingredients) {
-		for (Optional<ITypedIngredient<?>> i : ingredients) {
-			if (i.isPresent()) {
-				ITypedIngredient t = i.get();
-				addIngredient(t.getType(), t.getIngredient());
-			}
-		}
-		return this;
-	}
+    @Override
+    public IIngredientConsumer addOptionalTypedIngredients(List<Optional<ITypedIngredient<?>>> ingredients) {
+        for (Optional<ITypedIngredient<?>> i : ingredients) {
+            if (i.isPresent()) {
+                ITypedIngredient t = i.get();
+                addIngredient(t.getType(), t.getIngredient());
+            }
+        }
+        return this;
+    }
 
-	@Override
-	public IIngredientConsumer addFluidStack(Fluid fluid) {
-		return addFluidStack(fluid, FluidUnit.BUCKET);
-	}
+    @Override
+    public IIngredientConsumer addFluidStack(Fluid fluid) {
+        return addFluidStack(fluid, FluidUnit.BUCKET);
+    }
 
-	@Override
-	public IIngredientConsumer addFluidStack(Fluid fluid, long amount) {
-		return addFluidStack(fluid, amount, null);
-	}
+    @Override
+    public IIngredientConsumer addFluidStack(Fluid fluid, long amount) {
+        return addFluidStack(fluid, amount, null);
+    }
 
-	public IIngredientConsumer addFluidStack(Fluid fluid, long amount, CompoundTag nbt) {
-		stacks.add(EmiStack.of(fluid, nbt, amount));
-		return this;
-	}
+    public IIngredientConsumer addFluidStack(Fluid fluid, long amount, CompoundTag nbt) {
+        stacks.add(EmiStack.of(fluid, nbt, amount));
+        return this;
+    }
 }

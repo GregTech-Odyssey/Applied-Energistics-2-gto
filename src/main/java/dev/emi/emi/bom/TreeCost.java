@@ -16,249 +16,249 @@ import java.util.List;
 import java.util.Map;
 
 public class TreeCost {
-	public Map<EmiIngredient, FlatMaterialCost> costs = Maps.newHashMap();
-	public Map<EmiIngredient, ChanceMaterialCost> chanceCosts = Maps.newHashMap();
-	public Map<EmiStack, FlatMaterialCost> remainders = Maps.newHashMap();
-	public Map<EmiStack, ChanceMaterialCost> chanceRemainders = Maps.newHashMap();
+    public Map<EmiIngredient, FlatMaterialCost> costs = Maps.newHashMap();
+    public Map<EmiIngredient, ChanceMaterialCost> chanceCosts = Maps.newHashMap();
+    public Map<EmiStack, FlatMaterialCost> remainders = Maps.newHashMap();
+    public Map<EmiStack, ChanceMaterialCost> chanceRemainders = Maps.newHashMap();
 
-	public void calculate(dev.emi.emi.bom.MaterialNode node, long batches) {
-		costs.clear();
-		chanceCosts.clear();
-		remainders.clear();
-		chanceRemainders.clear();
-		calculateCost(node, batches * node.amount, dev.emi.emi.bom.ChanceState.DEFAULT, false);
-	}
+    public void calculate(MaterialNode node, long batches) {
+        costs.clear();
+        chanceCosts.clear();
+        remainders.clear();
+        chanceRemainders.clear();
+        calculateCost(node, batches * node.amount, ChanceState.DEFAULT, false);
+    }
 
-	public void calculateProgress(dev.emi.emi.bom.MaterialNode node, long batches, EmiPlayerInventory inventory) {
-		costs.clear();
-		chanceCosts.clear();
-		remainders.clear();
-		chanceRemainders.clear();
-		for (EmiStack stack : inventory.inventory.values()) {
-			stack = stack.copy();
-			remainders.put(stack, new FlatMaterialCost(stack, stack.getAmount()));
-		}
-		calculateCost(node, batches * node.amount, dev.emi.emi.bom.ChanceState.DEFAULT, true);
-	}
+    public void calculateProgress(MaterialNode node, long batches, EmiPlayerInventory inventory) {
+        costs.clear();
+        chanceCosts.clear();
+        remainders.clear();
+        chanceRemainders.clear();
+        for (EmiStack stack : inventory.inventory.values()) {
+            stack = stack.copy();
+            remainders.put(stack, new FlatMaterialCost(stack, stack.getAmount()));
+        }
+        calculateCost(node, batches * node.amount, ChanceState.DEFAULT, true);
+    }
 
-	private void addCost(EmiIngredient stack, long amount, long minBatch, dev.emi.emi.bom.ChanceState chance) {
-		if (chance.chanced()) {
-			if (chanceCosts.containsKey(stack)) {
-				chanceCosts.get(stack).merge(amount, chance.chance());
-			} else {
-				chanceCosts.put(stack, new ChanceMaterialCost(stack, amount, chance.chance()));
-			}
-			chanceCosts.get(stack).minBatch(minBatch);
-		} else {
-			if (costs.containsKey(stack)) {
-				costs.get(stack).amount += amount;
-			} else {
-				costs.put(stack, new FlatMaterialCost(stack, amount));
-			}
-		}
-	}
+    private void addCost(EmiIngredient stack, long amount, long minBatch, ChanceState chance) {
+        if (chance.chanced()) {
+            if (chanceCosts.containsKey(stack)) {
+                chanceCosts.get(stack).merge(amount, chance.chance());
+            } else {
+                chanceCosts.put(stack, new ChanceMaterialCost(stack, amount, chance.chance()));
+            }
+            chanceCosts.get(stack).minBatch(minBatch);
+        } else {
+            if (costs.containsKey(stack)) {
+                costs.get(stack).amount += amount;
+            } else {
+                costs.put(stack, new FlatMaterialCost(stack, amount));
+            }
+        }
+    }
 
-	private void addRemainder(EmiStack stack, long amount, dev.emi.emi.bom.ChanceState chance) {
-		if (amount > 0) {
-			stack = stack.copy().setAmount(1);
-			if (chance.chanced()) {
-				if (chanceRemainders.containsKey(stack)) {
-					chanceRemainders.get(stack).merge(amount, chance.chance());
-				} else {
-					chanceRemainders.put(stack, new ChanceMaterialCost(stack, amount, chance.chance()));
-				}
-			} else {
-				if (remainders.containsKey(stack)) {
-					remainders.get(stack).amount += amount;
-				} else {
-					remainders.put(stack, new FlatMaterialCost(stack, amount));
-				}
-			}
-		}
-	}
+    private void addRemainder(EmiStack stack, long amount, ChanceState chance) {
+        if (amount > 0) {
+            stack = stack.copy().setAmount(1);
+            if (chance.chanced()) {
+                if (chanceRemainders.containsKey(stack)) {
+                    chanceRemainders.get(stack).merge(amount, chance.chance());
+                } else {
+                    chanceRemainders.put(stack, new ChanceMaterialCost(stack, amount, chance.chance()));
+                }
+            } else {
+                if (remainders.containsKey(stack)) {
+                    remainders.get(stack).amount += amount;
+                } else {
+                    remainders.put(stack, new FlatMaterialCost(stack, amount));
+                }
+            }
+        }
+    }
 
-	private double getChancedRemainder(EmiStack stack, double desired, boolean catalyst, dev.emi.emi.bom.ChanceState chance) {
-		double given = 0;
-		ChanceMaterialCost chancedRemainder = chanceRemainders.get(stack);
-		if (chancedRemainder != null) {
-			double remainderEff = chancedRemainder.amount * chancedRemainder.chance;
-			if (remainderEff >= desired) {
-				if (!catalyst) {
-					chancedRemainder.amount = 1;
-					chancedRemainder.chance = (float) (remainderEff - desired);
-					if (chancedRemainder.chance == 0) {
-						chanceRemainders.remove(stack);
-					}
-				}
-				return desired;
-			} else {
-				given = remainderEff;
-				if (!catalyst) {
-					double leftover = remainderEff - (given * chance.chance());
-					if (leftover == 0) {
-						chanceRemainders.remove(stack);
-					} else {
-						chancedRemainder.amount = 1;
-						chancedRemainder.chance = (float) leftover;
-					}
-				}
-			}
-		} else {
-			FlatMaterialCost remainder = remainders.get(stack);
-			if (remainder != null) {
-				// TODO add partial chanced remainders
-				if (remainder.amount >= desired) {
-					if (!catalyst) {
-						remainder.amount -= desired;
-						if (remainder.amount == 0) {
-							remainders.remove(stack);
-						}
-					}
-					return desired;
-				} else {
-					if (!catalyst) {
-						remainders.remove(stack);
-					}
-					given += remainder.amount;
-				}
-			}
-		}
-		return given;
-	}
+    private double getChancedRemainder(EmiStack stack, double desired, boolean catalyst, ChanceState chance) {
+        double given = 0;
+        ChanceMaterialCost chancedRemainder = chanceRemainders.get(stack);
+        if (chancedRemainder != null) {
+            double remainderEff = chancedRemainder.amount * chancedRemainder.chance;
+            if (remainderEff >= desired) {
+                if (!catalyst) {
+                    chancedRemainder.amount = 1;
+                    chancedRemainder.chance = (float) (remainderEff - desired);
+                    if (chancedRemainder.chance == 0) {
+                        chanceRemainders.remove(stack);
+                    }
+                }
+                return desired;
+            } else {
+                given = remainderEff;
+                if (!catalyst) {
+                    double leftover = remainderEff - (given * chance.chance());
+                    if (leftover == 0) {
+                        chanceRemainders.remove(stack);
+                    } else {
+                        chancedRemainder.amount = 1;
+                        chancedRemainder.chance = (float) leftover;
+                    }
+                }
+            }
+        } else {
+            FlatMaterialCost remainder = remainders.get(stack);
+            if (remainder != null) {
+                // TODO add partial chanced remainders
+                if (remainder.amount >= desired) {
+                    if (!catalyst) {
+                        remainder.amount -= desired;
+                        if (remainder.amount == 0) {
+                            remainders.remove(stack);
+                        }
+                    }
+                    return desired;
+                } else {
+                    if (!catalyst) {
+                        remainders.remove(stack);
+                    }
+                    given += remainder.amount;
+                }
+            }
+        }
+        return given;
+    }
 
-	private long getRemainder(EmiStack stack, long desired, boolean catalyst) {
-		FlatMaterialCost remainder = remainders.get(stack);
-		if (remainder != null) {
-			if (remainder.amount >= desired) {
-				if (!catalyst) {
-					remainder.amount -= desired;
-					if (remainder.amount == 0) {
-						remainders.remove(stack);
-					}
-				}
-				return desired;
-			} else {
-				if (!catalyst) {
-					remainders.remove(stack);
-				}
-				return remainder.amount;
-			}
-		}
-		return 0;
-	}
+    private long getRemainder(EmiStack stack, long desired, boolean catalyst) {
+        FlatMaterialCost remainder = remainders.get(stack);
+        if (remainder != null) {
+            if (remainder.amount >= desired) {
+                if (!catalyst) {
+                    remainder.amount -= desired;
+                    if (remainder.amount == 0) {
+                        remainders.remove(stack);
+                    }
+                }
+                return desired;
+            } else {
+                if (!catalyst) {
+                    remainders.remove(stack);
+                }
+                return remainder.amount;
+            }
+        }
+        return 0;
+    }
 
-	private void complete(dev.emi.emi.bom.MaterialNode node) {
-		node.progress = ProgressState.COMPLETED;
-		node.totalNeeded = 0;
-		node.neededBatches = 0;
-		if (node.children != null) {
-			for (dev.emi.emi.bom.MaterialNode child : node.children) {
-				complete(child);
-			}
-		}
-	}
+    private void complete(MaterialNode node) {
+        node.progress = ProgressState.COMPLETED;
+        node.totalNeeded = 0;
+        node.neededBatches = 0;
+        if (node.children != null) {
+            for (MaterialNode child : node.children) {
+                complete(child);
+            }
+        }
+    }
 
-	private void calculateCost(dev.emi.emi.bom.MaterialNode node, long amount, dev.emi.emi.bom.ChanceState chance, boolean trackProgress) {
-		if (trackProgress) {
-			node.progress = ProgressState.UNSTARTED;
-			node.totalNeeded = 0;
-			node.neededBatches = 0;
-		}
-		boolean catalyst = node.catalyst;
-		if (catalyst) {
-			amount = node.amount;
-		}
-		EmiRecipe recipe = node.recipe;
-		if (recipe instanceof EmiResolutionRecipe err) {
-			calculateCost(node.children.get(0), amount, chance, trackProgress);
-			if (catalyst) {
-				addRemainder(err.stack, amount, chance);
-			}
-			return;
-		}
-		long original = amount;
-		List<EmiStack> ingredientStacks = node.ingredient.getEmiStacks();
-		for (int i = 0; i < ingredientStacks.size(); i++) {
-			if (chance.chanced()) {
-				double desired = amount * chance.chance();
-				double given = getChancedRemainder(ingredientStacks.get(i), desired, catalyst, chance);
-				if (given > 0) {
-					double scaled = given / chance.chance();
-					amount -= (long) scaled;
-					if (amount > 0) {
-						chance = new dev.emi.emi.bom.ChanceState((float) ((amount - (scaled % 1)) * chance.chance() / amount), true);
-					}
-				}
-			} else {
-				amount -= getRemainder(ingredientStacks.get(i), amount, catalyst);
-			}
-		}
-		if (amount == 0) {
-			if (trackProgress) {
-				complete(node);
-			}
-			return;
-		}
-		if (trackProgress && amount != original) {
-			node.progress = ProgressState.PARTIAL;
-		}
-		
-		long effectiveCrafts = amount;
-		if (recipe != null) {
-			long minBatches = (long) Math.ceil(amount / (double) node.divisor);
-			effectiveCrafts = minBatches * node.divisor;
-			if (trackProgress) {
-				node.totalNeeded = amount;
-				node.neededBatches = minBatches;
-			}
-			ChanceState produced = chance.produce(node.produceChance);
-			for (dev.emi.emi.bom.MaterialNode n : node.children) {
-				calculateCost(n, minBatches * n.amount, produced.consume(n.consumeChance), trackProgress);
-			}
-			EmiStack stack = node.ingredient.getEmiStacks().get(0);
-			addRemainder(stack, effectiveCrafts - amount, produced);
+    private void calculateCost(MaterialNode node, long amount, ChanceState chance, boolean trackProgress) {
+        if (trackProgress) {
+            node.progress = ProgressState.UNSTARTED;
+            node.totalNeeded = 0;
+            node.neededBatches = 0;
+        }
+        boolean catalyst = node.catalyst;
+        if (catalyst) {
+            amount = node.amount;
+        }
+        EmiRecipe recipe = node.recipe;
+        if (recipe instanceof EmiResolutionRecipe err) {
+            calculateCost(node.children.get(0), amount, chance, trackProgress);
+            if (catalyst) {
+                addRemainder(err.stack, amount, chance);
+            }
+            return;
+        }
+        long original = amount;
+        List<EmiStack> ingredientStacks = node.ingredient.getEmiStacks();
+        for (int i = 0; i < ingredientStacks.size(); i++) {
+            if (chance.chanced()) {
+                double desired = amount * chance.chance();
+                double given = getChancedRemainder(ingredientStacks.get(i), desired, catalyst, chance);
+                if (given > 0) {
+                    double scaled = given / chance.chance();
+                    amount -= (long) scaled;
+                    if (amount > 0) {
+                        chance = new ChanceState((float) ((amount - (scaled % 1)) * chance.chance() / amount), true);
+                    }
+                }
+            } else {
+                amount -= getRemainder(ingredientStacks.get(i), amount, catalyst);
+            }
+        }
+        if (amount == 0) {
+            if (trackProgress) {
+                complete(node);
+            }
+            return;
+        }
+        if (trackProgress && amount != original) {
+            node.progress = ProgressState.PARTIAL;
+        }
+        
+        long effectiveCrafts = amount;
+        if (recipe != null) {
+            long minBatches = (long) Math.ceil(amount / (double) node.divisor);
+            effectiveCrafts = minBatches * node.divisor;
+            if (trackProgress) {
+                node.totalNeeded = amount;
+                node.neededBatches = minBatches;
+            }
+            ChanceState produced = chance.produce(node.produceChance);
+            for (MaterialNode n : node.children) {
+                calculateCost(n, minBatches * n.amount, produced.consume(n.consumeChance), trackProgress);
+            }
+            EmiStack stack = node.ingredient.getEmiStacks().get(0);
+            addRemainder(stack, effectiveCrafts - amount, produced);
 
-			for (EmiStack es : recipe.getOutputs()) {
-				if (!stack.equals(es)) {
-					addRemainder(es, minBatches * es.getAmount(), produced.consume(es.getChance()));
-				}
-			}
+            for (EmiStack es : recipe.getOutputs()) {
+                if (!stack.equals(es)) {
+                    addRemainder(es, minBatches * es.getAmount(), produced.consume(es.getChance()));
+                }
+            }
 
-			for (dev.emi.emi.bom.MaterialNode n : node.children) {
-				if (!n.remainder.isEmpty() && n.remainderAmount > 0) {
-					if (n.catalyst) {
-						addRemainder(n.remainder, n.remainderAmount, produced.consume(n.consumeChance));
-					} else {
-						addRemainder(n.remainder, minBatches * n.remainderAmount, produced.consume(n.consumeChance));
-					}
-				}
-			}
-		} else {
-			addCost(node.ingredient, amount, node.amount, chance);
-		}
-	}
+            for (MaterialNode n : node.children) {
+                if (!n.remainder.isEmpty() && n.remainderAmount > 0) {
+                    if (n.catalyst) {
+                        addRemainder(n.remainder, n.remainderAmount, produced.consume(n.consumeChance));
+                    } else {
+                        addRemainder(n.remainder, minBatches * n.remainderAmount, produced.consume(n.consumeChance));
+                    }
+                }
+            }
+        } else {
+            addCost(node.ingredient, amount, node.amount, chance);
+        }
+    }
 
-	public long getIdealBatch(dev.emi.emi.bom.MaterialNode node, long total, long amount) {
-		if (node.recipe == null) {
-			return total;
-		}
-		if (node.divisor > 0) {
-			long mod = node.divisor / gcd(node.divisor, amount);
-			total *= mod / gcd(total, mod);
-		}
-		if (node.children != null) {
-			for (MaterialNode n : node.children) {
-				total = getIdealBatch(n, total, amount * n.amount);
-			}
-		}
-		return total;
-	}
+    public long getIdealBatch(MaterialNode node, long total, long amount) {
+        if (node.recipe == null) {
+            return total;
+        }
+        if (node.divisor > 0) {
+            long mod = node.divisor / gcd(node.divisor, amount);
+            total *= mod / gcd(total, mod);
+        }
+        if (node.children != null) {
+            for (MaterialNode n : node.children) {
+                total = getIdealBatch(n, total, amount * n.amount);
+            }
+        }
+        return total;
+    }
 
-	public long gcd(long a, long b) {
-		if (b == 0) {
-			return a;
-		} else {
-			return gcd(b, a % b);
-		}
-	}
+    public long gcd(long a, long b) {
+        if (b == 0) {
+            return a;
+        } else {
+            return gcd(b, a % b);
+        }
+    }
 }

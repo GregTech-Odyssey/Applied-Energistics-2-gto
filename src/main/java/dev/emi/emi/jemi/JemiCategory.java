@@ -12,31 +12,31 @@ import net.minecraft.network.chat.Component;
 import java.util.List;
 
 public class JemiCategory extends EmiRecipeCategory {
-	public IRecipeCategory<?> category;
+    public IRecipeCategory<?> category;
 
-	public JemiCategory(IRecipeCategory<?> category) {
-		super(category.getRecipeType().getUid(), (raw, x, y, delta) -> {});
-		this.icon = (raw, x, y, delta) -> {
-			EmiDrawContext context = EmiDrawContext.wrap(raw);
-			IDrawable icon = category.getIcon();
-			if (icon != null) {
-				icon.draw(context.raw(), x + (16 - icon.getWidth()) / 2, y + (16 - icon.getHeight()) / 2);
-			} else {
-				List<EmiIngredient> workstations = EmiApi.getRecipeManager().getWorkstations(this);
-				if (!workstations.isEmpty()) {
-					workstations.get(0).render(context.raw(), x, y, delta, EmiIngredient.RENDER_ICON);
-				} else {
-					String title = category.getTitle().getString();
-					context.drawCenteredTextWithShadow(EmiPort.literal(title.substring(0, Math.min(2, title.length()))), x + 8, y + 2);
-				}
-			}
-		};
-		this.simplified = this.icon;
-		this.category = category;
-	}
+    public JemiCategory(IRecipeCategory<?> category) {
+        super(category.getRecipeType().getUid(), (raw, x, y, delta) -> {});
+        this.icon = (raw, x, y, delta) -> {
+            EmiDrawContext context = EmiDrawContext.wrap(raw);
+            IDrawable icon = category.getIcon();
+            if (icon != null) {
+                icon.draw(context.raw(), x + (16 - icon.getWidth()) / 2, y + (16 - icon.getHeight()) / 2);
+            } else {
+                List<EmiIngredient> workstations = EmiApi.getRecipeManager().getWorkstations(this);
+                if (!workstations.isEmpty()) {
+                    workstations.get(0).render(context.raw(), x, y, delta, EmiIngredient.RENDER_ICON);
+                } else {
+                    String title = category.getTitle().getString();
+                    context.drawCenteredTextWithShadow(EmiPort.literal(title.substring(0, Math.min(2, title.length()))), x + 8, y + 2);
+                }
+            }
+        };
+        this.simplified = this.icon;
+        this.category = category;
+    }
 
-	@Override
-	public Component getName() {
-		return category.getTitle();
-	}
+    @Override
+    public Component getName() {
+        return category.getTitle();
+    }
 }

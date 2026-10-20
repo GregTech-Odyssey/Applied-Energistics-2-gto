@@ -39,7 +39,8 @@ description="A Mod about Matter, Energy and using them to conquer the world.."
     modId="jei"
     mandatory=false
     versionRange="${jei_version}"
-    ordering="AFTER"
+    # All mods in this jar share one Forge sorting node. Bundled EMI must load before JEI.
+    ordering="NONE"
     side="CLIENT"
 
 [[dependencies.ae2]]
@@ -75,7 +76,7 @@ side="BOTH"
 [[dependencies.emi]]
 modId="jei"
 mandatory=false
-versionRange="[15.20.0.0,)"
+versionRange="${jei_version}"
 ordering="BEFORE"
 side="CLIENT"
 

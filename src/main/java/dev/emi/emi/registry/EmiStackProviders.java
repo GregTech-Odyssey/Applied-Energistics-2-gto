@@ -24,56 +24,56 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 public class EmiStackProviders {
     public static Map<Class<?>, List<EmiStackProvider<?>>> fromClass = new Reference2ObjectOpenHashMap<>();
-	public static List<EmiStackProvider<?>> generic = Lists.newArrayList();
+    public static List<EmiStackProvider<?>> generic = Lists.newArrayList();
 
-	public static void clear() {
-		fromClass.clear();
-		generic.clear();
-	}
+    public static void clear() {
+        fromClass.clear();
+        generic.clear();
+    }
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	public static EmiStackInteraction getStackAt(Screen screen, int x, int y, boolean notClick) {
+    public static EmiStackInteraction getStackAt(Screen screen, int x, int y, boolean notClick) {
         var registered = fromClass.get(screen.getClass());
         if (registered != null) {
             for (EmiStackProvider provider : registered) {
-				EmiStackInteraction stack = provider.getStackAt(screen, x, y);
-				if (!stack.isEmpty() && (notClick || stack.isClickable())) {
-					return stack;
-				}
-			}
-		}
-		for (EmiStackProvider handler : generic) {
-			EmiStackInteraction stack = handler.getStackAt(screen, x, y);
-			if (!stack.isEmpty() && (notClick || stack.isClickable())) {
-				return stack;
-			}
-		}
-		if (notClick && screen instanceof HandledScreenAccessor handled) {
-			Slot s = handled.getFocusedSlot();
-			if (s != null) {
-				ItemStack stack = s.getItem();
-				if (!stack.isEmpty()) {
-					if (s instanceof ResultSlot craf) {
-						// Emi be making assumptions
-						try {
-							CraftingContainer inv = ((CraftingResultSlotAccessor) craf).getInput();
-							Minecraft client = Minecraft.getInstance();
+                EmiStackInteraction stack = provider.getStackAt(screen, x, y);
+                if (!stack.isEmpty() && (notClick || stack.isClickable())) {
+                    return stack;
+                }
+            }
+        }
+        for (EmiStackProvider handler : generic) {
+            EmiStackInteraction stack = handler.getStackAt(screen, x, y);
+            if (!stack.isEmpty() && (notClick || stack.isClickable())) {
+                return stack;
+            }
+        }
+        if (notClick && screen instanceof HandledScreenAccessor handled) {
+            Slot s = handled.getFocusedSlot();
+            if (s != null) {
+                ItemStack stack = s.getItem();
+                if (!stack.isEmpty()) {
+                    if (s instanceof ResultSlot craf) {
+                        // Emi be making assumptions
+                        try {
+                            CraftingContainer inv = ((CraftingResultSlotAccessor) craf).getInput();
+                            Minecraft client = Minecraft.getInstance();
                             List<CraftingRecipe> list = client.level.getRecipeManager()
                                     .getRecipesFor(RecipeType.CRAFTING, inv, client.level);
-							if (!list.isEmpty()) {
-								ResourceLocation id = EmiPort.getId(list.get(0));
-								EmiRecipe recipe = EmiApi.getRecipeManager().getRecipe(id);
-								if (recipe != null) {
-									return new EmiStackInteraction(EmiStack.of(stack), recipe, false);
-								}
-							}
-						} catch (Exception e) {
-						}
-					}
-					return new EmiStackInteraction(EmiStack.of(stack));
-				}
-			}
-		}
-		return EmiStackInteraction.EMPTY;
-	}
+                            if (!list.isEmpty()) {
+                                ResourceLocation id = EmiPort.getId(list.get(0));
+                                EmiRecipe recipe = EmiApi.getRecipeManager().getRecipe(id);
+                                if (recipe != null) {
+                                    return new EmiStackInteraction(EmiStack.of(stack), recipe, false);
+                                }
+                            }
+                        } catch (Exception e) {
+                        }
+                    }
+                    return new EmiStackInteraction(EmiStack.of(stack));
+                }
+            }
+        }
+        return EmiStackInteraction.EMPTY;
+    }
 }

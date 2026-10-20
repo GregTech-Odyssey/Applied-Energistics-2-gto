@@ -25,104 +25,104 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public interface StandardRecipeHandler<T extends AbstractContainerMenu> extends EmiRecipeHandler<T> {
 
-	/**
+    /**
      * @return The slots for the recipe handler to source ingredients from. Typically this should include the player's
      *         inventory, and crafting slots.
-	 */
-	List<Slot> getInputSources(T handler);
+     */
+    List<Slot> getInputSources(T handler);
 
-	/**
-	 * @return The slots where inputs should be placed to perform crafting.
-	 */
-	List<Slot> getCraftingSlots(T handler);
+    /**
+     * @return The slots where inputs should be placed to perform crafting.
+     */
+    List<Slot> getCraftingSlots(T handler);
 
-	/**
-	 * @return The slots where inputs should be placed to perform crafting for a particular context.
-	 */
-	default List<Slot> getCraftingSlots(EmiRecipe recipe, T handler) {
-		return getCraftingSlots(handler);
-	}
+    /**
+     * @return The slots where inputs should be placed to perform crafting for a particular context.
+     */
+    default List<Slot> getCraftingSlots(EmiRecipe recipe, T handler) {
+        return getCraftingSlots(handler);
+    }
 
-	/**
+    /**
      * @return The output slot for recipe handlers that support instant interaction, like crafting tables. For handlers
      *         that have processing time, or where this concept is otherwise inapplicable, null.
-	 */
-	default @Nullable Slot getOutputSlot(T handler) {
-		return null;
-	}
+     */
+    default @Nullable Slot getOutputSlot(T handler) {
+        return null;
+    }
 
-	@Override
-	default EmiPlayerInventory getInventory(AbstractContainerScreen<T> screen) {
+    @Override
+    default EmiPlayerInventory getInventory(AbstractContainerScreen<T> screen) {
         var slots = getInputSources(screen.getMenu());
         var stacks = new ObjectArrayList<EmiStack>(slots.size());
         for (var slot : slots)
             stacks.add(EmiStack.of(slot.getItem()));
         return new EmiPlayerInventory(stacks);
-	}
+    }
 
-	@Override
-	default boolean canCraft(EmiRecipe recipe, EmiCraftContext<T> context) {
-		return context.getInventory().canCraft(recipe);
-	}
+    @Override
+    default boolean canCraft(EmiRecipe recipe, EmiCraftContext<T> context) {
+        return context.getInventory().canCraft(recipe);
+    }
 
-	@Override
-	default boolean craft(EmiRecipe recipe, EmiCraftContext<T> context) {
-		List<ItemStack> stacks = EmiRecipeFiller.getStacks(this, recipe, context.getScreen(), context.getAmount());
-		if (stacks != null) {
-			if (stacks != null) {
-				Minecraft.getInstance().setScreen(context.getScreen());
-				if (!EmiClient.onServer) {
+    @Override
+    default boolean craft(EmiRecipe recipe, EmiCraftContext<T> context) {
+        List<ItemStack> stacks = EmiRecipeFiller.getStacks(this, recipe, context.getScreen(), context.getAmount());
+        if (stacks != null) {
+            if (stacks != null) {
+                Minecraft.getInstance().setScreen(context.getScreen());
+                if (!EmiClient.onServer) {
                     return EmiRecipeFiller.clientFill(this, recipe, context.getScreen(), stacks,
                             context.getDestination());
-				} else {
+                } else {
                     EmiClient.sendFillRecipe(this, context.getScreen(), context.getScreenHandler().containerId,
                             switch (context.getDestination()) {
                                 case NONE -> 0;
                                 case CURSOR -> 1;
                                 case INVENTORY -> 2;
                             }, stacks, recipe);
-				}
-				return true;
-			}
-		}
-		return false;
-	}
+                }
+                return true;
+            }
+        }
+        return false;
+    }
 
-	@Override
-	default void render(EmiRecipe recipe, EmiCraftContext<T> context, List<Widget> widgets, GuiGraphics draw) {
-		renderMissing(recipe, context.getInventory(), widgets, draw);
-	}
+    @Override
+    default void render(EmiRecipe recipe, EmiCraftContext<T> context, List<Widget> widgets, GuiGraphics draw) {
+        renderMissing(recipe, context.getInventory(), widgets, draw);
+    }
 
-	@ApiStatus.Internal
-	public static void renderMissing(EmiRecipe recipe, EmiPlayerInventory inv, List<Widget> widgets, GuiGraphics draw) {
-		EmiDrawContext context = EmiDrawContext.wrap(draw);
-		context.enableDepthTest();
-		Map<EmiIngredient, Boolean> availableForCrafting = getAvailable(recipe, inv);
-		for (Widget w : widgets) {
-			if (w instanceof SlotWidget sw) {
-				EmiIngredient stack = sw.getStack();
-				Bounds bounds = sw.getBounds();
-				if (sw.getRecipe() == null && availableForCrafting.containsKey(stack) && !stack.isEmpty()) {
-					if (availableForCrafting.get(stack)) {
+    @ApiStatus.Internal
+    public static void renderMissing(EmiRecipe recipe, EmiPlayerInventory inv, List<Widget> widgets, GuiGraphics draw) {
+        EmiDrawContext context = EmiDrawContext.wrap(draw);
+        context.enableDepthTest();
+        Map<EmiIngredient, Boolean> availableForCrafting = getAvailable(recipe, inv);
+        for (Widget w : widgets) {
+            if (w instanceof SlotWidget sw) {
+                EmiIngredient stack = sw.getStack();
+                Bounds bounds = sw.getBounds();
+                if (sw.getRecipe() == null && availableForCrafting.containsKey(stack) && !stack.isEmpty()) {
+                    if (availableForCrafting.get(stack)) {
                         // context.fill(bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0x4400FF00);
-					} else {
-						context.fill(bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0x44FF0000);
-					}
-				}
-			}
-		}
-	}
+                    } else {
+                        context.fill(bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0x44FF0000);
+                    }
+                }
+            }
+        }
+    }
 
-	private static Map<EmiIngredient, Boolean> getAvailable(EmiRecipe recipe, EmiPlayerInventory inventory) {
-		Map<EmiIngredient, Boolean> availableForCrafting = new IdentityHashMap<>();
-		List<Boolean> list = inventory.getCraftAvailability(recipe);
-		List<EmiIngredient> inputs = recipe.getInputs();
-		if (list.size() != inputs.size()) {
-			return Map.of();
-		}
-		for (int i = 0; i < list.size(); i++) {
-			availableForCrafting.put(inputs.get(i), list.get(i));
-		}
-		return availableForCrafting;
-	}
+    private static Map<EmiIngredient, Boolean> getAvailable(EmiRecipe recipe, EmiPlayerInventory inventory) {
+        Map<EmiIngredient, Boolean> availableForCrafting = new IdentityHashMap<>();
+        List<Boolean> list = inventory.getCraftAvailability(recipe);
+        List<EmiIngredient> inputs = recipe.getInputs();
+        if (list.size() != inputs.size()) {
+            return Map.of();
+        }
+        for (int i = 0; i < list.size(); i++) {
+            availableForCrafting.put(inputs.get(i), list.get(i));
+        }
+        return availableForCrafting;
+    }
 }

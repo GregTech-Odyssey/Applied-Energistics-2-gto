@@ -17,47 +17,47 @@ import java.util.List;
  */
 @ApiStatus.Experimental
 public class EmiTooltipMetadata {
-	private static final EmiTooltipMetadata EMPTY = new EmiTooltipMetadata(EmiStack.EMPTY, null);
-	private final EmiIngredient stack;
-	private final EmiRecipe recipe;
+    private static final EmiTooltipMetadata EMPTY = new EmiTooltipMetadata(EmiStack.EMPTY, null);
+    private final EmiIngredient stack;
+    private final EmiRecipe recipe;
 
-	private EmiTooltipMetadata(EmiIngredient stack, EmiRecipe recipe) {
-		this.stack = stack;
-		this.recipe = recipe;
-	}
+    private EmiTooltipMetadata(EmiIngredient stack, EmiRecipe recipe) {
+        this.stack = stack;
+        this.recipe = recipe;
+    }
 
-	/**
-	 * @return The stack responsible for the tooltip, or {@link EmiStack#EMPTY} if not present.
-	 */
-	public EmiIngredient getStack() {
-		return stack;
-	}
+    /**
+     * @return The stack responsible for the tooltip, or {@link EmiStack#EMPTY} if not present.
+     */
+    public EmiIngredient getStack() {
+        return stack;
+    }
 
-	/**
-	 * @return The recipe context for the tooltip, or {@code null} if not present.
-	 */
-	public EmiRecipe getRecipe() {
-		return recipe;
-	}
+    /**
+     * @return The recipe context for the tooltip, or {@code null} if not present.
+     */
+    public EmiRecipe getRecipe() {
+        return recipe;
+    }
 
-	/**
-	 * Constructs an {@link EmiTooltipMetadata} object based on a list of tooltip components.
-	 * This can be useful for retrieving otherwised erased information, like the {@link EmiIngredient}, from a tooltip.
-	 */
-	public static EmiTooltipMetadata of(List<ClientTooltipComponent> tooltip) {
-		if (!tooltip.isEmpty()) {
-			ClientTooltipComponent title = tooltip.get(0);
-			EmiRecipe recipe = null;
-			for (ClientTooltipComponent comp : tooltip) {
-				if (comp instanceof RecipeTooltipComponent rtc) {
-					recipe = rtc.getRecipe();
-					break;
-				}
-			}
-			if (title instanceof EmiTextTooltipWrapper ettw && !ettw.stack.isEmpty()) {
-				return new EmiTooltipMetadata(ettw.stack, recipe);
-			}
-		}
-		return EMPTY;
-	}
+    /**
+     * Constructs an {@link EmiTooltipMetadata} object based on a list of tooltip components.
+     * This can be useful for retrieving otherwised erased information, like the {@link EmiIngredient}, from a tooltip.
+     */
+    public static EmiTooltipMetadata of(List<ClientTooltipComponent> tooltip) {
+        if (!tooltip.isEmpty()) {
+            ClientTooltipComponent title = tooltip.get(0);
+            EmiRecipe recipe = null;
+            for (ClientTooltipComponent comp : tooltip) {
+                if (comp instanceof RecipeTooltipComponent rtc) {
+                    recipe = rtc.getRecipe();
+                    break;
+                }
+            }
+            if (title instanceof EmiTextTooltipWrapper ettw && !ettw.stack.isEmpty()) {
+                return new EmiTooltipMetadata(ettw.stack, recipe);
+            }
+        }
+        return EMPTY;
+    }
 }

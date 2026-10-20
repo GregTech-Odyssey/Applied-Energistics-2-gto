@@ -7,9 +7,9 @@ import java.util.function.Predicate;
 
 public record IndexStackData(boolean disable, List<Added> added, List<EmiIngredient> removed, List<Filter> filters) {
 
-	public static record Added(EmiIngredient added, EmiIngredient after) {
-	}
+    public static record Added(EmiIngredient added, EmiIngredient after) {
+    }
 
-	public static record Filter(Predicate<String> filter) {
-	}
+    public static record Filter(Predicate<String> filter) {
+    }
 }

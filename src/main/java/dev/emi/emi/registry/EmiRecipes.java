@@ -33,14 +33,14 @@ import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 public class EmiRecipes {
-	public static volatile Worker activeWorker = null;
-	public static EmiRecipeManager manager = Manager.EMPTY;
-	public static List<Consumer<Consumer<EmiRecipe>>> lateRecipes = Lists.newArrayList();
-	public static List<Predicate<EmiRecipe>> invalidators = Lists.newArrayList();
+    public static volatile Worker activeWorker = null;
+    public static EmiRecipeManager manager = Manager.EMPTY;
+    public static List<Consumer<Consumer<EmiRecipe>>> lateRecipes = Lists.newArrayList();
+    public static List<Predicate<EmiRecipe>> invalidators = Lists.newArrayList();
 
-	public static List<EmiRecipeCategory> categories = Lists.newArrayList();
+    public static List<EmiRecipeCategory> categories = Lists.newArrayList();
     private static Reference2ObjectOpenHashMap<EmiRecipeCategory, ObjectArrayList<EmiIngredient>> workstations = new Reference2ObjectOpenHashMap<>();
-	private static List<EmiRecipe> recipes = Lists.newArrayList();
+    private static List<EmiRecipe> recipes = Lists.newArrayList();
 
     private static final O2OOpenCacheHashMap<EmiStack, List<EmiRecipe>> WORKSTATION_INDEX = new O2OOpenCacheHashMap<>();
     // Preserve the Map field descriptor used by existing EMI integrations.
@@ -50,26 +50,26 @@ public class EmiRecipes {
         WORKSTATION_INDEX.computeIfAbsent(stack, key -> new ObjectArrayList<>(recipes.size())).addAll(recipes);
     }
 
-	public static List<EmiRecipeDecorator> decorators = Lists.newArrayList();
+    public static List<EmiRecipeDecorator> decorators = Lists.newArrayList();
 
-	public static void clear() {
-		setWorker(null);
-		lateRecipes.clear();
-		invalidators.clear();
-		categories.clear();
-		workstations.clear();
-		recipes.clear();
+    public static void clear() {
+        setWorker(null);
+        lateRecipes.clear();
+        invalidators.clear();
+        categories.clear();
+        workstations.clear();
+        recipes.clear();
         WORKSTATION_INDEX.clear();
-		decorators.clear();
-		manager = Manager.EMPTY;
-	}
+        decorators.clear();
+        manager = Manager.EMPTY;
+    }
 
-	public static void bake() {
-		long start = System.currentTimeMillis();
+    public static void bake() {
+        long start = System.currentTimeMillis();
         for (var supplier : EmiData.recipes)
             recipes.add(supplier.get());
-		categories.sort(Comparator.comparingInt(EmiRecipeCategoryProperties::getOrder));
-		invalidators.addAll(EmiData.recipeFilters);
+        categories.sort(Comparator.comparingInt(EmiRecipeCategoryProperties::getOrder));
+        invalidators.addAll(EmiData.recipeFilters);
         invalidators.add(recipe -> hasDisabled(recipe.getInputs()) || hasDisabled(recipe.getOutputs())
                 || hasDisabled(recipe.getCatalysts()));
         var filtered = new ObjectArrayList<EmiRecipe>(recipes.size());
@@ -90,10 +90,10 @@ public class EmiRecipes {
                     visible.add(stack);
             if (!visible.isEmpty())
                 filteredWorkstations.put(entry.getKey(), visible);
-		}
-		manager = new Manager(categories, filteredWorkstations, filtered, false);
-		setWorker(new Worker(categories, filteredWorkstations, filtered));
-		EmiLog.info("Baked " + recipes.size() + " recipes in " + (System.currentTimeMillis() - start) + "ms");
+        }
+        manager = new Manager(categories, filteredWorkstations, filtered, false);
+        setWorker(new Worker(categories, filteredWorkstations, filtered));
+        EmiLog.info("Baked " + recipes.size() + " recipes in " + (System.currentTimeMillis() - start) + "ms");
     }
 
     private static boolean hasDisabled(List<? extends EmiIngredient> ingredients) {
@@ -101,38 +101,38 @@ public class EmiRecipes {
             if (EmiHidden.isDisabled(ingredient))
                 return true;
         return false;
-	}
+    }
 
-	public static void addCategory(EmiRecipeCategory category) {
-		categories.add(category);
-	}
+    public static void addCategory(EmiRecipeCategory category) {
+        categories.add(category);
+    }
 
-	public static void addWorkstation(EmiRecipeCategory category, EmiIngredient workstation) {
+    public static void addWorkstation(EmiRecipeCategory category, EmiIngredient workstation) {
         workstations.computeIfAbsent(category, k -> new ObjectArrayList<>(1)).add(workstation);
-	}
+    }
 
-	public static void addRecipe(EmiRecipe recipe) {
-		recipes.add(recipe);
-	}
+    public static void addRecipe(EmiRecipe recipe) {
+        recipes.add(recipe);
+    }
 
-	private static synchronized void setWorker(Worker worker) {
-		activeWorker = worker;
-		if (worker != null) {
-			new Thread(activeWorker).start();
-		}
-	}
+    private static synchronized void setWorker(Worker worker) {
+        activeWorker = worker;
+        if (worker != null) {
+            new Thread(activeWorker).start();
+        }
+    }
 
-	private static class Manager implements EmiRecipeManager {
-		public static final EmiRecipeManager EMPTY = new Manager();
+    private static class Manager implements EmiRecipeManager {
+        public static final EmiRecipeManager EMPTY = new Manager();
         private final ObjectArrayList<EmiRecipeCategory> categories;
         private final Reference2ObjectOpenHashMap<EmiRecipeCategory, ObjectArrayList<EmiIngredient>> workstations;
-		private final List<EmiRecipe> recipes;
+        private final List<EmiRecipe> recipes;
         private final O2OOpenCustomCacheHashMap<EmiStack, ObjectArrayList<EmiRecipe>> byInput;
         private final O2OOpenCustomCacheHashMap<EmiStack, ObjectArrayList<EmiRecipe>> byOutput;
         private final Reference2ObjectOpenHashMap<EmiRecipeCategory, ObjectArrayList<EmiRecipe>> byCategory;
         private final O2OOpenCacheHashMap<ResourceLocation, EmiRecipe> byId;
 
-		private Manager() {
+        private Manager() {
             categories = new ObjectArrayList<>(0);
             workstations = new Reference2ObjectOpenHashMap<>(0);
             recipes = Collections.emptyList();
@@ -140,7 +140,7 @@ public class EmiRecipes {
             byOutput = new O2OOpenCustomCacheHashMap<>(0, new EmiStackList.ComparisonHashStrategy());
             byCategory = new Reference2ObjectOpenHashMap<>(0);
             byId = new O2OOpenCacheHashMap<>(0);
-		}
+        }
 
         Manager(List<EmiRecipeCategory> categories,
                 Reference2ObjectOpenHashMap<EmiRecipeCategory, ObjectArrayList<EmiIngredient>> workstations,
@@ -150,7 +150,7 @@ public class EmiRecipes {
             for (var category : categories)
                 if (registered.add(category))
                     this.categories.add(category);
-			this.workstations = workstations;
+            this.workstations = workstations;
             this.recipes = recipes;
             byInput = new O2OOpenCustomCacheHashMap<>(new EmiStackList.ComparisonHashStrategy());
             byOutput = new O2OOpenCustomCacheHashMap<>(new EmiStackList.ComparisonHashStrategy());
@@ -163,24 +163,24 @@ public class EmiRecipes {
                 var id = recipe.getId();
                 var category = recipe.getCategory();
                 if (!registered.contains(category))
-					EmiReloadLog.warn("Recipe " + id + " loaded with unregistered category: " + category.getId());
-				if (EmiConfig.logNonTagIngredients && recipe.supportsRecipeTree()) {
+                    EmiReloadLog.warn("Recipe " + id + " loaded with unregistered category: " + category.getId());
+                if (EmiConfig.logNonTagIngredients && recipe.supportsRecipeTree()) {
                     var seen = new OpenCacheHashSet<EmiIngredient>(recipe.getInputs().size());
                     for (var ingredient : recipe.getInputs()) {
                         if (ingredient instanceof ListEmiIngredient && seen.add(ingredient)) {
                             EmiReloadLog.warn("Recipe " + id + " uses non-tag ingredient: " + ingredient);
-						}
-					}
-				}
+                        }
+                    }
+                }
                 byCategory.computeIfAbsent(category, key -> new ObjectArrayList<>()).add(recipe);
-				if (id != null) {
+                if (id != null) {
                     if (byId.putIfAbsent(id, recipe) != null && EmiConfig.devMode) {
                         int previous = duplicateIds.getInt(id);
                         duplicateIds.put(id, previous == 0 ? 2 : previous + 1);
-					}
+                    }
                     if (EmiConfig.devMode && !id.getPath().startsWith("/") && client.level != null
                             && client.level.getRecipeManager().byKey(id).isEmpty())
-						incorrectIds.add(id);
+                        incorrectIds.add(id);
                 }
             }
             if (EmiConfig.devMode) {
@@ -191,22 +191,22 @@ public class EmiRecipes {
                 for (var id : incorrectIds)
                     EmiReloadLog.warn("Recipe " + id
                             + " not present in recipe manager. Consider prefixing its path with '/' if it is synthetic.");
-			}
+            }
 
             var indexed = new ReferenceOpenHashSet<EmiRecipe>(recipes.size());
             for (var iterator = byCategory.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
                 var entry = iterator.next();
                 var category = entry.getKey();
                 var categoryRecipes = entry.getValue();
-				String key = EmiUtil.translateId("emi.category.", category.getId());
-				if (category.getName().equals(EmiPort.translatable(key)) && !I18n.exists(key)) {
-					EmiReloadLog.warn("Untranslated recipe category " + category.getId());
-				}
+                String key = EmiUtil.translateId("emi.category.", category.getId());
+                if (category.getName().equals(EmiPort.translatable(key)) && !I18n.exists(key)) {
+                    EmiReloadLog.warn("Untranslated recipe category " + category.getId());
+                }
                 var sort = EmiRecipeCategoryProperties.getSort(category);
-				if (doSort && sort != EmiRecipeSorting.none()) {
+                if (doSort && sort != EmiRecipeSorting.none()) {
                     categoryRecipes.sort(sort);
-					EmiRecipeSorter.clear();
-				}
+                    EmiRecipeSorter.clear();
+                }
                 for (var recipe : categoryRecipes) {
                     if (!indexed.add(recipe))
                         continue;
@@ -220,8 +220,8 @@ public class EmiRecipes {
                     }
                     for (var output : recipe.getOutputs())
                         EmiRecipeIndex.indexStack(byOutput, output, recipe, true);
-				}
-			}
+                }
+            }
             for (var stacks : workstations.values()) {
                 if (stacks.size() < 2)
                     continue;
@@ -242,77 +242,77 @@ public class EmiRecipes {
                 for (var ingredient : stacks) {
                     for (var stack : ingredient.getEmiStacks())
                         indexWorkstation(stack, entry.getValue());
-				}
-			}
-			if (EmiConfig.devMode) {
-				EmiDev.duplicateRecipeIds = duplicateIds.keySet();
-				EmiDev.incorrectRecipeIds = incorrectIds;
-			}
-		}
+                }
+            }
+            if (EmiConfig.devMode) {
+                EmiDev.duplicateRecipeIds = duplicateIds.keySet();
+                EmiDev.incorrectRecipeIds = incorrectIds;
+            }
+        }
 
-		@Override
-		public List<EmiRecipeCategory> getCategories() {
-			return categories;
-		}
+        @Override
+        public List<EmiRecipeCategory> getCategories() {
+            return categories;
+        }
 
-		@Override
-		public List<EmiIngredient> getWorkstations(EmiRecipeCategory category) {
+        @Override
+        public List<EmiIngredient> getWorkstations(EmiRecipeCategory category) {
             var stacks = workstations.get(category);
             return stacks == null ? Collections.emptyList() : stacks;
-		}
+        }
 
-		@Override
-		public List<EmiRecipe> getRecipes() {
-			return recipes;
-		}
+        @Override
+        public List<EmiRecipe> getRecipes() {
+            return recipes;
+        }
 
-		@Override
-		public List<EmiRecipe> getRecipes(EmiRecipeCategory category) {
+        @Override
+        public List<EmiRecipe> getRecipes(EmiRecipeCategory category) {
             var matches = byCategory.get(category);
             return matches == null ? Collections.emptyList() : matches;
-		}
+        }
 
-		@Override
-		public @Nullable EmiRecipe getRecipe(ResourceLocation id) {
+        @Override
+        public @Nullable EmiRecipe getRecipe(ResourceLocation id) {
             return byId.get(id);
-		}
+        }
 
-		@Override
-		public List<EmiRecipe> getRecipesByInput(EmiStack stack) {
+        @Override
+        public List<EmiRecipe> getRecipesByInput(EmiStack stack) {
             var matches = byInput.get(stack);
             return matches == null ? Collections.emptyList() : matches;
-		}
+        }
 
-		@Override
-		public List<EmiRecipe> getRecipesByOutput(EmiStack stack) {
+        @Override
+        public List<EmiRecipe> getRecipesByOutput(EmiStack stack) {
             var matches = byOutput.get(stack);
             return matches == null ? Collections.emptyList() : matches;
-		}
-	}
+        }
+    }
 
-	private static class Worker implements Runnable {
-		private List<EmiRecipeCategory> categories;
+    private static class Worker implements Runnable {
+        private List<EmiRecipeCategory> categories;
         private Reference2ObjectOpenHashMap<EmiRecipeCategory, ObjectArrayList<EmiIngredient>> workstations;
-		private List<EmiRecipe> recipes;
+        private List<EmiRecipe> recipes;
 
         public Worker(List<EmiRecipeCategory> categories,
                 Reference2ObjectOpenHashMap<EmiRecipeCategory, ObjectArrayList<EmiIngredient>> workstations,
                 List<EmiRecipe> recipes) {
-			this.categories = categories;
-			this.workstations = workstations;
-			this.recipes = recipes;
-		}
+            this.categories = categories;
+            this.workstations = workstations;
+            this.recipes = recipes;
+        }
 
-		@Override
-		public void run() {
-			long startTime = System.currentTimeMillis();
-			Manager manager = new Manager(categories, workstations, recipes, true);
-			if (activeWorker == this) {
-				long endTime = System.currentTimeMillis();
-				EmiLog.info("Baked recipes after reload in " + (endTime - startTime) + "ms");
-				EmiRecipes.manager = manager;
-			}
-			setWorker(null);
-		}
-	}
+        @Override
+        public void run() {
+            long startTime = System.currentTimeMillis();
+            Manager manager = new Manager(categories, workstations, recipes, true);
+            if (activeWorker == this) {
+                long endTime = System.currentTimeMillis();
+                EmiLog.info("Baked recipes after reload in " + (endTime - startTime) + "ms");
+                EmiRecipes.manager = manager;
+            }
+            setWorker(null);
+        }
+    }
 }

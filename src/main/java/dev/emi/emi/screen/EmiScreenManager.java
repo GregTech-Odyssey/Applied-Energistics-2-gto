@@ -65,784 +65,784 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 public class EmiScreenManager {
-	private static final int PADDING_SIZE = 1;
-	public static final int ENTRY_SIZE = 16 + PADDING_SIZE * 2;
-	private static final int SUBPANEL_SEPARATOR_SIZE = 3;
-	private static Minecraft client = Minecraft.getInstance();
-	private static List<? extends EmiIngredient> searchedStacks = List.of();
-	private static int lastWidth, lastHeight;
-	private static List<Bounds> lastExclusion;
-	private static dev.emi.emi.screen.StackBatcher.ClaimedCollection batchers = new dev.emi.emi.screen.StackBatcher.ClaimedCollection();
-	private static List<SidebarPanel> panels = List.of(
-			new SidebarPanel(SidebarSide.LEFT, EmiConfig.leftSidebarPages),
-			new SidebarPanel(SidebarSide.RIGHT, EmiConfig.rightSidebarPages),
-			new SidebarPanel(SidebarSide.TOP, EmiConfig.topSidebarPages),
-			new SidebarPanel(SidebarSide.BOTTOM, EmiConfig.bottomSidebarPages));
-	// The last stack that was used to draw a tooltip, cleared each frame
-	public static ItemStack lastStackTooltipRendered;
-	private static long lastPlayerInventorySync = 0;
-	public static EmiPlayerInventory lastPlayerInventory;
-	public static int lastMouseX, lastMouseY;
-	// The stack that was clicked on, for determining when a drag properly starts
-	public static EmiIngredient pressedStack = EmiStack.EMPTY;
-	public static EmiIngredient draggedStack = EmiStack.EMPTY;
-	// Prevent users from clicking on the wrong thing as their index changes under
-	// them
-	private static EmiStackInteraction lastHoveredCraftable = null;
-	// Whether the craftable has been used multiple times, indicating it shouldn't
-	// disappear
-	// Even if the recipe it was focusing becomes invalid
-	private static boolean lastHoveredCraftableSturdy = false;
-	private static int lastHoveredCraftableOffset = -1;
-	private static double scrollAcc = 0;
+    private static final int PADDING_SIZE = 1;
+    public static final int ENTRY_SIZE = 16 + PADDING_SIZE * 2;
+    private static final int SUBPANEL_SEPARATOR_SIZE = 3;
+    private static Minecraft client = Minecraft.getInstance();
+    private static List<? extends EmiIngredient> searchedStacks = List.of();
+    private static int lastWidth, lastHeight;
+    private static List<Bounds> lastExclusion;
+    private static StackBatcher.ClaimedCollection batchers = new StackBatcher.ClaimedCollection();
+    private static List<SidebarPanel> panels = List.of(
+            new SidebarPanel(SidebarSide.LEFT, EmiConfig.leftSidebarPages),
+            new SidebarPanel(SidebarSide.RIGHT, EmiConfig.rightSidebarPages),
+            new SidebarPanel(SidebarSide.TOP, EmiConfig.topSidebarPages),
+            new SidebarPanel(SidebarSide.BOTTOM, EmiConfig.bottomSidebarPages));
+    // The last stack that was used to draw a tooltip, cleared each frame
+    public static ItemStack lastStackTooltipRendered;
+    private static long lastPlayerInventorySync = 0;
+    public static EmiPlayerInventory lastPlayerInventory;
+    public static int lastMouseX, lastMouseY;
+    // The stack that was clicked on, for determining when a drag properly starts
+    public static EmiIngredient pressedStack = EmiStack.EMPTY;
+    public static EmiIngredient draggedStack = EmiStack.EMPTY;
+    // Prevent users from clicking on the wrong thing as their index changes under
+    // them
+    private static EmiStackInteraction lastHoveredCraftable = null;
+    // Whether the craftable has been used multiple times, indicating it shouldn't
+    // disappear
+    // Even if the recipe it was focusing becomes invalid
+    private static boolean lastHoveredCraftableSturdy = false;
+    private static int lastHoveredCraftableOffset = -1;
+    private static double scrollAcc = 0;
 
-	public static EmiSearchWidget search = new EmiSearchWidget(client.font, 0, 0, 160, 18);
-	public static SizedButtonWidget emi = new SizedButtonWidget(0, 0, 20, 20, 204, 0,
-			() -> true, (w) -> client.setScreen(new dev.emi.emi.screen.ConfigScreen(client.screen)),
-			List.of(EmiPort.translatable("tooltip.emi.config", EmiRenderHelper.getEmiText())));
-	public static SizedButtonWidget tree = new SizedButtonWidget(0, 0, 20, 20, 184, 0,
-			() -> true, (w) -> EmiApi.viewRecipeTree(),
-			List.of(EmiPort.translatable("tooltip.emi.recipe_tree")));
-	public static Button grouping = EmiPort.newButton(0, 0, 20, 20, EmiPort.literal("G"),
-			(w) -> client.setScreen(new ConfigScreen(client.screen, true)));
+    public static EmiSearchWidget search = new EmiSearchWidget(client.font, 0, 0, 160, 18);
+    public static SizedButtonWidget emi = new SizedButtonWidget(0, 0, 20, 20, 204, 0,
+            () -> true, (w) -> client.setScreen(new ConfigScreen(client.screen)),
+            List.of(EmiPort.translatable("tooltip.emi.config", EmiRenderHelper.getEmiText())));
+    public static SizedButtonWidget tree = new SizedButtonWidget(0, 0, 20, 20, 184, 0,
+            () -> true, (w) -> EmiApi.viewRecipeTree(),
+            List.of(EmiPort.translatable("tooltip.emi.recipe_tree")));
+    public static Button grouping = EmiPort.newButton(0, 0, 20, 20, EmiPort.literal("G"),
+            (w) -> client.setScreen(new ConfigScreen(client.screen, true)));
 
-	static {
+    static {
         grouping.setTooltip(
                 Tooltip.create(EmiPort.literal(PlannerText.tr("sidebar.config.button", "Sidebar Grouping"))));
-	}
+    }
 
-	public static boolean isDisabled() {
-		return !EmiReloadManager.isLoaded() || !EmiConfig.enabled;
-	}
+    public static boolean isDisabled() {
+        return !EmiReloadManager.isLoaded() || !EmiConfig.enabled;
+    }
 
-	public static void recalculate() {
-		updateCraftables();
-		SidebarPanel searchPanel = getSearchPanel();
-		if (searchPanel != null && searchPanel.space != null) {
-			if (searchedStacks != EmiSearch.stacks) {
-				searchPanel.space.batcher.repopulate();
-				searchedStacks = EmiSearch.stacks;
-			}
-		}
+    public static void recalculate() {
+        updateCraftables();
+        SidebarPanel searchPanel = getSearchPanel();
+        if (searchPanel != null && searchPanel.space != null) {
+            if (searchedStacks != EmiSearch.stacks) {
+                searchPanel.space.batcher.repopulate();
+                searchedStacks = EmiSearch.stacks;
+            }
+        }
 
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (base.isEmpty()) {
-			return;
-		}
-		Screen screen = base.screen();
-		List<Bounds> exclusion = EmiExclusionAreas.getExclusion(base);
-		if (lastWidth == screen.width && lastHeight == screen.height && exclusion.size() == lastExclusion.size()) {
-			boolean same = true;
-			for (int i = 0; i < exclusion.size(); i++) {
-				Bounds a = exclusion.get(i);
-				Bounds b = lastExclusion.get(i);
-				if (a.x() != b.x() || a.y() != b.y() || a.width() != b.width() || a.height() != b.height()) {
-					same = false;
-					break;
-				}
-			}
-			if (same) {
-				return;
-			}
-		}
-		for (SidebarPanel panel : panels) {
-			for (ScreenSpace space : panel.getSpaces()) {
-				space.batcher.repopulate();
-			}
-		}
-		lastWidth = screen.width;
-		lastHeight = screen.height;
-		lastExclusion = exclusion;
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (base.isEmpty()) {
+            return;
+        }
+        Screen screen = base.screen();
+        List<Bounds> exclusion = EmiExclusionAreas.getExclusion(base);
+        if (lastWidth == screen.width && lastHeight == screen.height && exclusion.size() == lastExclusion.size()) {
+            boolean same = true;
+            for (int i = 0; i < exclusion.size(); i++) {
+                Bounds a = exclusion.get(i);
+                Bounds b = lastExclusion.get(i);
+                if (a.x() != b.x() || a.y() != b.y() || a.width() != b.width() || a.height() != b.height()) {
+                    same = false;
+                    break;
+                }
+            }
+            if (same) {
+                return;
+            }
+        }
+        for (SidebarPanel panel : panels) {
+            for (ScreenSpace space : panel.getSpaces()) {
+                space.batcher.repopulate();
+            }
+        }
+        lastWidth = screen.width;
+        lastHeight = screen.height;
+        lastExclusion = exclusion;
 
-		Bounds bounds = base.bounds();
-		int left = Math.max(ENTRY_SIZE * 2, bounds.left());
-		int right = Math.min(screen.width - ENTRY_SIZE * 2, bounds.right());
-		int top = bounds.left();
-		int bottom = bounds.bottom();
+        Bounds bounds = base.bounds();
+        int left = Math.max(ENTRY_SIZE * 2, bounds.left());
+        int right = Math.min(screen.width - ENTRY_SIZE * 2, bounds.right());
+        int top = bounds.left();
+        int bottom = bounds.bottom();
 
-		batchers.unclaimAll();
+        batchers.unclaimAll();
 
-		List<Bounds> spaceExclusion = Lists.newArrayList();
-		spaceExclusion.addAll(exclusion);
+        List<Bounds> spaceExclusion = Lists.newArrayList();
+        spaceExclusion.addAll(exclusion);
 
-		createScreenSpace(panels.get(0), screen, spaceExclusion, false,
-				new Bounds(0, 0, left, screen.height),
-				SidebarSettings.LEFT);
+        createScreenSpace(panels.get(0), screen, spaceExclusion, false,
+                new Bounds(0, 0, left, screen.height),
+                SidebarSettings.LEFT);
 
-		createScreenSpace(panels.get(1), screen, spaceExclusion, true,
-				new Bounds(right, 0, screen.width - right, screen.height),
-				SidebarSettings.RIGHT);
+        createScreenSpace(panels.get(1), screen, spaceExclusion, true,
+                new Bounds(right, 0, screen.width - right, screen.height),
+                SidebarSettings.RIGHT);
 
-		spaceExclusion = Lists.newArrayList();
-		if (panels.get(0).isVisible()) {
-			spaceExclusion.add(panels.get(0).getBounds());
-		}
-		if (panels.get(1).isVisible()) {
-			spaceExclusion.add(panels.get(1).getBounds());
-		}
-		spaceExclusion.addAll(exclusion);
+        spaceExclusion = Lists.newArrayList();
+        if (panels.get(0).isVisible()) {
+            spaceExclusion.add(panels.get(0).getBounds());
+        }
+        if (panels.get(1).isVisible()) {
+            spaceExclusion.add(panels.get(1).getBounds());
+        }
+        spaceExclusion.addAll(exclusion);
 
         int topCenter = EmiConfig.topSidebarSize.values.getInt(0) * ENTRY_SIZE / 2
                 + EmiConfig.topSidebarTheme.horizontalPadding;
-		int topSpaceBottom = switch (EmiConfig.topSidebarAlign.horizontal) {
+        int topSpaceBottom = switch (EmiConfig.topSidebarAlign.horizontal) {
             case LEFT -> getVerticalConstraint(panels.get(0), EmiConfig.topSidebarMargins.left() + topCenter, top,
                     screen.height, true);
-			case CENTER -> top;
+            case CENTER -> top;
             case RIGHT -> getVerticalConstraint(panels.get(1), right - EmiConfig.topSidebarMargins.right() + topCenter,
                     top, screen.height, true);
-		};
-		boolean topRtl = EmiConfig.topSidebarAlign.horizontal == Horizontal.RIGHT;
+        };
+        boolean topRtl = EmiConfig.topSidebarAlign.horizontal == Horizontal.RIGHT;
 
-		createScreenSpace(panels.get(2), screen, spaceExclusion, topRtl,
-				new Bounds(0, 0, screen.width, topSpaceBottom),
-				SidebarSettings.TOP);
+        createScreenSpace(panels.get(2), screen, spaceExclusion, topRtl,
+                new Bounds(0, 0, screen.width, topSpaceBottom),
+                SidebarSettings.TOP);
 
         int bottomCenter = EmiConfig.bottomSidebarSize.values.getInt(0) * ENTRY_SIZE / 2
                 + EmiConfig.bottomSidebarTheme.horizontalPadding;
-		int bottomSpaceTop = switch (EmiConfig.bottomSidebarAlign.horizontal) {
+        int bottomSpaceTop = switch (EmiConfig.bottomSidebarAlign.horizontal) {
             case LEFT -> getVerticalConstraint(panels.get(0), EmiConfig.bottomSidebarMargins.left() + bottomCenter,
                     bottom, 0, false);
-			case CENTER -> bottom;
+            case CENTER -> bottom;
             case RIGHT -> getVerticalConstraint(panels.get(1), EmiConfig.bottomSidebarMargins.right() + bottomCenter,
                     bottom, 0, false);
-		};
-		boolean bottomRtl = EmiConfig.bottomSidebarAlign.horizontal == Horizontal.RIGHT;
+        };
+        boolean bottomRtl = EmiConfig.bottomSidebarAlign.horizontal == Horizontal.RIGHT;
 
-		createScreenSpace(panels.get(3), screen, spaceExclusion, bottomRtl,
-				new Bounds(0, bottomSpaceTop, screen.width, screen.height - bottomSpaceTop),
-				SidebarSettings.BOTTOM);
+        createScreenSpace(panels.get(3), screen, spaceExclusion, bottomRtl,
+                new Bounds(0, bottomSpaceTop, screen.width, screen.height - bottomSpaceTop),
+                SidebarSettings.BOTTOM);
 
-		updateSidebarButtons();
-	}
+        updateSidebarButtons();
+    }
 
-	private static void updateCraftables() {
-		int minDelay = 400;
-		if (hasSidebarVisible(SidebarType.CRAFTABLES)) {
-			minDelay = 50;
-		}
-		if (lastPlayerInventory == null || Math.abs(System.currentTimeMillis() - lastPlayerInventorySync) >= minDelay) {
-			lastPlayerInventorySync = System.currentTimeMillis();
-			EmiPlayerInventory inv = EmiPlayerInventory.of(client.player);
-			SidebarPanel searchPanel = getSearchPanel();
-			if (!inv.isEqual(lastPlayerInventory)) {
-				lastPlayerInventory = inv;
-				EmiSidebars.craftables = lastPlayerInventory.getCraftables();
-				if (searchPanel != null && searchPanel.space != null) {
-					searchPanel.space.batcher.repopulate();
-					if (searchPanel.getType() == SidebarType.CRAFTABLES) {
-						EmiSearch.update();
-					}
-				}
-				EmiFavorites.updateSynthetic(inv);
-				repopulatePanels(SidebarType.CRAFTABLES);
-			}
-		}
-	}
+    private static void updateCraftables() {
+        int minDelay = 400;
+        if (hasSidebarVisible(SidebarType.CRAFTABLES)) {
+            minDelay = 50;
+        }
+        if (lastPlayerInventory == null || Math.abs(System.currentTimeMillis() - lastPlayerInventorySync) >= minDelay) {
+            lastPlayerInventorySync = System.currentTimeMillis();
+            EmiPlayerInventory inv = EmiPlayerInventory.of(client.player);
+            SidebarPanel searchPanel = getSearchPanel();
+            if (!inv.isEqual(lastPlayerInventory)) {
+                lastPlayerInventory = inv;
+                EmiSidebars.craftables = lastPlayerInventory.getCraftables();
+                if (searchPanel != null && searchPanel.space != null) {
+                    searchPanel.space.batcher.repopulate();
+                    if (searchPanel.getType() == SidebarType.CRAFTABLES) {
+                        EmiSearch.update();
+                    }
+                }
+                EmiFavorites.updateSynthetic(inv);
+                repopulatePanels(SidebarType.CRAFTABLES);
+            }
+        }
+    }
 
-	public static void forceRecalculate() {
-		lastWidth = -1;
-		lastPlayerInventory = null;
-		recalculate();
-	}
+    public static void forceRecalculate() {
+        lastWidth = -1;
+        lastPlayerInventory = null;
+        recalculate();
+    }
 
-	public static void updateSearchSidebar() {
-		if (search.isFocused || !search.getValue().isEmpty()) {
-			EmiScreenManager.focusSearchSidebarType(EmiConfig.searchSidebarFocus);
-		} else {
-			EmiScreenManager.focusSearchSidebarType(EmiConfig.emptySearchSidebarFocus);
-		}
-	}
+    public static void updateSearchSidebar() {
+        if (search.isFocused || !search.getValue().isEmpty()) {
+            EmiScreenManager.focusSearchSidebarType(EmiConfig.searchSidebarFocus);
+        } else {
+            EmiScreenManager.focusSearchSidebarType(EmiConfig.emptySearchSidebarFocus);
+        }
+    }
 
-	private static int getVerticalConstraint(SidebarPanel panel, int cx, int def, int max, boolean top) {
-		if (panel.isVisible()) {
-			Bounds bounds = panel.getBounds();
-			if (bounds.x() <= cx && bounds.right() >= cx) {
-				return top ? Math.max(def, bounds.top()) : Math.min(def, bounds.bottom());
-			}
-		}
-		return max;
-	}
+    private static int getVerticalConstraint(SidebarPanel panel, int cx, int def, int max, boolean top) {
+        if (panel.isVisible()) {
+            Bounds bounds = panel.getBounds();
+            if (bounds.x() <= cx && bounds.right() >= cx) {
+                return top ? Math.max(def, bounds.top()) : Math.min(def, bounds.bottom());
+            }
+        }
+        return max;
+    }
 
-	private static void createScreenSpace(SidebarPanel panel, Screen screen, List<Bounds> exclusion,
-			boolean rtl, Bounds bounds, SidebarSettings settings) {
-		Margins margins = settings.margins();
-		ScreenAlign align = settings.align();
-		SidebarTheme theme = settings.theme();
-		SidebarSubpanels subpanels = settings.subpanels();
-		boolean header = settings.header() == HeaderType.VISIBLE || panel.getType() == SidebarType.FAVORITES;
+    private static void createScreenSpace(SidebarPanel panel, Screen screen, List<Bounds> exclusion,
+            boolean rtl, Bounds bounds, SidebarSettings settings) {
+        Margins margins = settings.margins();
+        ScreenAlign align = settings.align();
+        SidebarTheme theme = settings.theme();
+        SidebarSubpanels subpanels = settings.subpanels();
+        boolean header = settings.header() == HeaderType.VISIBLE || panel.getType() == SidebarType.FAVORITES;
 
-		int maxWidth = settings.size().values.getInt(0);
-		int maxHeight = settings.size().values.getInt(1);
+        int maxWidth = settings.size().values.getInt(0);
+        int maxHeight = settings.size().values.getInt(1);
 
-		int subpanelHeight = 0;
-		for (SidebarSubpanels.Subpanel subpanel : subpanels.subpanels) {
-			subpanelHeight += subpanel.rows() * ENTRY_SIZE + SUBPANEL_SEPARATOR_SIZE;
-			maxHeight -= subpanel.rows();
-		}
+        int subpanelHeight = 0;
+        for (SidebarSubpanels.Subpanel subpanel : subpanels.subpanels) {
+            subpanelHeight += subpanel.rows() * ENTRY_SIZE + SUBPANEL_SEPARATOR_SIZE;
+            maxHeight -= subpanel.rows();
+        }
 
-		if (panel.getType() == SidebarType.CHESS) {
-			maxWidth = 8;
-			maxHeight = 8;
-			theme = SidebarTheme.MODERN;
-		}
-		int cx = bounds.x() + bounds.width() / 2;
-		int cy = bounds.y() + bounds.height() / 2;
-		int headerOffset = header ? 18 : 0;
+        if (panel.getType() == SidebarType.CHESS) {
+            maxWidth = 8;
+            maxHeight = 8;
+            theme = SidebarTheme.MODERN;
+        }
+        int cx = bounds.x() + bounds.width() / 2;
+        int cy = bounds.y() + bounds.height() / 2;
+        int headerOffset = header ? 18 : 0;
 
-		// Try a more optimistic approach to position the bounding box slightly more
-		// pleasantly if applicable
-		int idealWidth = Math.min(
-				maxWidth * ENTRY_SIZE + margins.left() + margins.right() + theme.horizontalPadding * 2, bounds.width());
-		int idealHeight = Math.min(
+        // Try a more optimistic approach to position the bounding box slightly more
+        // pleasantly if applicable
+        int idealWidth = Math.min(
+                maxWidth * ENTRY_SIZE + margins.left() + margins.right() + theme.horizontalPadding * 2, bounds.width());
+        int idealHeight = Math.min(
                 maxHeight * ENTRY_SIZE + margins.top() + margins.bottom() + theme.verticalPadding * 2 + headerOffset
                         + subpanelHeight,
-				bounds.height());
-		int idealX = switch (align.horizontal) {
-			case LEFT -> bounds.x();
-			case CENTER -> bounds.x() + bounds.width() / 2 - idealWidth / 2;
-			case RIGHT -> bounds.right() - idealWidth;
-		};
-		int idealY = switch (align.horizontal) {
-			case LEFT -> bounds.y();
-			case CENTER -> bounds.y() + bounds.height() / 2 - idealHeight / 2;
-			case RIGHT -> bounds.bottom() - idealHeight;
-		};
-		Bounds idealBounds = constrainBounds(exclusion, new Bounds(idealX, idealY, idealWidth, idealHeight), align,
-				headerOffset);
+                bounds.height());
+        int idealX = switch (align.horizontal) {
+            case LEFT -> bounds.x();
+            case CENTER -> bounds.x() + bounds.width() / 2 - idealWidth / 2;
+            case RIGHT -> bounds.right() - idealWidth;
+        };
+        int idealY = switch (align.horizontal) {
+            case LEFT -> bounds.y();
+            case CENTER -> bounds.y() + bounds.height() / 2 - idealHeight / 2;
+            case RIGHT -> bounds.bottom() - idealHeight;
+        };
+        Bounds idealBounds = constrainBounds(exclusion, new Bounds(idealX, idealY, idealWidth, idealHeight), align,
+                headerOffset);
 
-		bounds = constrainBounds(exclusion, bounds, align, headerOffset);
+        bounds = constrainBounds(exclusion, bounds, align, headerOffset);
 
-		if (Math.min(idealWidth, idealBounds.width()) * Math.min(idealHeight, idealBounds.height()) > Math
-				.min(idealWidth, bounds.width()) * Math.min(idealHeight, bounds.height())) {
-			bounds = idealBounds;
-		}
+        if (Math.min(idealWidth, idealBounds.width()) * Math.min(idealHeight, idealBounds.height()) > Math
+                .min(idealWidth, bounds.width()) * Math.min(idealHeight, bounds.height())) {
+            bounds = idealBounds;
+        }
 
-		int xMin = bounds.left() + margins.left() + theme.horizontalPadding;
-		int xMax = bounds.right() - margins.right() - theme.horizontalPadding;
-		int yMin = bounds.top() + margins.top() + theme.verticalPadding;
-		int yMax = bounds.bottom() - margins.bottom() - theme.verticalPadding;
-		int xSpan = xMax - xMin;
-		int ySpan = yMax - yMin;
-		int tw = Math.max(0, Math.min((xSpan) / ENTRY_SIZE, maxWidth));
-		int th = Math.max(0, Math.min((ySpan - headerOffset - subpanelHeight) / ENTRY_SIZE, maxHeight));
-		int hl = xMin;
-		int hr = xMax - tw * ENTRY_SIZE;
-		int tx = switch (align.horizontal) {
-			case LEFT -> hl;
-			case CENTER -> Mth.clamp(cx - (tw * ENTRY_SIZE) / 2, hl, hr);
-			case RIGHT -> hr;
-		};
-		int vt = yMin + headerOffset;
-		int vb = yMax - th * ENTRY_SIZE - subpanelHeight;
-		int ty = switch (align.vertical) {
-			case TOP -> vt;
+        int xMin = bounds.left() + margins.left() + theme.horizontalPadding;
+        int xMax = bounds.right() - margins.right() - theme.horizontalPadding;
+        int yMin = bounds.top() + margins.top() + theme.verticalPadding;
+        int yMax = bounds.bottom() - margins.bottom() - theme.verticalPadding;
+        int xSpan = xMax - xMin;
+        int ySpan = yMax - yMin;
+        int tw = Math.max(0, Math.min((xSpan) / ENTRY_SIZE, maxWidth));
+        int th = Math.max(0, Math.min((ySpan - headerOffset - subpanelHeight) / ENTRY_SIZE, maxHeight));
+        int hl = xMin;
+        int hr = xMax - tw * ENTRY_SIZE;
+        int tx = switch (align.horizontal) {
+            case LEFT -> hl;
+            case CENTER -> Mth.clamp(cx - (tw * ENTRY_SIZE) / 2, hl, hr);
+            case RIGHT -> hr;
+        };
+        int vt = yMin + headerOffset;
+        int vb = yMax - th * ENTRY_SIZE - subpanelHeight;
+        int ty = switch (align.vertical) {
+            case TOP -> vt;
             case CENTER -> Mth.clamp(
                     cy - (th * ENTRY_SIZE - headerOffset + subpanelHeight + theme.verticalPadding / 2) / 2, vt, vb);
-			case BOTTOM -> vb;
-		};
-		panel.header = header;
-		panel.theme = theme;
-		ScreenSpace space = new ScreenSpace(tx, ty, tw, th, rtl, exclusion, () -> panel.getType(), panel.isSearch());
-		List<ScreenSpace> subspaces = Lists.newArrayList();
-		for (SidebarSubpanels.Subpanel subpanel : subpanels.subpanels) {
-			ty += th * ENTRY_SIZE + SUBPANEL_SEPARATOR_SIZE;
-			th = subpanel.rows();
-			subspaces.add(new ScreenSpace(tx, ty, tw, th, rtl, exclusion, () -> subpanel.type, false));
-		}
-		panel.setSpaces(space, subspaces);
-	}
+            case BOTTOM -> vb;
+        };
+        panel.header = header;
+        panel.theme = theme;
+        ScreenSpace space = new ScreenSpace(tx, ty, tw, th, rtl, exclusion, () -> panel.getType(), panel.isSearch());
+        List<ScreenSpace> subspaces = Lists.newArrayList();
+        for (SidebarSubpanels.Subpanel subpanel : subpanels.subpanels) {
+            ty += th * ENTRY_SIZE + SUBPANEL_SEPARATOR_SIZE;
+            th = subpanel.rows();
+            subspaces.add(new ScreenSpace(tx, ty, tw, th, rtl, exclusion, () -> subpanel.type, false));
+        }
+        panel.setSpaces(space, subspaces);
+    }
 
-	private static Bounds constrainBounds(List<Bounds> exclusion, Bounds bounds, ScreenAlign align, int headerOffset) {
-		for (int i = 0; i < exclusion.size(); i++) {
-			Bounds overlap = exclusion.get(i).overlap(bounds);
-			if (!overlap.empty() && !bounds.empty()) {
+    private static Bounds constrainBounds(List<Bounds> exclusion, Bounds bounds, ScreenAlign align, int headerOffset) {
+        for (int i = 0; i < exclusion.size(); i++) {
+            Bounds overlap = exclusion.get(i).overlap(bounds);
+            if (!overlap.empty() && !bounds.empty()) {
                 if (overlap.top() < bounds.top() + ENTRY_SIZE + headerOffset
                         || overlap.width() >= bounds.width() * 2 / 3
-						|| overlap.height() >= bounds.height() / 3) {
-					int widthFactor = overlap.width() * 10 / bounds.width();
-					int heightFactor = overlap.height() * 10 / bounds.height();
-					if (heightFactor < widthFactor) {
-						int cy = bounds.y() + bounds.height() / 2;
-						int ocy = overlap.y() + overlap.height() / 2;
-						cy += switch (align.vertical) {
-							case TOP -> -bounds.height() / 4;
-							case CENTER -> 0;
-							case BOTTOM -> bounds.height() / 4;
-						};
-						if (cy < ocy) {
-							bounds = new Bounds(bounds.x(), bounds.y(), bounds.width(), overlap.top() - bounds.top());
-						} else {
-							bounds = new Bounds(bounds.x(), overlap.bottom(), bounds.width(),
-									bounds.bottom() - overlap.bottom());
-						}
-					} else {
-						int cx = bounds.x() + bounds.width() / 2;
-						int ocx = overlap.x() + overlap.width() / 2;
-						cx += switch (align.horizontal) {
-							case LEFT -> -bounds.width() / 4;
-							case CENTER -> 0;
-							case RIGHT -> bounds.width() / 4;
-						};
-						if (cx < ocx) {
-							bounds = new Bounds(bounds.x(), bounds.y(), overlap.left() - bounds.left(),
-									bounds.height());
-						} else {
-							bounds = new Bounds(overlap.right(), bounds.y(), bounds.right() - overlap.right(),
-									bounds.height());
-						}
-					}
-					i = -1;
-				}
-			}
-		}
-		if (bounds.empty()) {
-			return Bounds.EMPTY;
-		}
-		return bounds;
-	}
+                        || overlap.height() >= bounds.height() / 3) {
+                    int widthFactor = overlap.width() * 10 / bounds.width();
+                    int heightFactor = overlap.height() * 10 / bounds.height();
+                    if (heightFactor < widthFactor) {
+                        int cy = bounds.y() + bounds.height() / 2;
+                        int ocy = overlap.y() + overlap.height() / 2;
+                        cy += switch (align.vertical) {
+                            case TOP -> -bounds.height() / 4;
+                            case CENTER -> 0;
+                            case BOTTOM -> bounds.height() / 4;
+                        };
+                        if (cy < ocy) {
+                            bounds = new Bounds(bounds.x(), bounds.y(), bounds.width(), overlap.top() - bounds.top());
+                        } else {
+                            bounds = new Bounds(bounds.x(), overlap.bottom(), bounds.width(),
+                                    bounds.bottom() - overlap.bottom());
+                        }
+                    } else {
+                        int cx = bounds.x() + bounds.width() / 2;
+                        int ocx = overlap.x() + overlap.width() / 2;
+                        cx += switch (align.horizontal) {
+                            case LEFT -> -bounds.width() / 4;
+                            case CENTER -> 0;
+                            case RIGHT -> bounds.width() / 4;
+                        };
+                        if (cx < ocx) {
+                            bounds = new Bounds(bounds.x(), bounds.y(), overlap.left() - bounds.left(),
+                                    bounds.height());
+                        } else {
+                            bounds = new Bounds(overlap.right(), bounds.y(), bounds.right() - overlap.right(),
+                                    bounds.height());
+                        }
+                    }
+                    i = -1;
+                }
+            }
+        }
+        if (bounds.empty()) {
+            return Bounds.EMPTY;
+        }
+        return bounds;
+    }
 
-	public static void focusSearchSidebarType(SidebarType type) {
-		SidebarPanel search = getSearchPanel();
-		if (search != null && search.supportsType(type)) {
-			search.setType(type);
-		}
-	}
+    public static void focusSearchSidebarType(SidebarType type) {
+        SidebarPanel search = getSearchPanel();
+        if (search != null && search.supportsType(type)) {
+            search.setType(type);
+        }
+    }
 
-	public static void focusSidebarType(SidebarType type) {
-		for (SidebarPanel panel : panels) {
-			if (panel.supportsType(type)) {
-				panel.setType(type);
-			}
-		}
-	}
+    public static void focusSidebarType(SidebarType type) {
+        for (SidebarPanel panel : panels) {
+            if (panel.supportsType(type)) {
+                panel.setType(type);
+            }
+        }
+    }
 
-	public static @Nullable SidebarPanel getPanelFor(SidebarSide side) {
-		for (SidebarPanel panel : panels) {
-			if (panel.side == side) {
-				return panel;
-			}
-		}
-		return null;
-	}
+    public static @Nullable SidebarPanel getPanelFor(SidebarSide side) {
+        for (SidebarPanel panel : panels) {
+            if (panel.side == side) {
+                return panel;
+            }
+        }
+        return null;
+    }
 
-	public static @Nullable SidebarPanel getPanelFor(SidebarType type) {
-		for (SidebarPanel panel : panels) {
-			if (panel.getType() == type) {
-				return panel;
-			}
-		}
-		return null;
-	}
+    public static @Nullable SidebarPanel getPanelFor(SidebarType type) {
+        for (SidebarPanel panel : panels) {
+            if (panel.getType() == type) {
+                return panel;
+            }
+        }
+        return null;
+    }
 
-	public static @Nullable SidebarPanel getHoveredPanel(int mouseX, int mouseY) {
-		for (SidebarPanel panel : panels) {
-			if (panel.getBounds().contains(mouseX, mouseY) && panel.isVisible()) {
-				return panel;
-			}
-		}
-		return null;
-	}
+    public static @Nullable SidebarPanel getHoveredPanel(int mouseX, int mouseY) {
+        for (SidebarPanel panel : panels) {
+            if (panel.getBounds().contains(mouseX, mouseY) && panel.isVisible()) {
+                return panel;
+            }
+        }
+        return null;
+    }
 
-	public static @Nullable ScreenSpace getHoveredSpace(int mouseX, int mouseY) {
-		SidebarPanel panel = getHoveredPanel(mouseX, mouseY);
-		if (panel != null) {
-			return panel.getHoveredSpace(mouseX, mouseY);
-		}
-		return null;
-	}
+    public static @Nullable ScreenSpace getHoveredSpace(int mouseX, int mouseY) {
+        SidebarPanel panel = getHoveredPanel(mouseX, mouseY);
+        if (panel != null) {
+            return panel.getHoveredSpace(mouseX, mouseY);
+        }
+        return null;
+    }
 
-	public static boolean hasSidebarVisible(SidebarType type) {
-		for (SidebarPanel panel : panels) {
-			for (ScreenSpace space : panel.getSpaces()) {
-				if (type == space.getType()) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+    public static boolean hasSidebarVisible(SidebarType type) {
+        for (SidebarPanel panel : panels) {
+            for (ScreenSpace space : panel.getSpaces()) {
+                if (type == space.getType()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-	public static boolean hasSidebarAvailable(SidebarType type) {
-		for (SidebarPanel panel : panels) {
-			if (panel.supportsType(type)) {
-				return true;
-			}
-		}
-		return false;
-	}
+    public static boolean hasSidebarAvailable(SidebarType type) {
+        for (SidebarPanel panel : panels) {
+            if (panel.supportsType(type)) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	public static void repopulatePanels(SidebarType type) {
-		for (SidebarPanel panel : panels) {
-			for (ScreenSpace space : panel.getSpaces()) {
-				if (space.getType() == type) {
-					space.batcher.repopulate();
-				}
-			}
-		}
-	}
+    public static void repopulatePanels(SidebarType type) {
+        for (SidebarPanel panel : panels) {
+            for (ScreenSpace space : panel.getSpaces()) {
+                if (space.getType() == type) {
+                    space.batcher.repopulate();
+                }
+            }
+        }
+    }
 
-	public static SidebarPanel getSearchPanel() {
-		for (SidebarPanel panel : panels) {
-			if (panel.isSearch()) {
-				return panel;
-			}
-		}
-		return null;
-	}
+    public static SidebarPanel getSearchPanel() {
+        for (SidebarPanel panel : panels) {
+            if (panel.isSearch()) {
+                return panel;
+            }
+        }
+        return null;
+    }
 
-	public static void toggleSidebarType(SidebarType type) {
-		boolean visible = false;
-		for (SidebarPanel panel : panels) {
-			if (panel.getType() == type) {
-				visible = true;
-				panel.cycleType(1);
-			}
-		}
-		if (!visible) {
-			focusSidebarType(type);
-		}
-	}
+    public static void toggleSidebarType(SidebarType type) {
+        boolean visible = false;
+        for (SidebarPanel panel : panels) {
+            if (panel.getType() == type) {
+                visible = true;
+                panel.cycleType(1);
+            }
+        }
+        if (!visible) {
+            focusSidebarType(type);
+        }
+    }
 
-	public static List<? extends EmiIngredient> getSearchSource() {
-		SidebarPanel search = getSearchPanel();
-		if (search == null) {
-			return List.of();
-		}
-		return EmiSidebars.getStacks(search.getType());
-	}
+    public static List<? extends EmiIngredient> getSearchSource() {
+        SidebarPanel search = getSearchPanel();
+        if (search == null) {
+            return List.of();
+        }
+        return EmiSidebars.getStacks(search.getType());
+    }
 
-	public static EmiStackInteraction getHoveredStack(int mouseX, int mouseY, boolean notClick) {
-		return getHoveredStack(mouseX, mouseY, notClick, false);
-	}
+    public static EmiStackInteraction getHoveredStack(int mouseX, int mouseY, boolean notClick) {
+        return getHoveredStack(mouseX, mouseY, notClick, false);
+    }
 
-	public static int getDebugTextX() {
-		int x = 4;
-		if (emi.visible) {
-			x = Math.max(4, 4 + 22);
-		}
-		if (tree.visible) {
-			x = Math.max(4, 4 + 22 + 22);
-		}
-		if (grouping.visible) {
-			x = Math.max(4, 4 + 22 + 22 + 22);
-		}
-		return x;
-	}
+    public static int getDebugTextX() {
+        int x = 4;
+        if (emi.visible) {
+            x = Math.max(4, 4 + 22);
+        }
+        if (tree.visible) {
+            x = Math.max(4, 4 + 22 + 22);
+        }
+        if (grouping.visible) {
+            x = Math.max(4, 4 + 22 + 22 + 22);
+        }
+        return x;
+    }
 
-	public static EmiStackInteraction getHoveredStack(int mouseX, int mouseY, boolean notClick,
-			boolean ignoreLastHoveredCraftable) {
-		if (client.screen == null) {
-			return EmiStackInteraction.EMPTY;
-		}
-		EmiStackInteraction stack = EmiStackProviders.getStackAt(client.screen, mouseX, mouseY, notClick);
-		if (!stack.isEmpty()) {
-			return stack;
-		}
-		if (!ignoreLastHoveredCraftable) {
-			if (lastHoveredCraftable != null) {
-				if (lastHoveredCraftable.getRecipeContext() == null
-						|| (!lastHoveredCraftableSturdy && lastPlayerInventory != null &&
+    public static EmiStackInteraction getHoveredStack(int mouseX, int mouseY, boolean notClick,
+            boolean ignoreLastHoveredCraftable) {
+        if (client.screen == null) {
+            return EmiStackInteraction.EMPTY;
+        }
+        EmiStackInteraction stack = EmiStackProviders.getStackAt(client.screen, mouseX, mouseY, notClick);
+        if (!stack.isEmpty()) {
+            return stack;
+        }
+        if (!ignoreLastHoveredCraftable) {
+            if (lastHoveredCraftable != null) {
+                if (lastHoveredCraftable.getRecipeContext() == null
+                        || (!lastHoveredCraftableSturdy && lastPlayerInventory != null &&
                                 !lastPlayerInventory.canCraft(lastHoveredCraftable.getRecipeContext()))) {
-					lastHoveredCraftable = null;
-				} else {
-					return lastHoveredCraftable;
-				}
-			}
-		}
-		for (SidebarPanel panel : panels) {
-			for (ScreenSpace space : panel.getSpaces()) {
-				if (panel.isVisible() && space.pageSize > 0 && space.contains(mouseX, mouseY)
-						&& mouseX >= space.tx && mouseY >= space.ty) {
-					int x = (mouseX - space.tx) / ENTRY_SIZE;
-					int y = (mouseY - space.ty) / ENTRY_SIZE;
-					int n = space.getRawOffset(x, y);
-					if (n >= 0 && space == panel.space) {
-						n += space.pageSize * panel.page;
-					}
-					if (n >= 0 && n < space.getStacks().size()) {
-						EmiIngredient hovered = space.getStacks().get(n);
-						if (hovered instanceof EmiFavorite fav) {
-							return new SidebarEmiStackInteraction(hovered, space, fav.getRecipe(), true);
-						}
-						return new SidebarEmiStackInteraction(hovered, space);
-					}
-				}
-			}
-		}
-		if (lastStackTooltipRendered != null && notClick) {
-			return new EmiStackInteraction(EmiStack.of(lastStackTooltipRendered));
-		}
-		return EmiStackInteraction.EMPTY;
-	}
+                    lastHoveredCraftable = null;
+                } else {
+                    return lastHoveredCraftable;
+                }
+            }
+        }
+        for (SidebarPanel panel : panels) {
+            for (ScreenSpace space : panel.getSpaces()) {
+                if (panel.isVisible() && space.pageSize > 0 && space.contains(mouseX, mouseY)
+                        && mouseX >= space.tx && mouseY >= space.ty) {
+                    int x = (mouseX - space.tx) / ENTRY_SIZE;
+                    int y = (mouseY - space.ty) / ENTRY_SIZE;
+                    int n = space.getRawOffset(x, y);
+                    if (n >= 0 && space == panel.space) {
+                        n += space.pageSize * panel.page;
+                    }
+                    if (n >= 0 && n < space.getStacks().size()) {
+                        EmiIngredient hovered = space.getStacks().get(n);
+                        if (hovered instanceof EmiFavorite fav) {
+                            return new SidebarEmiStackInteraction(hovered, space, fav.getRecipe(), true);
+                        }
+                        return new SidebarEmiStackInteraction(hovered, space);
+                    }
+                }
+            }
+        }
+        if (lastStackTooltipRendered != null && notClick) {
+            return new EmiStackInteraction(EmiStack.of(lastStackTooltipRendered));
+        }
+        return EmiStackInteraction.EMPTY;
+    }
 
-	private static void updateMouse(int mouseX, int mouseY) {
-		if (lastHoveredCraftable != null) {
-			ScreenSpace space = getHoveredSpace(mouseX, mouseY);
+    private static void updateMouse(int mouseX, int mouseY) {
+        if (lastHoveredCraftable != null) {
+            ScreenSpace space = getHoveredSpace(mouseX, mouseY);
             if (space != null
                     && (space.getType() == SidebarType.CRAFTABLES || space.getType() == SidebarType.CRAFT_HISTORY)) {
-				int offset = space.getRawOffsetFromMouse(mouseX, mouseY);
-				if (offset != lastHoveredCraftableOffset) {
-					lastHoveredCraftable = null;
-				}
-			} else {
-				lastHoveredCraftable = null;
-			}
-		}
-		lastMouseX = mouseX;
-		lastMouseY = mouseY;
-	}
+                int offset = space.getRawOffsetFromMouse(mouseX, mouseY);
+                if (offset != lastHoveredCraftableOffset) {
+                    lastHoveredCraftable = null;
+                }
+            } else {
+                lastHoveredCraftable = null;
+            }
+        }
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+    }
 
-	public static void drawBackground(EmiDrawContext context, int mouseX, int mouseY, float delta) {
-		updateMouse(mouseX, mouseY);
-		recalculate();
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (!base.isEmpty()) {
-			EmiProfiler.push("sidebar");
-			for (SidebarPanel panel : panels) {
-				panel.drawBackground(context, mouseX, mouseY, delta);
-			}
-		}
-	}
+    public static void drawBackground(EmiDrawContext context, int mouseX, int mouseY, float delta) {
+        updateMouse(mouseX, mouseY);
+        recalculate();
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (!base.isEmpty()) {
+            EmiProfiler.push("sidebar");
+            for (SidebarPanel panel : panels) {
+                panel.drawBackground(context, mouseX, mouseY, delta);
+            }
+        }
+    }
 
-	public static void render(EmiDrawContext context, int mouseX, int mouseY, float delta) {
-		EmiProfiler.push("emi");
-		updateMouse(mouseX, mouseY);
-		recalculate();
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (base.isEmpty()) {
-			EmiProfiler.pop();
-			return;
+    public static void render(EmiDrawContext context, int mouseX, int mouseY, float delta) {
+        EmiProfiler.push("emi");
+        updateMouse(mouseX, mouseY);
+        recalculate();
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (base.isEmpty()) {
+            EmiProfiler.pop();
+            return;
         }
         if (EmiSearch.searchBaking) {
             context.drawTextWithShadow(EmiPort.literal("Baking search"), getDebugTextX(), base.screen().height - 26);
-		}
-		boolean visible = !isDisabled();
-		emi.visible = EmiConfig.emiConfigButtonVisibility.resolve(visible);
-		tree.visible = EmiConfig.recipeTreeButtonVisibility.resolve(visible);
-		grouping.visible = EmiConfig.emiConfigButtonVisibility.resolve(visible);
-		for (SidebarPanel panel : panels) {
-			panel.updateWidgetVisibility();
-		}
-		renderWidgets(context, mouseX, mouseY, delta, base);
-		if (isDisabled()) {
-			int screenHeight = base.screen().height;
-			if (!EmiReloadManager.isLoaded()) {
-				int reloadInfoX = getDebugTextX();
-				if (EmiReloadManager.getStatus() == -1) {
+        }
+        boolean visible = !isDisabled();
+        emi.visible = EmiConfig.emiConfigButtonVisibility.resolve(visible);
+        tree.visible = EmiConfig.recipeTreeButtonVisibility.resolve(visible);
+        grouping.visible = EmiConfig.emiConfigButtonVisibility.resolve(visible);
+        for (SidebarPanel panel : panels) {
+            panel.updateWidgetVisibility();
+        }
+        renderWidgets(context, mouseX, mouseY, delta, base);
+        if (isDisabled()) {
+            int screenHeight = base.screen().height;
+            if (!EmiReloadManager.isLoaded()) {
+                int reloadInfoX = getDebugTextX();
+                if (EmiReloadManager.getStatus() == -1) {
                     context.drawTextWithShadow(EmiPort.translatable("emi.reloading.error"), reloadInfoX,
                             screenHeight - 16);
-				} else if (EmiReloadManager.getStatus() == 0) {
+                } else if (EmiReloadManager.getStatus() == 0) {
                     context.drawTextWithShadow(EmiPort.translatable("emi.reloading.waiting"), reloadInfoX,
                             screenHeight - 16);
-				} else {
-					context.drawTextWithShadow(EmiPort.translatable("emi.reloading"), reloadInfoX, screenHeight - 16);
-					context.drawTextWithShadow(EmiReloadManager.reloadStep, reloadInfoX, screenHeight - 26);
-					if (System.currentTimeMillis() > EmiReloadManager.reloadWorry) {
+                } else {
+                    context.drawTextWithShadow(EmiPort.translatable("emi.reloading"), reloadInfoX, screenHeight - 16);
+                    context.drawTextWithShadow(EmiReloadManager.reloadStep, reloadInfoX, screenHeight - 26);
+                    if (System.currentTimeMillis() > EmiReloadManager.reloadWorry) {
                         context.drawTextWithShadow(EmiPort.translatable("emi.reloading.worry"), reloadInfoX,
                                 screenHeight - 36);
-					}
-				}
-			}
-			EmiProfiler.pop();
-			lastHoveredCraftable = null;
-			return;
-		} else if (EmiRecipes.activeWorker != null) {
-			int bakingX = getDebugTextX();
+                    }
+                }
+            }
+            EmiProfiler.pop();
+            lastHoveredCraftable = null;
+            return;
+        } else if (EmiRecipes.activeWorker != null) {
+            int bakingX = getDebugTextX();
             context.drawTextWithShadow(EmiPort.translatable("emi.reloading.still_baking_recipes"), bakingX,
                     base.screen().height - 16);
-		} else {
-			renderDevMode(context, mouseX, mouseY, delta, base);
-		}
-		EmiProfiler.push("sidebars");
-		for (SidebarPanel panel : panels) {
-			panel.render(context, mouseX, mouseY, delta);
-		}
-		FavoriteGroupSidebar.render(context, mouseX, mouseY, delta);
+        } else {
+            renderDevMode(context, mouseX, mouseY, delta, base);
+        }
+        EmiProfiler.push("sidebars");
+        for (SidebarPanel panel : panels) {
+            panel.render(context, mouseX, mouseY, delta);
+        }
+        FavoriteGroupSidebar.render(context, mouseX, mouseY, delta);
 
-		renderLastHoveredCraftable(context, mouseX, mouseY, delta, base);
+        renderLastHoveredCraftable(context, mouseX, mouseY, delta, base);
 
-		EmiProfiler.pop();
+        EmiProfiler.pop();
 
-		renderExclusionAreas(context, mouseX, mouseY, delta, base);
+        renderExclusionAreas(context, mouseX, mouseY, delta, base);
 
-		EmiProfiler.swap("slots");
-		renderSlotOverlays(context, mouseX, mouseY, delta, base);
-		EmiProfiler.pop();
+        EmiProfiler.swap("slots");
+        renderSlotOverlays(context, mouseX, mouseY, delta, base);
+        EmiProfiler.pop();
 
-		context.disableDepthTest();
-	}
+        context.disableDepthTest();
+    }
 
-	public static void drawForeground(EmiDrawContext context, int mouseX, int mouseY, float delta) {
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (!base.isEmpty() && !isDisabled()) {
-			renderDraggedStack(context, mouseX, mouseY, delta, base);
-			renderCurrentTooltip(context, mouseX, mouseY, delta, base);
-			FavoriteGroupSidebar.renderTooltip(base.screen(), context, mouseX, mouseY);
-		}
-	}
+    public static void drawForeground(EmiDrawContext context, int mouseX, int mouseY, float delta) {
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (!base.isEmpty() && !isDisabled()) {
+            renderDraggedStack(context, mouseX, mouseY, delta, base);
+            renderCurrentTooltip(context, mouseX, mouseY, delta, base);
+            FavoriteGroupSidebar.renderTooltip(base.screen(), context, mouseX, mouseY);
+        }
+    }
 
     private static void renderWidgets(EmiDrawContext context, int mouseX, int mouseY, float delta,
-            dev.emi.emi.screen.EmiScreenBase base) {
-		context.push();
-		context.matrices().translate(0, 0, 100);
-		emi.render(context.raw(), mouseX, mouseY, delta);
-		tree.render(context.raw(), mouseX, mouseY, delta);
-		grouping.render(context.raw(), mouseX, mouseY, delta);
-		search.render(context.raw(), mouseX, mouseY, delta);
-		context.pop();
-	}
+            EmiScreenBase base) {
+        context.push();
+        context.matrices().translate(0, 0, 100);
+        emi.render(context.raw(), mouseX, mouseY, delta);
+        tree.render(context.raw(), mouseX, mouseY, delta);
+        grouping.render(context.raw(), mouseX, mouseY, delta);
+        search.render(context.raw(), mouseX, mouseY, delta);
+        context.pop();
+    }
 
     private static void renderLastHoveredCraftable(EmiDrawContext context, int mouseX, int mouseY, float delta,
-            dev.emi.emi.screen.EmiScreenBase base) {
-		if (lastHoveredCraftable != null && lastHoveredCraftableOffset != -1) {
-			EmiStackInteraction cur = getHoveredStack(mouseX, mouseY, false, true);
-			if (cur.getRecipeContext() != lastHoveredCraftable.getRecipeContext()) {
-				ScreenSpace space = getHoveredSpace(mouseX, mouseY);
+            EmiScreenBase base) {
+        if (lastHoveredCraftable != null && lastHoveredCraftableOffset != -1) {
+            EmiStackInteraction cur = getHoveredStack(mouseX, mouseY, false, true);
+            if (cur.getRecipeContext() != lastHoveredCraftable.getRecipeContext()) {
+                ScreenSpace space = getHoveredSpace(mouseX, mouseY);
                 if (space != null && (space.getType() == SidebarType.CRAFTABLES
                         || space.getType() == SidebarType.CRAFT_HISTORY)) {
-					PoseStack view = RenderSystem.getModelViewStack();
-					view.pushPose();
-					view.translate(0, 0, 200);
-					EmiPort.applyModelViewMatrix();
-					int lhx = space.getRawX(lastHoveredCraftableOffset);
-					int lhy = space.getRawY(lastHoveredCraftableOffset);
-					context.fill(lhx, lhy, 18, 18, 0x44AA00FF);
-					lastHoveredCraftable.getStack().render(context.raw(), lhx + 1, lhy + 1, delta,
-							EmiIngredient.RENDER_ICON);
-					view.popPose();
-					EmiPort.applyModelViewMatrix();
-				}
-			}
-		}
-	}
+                    PoseStack view = RenderSystem.getModelViewStack();
+                    view.pushPose();
+                    view.translate(0, 0, 200);
+                    EmiPort.applyModelViewMatrix();
+                    int lhx = space.getRawX(lastHoveredCraftableOffset);
+                    int lhy = space.getRawY(lastHoveredCraftableOffset);
+                    context.fill(lhx, lhy, 18, 18, 0x44AA00FF);
+                    lastHoveredCraftable.getStack().render(context.raw(), lhx + 1, lhy + 1, delta,
+                            EmiIngredient.RENDER_ICON);
+                    view.popPose();
+                    EmiPort.applyModelViewMatrix();
+                }
+            }
+        }
+    }
 
     private static void renderDraggedStack(EmiDrawContext context, int mouseX, int mouseY, float delta,
-            dev.emi.emi.screen.EmiScreenBase base) {
-		if (!draggedStack.isEmpty()) {
-			SidebarPanel panel = getHoveredPanel(mouseX, mouseY);
-			if (panel != null) {
-				ScreenSpace space = panel.getHoveredSpace(mouseX, mouseY);
-				if (space != null && space.getType() == SidebarType.FAVORITES) {
-					int pageSize = space.pageSize;
-					int page = panel.page;
-					int pageStart = pageSize * page;
-					int sidebarCount = space.getStacks().size();
-					int globalEdge = Math.min(pageStart + space.getClosestEdge(mouseX, mouseY), sidebarCount);
-					int index = globalEdge - pageStart;
-					if (index >= 0 && index <= pageSize) {
-						context.push();
-						context.matrices().translate(0, 0, 200);
-						int dx = space.getEdgeX(index);
-						int dy = space.getEdgeY(index);
-						context.fill(dx - 1, dy, 2, 18, 0xFF00FFFF);
-						context.pop();
-					}
-				}
-			}
-			context.push();
-			context.matrices().translate(0, 0, 400);
-			EmiDragDropHandlers.render(base.screen(), draggedStack, context.raw(), mouseX, mouseY, delta);
-			draggedStack.render(context.raw(), mouseX - 8, mouseY - 8, delta, EmiIngredient.RENDER_ICON);
-			context.pop();
-		}
-	}
+            EmiScreenBase base) {
+        if (!draggedStack.isEmpty()) {
+            SidebarPanel panel = getHoveredPanel(mouseX, mouseY);
+            if (panel != null) {
+                ScreenSpace space = panel.getHoveredSpace(mouseX, mouseY);
+                if (space != null && space.getType() == SidebarType.FAVORITES) {
+                    int pageSize = space.pageSize;
+                    int page = panel.page;
+                    int pageStart = pageSize * page;
+                    int sidebarCount = space.getStacks().size();
+                    int globalEdge = Math.min(pageStart + space.getClosestEdge(mouseX, mouseY), sidebarCount);
+                    int index = globalEdge - pageStart;
+                    if (index >= 0 && index <= pageSize) {
+                        context.push();
+                        context.matrices().translate(0, 0, 200);
+                        int dx = space.getEdgeX(index);
+                        int dy = space.getEdgeY(index);
+                        context.fill(dx - 1, dy, 2, 18, 0xFF00FFFF);
+                        context.pop();
+                    }
+                }
+            }
+            context.push();
+            context.matrices().translate(0, 0, 400);
+            EmiDragDropHandlers.render(base.screen(), draggedStack, context.raw(), mouseX, mouseY, delta);
+            draggedStack.render(context.raw(), mouseX - 8, mouseY - 8, delta, EmiIngredient.RENDER_ICON);
+            context.pop();
+        }
+    }
 
     private static void renderCurrentTooltip(EmiDrawContext context, int mouseX, int mouseY, float delta,
-            dev.emi.emi.screen.EmiScreenBase base) {
-		try {
-			ItemStack cursor = ItemStack.EMPTY;
-			if (client.screen instanceof AbstractContainerScreen<?> handled) {
-				cursor = handled.getMenu().getCarried();
-			}
-			ScreenSpace space = getHoveredSpace(mouseX, mouseY);
+            EmiScreenBase base) {
+        try {
+            ItemStack cursor = ItemStack.EMPTY;
+            if (client.screen instanceof AbstractContainerScreen<?> handled) {
+                cursor = handled.getMenu().getCarried();
+            }
+            ScreenSpace space = getHoveredSpace(mouseX, mouseY);
             if (EmiApi.isCheatMode() && !cursor.isEmpty() && space != null && space.getType() == SidebarType.INDEX
                     && EmiConfig.deleteCursorStack.isBound()) {
-				List<ClientTooltipComponent> list = List.of(
+                List<ClientTooltipComponent> list = List.of(
                         ClientTooltipComponent.create(EmiPort.ordered(EmiPort.translatable("emi.delete_stack"))),
                         ClientTooltipComponent.create(EmiPort.ordered(EmiConfig.deleteCursorStack.getBindText())));
-				if (space.rtl) {
-					EmiRenderHelper.drawLeftTooltip(base.screen(), context, list, mouseX, mouseY);
-				} else {
-					EmiRenderHelper.drawTooltip(base.screen(), context, list, mouseX, mouseY);
-				}
-			}
-			if (cursor.isEmpty() && draggedStack.isEmpty()) {
-				EmiProfiler.swap("hover");
-				try {
-					EmiIngredient hov = EmiStack.EMPTY;
-					SidebarType sidebar = SidebarType.NONE;
-					if (getHoveredStack(mouseX, mouseY, false) instanceof SidebarEmiStackInteraction sesi) {
-						hov = sesi.getStack();
-						sidebar = sesi.getType();
-					}
-					List<ClientTooltipComponent> list = Lists.newArrayList();
-					list.addAll(hov.getTooltip());
-					if (space != null && sidebar == SidebarType.INDEX && !EmiConfig.editMode) {
+                if (space.rtl) {
+                    EmiRenderHelper.drawLeftTooltip(base.screen(), context, list, mouseX, mouseY);
+                } else {
+                    EmiRenderHelper.drawTooltip(base.screen(), context, list, mouseX, mouseY);
+                }
+            }
+            if (cursor.isEmpty() && draggedStack.isEmpty()) {
+                EmiProfiler.swap("hover");
+                try {
+                    EmiIngredient hov = EmiStack.EMPTY;
+                    SidebarType sidebar = SidebarType.NONE;
+                    if (getHoveredStack(mouseX, mouseY, false) instanceof SidebarEmiStackInteraction sesi) {
+                        hov = sesi.getStack();
+                        sidebar = sesi.getType();
+                    }
+                    List<ClientTooltipComponent> list = Lists.newArrayList();
+                    list.addAll(hov.getTooltip());
+                    if (space != null && sidebar == SidebarType.INDEX && !EmiConfig.editMode) {
                         EmiCollapsibleSidebarGroups.Group group = EmiCollapsibleSidebarGroups
                                 .group(space.getRawStacks(), hov);
-						if (group != null) {
-							String label = EmiCollapsibleSidebarGroups.isExpanded(group)
+                        if (group != null) {
+                            String label = EmiCollapsibleSidebarGroups.isExpanded(group)
                                     ? PlannerText.tr("sidebar.group.collapse", "ALT + LMB: Collapse group (%d items)",
                                             group.size())
                                     : PlannerText.tr("sidebar.group.expand", "ALT + LMB: Expand group (%d items)",
                                             group.size());
-							list.add(ClientTooltipComponent.create(EmiPort.literal(label)
-									.withStyle(ChatFormatting.LIGHT_PURPLE).getVisualOrderText()));
-						}
-					}
-					if (EmiApi.getRecipeContext(hov) == null && EmiConfig.showCraft.isHeld()) {
-						EmiRecipe recipe = EmiUtil.getPreferredRecipe(hov, lastPlayerInventory, false);
-						if (recipe != null) {
-							list.add(new RecipeTooltipComponent(recipe, true));
-						}
-					}
-					if (EmiConfig.editMode && sidebar == SidebarType.INDEX) {
+                            list.add(ClientTooltipComponent.create(EmiPort.literal(label)
+                                    .withStyle(ChatFormatting.LIGHT_PURPLE).getVisualOrderText()));
+                        }
+                    }
+                    if (EmiApi.getRecipeContext(hov) == null && EmiConfig.showCraft.isHeld()) {
+                        EmiRecipe recipe = EmiUtil.getPreferredRecipe(hov, lastPlayerInventory, false);
+                        if (recipe != null) {
+                            list.add(new RecipeTooltipComponent(recipe, true));
+                        }
+                    }
+                    if (EmiConfig.editMode && sidebar == SidebarType.INDEX) {
                         list.add(ClientTooltipComponent.create(
                                 EmiPort.translatable("emi.edit_mode.hide_one", EmiConfig.hideStack.getBindText())
                                         .getVisualOrderText()));
                         list.add(ClientTooltipComponent.create(
                                 EmiPort.translatable("emi.edit_mode.hide_all", EmiConfig.hideStackById.getBindText())
                                         .getVisualOrderText()));
-					}
-					if (space != null && space.rtl) {
-						EmiRenderHelper.drawLeftTooltip(base.screen(), context, list, mouseX, mouseY);
-					} else {
-						EmiRenderHelper.drawTooltip(base.screen(), context, list, mouseX, mouseY);
-					}
-				} finally {
-					EmiProfiler.pop();
-				}
-			}
-		} catch (Exception e) {
-			try {
-				EmiLog.error("Error rendering tooltip", e);
-				List<ClientTooltipComponent> list = List.of(
+                    }
+                    if (space != null && space.rtl) {
+                        EmiRenderHelper.drawLeftTooltip(base.screen(), context, list, mouseX, mouseY);
+                    } else {
+                        EmiRenderHelper.drawTooltip(base.screen(), context, list, mouseX, mouseY);
+                    }
+                } finally {
+                    EmiProfiler.pop();
+                }
+            }
+        } catch (Exception e) {
+            try {
+                EmiLog.error("Error rendering tooltip", e);
+                List<ClientTooltipComponent> list = List.of(
                         EmiTooltipComponents.of(EmiPort.literal("Error rendering tooltip", ChatFormatting.RED)),
                         EmiTooltipComponents.of(EmiPort.literal("See log", ChatFormatting.GRAY)));
-				EmiRenderHelper.drawTooltip(base.screen(), context, list, mouseX, mouseY);
-			} catch (Exception e2) {
-				EmiLog.error("Critical error rendering tooltip", e);
-			}
-		}
-		lastStackTooltipRendered = null;
-	}
+                EmiRenderHelper.drawTooltip(base.screen(), context, list, mouseX, mouseY);
+            } catch (Exception e2) {
+                EmiLog.error("Critical error rendering tooltip", e);
+            }
+        }
+        lastStackTooltipRendered = null;
+    }
 
     private static void renderDevMode(EmiDrawContext context, int mouseX, int mouseY, float delta,
-            dev.emi.emi.screen.EmiScreenBase base) {
-		if (EmiConfig.devMode) {
-			Screen screen = base.screen();
-			EmiProfiler.swap("dev");
-			int color = 0xFFFFFF;
-			Component title = EmiPort.literal("EMI Dev Mode");
-			int off = -16;
-			int devTextX = getDebugTextX();
-			if (!EmiReloadLog.warnings.isEmpty()) {
-				color = 0xFF0000;
-				off = -11;
-				String warnCount = EmiReloadLog.warningCount + " Warnings";
-				context.drawTextWithShadow(EmiPort.literal(warnCount), devTextX, screen.height - 21, color);
-				int width = Math.max(client.font.width(title), client.font.width(warnCount));
-				if (mouseX >= devTextX && mouseX < width + devTextX && mouseY > screen.height - 28) {
+            EmiScreenBase base) {
+        if (EmiConfig.devMode) {
+            Screen screen = base.screen();
+            EmiProfiler.swap("dev");
+            int color = 0xFFFFFF;
+            Component title = EmiPort.literal("EMI Dev Mode");
+            int off = -16;
+            int devTextX = getDebugTextX();
+            if (!EmiReloadLog.warnings.isEmpty()) {
+                color = 0xFF0000;
+                off = -11;
+                String warnCount = EmiReloadLog.warningCount + " Warnings";
+                context.drawTextWithShadow(EmiPort.literal(warnCount), devTextX, screen.height - 21, color);
+                int width = Math.max(client.font.width(title), client.font.width(warnCount));
+                if (mouseX >= devTextX && mouseX < width + devTextX && mouseY > screen.height - 28) {
                     var tooltip = new ObjectArrayList<Component>(EmiReloadLog.warnings.size() + 1);
                     tooltip.add(EmiPort.literal(" EMI detected some issues, see log for full details"));
                     for (var warning : EmiReloadLog.warnings) {
@@ -854,1261 +854,1261 @@ public class EmiScreenManager {
                         tooltip.add(EmiPort.literal(text));
                     }
                     context.raw().renderComponentTooltip(client.font, tooltip, 0, 20);
-				}
-			}
-			context.drawTextWithShadow(title, devTextX, screen.height + off, color);
-		}
-	}
+                }
+            }
+            context.drawTextWithShadow(title, devTextX, screen.height + off, color);
+        }
+    }
 
     private static void renderExclusionAreas(EmiDrawContext context, int mouseX, int mouseY, float delta,
-            dev.emi.emi.screen.EmiScreenBase base) {
-		if (EmiConfig.highlightExclusionAreas) {
-			for (SidebarPanel panel : panels) {
-				if (panel.isVisible()) {
-					Bounds bounds = panel.getBounds();
-					context.fill(bounds.left(), bounds.top(), bounds.width(), bounds.height(), 0x440000ff);
-				}
-			}
-			List<Bounds> exclusions = EmiExclusionAreas.getExclusion(base);
-			if (exclusions.size() == 0) {
-				return;
-			}
-			for (int i = 0; i < exclusions.size(); i++) {
-				Bounds b = exclusions.get(i);
-				context.fill(b.x(), b.y(), b.width(), b.height(), i == 0 ? 0x4400ff00 : 0x44ff0000);
-			}
-		}
-	}
+            EmiScreenBase base) {
+        if (EmiConfig.highlightExclusionAreas) {
+            for (SidebarPanel panel : panels) {
+                if (panel.isVisible()) {
+                    Bounds bounds = panel.getBounds();
+                    context.fill(bounds.left(), bounds.top(), bounds.width(), bounds.height(), 0x440000ff);
+                }
+            }
+            List<Bounds> exclusions = EmiExclusionAreas.getExclusion(base);
+            if (exclusions.size() == 0) {
+                return;
+            }
+            for (int i = 0; i < exclusions.size(); i++) {
+                Bounds b = exclusions.get(i);
+                context.fill(b.x(), b.y(), b.width(), b.height(), i == 0 ? 0x4400ff00 : 0x44ff0000);
+            }
+        }
+    }
 
     private static final ReferenceOpenHashSet<Slot> OVERLAY_IGNORED_SLOTS = new ReferenceOpenHashSet<>();
     private static final OpenCacheHashSet<EmiStack> OVERLAY_FAVORITES = new OpenCacheHashSet<>();
 
     @SuppressWarnings({ "rawtypes", "unchecked" })
     private static void renderSlotOverlays(EmiDrawContext context, int mouseX, int mouseY, float delta,
-            dev.emi.emi.screen.EmiScreenBase base) {
-		CompiledQuery query = null;
-		if (EmiScreenManager.search.highlight) {
-			query = EmiSearch.compiledQuery;
-		}
+            EmiScreenBase base) {
+        CompiledQuery query = null;
+        if (EmiScreenManager.search.highlight) {
+            query = EmiSearch.compiledQuery;
+        }
         var ignoredSlots = OVERLAY_IGNORED_SLOTS;
         ignoredSlots.clear();
         var synfavs = OVERLAY_FAVORITES;
         synfavs.clear();
-		if (BoM.craftingMode && BoM.tree != null) {
-			List<EmiFavorite.Synthetic> syntheticFavorites = EmiFavorites.syntheticFavorites;
-			for (EmiFavorite.Synthetic fav : syntheticFavorites) {
-				synfavs.addAll(fav.getEmiStacks());
-			}
+        if (BoM.craftingMode && BoM.tree != null) {
+            List<EmiFavorite.Synthetic> syntheticFavorites = EmiFavorites.syntheticFavorites;
+            for (EmiFavorite.Synthetic fav : syntheticFavorites) {
+                synfavs.addAll(fav.getEmiStacks());
+            }
 
-			try {
-				AbstractContainerScreen<?> hs = EmiApi.getHandledScreen();
-				for (EmiRecipeHandler handler : EmiRecipeFiller.getAllHandlers(hs)) {
-					if (handler instanceof StandardRecipeHandler standard) {
-						ignoredSlots.addAll(standard.getInputSources(hs.getMenu()));
-						ignoredSlots.addAll(standard.getCraftingSlots(hs.getMenu()));
-					}
-				}
-			} catch (Throwable t) {
-				EmiLog.error("Recipe handler is throwing in renderSlotOverlays:", t);
-			}
-		}
-		if (base.screen() instanceof AbstractContainerScreen<?> hs && hs instanceof HandledScreenAccessor hsa) {
-			context.push();
-			context.matrices().translate(hsa.getX(), hsa.getY(), 0);
-			for (Slot slot : hs.getMenu().slots) {
-				if (!slot.isActive()) {
-					continue;
-				}
-				EmiStack stack = EmiStack.of(slot.getItem());
-				context.push();
-				context.matrices().translate(0, 0, 300);
-				if (query != null) {
-					if (!query.test(stack)) {
-						context.fill(slot.x - 1, slot.y - 1, 18, 18, 0x77000000);
-					}
-				} else if (BoM.craftingMode && BoM.tree != null) {
+            try {
+                AbstractContainerScreen<?> hs = EmiApi.getHandledScreen();
+                for (EmiRecipeHandler handler : EmiRecipeFiller.getAllHandlers(hs)) {
+                    if (handler instanceof StandardRecipeHandler standard) {
+                        ignoredSlots.addAll(standard.getInputSources(hs.getMenu()));
+                        ignoredSlots.addAll(standard.getCraftingSlots(hs.getMenu()));
+                    }
+                }
+            } catch (Throwable t) {
+                EmiLog.error("Recipe handler is throwing in renderSlotOverlays:", t);
+            }
+        }
+        if (base.screen() instanceof AbstractContainerScreen<?> hs && hs instanceof HandledScreenAccessor hsa) {
+            context.push();
+            context.matrices().translate(hsa.getX(), hsa.getY(), 0);
+            for (Slot slot : hs.getMenu().slots) {
+                if (!slot.isActive()) {
+                    continue;
+                }
+                EmiStack stack = EmiStack.of(slot.getItem());
+                context.push();
+                context.matrices().translate(0, 0, 300);
+                if (query != null) {
+                    if (!query.test(stack)) {
+                        context.fill(slot.x - 1, slot.y - 1, 18, 18, 0x77000000);
+                    }
+                } else if (BoM.craftingMode && BoM.tree != null) {
                     if (!(slot.container instanceof Inventory) && !ignoredSlots.contains(slot)
                             && synfavs.contains(stack)) {
-						context.fill(slot.x - 1, slot.y - 1, 18, 18, 0x7700BBFF);
-					}
-				}
-				context.pop();
-			}
-			context.pop();
-		}
-	}
+                        context.fill(slot.x - 1, slot.y - 1, 18, 18, 0x7700BBFF);
+                    }
+                }
+                context.pop();
+            }
+            context.pop();
+        }
+    }
 
-	public static void addWidgets(Screen screen) {
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (base.isEmpty()) {
-			return;
-		}
-		forceRecalculate();
-		if (EmiConfig.centerSearchBar || panels.get(0).space == null || panels.get(1).space == null) {
-			search.x = (screen.width - 160) / 2;
-			search.y = screen.height - 21;
-			search.setWidth(160);
-		} else {
-			if (EmiConfig.searchSidebar == SidebarSide.RIGHT) {
-				search.x = panels.get(1).space.tx;
-				search.y = screen.height - 21;
-				search.setWidth(panels.get(1).space.tw * ENTRY_SIZE);
-			} else {
-				search.x = panels.get(0).space.tx;
-				search.y = screen.height - 21 - 21;
-				search.setWidth(panels.get(0).space.tw * ENTRY_SIZE);
-			}
-		}
-		EmiPort.focus(search, false);
-		search.setVisible(EmiConfig.searchSidebar != SidebarSide.NONE);
+    public static void addWidgets(Screen screen) {
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (base.isEmpty()) {
+            return;
+        }
+        forceRecalculate();
+        if (EmiConfig.centerSearchBar || panels.get(0).space == null || panels.get(1).space == null) {
+            search.x = (screen.width - 160) / 2;
+            search.y = screen.height - 21;
+            search.setWidth(160);
+        } else {
+            if (EmiConfig.searchSidebar == SidebarSide.RIGHT) {
+                search.x = panels.get(1).space.tx;
+                search.y = screen.height - 21;
+                search.setWidth(panels.get(1).space.tw * ENTRY_SIZE);
+            } else {
+                search.x = panels.get(0).space.tx;
+                search.y = screen.height - 21 - 21;
+                search.setWidth(panels.get(0).space.tw * ENTRY_SIZE);
+            }
+        }
+        EmiPort.focus(search, false);
+        search.setVisible(EmiConfig.searchSidebar != SidebarSide.NONE);
 
-		emi.x = 2;
-		emi.y = screen.height - 22;
+        emi.x = 2;
+        emi.y = screen.height - 22;
 
-		tree.x = 24;
-		tree.y = screen.height - 22;
+        tree.x = 24;
+        tree.y = screen.height - 22;
 
-		grouping.setX(46);
-		grouping.setY(screen.height - 22);
+        grouping.setX(46);
+        grouping.setY(screen.height - 22);
 
-		updateSidebarButtons();
-	}
+        updateSidebarButtons();
+    }
 
-	private static void updateSidebarButtons() {
-		for (SidebarPanel panel : panels) {
-			panel.updateWidgetPosition();
-			panel.updateWidgetVisibility();
-		}
-	}
+    private static void updateSidebarButtons() {
+        for (SidebarPanel panel : panels) {
+            panel.updateWidgetPosition();
+            panel.updateWidgetVisibility();
+        }
+    }
 
-	private static boolean isClickClicky(int button) {
-		return button >= 0 && button < 3;
-	}
+    private static boolean isClickClicky(int button) {
+        return button >= 0 && button < 3;
+    }
 
-	public static boolean mouseScrolled(double mouseX, double mouseY, double amount) {
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (base.isEmpty()) {
-			return false;
-		}
-		scrollAcc += amount;
-		int sa = (int) scrollAcc;
-		scrollAcc %= 1;
-		if (isDisabled()) {
-			return false;
-		}
-		if (FavoriteGroupSidebar.mouseScrolled(mouseX, mouseY, amount)) {
-			return true;
-		}
-		recalculate();
-		SidebarPanel panel = getHoveredPanel((int) mouseX, (int) mouseY);
-		if (panel != null) {
-			int mx = (int) mouseX;
-			int my = (int) mouseY;
-			for (Bounds bounds : EmiExclusionAreas.getExclusion(base)) {
-				if (bounds.contains(mx, my)) {
-					return false;
-				}
-			}
-			panel.scroll(-sa);
-			return true;
-		}
-		return false;
-	}
+    public static boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (base.isEmpty()) {
+            return false;
+        }
+        scrollAcc += amount;
+        int sa = (int) scrollAcc;
+        scrollAcc %= 1;
+        if (isDisabled()) {
+            return false;
+        }
+        if (FavoriteGroupSidebar.mouseScrolled(mouseX, mouseY, amount)) {
+            return true;
+        }
+        recalculate();
+        SidebarPanel panel = getHoveredPanel((int) mouseX, (int) mouseY);
+        if (panel != null) {
+            int mx = (int) mouseX;
+            int my = (int) mouseY;
+            for (Bounds bounds : EmiExclusionAreas.getExclusion(base)) {
+                if (bounds.contains(mx, my)) {
+                    return false;
+                }
+            }
+            panel.scroll(-sa);
+            return true;
+        }
+        return false;
+    }
 
-	public static boolean mouseClicked(double mouseX, double mouseY, int button) {
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (base.isEmpty()) {
-			return false;
-		}
-		if (FavoriteGroupSidebar.mouseClicked(mouseX, mouseY, button)) {
-			return true;
-		}
-		if (search.mouseClicked(mouseX, mouseY, button)) {
-			return true;
-		} else if (emi.mouseClicked(mouseX, mouseY, button)) {
-			return true;
-		} else if (tree.mouseClicked(mouseX, mouseY, button)) {
-			return true;
-		} else if (grouping.mouseClicked(mouseX, mouseY, button)) {
-			return true;
-		}
-		for (SidebarPanel panel : panels) {
-			if (panel.cycle.mouseClicked(mouseX, mouseY, button)) {
-				return true;
-			} else if (panel.pageLeft.mouseClicked(mouseX, mouseY, button)) {
-				return true;
-			} else if (panel.pageRight.mouseClicked(mouseX, mouseY, button)) {
-				return true;
-			}
-		}
-		if (isDisabled()) {
-			if (EmiConfig.toggleVisibility.matchesMouse(button)) {
-				toggleVisibility(true);
-				return true;
-			}
-			return false;
-		}
-		recalculate();
-		if (button == 0 && EmiInput.isAltDown() && !EmiConfig.editMode) {
-			ScreenSpace space = getHoveredSpace((int) mouseX, (int) mouseY);
-			if (space != null && space.getType() == SidebarType.INDEX) {
-				EmiIngredient hovered = getHoveredStack((int) mouseX, (int) mouseY, false).getStack();
-				if (EmiCollapsibleSidebarGroups.toggle(space.getRawStacks(), hovered)) {
-					repopulatePanels(SidebarType.INDEX);
-					return true;
-				}
-			}
-		}
-		EmiIngredient ingredient = getHoveredStack((int) mouseX, (int) mouseY, !isClickClicky(button)).getStack();
-		pressedStack = ingredient;
-		if (!ingredient.isEmpty()) {
-			// Don't cancel the event for extra mouse buttons
-			ingredient = getHoveredStack((int) mouseX, (int) mouseY, false).getStack();
-			if (!ingredient.isEmpty()) {
-				return true;
-			}
-		} else {
-			if (genericInteraction(bind -> bind.matchesMouse(button))) {
-				return true;
-			}
-		}
-		return false;
-	}
+    public static boolean mouseClicked(double mouseX, double mouseY, int button) {
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (base.isEmpty()) {
+            return false;
+        }
+        if (FavoriteGroupSidebar.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        if (search.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        } else if (emi.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        } else if (tree.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        } else if (grouping.mouseClicked(mouseX, mouseY, button)) {
+            return true;
+        }
+        for (SidebarPanel panel : panels) {
+            if (panel.cycle.mouseClicked(mouseX, mouseY, button)) {
+                return true;
+            } else if (panel.pageLeft.mouseClicked(mouseX, mouseY, button)) {
+                return true;
+            } else if (panel.pageRight.mouseClicked(mouseX, mouseY, button)) {
+                return true;
+            }
+        }
+        if (isDisabled()) {
+            if (EmiConfig.toggleVisibility.matchesMouse(button)) {
+                toggleVisibility(true);
+                return true;
+            }
+            return false;
+        }
+        recalculate();
+        if (button == 0 && EmiInput.isAltDown() && !EmiConfig.editMode) {
+            ScreenSpace space = getHoveredSpace((int) mouseX, (int) mouseY);
+            if (space != null && space.getType() == SidebarType.INDEX) {
+                EmiIngredient hovered = getHoveredStack((int) mouseX, (int) mouseY, false).getStack();
+                if (EmiCollapsibleSidebarGroups.toggle(space.getRawStacks(), hovered)) {
+                    repopulatePanels(SidebarType.INDEX);
+                    return true;
+                }
+            }
+        }
+        EmiIngredient ingredient = getHoveredStack((int) mouseX, (int) mouseY, !isClickClicky(button)).getStack();
+        pressedStack = ingredient;
+        if (!ingredient.isEmpty()) {
+            // Don't cancel the event for extra mouse buttons
+            ingredient = getHoveredStack((int) mouseX, (int) mouseY, false).getStack();
+            if (!ingredient.isEmpty()) {
+                return true;
+            }
+        } else {
+            if (genericInteraction(bind -> bind.matchesMouse(button))) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	public static boolean mouseReleased(double mouseX, double mouseY, int button) {
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (base.isEmpty()) {
-			return false;
-		}
-		try {
-			if (isDisabled()) {
-				return false;
-			}
-			if (FavoriteGroupSidebar.mouseReleased(mouseX, mouseY, button)) {
-				return true;
-			}
-			int mx = (int) mouseX;
-			int my = (int) mouseY;
-			recalculate();
-			if (EmiApi.isCheatMode() && EmiConfig.deleteCursorStack.matchesMouse(button)) {
-				if (deleteCursor(mx, my)) {
-					// Returning false here makes the handled screen do something and removes a bug, oh well.
-					return false;
-				}
-			}
-			SidebarPanel panel = getHoveredPanel(mx, my);
-			if (draggedStack == EmiStack.EMPTY && panel != null && panel.getType() == SidebarType.CHESS) {
-				EmiChess.interact(pressedStack, button);
-				return true;
-			}
-			if (!pressedStack.isEmpty()) {
-				if (!draggedStack.isEmpty()) {
-					if (panel != null) {
-						ScreenSpace space = panel.getHoveredSpace(mx, my);
+    public static boolean mouseReleased(double mouseX, double mouseY, int button) {
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (base.isEmpty()) {
+            return false;
+        }
+        try {
+            if (isDisabled()) {
+                return false;
+            }
+            if (FavoriteGroupSidebar.mouseReleased(mouseX, mouseY, button)) {
+                return true;
+            }
+            int mx = (int) mouseX;
+            int my = (int) mouseY;
+            recalculate();
+            if (EmiApi.isCheatMode() && EmiConfig.deleteCursorStack.matchesMouse(button)) {
+                if (deleteCursor(mx, my)) {
+                    // Returning false here makes the handled screen do something and removes a bug, oh well.
+                    return false;
+                }
+            }
+            SidebarPanel panel = getHoveredPanel(mx, my);
+            if (draggedStack == EmiStack.EMPTY && panel != null && panel.getType() == SidebarType.CHESS) {
+                EmiChess.interact(pressedStack, button);
+                return true;
+            }
+            if (!pressedStack.isEmpty()) {
+                if (!draggedStack.isEmpty()) {
+                    if (panel != null) {
+                        ScreenSpace space = panel.getHoveredSpace(mx, my);
                         if (space != null && space.getType() == SidebarType.FAVORITES) {
-							int page = panel.page;
-							int pageSize = space.pageSize;
-							int pageStart = pageSize * page;
+                            int page = panel.page;
+                            int pageSize = space.pageSize;
+                            int pageStart = pageSize * page;
                             int sidebarEdge = Math.min(pageStart + space.getClosestEdge(mx, my),
                                     space.getStacks().size());
-							if (sidebarEdge >= pageStart) {
-								int rawIndex = EmiFavoriteGroups.rawInsertionIndexForSidebarEdge(sidebarEdge);
-								EmiFavorites.addFavoriteAt(draggedStack, rawIndex);
-								space.batcher.repopulate();
-							}
-							return true;
-						} else if (panel.getType() == SidebarType.CHESS) {
-							EmiChess.drop(draggedStack, getHoveredStack(mx, my, true).getStack());
-						}
-					} else if (client.screen != null) {
-						if (EmiDragDropHandlers.dropStack(client.screen, draggedStack, mx, my)) {
-							return true;
-						}
-					}
-				} else {
-					EmiStackInteraction hovered = getHoveredStack((int) mouseX, (int) mouseY, !isClickClicky(button));
-					if (draggedStack.isEmpty() && stackInteraction(hovered, bind -> bind.matchesMouse(button))) {
-						return true;
-					}
-				}
-				if (genericInteraction(bind -> bind.matchesMouse(button))) {
-					return true;
-				}
-			}
-			return false;
-		} finally {
-			pressedStack = EmiStack.EMPTY;
-			draggedStack = EmiStack.EMPTY;
-		}
-	}
+                            if (sidebarEdge >= pageStart) {
+                                int rawIndex = EmiFavoriteGroups.rawInsertionIndexForSidebarEdge(sidebarEdge);
+                                EmiFavorites.addFavoriteAt(draggedStack, rawIndex);
+                                space.batcher.repopulate();
+                            }
+                            return true;
+                        } else if (panel.getType() == SidebarType.CHESS) {
+                            EmiChess.drop(draggedStack, getHoveredStack(mx, my, true).getStack());
+                        }
+                    } else if (client.screen != null) {
+                        if (EmiDragDropHandlers.dropStack(client.screen, draggedStack, mx, my)) {
+                            return true;
+                        }
+                    }
+                } else {
+                    EmiStackInteraction hovered = getHoveredStack((int) mouseX, (int) mouseY, !isClickClicky(button));
+                    if (draggedStack.isEmpty() && stackInteraction(hovered, bind -> bind.matchesMouse(button))) {
+                        return true;
+                    }
+                }
+                if (genericInteraction(bind -> bind.matchesMouse(button))) {
+                    return true;
+                }
+            }
+            return false;
+        } finally {
+            pressedStack = EmiStack.EMPTY;
+            draggedStack = EmiStack.EMPTY;
+        }
+    }
 
-	public static boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (base.isEmpty()) {
-			return false;
-		}
-		if (isDisabled()) {
-			return false;
-		}
-		if (FavoriteGroupSidebar.mouseDragged(mouseX, mouseY, button)) {
-			draggedStack = EmiStack.EMPTY;
-			return true;
-		}
-		if (draggedStack.isEmpty() && button == 0) {
-			if (client.screen instanceof AbstractContainerScreen<?> handled) {
-				if (!handled.getMenu().getCarried().isEmpty()) {
-					return false;
-				}
-			}
-			recalculate();
-			EmiStackInteraction hovered = getHoveredStack((int) mouseX, (int) mouseY, !isClickClicky(button));
-			if (hovered.getStack() != pressedStack && !(pressedStack instanceof EmiFavorite.Synthetic)) {
-				draggedStack = pressedStack;
-			}
-		}
-		return false;
-	}
+    public static boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (base.isEmpty()) {
+            return false;
+        }
+        if (isDisabled()) {
+            return false;
+        }
+        if (FavoriteGroupSidebar.mouseDragged(mouseX, mouseY, button)) {
+            draggedStack = EmiStack.EMPTY;
+            return true;
+        }
+        if (draggedStack.isEmpty() && button == 0) {
+            if (client.screen instanceof AbstractContainerScreen<?> handled) {
+                if (!handled.getMenu().getCarried().isEmpty()) {
+                    return false;
+                }
+            }
+            recalculate();
+            EmiStackInteraction hovered = getHoveredStack((int) mouseX, (int) mouseY, !isClickClicky(button));
+            if (hovered.getStack() != pressedStack && !(pressedStack instanceof EmiFavorite.Synthetic)) {
+                draggedStack = pressedStack;
+            }
+        }
+        return false;
+    }
 
-	public static boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
-		if (base.isEmpty()) {
-			return false;
-		}
-		if (isDisabled()) {
-			if (EmiConfig.toggleVisibility.matchesKey(keyCode, scanCode)) {
-				toggleVisibility(true);
-				return true;
-			}
-			return false;
-		}
+    public static boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
+        if (base.isEmpty()) {
+            return false;
+        }
+        if (isDisabled()) {
+            if (EmiConfig.toggleVisibility.matchesKey(keyCode, scanCode)) {
+                toggleVisibility(true);
+                return true;
+            }
+            return false;
+        }
         if (EmiScreenManager.search.keyPressed(keyCode, scanCode, modifiers)
                 || EmiScreenManager.search.canConsumeInput()) {
-			return true;
-		}
-		if (hasFocusedTextField(client.screen, 10)) {
-			return false;
-		}
-		if (FavoriteGroupSidebar.keyPressed(lastMouseX, lastMouseY, keyCode, modifiers)) {
-			return true;
-		}
-		if (EmiApi.isCheatMode() && EmiConfig.deleteCursorStack.matchesKey(keyCode, scanCode)) {
-			if (deleteCursor(lastMouseX, lastMouseY)) {
-				return true;
-			}
-		}
-		if (EmiInput.isControlDown() && keyCode == GLFW.GLFW_KEY_Y) {
-			EmiApi.displayAllRecipes();
-			return true;
-		} else {
-			recalculate();
-			if (stackInteraction(getHoveredStack(lastMouseX, lastMouseY, true),
-					bind -> bind.matchesKey(keyCode, scanCode))) {
-				return true;
-			}
-			if (genericInteraction(bind -> bind.matchesKey(keyCode, scanCode))) {
-				return true;
-			}
-		}
-		return false;
-	}
+            return true;
+        }
+        if (hasFocusedTextField(client.screen, 10)) {
+            return false;
+        }
+        if (FavoriteGroupSidebar.keyPressed(lastMouseX, lastMouseY, keyCode, modifiers)) {
+            return true;
+        }
+        if (EmiApi.isCheatMode() && EmiConfig.deleteCursorStack.matchesKey(keyCode, scanCode)) {
+            if (deleteCursor(lastMouseX, lastMouseY)) {
+                return true;
+            }
+        }
+        if (EmiInput.isControlDown() && keyCode == GLFW.GLFW_KEY_Y) {
+            EmiApi.displayAllRecipes();
+            return true;
+        } else {
+            recalculate();
+            if (stackInteraction(getHoveredStack(lastMouseX, lastMouseY, true),
+                    bind -> bind.matchesKey(keyCode, scanCode))) {
+                return true;
+            }
+            if (genericInteraction(bind -> bind.matchesKey(keyCode, scanCode))) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-	private static boolean hasFocusedTextField(ContainerEventHandler parent, int depthBail) {
-		if (depthBail <= 0) {
-			return false;
-		}
-		for (GuiEventListener e : parent.children()) {
-			if (e instanceof EditBox tfw && tfw.canConsumeInput() && tfw.visible) {
-				return true;
-			} else if (e instanceof ContainerEventHandler p) {
-				return hasFocusedTextField(p, depthBail - 1);
-			}
-		}
-		return false;
-	}
+    private static boolean hasFocusedTextField(ContainerEventHandler parent, int depthBail) {
+        if (depthBail <= 0) {
+            return false;
+        }
+        for (GuiEventListener e : parent.children()) {
+            if (e instanceof EditBox tfw && tfw.canConsumeInput() && tfw.visible) {
+                return true;
+            } else if (e instanceof ContainerEventHandler p) {
+                return hasFocusedTextField(p, depthBail - 1);
+            }
+        }
+        return false;
+    }
 
-	public static boolean genericInteraction(Function<EmiBind, Boolean> function) {
-		if (function.apply(EmiConfig.toggleVisibility)) {
-			toggleVisibility(true);
-			return true;
-		}
-		boolean searchBreak = false;
-		if (function.apply(EmiConfig.focusSearch)) {
-			if (client.screen != null) {
-				client.screen.setFocused(search);
-				EmiPort.focus(search, true);
-				searchBreak = true;
-			}
-		}
-		if (function.apply(EmiConfig.clearSearch)) {
-			search.setValue("");
-			searchBreak = true;
-		}
-		if (searchBreak) {
-			return true;
-		}
-		if (function.apply(EmiConfig.viewTree)) {
-			EmiApi.viewRecipeTree();
-			return true;
-		} else if (function.apply(EmiConfig.back)) {
-			if (!EmiHistory.isEmpty()) {
-				EmiHistory.pop();
-				return true;
-			}
-		} else if (function.apply(EmiConfig.forward)) {
-			if (!EmiHistory.isForwardEmpty()) {
-				EmiHistory.forward();
-				return true;
-			}
-		}
-		return false;
-	}
+    public static boolean genericInteraction(Function<EmiBind, Boolean> function) {
+        if (function.apply(EmiConfig.toggleVisibility)) {
+            toggleVisibility(true);
+            return true;
+        }
+        boolean searchBreak = false;
+        if (function.apply(EmiConfig.focusSearch)) {
+            if (client.screen != null) {
+                client.screen.setFocused(search);
+                EmiPort.focus(search, true);
+                searchBreak = true;
+            }
+        }
+        if (function.apply(EmiConfig.clearSearch)) {
+            search.setValue("");
+            searchBreak = true;
+        }
+        if (searchBreak) {
+            return true;
+        }
+        if (function.apply(EmiConfig.viewTree)) {
+            EmiApi.viewRecipeTree();
+            return true;
+        } else if (function.apply(EmiConfig.back)) {
+            if (!EmiHistory.isEmpty()) {
+                EmiHistory.pop();
+                return true;
+            }
+        } else if (function.apply(EmiConfig.forward)) {
+            if (!EmiHistory.isForwardEmpty()) {
+                EmiHistory.forward();
+                return true;
+            }
+        }
+        return false;
+    }
 
-	public static boolean stackInteraction(EmiStackInteraction stack, Function<EmiBind, Boolean> function) {
-		EmiIngredient ingredient = stack.getStack();
-		EmiRecipe context = EmiApi.getRecipeContext(ingredient);
-		if (!ingredient.isEmpty()) {
-			if (EmiConfig.editMode) {
-				if (stack instanceof SidebarEmiStackInteraction sesi && sesi.getType() == SidebarType.INDEX) {
-					if (function.apply(EmiConfig.hideStack)) {
-						EmiHidden.setVisibility(sesi.getStack(), !EmiHidden.isHidden(sesi.getStack()), false);
-						return true;
-					} else if (function.apply(EmiConfig.hideStackById)) {
-						EmiHidden.setVisibility(sesi.getStack(), !EmiHidden.isHidden(sesi.getStack()), true);
-						return true;
-					}
-				}
-			}
-			if (craftInteraction(ingredient, () -> context, stack, function)) {
-				return true;
-			}
-			if (EmiApi.isCheatMode()) {
-				if (ingredient.getEmiStacks().size() == 1 && stack instanceof SidebarEmiStackInteraction) {
-					if (function.apply(EmiConfig.cheatOneToInventory)) {
-						return give(ingredient.getEmiStacks().get(0), 1, 0);
-					} else if (function.apply(EmiConfig.cheatStackToInventory)) {
-						return give(ingredient.getEmiStacks().get(0),
-								ingredient.getEmiStacks().get(0).getItemStack().getMaxStackSize(), 0);
-					} else if (function.apply(EmiConfig.cheatOneToCursor)) {
-						return give(ingredient.getEmiStacks().get(0), 1, 1);
-					} else if (function.apply(EmiConfig.cheatStackToCursor)) {
-						return give(ingredient.getEmiStacks().get(0),
-								ingredient.getEmiStacks().get(0).getItemStack().getMaxStackSize(), 1);
-					}
-				}
-			}
-			if (function.apply(EmiConfig.viewRecipes)) {
-				EmiApi.displayRecipes(ingredient);
-				if (stack.getRecipeContext() != null) {
-					EmiApi.focusRecipe(stack.getRecipeContext());
-				}
-				return true;
-			} else if (function.apply(EmiConfig.viewUses)) {
-				EmiApi.displayUses(ingredient);
-				return true;
-			} else if (function.apply(EmiConfig.favorite)) {
-				EmiFavorites.addFavorite(ingredient, stack.getRecipeContext());
-				repopulatePanels(SidebarType.FAVORITES);
-				return true;
-			} else if (function.apply(EmiConfig.viewStackTree) && stack.getRecipeContext() != null) {
-				BoM.setGoal(stack.getRecipeContext());
-				EmiApi.viewRecipeTree();
-				return true;
-			}
-			Supplier<EmiRecipe> supplier = () -> {
-				return EmiUtil.getPreferredRecipe(ingredient, lastPlayerInventory, true);
-			};
-			if (craftInteraction(ingredient, supplier, stack, function)) {
-				return true;
-			}
-		}
-		if (recipeInteraction(context, function)) {
-			return true;
-		}
-		return false;
-	}
+    public static boolean stackInteraction(EmiStackInteraction stack, Function<EmiBind, Boolean> function) {
+        EmiIngredient ingredient = stack.getStack();
+        EmiRecipe context = EmiApi.getRecipeContext(ingredient);
+        if (!ingredient.isEmpty()) {
+            if (EmiConfig.editMode) {
+                if (stack instanceof SidebarEmiStackInteraction sesi && sesi.getType() == SidebarType.INDEX) {
+                    if (function.apply(EmiConfig.hideStack)) {
+                        EmiHidden.setVisibility(sesi.getStack(), !EmiHidden.isHidden(sesi.getStack()), false);
+                        return true;
+                    } else if (function.apply(EmiConfig.hideStackById)) {
+                        EmiHidden.setVisibility(sesi.getStack(), !EmiHidden.isHidden(sesi.getStack()), true);
+                        return true;
+                    }
+                }
+            }
+            if (craftInteraction(ingredient, () -> context, stack, function)) {
+                return true;
+            }
+            if (EmiApi.isCheatMode()) {
+                if (ingredient.getEmiStacks().size() == 1 && stack instanceof SidebarEmiStackInteraction) {
+                    if (function.apply(EmiConfig.cheatOneToInventory)) {
+                        return give(ingredient.getEmiStacks().get(0), 1, 0);
+                    } else if (function.apply(EmiConfig.cheatStackToInventory)) {
+                        return give(ingredient.getEmiStacks().get(0),
+                                ingredient.getEmiStacks().get(0).getItemStack().getMaxStackSize(), 0);
+                    } else if (function.apply(EmiConfig.cheatOneToCursor)) {
+                        return give(ingredient.getEmiStacks().get(0), 1, 1);
+                    } else if (function.apply(EmiConfig.cheatStackToCursor)) {
+                        return give(ingredient.getEmiStacks().get(0),
+                                ingredient.getEmiStacks().get(0).getItemStack().getMaxStackSize(), 1);
+                    }
+                }
+            }
+            if (function.apply(EmiConfig.viewRecipes)) {
+                EmiApi.displayRecipes(ingredient);
+                if (stack.getRecipeContext() != null) {
+                    EmiApi.focusRecipe(stack.getRecipeContext());
+                }
+                return true;
+            } else if (function.apply(EmiConfig.viewUses)) {
+                EmiApi.displayUses(ingredient);
+                return true;
+            } else if (function.apply(EmiConfig.favorite)) {
+                EmiFavorites.addFavorite(ingredient, stack.getRecipeContext());
+                repopulatePanels(SidebarType.FAVORITES);
+                return true;
+            } else if (function.apply(EmiConfig.viewStackTree) && stack.getRecipeContext() != null) {
+                BoM.setGoal(stack.getRecipeContext());
+                EmiApi.viewRecipeTree();
+                return true;
+            }
+            Supplier<EmiRecipe> supplier = () -> {
+                return EmiUtil.getPreferredRecipe(ingredient, lastPlayerInventory, true);
+            };
+            if (craftInteraction(ingredient, supplier, stack, function)) {
+                return true;
+            }
+        }
+        if (recipeInteraction(context, function)) {
+            return true;
+        }
+        return false;
+    }
 
-	private static boolean craftInteraction(EmiIngredient ingredient, Supplier<EmiRecipe> contextSupplier,
-			EmiStackInteraction stack, Function<EmiBind, Boolean> function) {
-		if (!(stack instanceof SidebarEmiStackInteraction)) {
-			return false;
-		}
-		EmiCraftContext.Destination destination = null;
-		boolean all = false;
-		if (function.apply(EmiConfig.craftAllToInventory)) {
-			destination = EmiCraftContext.Destination.INVENTORY;
-			all = true;
-		} else if (function.apply(EmiConfig.craftOneToInventory)) {
-			destination = EmiCraftContext.Destination.INVENTORY;
-		} else if (function.apply(EmiConfig.craftOneToCursor)) {
-			destination = EmiCraftContext.Destination.CURSOR;
-		} else if (function.apply(EmiConfig.craftAll)) {
-			destination = EmiCraftContext.Destination.NONE;
-			all = true;
-		} else if (function.apply(EmiConfig.craftOne)) {
-			destination = EmiCraftContext.Destination.NONE;
-		}
-		if (destination != null) {
-			EmiRecipe context = contextSupplier.get();
-			if (context != null) {
-				if (EmiConfig.miscraftPrevention) {
-					ScreenSpace space = getHoveredSpace(lastMouseX, lastMouseY);
+    private static boolean craftInteraction(EmiIngredient ingredient, Supplier<EmiRecipe> contextSupplier,
+            EmiStackInteraction stack, Function<EmiBind, Boolean> function) {
+        if (!(stack instanceof SidebarEmiStackInteraction)) {
+            return false;
+        }
+        EmiCraftContext.Destination destination = null;
+        boolean all = false;
+        if (function.apply(EmiConfig.craftAllToInventory)) {
+            destination = EmiCraftContext.Destination.INVENTORY;
+            all = true;
+        } else if (function.apply(EmiConfig.craftOneToInventory)) {
+            destination = EmiCraftContext.Destination.INVENTORY;
+        } else if (function.apply(EmiConfig.craftOneToCursor)) {
+            destination = EmiCraftContext.Destination.CURSOR;
+        } else if (function.apply(EmiConfig.craftAll)) {
+            destination = EmiCraftContext.Destination.NONE;
+            all = true;
+        } else if (function.apply(EmiConfig.craftOne)) {
+            destination = EmiCraftContext.Destination.NONE;
+        }
+        if (destination != null) {
+            EmiRecipe context = contextSupplier.get();
+            if (context != null) {
+                if (EmiConfig.miscraftPrevention) {
+                    ScreenSpace space = getHoveredSpace(lastMouseX, lastMouseY);
                     if (space != null && (space.getType() == SidebarType.CRAFTABLES
                             || space.getType() == SidebarType.CRAFT_HISTORY)) {
-						lastHoveredCraftableOffset = space.getRawOffsetFromMouse(lastMouseX, lastMouseY);
-						if (lastHoveredCraftableOffset != -1) {
-							lastHoveredCraftableSturdy = lastHoveredCraftable != null;
-							lastHoveredCraftable = stack;
-							if (!all) {
-								lastHoveredCraftableSturdy = true;
-							}
-						}
-					}
-				}
-				int amount = all ? Integer.MAX_VALUE : 1;
-				if (stack.getStack() instanceof EmiFavorite.Synthetic syn) {
-					int batches = (int) syn.batches;
-					if (syn.getRecipe() == null) {
-						int oc = EmiUtil.getOutputCount(context, syn.getStack());
-						if (oc > 0) {
-							batches /= oc;
-						}
-					}
-					amount = Math.min(amount, batches);
-				}
+                        lastHoveredCraftableOffset = space.getRawOffsetFromMouse(lastMouseX, lastMouseY);
+                        if (lastHoveredCraftableOffset != -1) {
+                            lastHoveredCraftableSturdy = lastHoveredCraftable != null;
+                            lastHoveredCraftable = stack;
+                            if (!all) {
+                                lastHoveredCraftableSturdy = true;
+                            }
+                        }
+                    }
+                }
+                int amount = all ? Integer.MAX_VALUE : 1;
+                if (stack.getStack() instanceof EmiFavorite.Synthetic syn) {
+                    int batches = (int) syn.batches;
+                    if (syn.getRecipe() == null) {
+                        int oc = EmiUtil.getOutputCount(context, syn.getStack());
+                        if (oc > 0) {
+                            batches /= oc;
+                        }
+                    }
+                    amount = Math.min(amount, batches);
+                }
                 if (EmiRecipeFiller.performFill(context, EmiApi.getHandledScreen(), EmiCraftContext.Type.CRAFTABLE,
                         destination, amount)) {
-					Minecraft.getInstance().getSoundManager()
-							.play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-					return true;
-				}
-			}
-		}
-		return false;
-	}
+                    Minecraft.getInstance().getSoundManager()
+                            .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
-	public static boolean recipeInteraction(EmiRecipe recipe, Function<EmiBind, Boolean> function) {
-		if (recipe == null) {
-			return false;
-		}
-		if (function.apply(EmiConfig.favorite) && recipe.getOutputs().size() > 0) {
-			if (EmiInput.isShiftDown()) {
-				RecipeFavoriteActions.saveRecipeTree(recipe);
-			} else {
-				EmiFavorites.addFavorite(recipe.getOutputs().get(0), recipe);
-			}
-			repopulatePanels(SidebarType.FAVORITES);
-			return true;
-		} else if (function.apply(EmiConfig.copyId)) {
+    public static boolean recipeInteraction(EmiRecipe recipe, Function<EmiBind, Boolean> function) {
+        if (recipe == null) {
+            return false;
+        }
+        if (function.apply(EmiConfig.favorite) && recipe.getOutputs().size() > 0) {
+            if (EmiInput.isShiftDown()) {
+                RecipeFavoriteActions.saveRecipeTree(recipe);
+            } else {
+                EmiFavorites.addFavorite(recipe.getOutputs().get(0), recipe);
+            }
+            repopulatePanels(SidebarType.FAVORITES);
+            return true;
+        } else if (function.apply(EmiConfig.copyId)) {
             Minecraft.getInstance().getSoundManager()
                     .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
-			client.keyboardHandler.setClipboard("" + recipe.getId());
-			return true;
-		}
-		return false;
-	}
+            client.keyboardHandler.setClipboard("" + recipe.getId());
+            return true;
+        }
+        return false;
+    }
 
-	public static void toggleVisibility(boolean notify) {
-		EmiConfig.enabled = !EmiConfig.enabled;
-		EmiConfig.writeConfig();
-		if (notify && !EmiConfig.enabled && EmiConfig.helpLevel.has(HelpLevel.VERBOSE)) {
-			client.getToasts().addToast(new DisabledToast());
-		}
-		if (EmiConfig.enabled) {
-			forceRecalculate();
-		}
-	}
+    public static void toggleVisibility(boolean notify) {
+        EmiConfig.enabled = !EmiConfig.enabled;
+        EmiConfig.writeConfig();
+        if (notify && !EmiConfig.enabled && EmiConfig.helpLevel.has(HelpLevel.VERBOSE)) {
+            client.getToasts().addToast(new DisabledToast());
+        }
+        if (EmiConfig.enabled) {
+            forceRecalculate();
+        }
+    }
 
-	private static boolean give(EmiStack stack, int amount, int mode) {
-		if (stack.getItemStack().isEmpty()) {
-			return false;
-		}
-		ItemStack is = stack.getItemStack().copy();
-		is.setCount(amount);
+    private static boolean give(EmiStack stack, int amount, int mode) {
+        if (stack.getItemStack().isEmpty()) {
+            return false;
+        }
+        ItemStack is = stack.getItemStack().copy();
+        is.setCount(amount);
         if (mode == 1 && client.player.getAbilities().instabuild
                 && client.screen instanceof CreativeModeInventoryScreen) {
-			client.player.containerMenu.setCarried(is);
-			return true;
-		}
-		if (EmiClient.onServer) {
-			EmiNetwork.sendToServer(new CreateItemC2SPacket(mode, is));
-			return true;
-		} else {
-			if (!is.isEmpty()) {
-				ResourceLocation id = EmiPort.getItemRegistry().getKey(is.getItem());
-				String command = "give @s " + id;
-				if (is.hasTag()) {
-					command += is.getTag().toString();
-				}
-				command += " " + amount;
-				if (command.length() < 256) {
-					client.player.connection.sendCommand(command);
-					return true;
-				}
-			}
-			return false;
-		}
-	}
+            client.player.containerMenu.setCarried(is);
+            return true;
+        }
+        if (EmiClient.onServer) {
+            EmiNetwork.sendToServer(new CreateItemC2SPacket(mode, is));
+            return true;
+        } else {
+            if (!is.isEmpty()) {
+                ResourceLocation id = EmiPort.getItemRegistry().getKey(is.getItem());
+                String command = "give @s " + id;
+                if (is.hasTag()) {
+                    command += is.getTag().toString();
+                }
+                command += " " + amount;
+                if (command.length() < 256) {
+                    client.player.connection.sendCommand(command);
+                    return true;
+                }
+            }
+            return false;
+        }
+    }
 
-	private static boolean deleteCursor(int mx, int my) {
-		if (client.screen instanceof AbstractContainerScreen<?> handled) {
-			ItemStack cursor = handled.getMenu().getCarried();
-			ScreenSpace space = getHoveredSpace(mx, my);
-			if (!cursor.isEmpty() && space != null && space.getType() == SidebarType.INDEX) {
-				handled.getMenu().setCarried(ItemStack.EMPTY);
-				EmiNetwork.sendToServer(new CreateItemC2SPacket(1, ItemStack.EMPTY));
-				return true;
-			}
-		}
-		return false;
-	}
+    private static boolean deleteCursor(int mx, int my) {
+        if (client.screen instanceof AbstractContainerScreen<?> handled) {
+            ItemStack cursor = handled.getMenu().getCarried();
+            ScreenSpace space = getHoveredSpace(mx, my);
+            if (!cursor.isEmpty() && space != null && space.getType() == SidebarType.INDEX) {
+                handled.getMenu().setCarried(ItemStack.EMPTY);
+                EmiNetwork.sendToServer(new CreateItemC2SPacket(1, ItemStack.EMPTY));
+                return true;
+            }
+        }
+        return false;
+    }
 
-	public static class SidebarPanel {
-		public final SizedButtonWidget pageLeft, pageRight;
-		public final SidebarButtonWidget cycle;
-		public final SidebarPages pages;
-		public final SidebarSide side;
-		public List<ScreenSpace> spaces;
-		public ScreenSpace space;
-		public SidebarTheme theme;
-		public boolean header;
-		public int sidebarPage;
-		public int page;
+    public static class SidebarPanel {
+        public final SizedButtonWidget pageLeft, pageRight;
+        public final SidebarButtonWidget cycle;
+        public final SidebarPages pages;
+        public final SidebarSide side;
+        public List<ScreenSpace> spaces;
+        public ScreenSpace space;
+        public SidebarTheme theme;
+        public boolean header;
+        public int sidebarPage;
+        public int page;
 
-		public SidebarPanel(SidebarSide side, SidebarPages pages) {
-			this.side = side;
-			this.pages = pages;
-			pageLeft = new SizedButtonWidget(0, 0, 16, 16, 224, 0, this::hasMultiplePages, (w) -> scrollButton(-1));
-			pageRight = new SizedButtonWidget(0, 0, 16, 16, 240, 0, this::hasMultiplePages, (w) -> scrollButton(1));
-			cycle = new SidebarButtonWidget(0, 0, 16, 16, this);
-		}
+        public SidebarPanel(SidebarSide side, SidebarPages pages) {
+            this.side = side;
+            this.pages = pages;
+            pageLeft = new SizedButtonWidget(0, 0, 16, 16, 224, 0, this::hasMultiplePages, (w) -> scrollButton(-1));
+            pageRight = new SizedButtonWidget(0, 0, 16, 16, 240, 0, this::hasMultiplePages, (w) -> scrollButton(1));
+            cycle = new SidebarButtonWidget(0, 0, 16, 16, this);
+        }
 
-		public void setSpaces(ScreenSpace main, List<ScreenSpace> subpanels) {
-			space = main;
+        public void setSpaces(ScreenSpace main, List<ScreenSpace> subpanels) {
+            space = main;
             var spaces = new ObjectArrayList<ScreenSpace>(subpanels.size() + 1);
             spaces.add(main);
             spaces.addAll(subpanels);
             this.spaces = spaces;
-		}
+        }
 
-		public List<ScreenSpace> getSpaces() {
-			if (spaces == null) {
-				return List.of();
-			}
-			return spaces;
-		}
+        public List<ScreenSpace> getSpaces() {
+            if (spaces == null) {
+                return List.of();
+            }
+            return spaces;
+        }
 
-		public ScreenSpace getHoveredSpace(int mouseX, int mouseY) {
-			for (ScreenSpace space : getSpaces()) {
-				if (space.containsNotExcluded(mouseX, mouseY)) {
-					return space;
-				}
-			}
-			return null;
-		}
+        public ScreenSpace getHoveredSpace(int mouseX, int mouseY) {
+            for (ScreenSpace space : getSpaces()) {
+                if (space.containsNotExcluded(mouseX, mouseY)) {
+                    return space;
+                }
+            }
+            return null;
+        }
 
-		public SidebarType getType() {
-			if (sidebarPage >= 0 && sidebarPage < pages.pages.size()) {
-				return pages.pages.get(sidebarPage).type;
-			}
-			return SidebarType.NONE;
-		}
+        public SidebarType getType() {
+            if (sidebarPage >= 0 && sidebarPage < pages.pages.size()) {
+                return pages.pages.get(sidebarPage).type;
+            }
+            return SidebarType.NONE;
+        }
 
-		public boolean supportsType(SidebarType type) {
-			for (SidebarPages.SidebarPage page : pages.pages) {
-				if (page.type == type) {
-					return true;
-				}
-			}
-			return false;
-		}
+        public boolean supportsType(SidebarType type) {
+            for (SidebarPages.SidebarPage page : pages.pages) {
+                if (page.type == type) {
+                    return true;
+                }
+            }
+            return false;
+        }
 
-		public void setSidebarPage(int page) {
-			if (page == sidebarPage) {
-				return;
-			}
-			SidebarType previousType = getType();
-			boolean forceRecalculate = previousType == SidebarType.CHESS;
-			this.sidebarPage = page;
-			SidebarType currentType = getType();
-			forceRecalculate |= currentType == SidebarType.CHESS;
-			forceRecalculate |= (previousType == SidebarType.FAVORITES) != (currentType == SidebarType.FAVORITES);
-			if (forceRecalculate) {
-				if (client.screen != null) {
-					// Force recalculation
-					lastWidth = -1;
-					recalculate();
-				}
-			}
-			if (isSearch()) {
-				EmiSearch.search(search.getValue());
-			}
-			if (space != null) {
-				space.batcher.repopulate();
-			}
-		}
+        public void setSidebarPage(int page) {
+            if (page == sidebarPage) {
+                return;
+            }
+            SidebarType previousType = getType();
+            boolean forceRecalculate = previousType == SidebarType.CHESS;
+            this.sidebarPage = page;
+            SidebarType currentType = getType();
+            forceRecalculate |= currentType == SidebarType.CHESS;
+            forceRecalculate |= (previousType == SidebarType.FAVORITES) != (currentType == SidebarType.FAVORITES);
+            if (forceRecalculate) {
+                if (client.screen != null) {
+                    // Force recalculation
+                    lastWidth = -1;
+                    recalculate();
+                }
+            }
+            if (isSearch()) {
+                EmiSearch.search(search.getValue());
+            }
+            if (space != null) {
+                space.batcher.repopulate();
+            }
+        }
 
-		public void setType(SidebarType type) {
-			for (int i = 0; i < pages.pages.size(); i++) {
-				SidebarPages.SidebarPage page = pages.pages.get(i);
-				if (page.type == type) {
-					setSidebarPage(i);
-				}
-			}
-		}
+        public void setType(SidebarType type) {
+            for (int i = 0; i < pages.pages.size(); i++) {
+                SidebarPages.SidebarPage page = pages.pages.get(i);
+                if (page.type == type) {
+                    setSidebarPage(i);
+                }
+            }
+        }
 
-		public void cycleType(int amount) {
-			int page = sidebarPage + amount;
-			if (page >= pages.pages.size()) {
-				page = 0;
-			} else if (page < 0) {
-				page = Math.max(pages.pages.size() - 1, 0);
-			}
-			setSidebarPage(page);
-		}
+        public void cycleType(int amount) {
+            int page = sidebarPage + amount;
+            if (page >= pages.pages.size()) {
+                page = 0;
+            } else if (page < 0) {
+                page = Math.max(pages.pages.size() - 1, 0);
+            }
+            setSidebarPage(page);
+        }
 
-		public void render(EmiDrawContext context, int mouseX, int mouseY, float delta) {
-			if (this.space == null) {
-				return;
-			}
-			try {
-				cycleType(0);
-				if (getType() == SidebarType.CHESS) {
-					EmiChess.get().update();
-					if (space.tw != 8 || space.th != 8) {
-						cycleType(1);
-					}
-				}
-				if (isVisible()) {
-					EmiProfiler.swap(side.getName());
-					context.push();
-					context.matrices().translate(0, 0, 100);
-					pageLeft.render(context.raw(), mouseX, mouseY, delta);
-					cycle.render(context.raw(), mouseX, mouseY, delta);
-					pageRight.render(context.raw(), mouseX, mouseY, delta);
-					context.pop();
-					int totalPages = (space.getStacks().size() - 1) / space.pageSize + 1;
-					wrapPage();
-					drawHeader(context, mouseX, mouseY, delta, page, totalPages);
-					for (ScreenSpace space : getSpaces()) {
-						if (space == this.space) {
-							space.render(context, mouseX, mouseY, delta, space.pageSize * page);
-						} else {
-							space.render(context, mouseX, mouseY, delta, 0);
-						}
-					}
-				}
-			} catch (Exception e) {
-				EmiLog.error("Error rendering sidebar", e);
-				drawError(context, mouseX, mouseY, delta);
-			}
-		}
+        public void render(EmiDrawContext context, int mouseX, int mouseY, float delta) {
+            if (this.space == null) {
+                return;
+            }
+            try {
+                cycleType(0);
+                if (getType() == SidebarType.CHESS) {
+                    EmiChess.get().update();
+                    if (space.tw != 8 || space.th != 8) {
+                        cycleType(1);
+                    }
+                }
+                if (isVisible()) {
+                    EmiProfiler.swap(side.getName());
+                    context.push();
+                    context.matrices().translate(0, 0, 100);
+                    pageLeft.render(context.raw(), mouseX, mouseY, delta);
+                    cycle.render(context.raw(), mouseX, mouseY, delta);
+                    pageRight.render(context.raw(), mouseX, mouseY, delta);
+                    context.pop();
+                    int totalPages = (space.getStacks().size() - 1) / space.pageSize + 1;
+                    wrapPage();
+                    drawHeader(context, mouseX, mouseY, delta, page, totalPages);
+                    for (ScreenSpace space : getSpaces()) {
+                        if (space == this.space) {
+                            space.render(context, mouseX, mouseY, delta, space.pageSize * page);
+                        } else {
+                            space.render(context, mouseX, mouseY, delta, 0);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                EmiLog.error("Error rendering sidebar", e);
+                drawError(context, mouseX, mouseY, delta);
+            }
+        }
 
-		private void drawBackground(EmiDrawContext context, int mouseX, int mouseY, float delta) {
-			if (this.space == null) {
-				return;
-			}
-			try {
-				cycleType(0);
-				if (getType() == SidebarType.CHESS) {
-					if (space.tw != 8 || space.th != 8) {
-						cycleType(1);
-					}
-				}
-				if (isVisible()) {
-					context.enableDepthTest();
-					context.resetColor();
-					int headerOffset = header ? 18 : 0;
-					if (theme == SidebarTheme.VANILLA) {
-						int totalHeight = 18 + headerOffset;
-						for (ScreenSpace space : getSpaces()) {
-							totalHeight += space.th * ENTRY_SIZE + SUBPANEL_SEPARATOR_SIZE;
-						}
+        private void drawBackground(EmiDrawContext context, int mouseX, int mouseY, float delta) {
+            if (this.space == null) {
+                return;
+            }
+            try {
+                cycleType(0);
+                if (getType() == SidebarType.CHESS) {
+                    if (space.tw != 8 || space.th != 8) {
+                        cycleType(1);
+                    }
+                }
+                if (isVisible()) {
+                    context.enableDepthTest();
+                    context.resetColor();
+                    int headerOffset = header ? 18 : 0;
+                    if (theme == SidebarTheme.VANILLA) {
+                        int totalHeight = 18 + headerOffset;
+                        for (ScreenSpace space : getSpaces()) {
+                            totalHeight += space.th * ENTRY_SIZE + SUBPANEL_SEPARATOR_SIZE;
+                        }
                         EmiRenderHelper.drawNinePatch(context, EmiRenderHelper.BACKGROUND, space.tx - 9,
                                 space.ty - 9 - headerOffset,
                                 space.tw * ENTRY_SIZE + 18, totalHeight, 0, 32, 8, 1);
-					} else if (theme == SidebarTheme.MODERN) {
-						int offset = 2;
-						for (ScreenSpace space : getSpaces()) {
-							context.enableBlend();
-							context.drawTexture(EmiRenderHelper.GRID, space.tx, space.ty, space.tw * ENTRY_SIZE,
+                    } else if (theme == SidebarTheme.MODERN) {
+                        int offset = 2;
+                        for (ScreenSpace space : getSpaces()) {
+                            context.enableBlend();
+                            context.drawTexture(EmiRenderHelper.GRID, space.tx, space.ty, space.tw * ENTRY_SIZE,
                                     space.th * ENTRY_SIZE, 0, 0, space.tw, space.th, 2, offset);
-							if (space.th % 2 == 1) {
-								offset *= -1;
-							}
-							context.disableBlend();
-						}
-					}
-					for (ScreenSpace space : getSpaces()) {
-						if (space != this.space) {
+                            if (space.th % 2 == 1) {
+                                offset *= -1;
+                            }
+                            context.disableBlend();
+                        }
+                    }
+                    for (ScreenSpace space : getSpaces()) {
+                        if (space != this.space) {
                             context.drawTexture(EmiRenderHelper.DASH, space.tx + 1, space.ty - 2, space.tw * ENTRY_SIZE,
                                     1, 0, 0, space.tw * ENTRY_SIZE, 1, 6, 1);
-						}
-					}
-				}
-			} catch (Exception e) {
-				EmiLog.error("Error rendering sidebar background", e);
-				drawError(context, mouseX, mouseY, delta);
-			}
-		}
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                EmiLog.error("Error rendering sidebar background", e);
+                drawError(context, mouseX, mouseY, delta);
+            }
+        }
 
-		private void drawError(EmiDrawContext context, int mouseX, int mouseY, float delta) {
-			try {
-				Bounds bounds = getBounds();
-				int color = 0xFFFF0000;
-				int border = 4;
-				context.fill(bounds.left(), bounds.top(), bounds.width(), border, color);
-				context.fill(bounds.left(), bounds.bottom() - border, bounds.width(), border, color);
-				context.fill(bounds.left(), bounds.top(), border, bounds.height(), color);
-				context.fill(bounds.right() - border, bounds.top(), border, bounds.height(), color);
-				int cx = (bounds.left() + bounds.right()) / 2;
-				int cy = (bounds.top() + bounds.bottom()) / 2;
-				context.drawCenteredText(EmiPort.literal("Render Error"), cx, cy - 6, color);
-				context.drawCenteredText(EmiPort.literal("See Log"), cx, cy + 6, color);
-			} catch (Exception e) {
-				EmiLog.error("Critical error rendering sidebar", e);
-			}
-		}
+        private void drawError(EmiDrawContext context, int mouseX, int mouseY, float delta) {
+            try {
+                Bounds bounds = getBounds();
+                int color = 0xFFFF0000;
+                int border = 4;
+                context.fill(bounds.left(), bounds.top(), bounds.width(), border, color);
+                context.fill(bounds.left(), bounds.bottom() - border, bounds.width(), border, color);
+                context.fill(bounds.left(), bounds.top(), border, bounds.height(), color);
+                context.fill(bounds.right() - border, bounds.top(), border, bounds.height(), color);
+                int cx = (bounds.left() + bounds.right()) / 2;
+                int cy = (bounds.top() + bounds.bottom()) / 2;
+                context.drawCenteredText(EmiPort.literal("Render Error"), cx, cy - 6, color);
+                context.drawCenteredText(EmiPort.literal("See Log"), cx, cy + 6, color);
+            } catch (Exception e) {
+                EmiLog.error("Critical error rendering sidebar", e);
+            }
+        }
 
-		private void drawHeader(EmiDrawContext context, int mouseX, int mouseY, float delta, int page, int totalPages) {
-			if (header) {
-				int displayPage = page;
-				int displayPages = totalPages;
-				if (getType() == SidebarType.FAVORITES) {
-					displayPage = EmiFavoriteGroups.namespaceForSidebarPage(space, page);
-					displayPages = EmiFavorites.getFavoritePageCount();
-				}
+        private void drawHeader(EmiDrawContext context, int mouseX, int mouseY, float delta, int page, int totalPages) {
+            if (header) {
+                int displayPage = page;
+                int displayPages = totalPages;
+                if (getType() == SidebarType.FAVORITES) {
+                    displayPage = EmiFavoriteGroups.namespaceForSidebarPage(space, page);
+                    displayPages = EmiFavorites.getFavoritePageCount();
+                }
                 Component text = EmiRenderHelper.getPageText(displayPage + 1, displayPages,
                         (space.tw - 3) * ENTRY_SIZE);
-				int x = space.tx + (space.tw * ENTRY_SIZE) / 2;
-				int maxLeft = (space.tw - 2) * ENTRY_SIZE / 2 - ENTRY_SIZE;
-				int w = client.font.width(text) / 2;
-				if (w > maxLeft) {
-					x += (w - maxLeft);
-				}
-				context.drawCenteredText(text, x, space.ty - 15);
-				if (displayPages > 1 && space.tw > 2) {
-					int scrollLeft = space.tx + 18;
-					int scrollWidth = space.tw * ENTRY_SIZE - 36;
-					int scrollY = space.ty - 4;
-					context.fill(scrollLeft, scrollY, scrollWidth, 2, 0x55555555);
+                int x = space.tx + (space.tw * ENTRY_SIZE) / 2;
+                int maxLeft = (space.tw - 2) * ENTRY_SIZE / 2 - ENTRY_SIZE;
+                int w = client.font.width(text) / 2;
+                if (w > maxLeft) {
+                    x += (w - maxLeft);
+                }
+                context.drawCenteredText(text, x, space.ty - 15);
+                if (displayPages > 1 && space.tw > 2) {
+                    int scrollLeft = space.tx + 18;
+                    int scrollWidth = space.tw * ENTRY_SIZE - 36;
+                    int scrollY = space.ty - 4;
+                    context.fill(scrollLeft, scrollY, scrollWidth, 2, 0x55555555);
                     EmiRenderHelper.drawScroll(context, scrollLeft, scrollY, scrollWidth, 2, displayPage, displayPages,
                             0xFFFFFFFF);
-				}
-			}
-		}
+                }
+            }
+        }
 
-		private void wrapPage() {
-			int totalPages = (space.getStacks().size() - 1) / space.pageSize + 1;
-			if (page >= totalPages) {
-				page = 0;
-				space.batcher.repopulate();
-			} else if (page < 0) {
-				page = totalPages - 1;
-				space.batcher.repopulate();
-			}
-		}
+        private void wrapPage() {
+            int totalPages = (space.getStacks().size() - 1) / space.pageSize + 1;
+            if (page >= totalPages) {
+                page = 0;
+                space.batcher.repopulate();
+            } else if (page < 0) {
+                page = totalPages - 1;
+                space.batcher.repopulate();
+            }
+        }
 
-		public boolean isSearch() {
-			return side == EmiConfig.searchSidebar;
-		}
+        public boolean isSearch() {
+            return side == EmiConfig.searchSidebar;
+        }
 
-		public void updateWidgetPosition() {
-			if (this.space == null) {
-				return;
-			}
-			pageLeft.x = space.tx;
-			pageLeft.y = space.ty - 18;
-			pageRight.x = space.tx + space.tw * ENTRY_SIZE - 16;
-			pageRight.y = pageLeft.y;
-			cycle.x = space.tx + 18;
-			cycle.y = pageLeft.y - 1;
-		}
+        public void updateWidgetPosition() {
+            if (this.space == null) {
+                return;
+            }
+            pageLeft.x = space.tx;
+            pageLeft.y = space.ty - 18;
+            pageRight.x = space.tx + space.tw * ENTRY_SIZE - 16;
+            pageRight.y = pageLeft.y;
+            cycle.x = space.tx + 18;
+            cycle.y = pageLeft.y - 1;
+        }
 
-		public boolean isVisible() {
-			if (this.space == null) {
-				return false;
-			}
-			if (getType() == SidebarType.CHESS && (space.tw != 8 || space.th != 8)) {
-				return false;
-			}
-			return !isDisabled() && space.pageSize > 0 && pages.pages.size() > 0;
-		}
+        public boolean isVisible() {
+            if (this.space == null) {
+                return false;
+            }
+            if (getType() == SidebarType.CHESS && (space.tw != 8 || space.th != 8)) {
+                return false;
+            }
+            return !isDisabled() && space.pageSize > 0 && pages.pages.size() > 0;
+        }
 
-		public void updateWidgetVisibility() {
-			boolean visible = header && isVisible();
+        public void updateWidgetVisibility() {
+            boolean visible = header && isVisible();
 
-			pageLeft.visible = visible;
-			cycle.visible = visible;
-			pageRight.visible = visible;
-		}
+            pageLeft.visible = visible;
+            cycle.visible = visible;
+            pageRight.visible = visible;
+        }
 
-		public boolean hasMultiplePages() {
-			return space != null && (getType() == SidebarType.FAVORITES || space.getStacks().size() > space.pageSize);
-		}
+        public boolean hasMultiplePages() {
+            return space != null && (getType() == SidebarType.FAVORITES || space.getStacks().size() > space.pageSize);
+        }
 
-		private void scrollButton(int delta) {
-			if (space == null || space.pageSize == 0) {
-				return;
-			}
-			if (getType() == SidebarType.FAVORITES && delta > 0) {
-				int totalPages = Math.max(1, (space.getStacks().size() - 1) / space.pageSize + 1);
-				if (page >= totalPages - 1) {
-					int namespace = EmiFavoriteGroups.namespaceForSidebarPage(space, page);
+        private void scrollButton(int delta) {
+            if (space == null || space.pageSize == 0) {
+                return;
+            }
+            if (getType() == SidebarType.FAVORITES && delta > 0) {
+                int totalPages = Math.max(1, (space.getStacks().size() - 1) / space.pageSize + 1);
+                if (page >= totalPages - 1) {
+                    int namespace = EmiFavoriteGroups.namespaceForSidebarPage(space, page);
                     if (namespace == EmiFavorites.getFavoritePageCount() - 1
                             && EmiFavorites.isFavoritePageEmpty(namespace)) {
-						return;
-					}
-					namespace = EmiFavorites.addFavoritePage();
-					space.batcher.repopulate();
-					page = EmiFavoriteGroups.firstSidebarPageForNamespace(space, namespace);
-					return;
-				}
-			}
-			scroll(delta);
-		}
+                        return;
+                    }
+                    namespace = EmiFavorites.addFavoritePage();
+                    space.batcher.repopulate();
+                    page = EmiFavoriteGroups.firstSidebarPageForNamespace(space, namespace);
+                    return;
+                }
+            }
+            scroll(delta);
+        }
 
-		public void scroll(int delta) {
-			if (this.space == null) {
-				return;
-			}
-			if (space.pageSize == 0) {
-				return;
-			}
-			if (getType() == SidebarType.FAVORITES && delta < 0) {
-				int namespace = EmiFavoriteGroups.namespaceForSidebarPage(space, page);
-				if (EmiFavorites.removeTrailingEmptyFavoritePage(namespace)) {
-					space.batcher.repopulate();
-					page = EmiFavoriteGroups.firstSidebarPageForNamespace(space, Math.max(0, namespace - 1));
-					EmiPersistentData.save();
-					return;
-				}
-			}
-			page += delta;
-			int pageSize = space.pageSize;
-			int totalPages = (space.getStacks().size() - 1) / pageSize + 1;
-			if (totalPages <= 1) {
-				page = 0;
-				return;
-			}
-			if (page >= totalPages) {
-				page = 0;
-			} else if (page < 0) {
-				page = totalPages - 1;
-			}
-			space.batcher.repopulate();
-		}
+        public void scroll(int delta) {
+            if (this.space == null) {
+                return;
+            }
+            if (space.pageSize == 0) {
+                return;
+            }
+            if (getType() == SidebarType.FAVORITES && delta < 0) {
+                int namespace = EmiFavoriteGroups.namespaceForSidebarPage(space, page);
+                if (EmiFavorites.removeTrailingEmptyFavoritePage(namespace)) {
+                    space.batcher.repopulate();
+                    page = EmiFavoriteGroups.firstSidebarPageForNamespace(space, Math.max(0, namespace - 1));
+                    EmiPersistentData.save();
+                    return;
+                }
+            }
+            page += delta;
+            int pageSize = space.pageSize;
+            int totalPages = (space.getStacks().size() - 1) / pageSize + 1;
+            if (totalPages <= 1) {
+                page = 0;
+                return;
+            }
+            if (page >= totalPages) {
+                page = 0;
+            } else if (page < 0) {
+                page = totalPages - 1;
+            }
+            space.batcher.repopulate();
+        }
 
-		public Bounds getBounds() {
-			List<ScreenSpace> spaces = getSpaces();
-			if (this.space == null || spaces.isEmpty()) {
-				return Bounds.EMPTY;
-			}
-			int headerOffset = (header ? 18 : 0);
-			ScreenSpace end = getSpaces().get(getSpaces().size() - 1);
-			return new Bounds(
-					space.tx - theme.horizontalPadding,
-					space.ty - theme.verticalPadding - headerOffset,
-					space.tw * ENTRY_SIZE + theme.horizontalPadding * 2,
-					(end.ty - space.ty) + end.th * ENTRY_SIZE + theme.verticalPadding * 2 + headerOffset);
-		}
-	}
+        public Bounds getBounds() {
+            List<ScreenSpace> spaces = getSpaces();
+            if (this.space == null || spaces.isEmpty()) {
+                return Bounds.EMPTY;
+            }
+            int headerOffset = (header ? 18 : 0);
+            ScreenSpace end = getSpaces().get(getSpaces().size() - 1);
+            return new Bounds(
+                    space.tx - theme.horizontalPadding,
+                    space.ty - theme.verticalPadding - headerOffset,
+                    space.tw * ENTRY_SIZE + theme.horizontalPadding * 2,
+                    (end.ty - space.ty) + end.th * ENTRY_SIZE + theme.verticalPadding * 2 + headerOffset);
+        }
+    }
 
-	public static class ScreenSpace {
-		public final StackBatcher batcher = batchers.claim();
-		private final Supplier<SidebarType> typeSupplier;
-		public final int tx, ty, tw, th;
-		public final int pageSize;
-		public final boolean rtl;
-		public final int[] widths;
-		public final boolean search;
+    public static class ScreenSpace {
+        public final StackBatcher batcher = batchers.claim();
+        private final Supplier<SidebarType> typeSupplier;
+        public final int tx, ty, tw, th;
+        public final int pageSize;
+        public final boolean rtl;
+        public final int[] widths;
+        public final boolean search;
 
         public ScreenSpace(int tx, int ty, int tw, int th, boolean rtl, List<Bounds> exclusion,
                 Supplier<SidebarType> typeSupplier, boolean search) {
-			this.tx = tx;
-			this.ty = ty;
-			this.tw = tw;
-			this.th = th;
-			this.rtl = rtl;
-			this.typeSupplier = typeSupplier;
-			this.search = search;
-			int[] widths = new int[th];
-			int pageSize = 0;
-			for (int y = 0; y < th; y++) {
-				int width = 0;
-				int cy = ty + y * ENTRY_SIZE;
-				outer: for (int x = 0; x < tw; x++) {
-					int cx = tx + (rtl ? (tw - 1 - x) : x) * ENTRY_SIZE;
-					int rx = cx + ENTRY_SIZE - 1;
-					int ry = cy + ENTRY_SIZE - 1;
-					for (Bounds rect : exclusion) {
-						if (rect.contains(cx, cy) || rect.contains(rx, cy) || rect.contains(cx, ry)
-								|| rect.contains(rx, ry)) {
-							break outer;
-						}
-					}
-					width++;
-				}
-				widths[y] = width;
-				pageSize += width;
-			}
-			this.pageSize = pageSize;
-			this.widths = widths;
-		}
+            this.tx = tx;
+            this.ty = ty;
+            this.tw = tw;
+            this.th = th;
+            this.rtl = rtl;
+            this.typeSupplier = typeSupplier;
+            this.search = search;
+            int[] widths = new int[th];
+            int pageSize = 0;
+            for (int y = 0; y < th; y++) {
+                int width = 0;
+                int cy = ty + y * ENTRY_SIZE;
+                outer: for (int x = 0; x < tw; x++) {
+                    int cx = tx + (rtl ? (tw - 1 - x) : x) * ENTRY_SIZE;
+                    int rx = cx + ENTRY_SIZE - 1;
+                    int ry = cy + ENTRY_SIZE - 1;
+                    for (Bounds rect : exclusion) {
+                        if (rect.contains(cx, cy) || rect.contains(rx, cy) || rect.contains(cx, ry)
+                                || rect.contains(rx, ry)) {
+                            break outer;
+                        }
+                    }
+                    width++;
+                }
+                widths[y] = width;
+                pageSize += width;
+            }
+            this.pageSize = pageSize;
+            this.widths = widths;
+        }
 
-		public List<? extends EmiIngredient> getRawStacks() {
-			if (search && getType() != SidebarType.CHESS) {
-				return searchedStacks;
-			} else {
-				return EmiSidebars.getStacks(getType());
-			}
-		}
+        public List<? extends EmiIngredient> getRawStacks() {
+            if (search && getType() != SidebarType.CHESS) {
+                return searchedStacks;
+            } else {
+                return EmiSidebars.getStacks(getType());
+            }
+        }
 
-		public List<? extends EmiIngredient> getStacks() {
-			List<? extends EmiIngredient> stacks = getRawStacks();
-			if (getType() == SidebarType.INDEX && !EmiConfig.editMode) {
-				return EmiCollapsibleSidebarGroups.visible(stacks);
-			}
-			return stacks;
-		}
+        public List<? extends EmiIngredient> getStacks() {
+            List<? extends EmiIngredient> stacks = getRawStacks();
+            if (getType() == SidebarType.INDEX && !EmiConfig.editMode) {
+                return EmiCollapsibleSidebarGroups.visible(stacks);
+            }
+            return stacks;
+        }
 
-		public List<? extends EmiIngredient> getPage(int page) {
-			List<? extends EmiIngredient> stacks = getStacks();
-			int start = page * pageSize;
-			int end = Math.min(start + pageSize, stacks.size());
-			if (end > start) {
-				return stacks.subList(start, end);
-			}
-			return List.of();
-		}
+        public List<? extends EmiIngredient> getPage(int page) {
+            List<? extends EmiIngredient> stacks = getStacks();
+            int start = page * pageSize;
+            int end = Math.min(start + pageSize, stacks.size());
+            if (end > start) {
+                return stacks.subList(start, end);
+            }
+            return List.of();
+        }
 
-		public SidebarType getType() {
-			return typeSupplier.get();
-		}
+        public SidebarType getType() {
+            return typeSupplier.get();
+        }
 
-		public void render(EmiDrawContext context, int mouseX, int mouseY, float delta, int startIndex) {
-			if (this.pageSize > 0) {
-				context.enableDepthTest();
-				EmiPort.setPositionTexShader();
-				context.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-				int hx = -1, hy = -1;
-				List<int[]> collapsedMarkers = Lists.newArrayList();
-				batcher.begin(0, 0, 0);
-				int i = startIndex;
-				List<? extends EmiIngredient> stacks = getStacks();
-				int hovered = this.getRawOffsetFromMouse(mouseX, mouseY);
-				if (hovered != -1 && EmiConfig.showHoverOverlay && startIndex + hovered < stacks.size()
-						&& !stacks.get(startIndex + hovered).isEmpty()) {
-					hx = this.getRawX(hovered);
-					hy = this.getRawY(hovered);
-					EmiRenderHelper.drawSlotHightlight(context, hx, hy, ENTRY_SIZE, ENTRY_SIZE, 0);
-				}
-				context.push();
-				outer: for (int yo = 0; yo < this.th; yo++) {
-					for (int xo = 0; xo < this.getWidth(yo); xo++) {
-						if (i >= stacks.size()) {
-							break outer;
-						}
-						int cx = this.getX(xo, yo);
-						int cy = this.getY(xo, yo);
-						EmiIngredient stack = stacks.get(i++);
-						if (getType() == SidebarType.INDEX && !EmiConfig.editMode) {
+        public void render(EmiDrawContext context, int mouseX, int mouseY, float delta, int startIndex) {
+            if (this.pageSize > 0) {
+                context.enableDepthTest();
+                EmiPort.setPositionTexShader();
+                context.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+                int hx = -1, hy = -1;
+                List<int[]> collapsedMarkers = Lists.newArrayList();
+                batcher.begin(0, 0, 0);
+                int i = startIndex;
+                List<? extends EmiIngredient> stacks = getStacks();
+                int hovered = this.getRawOffsetFromMouse(mouseX, mouseY);
+                if (hovered != -1 && EmiConfig.showHoverOverlay && startIndex + hovered < stacks.size()
+                        && !stacks.get(startIndex + hovered).isEmpty()) {
+                    hx = this.getRawX(hovered);
+                    hy = this.getRawY(hovered);
+                    EmiRenderHelper.drawSlotHightlight(context, hx, hy, ENTRY_SIZE, ENTRY_SIZE, 0);
+                }
+                context.push();
+                outer: for (int yo = 0; yo < this.th; yo++) {
+                    for (int xo = 0; xo < this.getWidth(yo); xo++) {
+                        if (i >= stacks.size()) {
+                            break outer;
+                        }
+                        int cx = this.getX(xo, yo);
+                        int cy = this.getY(xo, yo);
+                        EmiIngredient stack = stacks.get(i++);
+                        if (getType() == SidebarType.INDEX && !EmiConfig.editMode) {
                             EmiCollapsibleSidebarGroups.Group group = EmiCollapsibleSidebarGroups.group(getRawStacks(),
                                     stack);
-							if (group != null) {
-								if (EmiCollapsibleSidebarGroups.isExpanded(group)) {
-									int color = 0x665E578C;
-									context.fill(cx, cy, ENTRY_SIZE, 1, color);
-									context.fill(cx, cy + ENTRY_SIZE - 1, ENTRY_SIZE, 1, color);
-									context.fill(cx, cy, 1, ENTRY_SIZE, color);
-									context.fill(cx + ENTRY_SIZE - 1, cy, 1, ENTRY_SIZE, color);
-								} else {
-									context.fill(cx, cy, ENTRY_SIZE, ENTRY_SIZE, 0x182A233F);
-									context.fill(cx, cy, ENTRY_SIZE, 1, 0x996E65A8);
-									context.fill(cx, cy + ENTRY_SIZE - 1, ENTRY_SIZE, 1, 0x996E65A8);
-									context.fill(cx, cy, 1, ENTRY_SIZE, 0x996E65A8);
-									context.fill(cx + ENTRY_SIZE - 1, cy, 1, ENTRY_SIZE, 0x996E65A8);
-									collapsedMarkers.add(new int[] { cx, cy });
-								}
-							}
-						}
-						int renderFlags = -1 ^ EmiIngredient.RENDER_AMOUNT;
-						if (getType() == SidebarType.FAVORITES && stack instanceof EmiFavorite favorite
-								&& EmiFavoriteGroups.groupFor(favorite) != null) {
-							renderFlags = -1;
-						}
-						batcher.render(stack, context.raw(), cx + 1, cy + 1, delta, renderFlags);
-						if (getType() == SidebarType.INDEX) {
-							if (EmiConfig.editMode && EmiHidden.isHidden(stack)) {
-								context.enableDepthTest();
-								context.fill(cx, cy, ENTRY_SIZE, ENTRY_SIZE, 0x33ff0000);
-							} else if (EmiConfig.highlightDefaulted && BoM.getRecipe(stack) != null) {
-								context.enableDepthTest();
-								context.fill(cx, cy, ENTRY_SIZE, ENTRY_SIZE, 0x3300ff00);
-							}
-						}
-					}
-				}
-				batcher.draw();
-				for (int[] marker : collapsedMarkers) {
-					int gx = marker[0];
-					int gy = marker[1];
-					context.fill(gx, gy, ENTRY_SIZE, 1, 0xAA6E65A8);
-					context.fill(gx, gy + ENTRY_SIZE - 1, ENTRY_SIZE, 1, 0xAA6E65A8);
-					context.fill(gx, gy, 1, ENTRY_SIZE, 0xAA6E65A8);
-					context.fill(gx + ENTRY_SIZE - 1, gy, 1, ENTRY_SIZE, 0xAA6E65A8);
-					int mx = gx + ENTRY_SIZE - 5;
-					int my = gy + 1;
-					context.fill(mx, my, 4, 4, 0x885A527F);
-					context.fill(mx + 1, my + 1, 2, 1, 0xCCB9B4D2);
-				}
-				context.pop();
-			}
-		}
+                            if (group != null) {
+                                if (EmiCollapsibleSidebarGroups.isExpanded(group)) {
+                                    int color = 0x665E578C;
+                                    context.fill(cx, cy, ENTRY_SIZE, 1, color);
+                                    context.fill(cx, cy + ENTRY_SIZE - 1, ENTRY_SIZE, 1, color);
+                                    context.fill(cx, cy, 1, ENTRY_SIZE, color);
+                                    context.fill(cx + ENTRY_SIZE - 1, cy, 1, ENTRY_SIZE, color);
+                                } else {
+                                    context.fill(cx, cy, ENTRY_SIZE, ENTRY_SIZE, 0x182A233F);
+                                    context.fill(cx, cy, ENTRY_SIZE, 1, 0x996E65A8);
+                                    context.fill(cx, cy + ENTRY_SIZE - 1, ENTRY_SIZE, 1, 0x996E65A8);
+                                    context.fill(cx, cy, 1, ENTRY_SIZE, 0x996E65A8);
+                                    context.fill(cx + ENTRY_SIZE - 1, cy, 1, ENTRY_SIZE, 0x996E65A8);
+                                    collapsedMarkers.add(new int[] { cx, cy });
+                                }
+                            }
+                        }
+                        int renderFlags = -1 ^ EmiIngredient.RENDER_AMOUNT;
+                        if (getType() == SidebarType.FAVORITES && stack instanceof EmiFavorite favorite
+                                && EmiFavoriteGroups.groupFor(favorite) != null) {
+                            renderFlags = -1;
+                        }
+                        batcher.render(stack, context.raw(), cx + 1, cy + 1, delta, renderFlags);
+                        if (getType() == SidebarType.INDEX) {
+                            if (EmiConfig.editMode && EmiHidden.isHidden(stack)) {
+                                context.enableDepthTest();
+                                context.fill(cx, cy, ENTRY_SIZE, ENTRY_SIZE, 0x33ff0000);
+                            } else if (EmiConfig.highlightDefaulted && BoM.getRecipe(stack) != null) {
+                                context.enableDepthTest();
+                                context.fill(cx, cy, ENTRY_SIZE, ENTRY_SIZE, 0x3300ff00);
+                            }
+                        }
+                    }
+                }
+                batcher.draw();
+                for (int[] marker : collapsedMarkers) {
+                    int gx = marker[0];
+                    int gy = marker[1];
+                    context.fill(gx, gy, ENTRY_SIZE, 1, 0xAA6E65A8);
+                    context.fill(gx, gy + ENTRY_SIZE - 1, ENTRY_SIZE, 1, 0xAA6E65A8);
+                    context.fill(gx, gy, 1, ENTRY_SIZE, 0xAA6E65A8);
+                    context.fill(gx + ENTRY_SIZE - 1, gy, 1, ENTRY_SIZE, 0xAA6E65A8);
+                    int mx = gx + ENTRY_SIZE - 5;
+                    int my = gy + 1;
+                    context.fill(mx, my, 4, 4, 0x885A527F);
+                    context.fill(mx + 1, my + 1, 2, 1, 0xCCB9B4D2);
+                }
+                context.pop();
+            }
+        }
 
-		public int getWidth(int y) {
-			return widths[y];
-		}
+        public int getWidth(int y) {
+            return widths[y];
+        }
 
-		public int getX(int x, int y) {
-			return tx + (rtl ? x + tw - getWidth(y) : x) * ENTRY_SIZE;
-		}
+        public int getX(int x, int y) {
+            return tx + (rtl ? x + tw - getWidth(y) : x) * ENTRY_SIZE;
+        }
 
-		public int getY(int x, int y) {
-			return ty + y * ENTRY_SIZE;
-		}
+        public int getY(int x, int y) {
+            return ty + y * ENTRY_SIZE;
+        }
 
-		public int getEdgeX(int off) {
-			int t = 0;
-			int y = 0;
-			while (y < th && t + getWidth(y) < off) {
-				t += getWidth(y++);
-			}
-			return getX(off - t, y);
-		}
+        public int getEdgeX(int off) {
+            int t = 0;
+            int y = 0;
+            while (y < th && t + getWidth(y) < off) {
+                t += getWidth(y++);
+            }
+            return getX(off - t, y);
+        }
 
-		public int getEdgeY(int off) {
-			int t = 0;
-			int y = 0;
-			while (y < th && t + getWidth(y) < off) {
-				t += getWidth(y++);
-			}
-			return ty + y * ENTRY_SIZE;
-		}
+        public int getEdgeY(int off) {
+            int t = 0;
+            int y = 0;
+            while (y < th && t + getWidth(y) < off) {
+                t += getWidth(y++);
+            }
+            return ty + y * ENTRY_SIZE;
+        }
 
-		public int getRawX(int off) {
-			int t = 0;
-			int y = 0;
-			while (y < th && t + getWidth(y) <= off) {
-				t += getWidth(y++);
-			}
-			return getX(off - t, y);
-		}
+        public int getRawX(int off) {
+            int t = 0;
+            int y = 0;
+            while (y < th && t + getWidth(y) <= off) {
+                t += getWidth(y++);
+            }
+            return getX(off - t, y);
+        }
 
-		public int getRawY(int off) {
-			int t = 0;
-			int y = 0;
-			while (y < th && t + getWidth(y) <= off) {
-				t += getWidth(y++);
-			}
-			return ty + y * ENTRY_SIZE;
-		}
+        public int getRawY(int off) {
+            int t = 0;
+            int y = 0;
+            while (y < th && t + getWidth(y) <= off) {
+                t += getWidth(y++);
+            }
+            return ty + y * ENTRY_SIZE;
+        }
 
-		public int getClosestEdge(int x, int y) {
-			if (y < ty) {
-				return 0;
-			} else if (y >= ty + th * ENTRY_SIZE) {
-				return pageSize;
-			} else {
-				x = (x - tx) / ENTRY_SIZE;
-				y = (y - ty) / ENTRY_SIZE;
-				int off = 0;
-				for (int i = 0; i < y; i++) {
-					off += widths[i];
-				}
-				if (x < 0) {
-					return y;
-				} else if (x >= widths[y]) {
-					return y + widths[y];
-				}
-				if (rtl) {
-					int to = tw - widths[y];
-					if (x >= to) {
-						off += x - to;
-					}
-				} else {
-					if (x < widths[y]) {
-						off += x;
-					} else {
-						off += widths[y];
-					}
-				}
-				return off;
-			}
-		}
+        public int getClosestEdge(int x, int y) {
+            if (y < ty) {
+                return 0;
+            } else if (y >= ty + th * ENTRY_SIZE) {
+                return pageSize;
+            } else {
+                x = (x - tx) / ENTRY_SIZE;
+                y = (y - ty) / ENTRY_SIZE;
+                int off = 0;
+                for (int i = 0; i < y; i++) {
+                    off += widths[i];
+                }
+                if (x < 0) {
+                    return y;
+                } else if (x >= widths[y]) {
+                    return y + widths[y];
+                }
+                if (rtl) {
+                    int to = tw - widths[y];
+                    if (x >= to) {
+                        off += x - to;
+                    }
+                } else {
+                    if (x < widths[y]) {
+                        off += x;
+                    } else {
+                        off += widths[y];
+                    }
+                }
+                return off;
+            }
+        }
 
-		public int getRawOffsetFromMouse(int mouseX, int mouseY) {
-			if (mouseX < tx || mouseY < ty) {
-				return -1;
-			}
-			return getRawOffset((mouseX - tx) / ENTRY_SIZE, (mouseY - ty) / ENTRY_SIZE);
-		}
+        public int getRawOffsetFromMouse(int mouseX, int mouseY) {
+            if (mouseX < tx || mouseY < ty) {
+                return -1;
+            }
+            return getRawOffset((mouseX - tx) / ENTRY_SIZE, (mouseY - ty) / ENTRY_SIZE);
+        }
 
-		public int getRawOffset(int x, int y) {
-			if (x >= 0 && y >= 0 && x < tw && y < th) {
-				int off = 0;
-				for (int i = 0; i < y; i++) {
-					off += widths[i];
-				}
-				if (rtl) {
-					int to = tw - widths[y];
-					if (x >= to) {
-						return off + x - to;
-					}
-				} else {
-					if (x < widths[y]) {
-						return off + x;
-					}
-				}
-			}
-			return -1;
-		}
+        public int getRawOffset(int x, int y) {
+            if (x >= 0 && y >= 0 && x < tw && y < th) {
+                int off = 0;
+                for (int i = 0; i < y; i++) {
+                    off += widths[i];
+                }
+                if (rtl) {
+                    int to = tw - widths[y];
+                    if (x >= to) {
+                        return off + x - to;
+                    }
+                } else {
+                    if (x < widths[y]) {
+                        return off + x;
+                    }
+                }
+            }
+            return -1;
+        }
 
-		public boolean contains(int x, int y) {
-			return x >= tx && x < tx + tw * ENTRY_SIZE && y >= ty && y < ty + th * ENTRY_SIZE;
-		}
+        public boolean contains(int x, int y) {
+            return x >= tx && x < tx + tw * ENTRY_SIZE && y >= ty && y < ty + th * ENTRY_SIZE;
+        }
 
-		public boolean containsNotExcluded(int x, int y) {
-			dev.emi.emi.screen.EmiScreenBase base = EmiScreenBase.getCurrent();
-			if (base.isEmpty()) {
-				return false;
-			}
-			if (this.contains(lastMouseX, lastMouseY)) {
-				for (Bounds bounds : EmiExclusionAreas.getExclusion(base)) {
-					if (bounds.contains(x, y)) {
-						return false;
-					}
-				}
-				return true;
-			}
-			return false;
-		}
-	}
+        public boolean containsNotExcluded(int x, int y) {
+            EmiScreenBase base = EmiScreenBase.getCurrent();
+            if (base.isEmpty()) {
+                return false;
+            }
+            if (this.contains(lastMouseX, lastMouseY)) {
+                for (Bounds bounds : EmiExclusionAreas.getExclusion(base)) {
+                    if (bounds.contains(x, y)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
+    }
 
-	public static class SidebarEmiStackInteraction extends EmiStackInteraction {
-		public final ScreenSpace space;
+    public static class SidebarEmiStackInteraction extends EmiStackInteraction {
+        public final ScreenSpace space;
 
-		public SidebarEmiStackInteraction(EmiIngredient stack, ScreenSpace space) {
-			super(stack);
-			this.space = space;
-		}
+        public SidebarEmiStackInteraction(EmiIngredient stack, ScreenSpace space) {
+            super(stack);
+            this.space = space;
+        }
 
-		public SidebarEmiStackInteraction(EmiIngredient stack, ScreenSpace space, EmiRecipe recipe, boolean clickable) {
-			super(stack, recipe, clickable);
-			this.space = space;
-		}
+        public SidebarEmiStackInteraction(EmiIngredient stack, ScreenSpace space, EmiRecipe recipe, boolean clickable) {
+            super(stack, recipe, clickable);
+            this.space = space;
+        }
 
-		public SidebarType getType() {
-			return space.getType();
-		}
-	}
+        public SidebarType getType() {
+            return space.getType();
+        }
+    }
 }

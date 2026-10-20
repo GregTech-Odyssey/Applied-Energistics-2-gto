@@ -12,27 +12,27 @@ import java.util.Optional;
 
 public class JemiIngredientFilter implements IIngredientFilter {
 
-	@Override
-	public void setFilterText(String filterText) {
-		EmiApi.setSearchText(filterText);
-	}
+    @Override
+    public void setFilterText(String filterText) {
+        EmiApi.setSearchText(filterText);
+    }
 
-	@Override
-	public String getFilterText() {
-		return EmiApi.getSearchText();
-	}
+    @Override
+    public String getFilterText() {
+        return EmiApi.getSearchText();
+    }
 
-	@Override
-	public <T> List<T> getFilteredIngredients(IIngredientType<T> ingredientType) {
-		SidebarPanel search = EmiScreenManager.getSearchPanel();
-		if (search == null || search.space == null) {
-			return List.of();
-		}
-		return search.space.getStacks().stream()
-			.map(i -> JemiUtil.getTyped(i.getEmiStacks().get(0)))
-			.filter(Optional::isPresent).map(Optional::get)
-			.map(i -> i.getIngredient(ingredientType))
-			.filter(Optional::isPresent).map(Optional::get)
-			.toList();
-	}
+    @Override
+    public <T> List<T> getFilteredIngredients(IIngredientType<T> ingredientType) {
+        SidebarPanel search = EmiScreenManager.getSearchPanel();
+        if (search == null || search.space == null) {
+            return List.of();
+        }
+        return search.space.getStacks().stream()
+            .map(i -> JemiUtil.getTyped(i.getEmiStacks().get(0)))
+            .filter(Optional::isPresent).map(Optional::get)
+            .map(i -> i.getIngredient(ingredientType))
+            .filter(Optional::isPresent).map(Optional::get)
+            .toList();
+    }
 }

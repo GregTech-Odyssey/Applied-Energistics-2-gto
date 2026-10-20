@@ -16,44 +16,44 @@ import java.util.stream.Stream;
 public class EmiArmorDyeRecipe extends EmiPatternCraftingRecipe {
     private static final List<DyeItem> DYES = Stream.of(DyeColor.values()).map(c -> DyeItem.byColor(c))
             .collect(Collectors.toList());
-	private final Item armor;
+    private final Item armor;
 
-	public EmiArmorDyeRecipe(Item armor, ResourceLocation id) {
-		super(List.of(
+    public EmiArmorDyeRecipe(Item armor, ResourceLocation id) {
+        super(List.of(
                 EmiIngredient.ofItems(DYES),
                 EmiStack.of(armor)), EmiStack.of(armor), id);
-		this.armor = armor;
-	}
+        this.armor = armor;
+    }
 
-	@Override
-	public SlotWidget getInputWidget(int slot, int x, int y) {
-		if (slot == 0) {
-			return new SlotWidget(EmiStack.of(armor), x, y);
-		} else {
-			final int s = slot - 1;
-			return new GeneratedSlotWidget(r -> {
-				List<DyeItem> dyes = getDyes(r);
-				if (s < dyes.size()) {
-					return EmiStack.of(dyes.get(s));
-				}
-				return EmiStack.EMPTY;
-			}, unique, x, y);
-		}
-	}
+    @Override
+    public SlotWidget getInputWidget(int slot, int x, int y) {
+        if (slot == 0) {
+            return new SlotWidget(EmiStack.of(armor), x, y);
+        } else {
+            final int s = slot - 1;
+            return new GeneratedSlotWidget(r -> {
+                List<DyeItem> dyes = getDyes(r);
+                if (s < dyes.size()) {
+                    return EmiStack.of(dyes.get(s));
+                }
+                return EmiStack.EMPTY;
+            }, unique, x, y);
+        }
+    }
 
-	@Override
-	public SlotWidget getOutputWidget(int x, int y) {
-		return new GeneratedSlotWidget(r -> {
-			return EmiStack.of(DyeableLeatherItem.dyeArmor(new ItemStack(armor), getDyes(r)));
-		}, unique, x, y);
-	}
+    @Override
+    public SlotWidget getOutputWidget(int x, int y) {
+        return new GeneratedSlotWidget(r -> {
+            return EmiStack.of(DyeableLeatherItem.dyeArmor(new ItemStack(armor), getDyes(r)));
+        }, unique, x, y);
+    }
 
-	private List<DyeItem> getDyes(Random random) {
-		List<DyeItem> dyes = Lists.newArrayList();
-		int amount = 1 + random.nextInt(8);
-		for (int i = 0; i < amount; i++) {
-			dyes.add(DYES.get(random.nextInt(DYES.size())));
-		}
-		return dyes;
-	}
+    private List<DyeItem> getDyes(Random random) {
+        List<DyeItem> dyes = Lists.newArrayList();
+        int amount = 1 + random.nextInt(8);
+        for (int i = 0; i < amount; i++) {
+            dyes.add(DYES.get(random.nextInt(DYES.size())));
+        }
+        return dyes;
+    }
 }

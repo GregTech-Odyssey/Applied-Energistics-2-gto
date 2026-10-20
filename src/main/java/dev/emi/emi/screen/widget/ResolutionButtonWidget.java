@@ -18,47 +18,47 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class ResolutionButtonWidget extends Button {
-	public Supplier<Widget> hoveredWidget;
-	public EmiIngredient stack;
+    public Supplier<Widget> hoveredWidget;
+    public EmiIngredient stack;
 
-	public ResolutionButtonWidget(int x, int y, int width, int height, EmiIngredient stack, Supplier<Widget> hoveredWidget) {
-		super(x, y, width, height, EmiPort.literal(""), button -> {
-			BoM.tree.addResolution(stack, null);
-			EmiHistory.pop();
-		}, s -> s.get());
-		this.stack = stack;
-		this.hoveredWidget = hoveredWidget;
-	}
-	
-	@Override
-	public void render(GuiGraphics raw, int mouseX, int mouseY, float delta) {
-		super.render(raw, mouseX, mouseY, delta);
-		if (this.isHovered()) {
-			Minecraft client = Minecraft.getInstance();
-			raw.renderComponentTooltip(client.font, List.of(
-				EmiPort.translatable("tooltip.emi.resolution"),
-				EmiPort.translatable("tooltip.emi.select_resolution"),
-				EmiPort.translatable("tooltip.emi.default_resolution"),
-				EmiPort.translatable("tooltip.emi.clear_resolution")
-			), mouseX, mouseY);
-		}
-		stack.render(raw, x + 1, y + 1, delta);
-	}
+    public ResolutionButtonWidget(int x, int y, int width, int height, EmiIngredient stack, Supplier<Widget> hoveredWidget) {
+        super(x, y, width, height, EmiPort.literal(""), button -> {
+            BoM.tree.addResolution(stack, null);
+            EmiHistory.pop();
+        }, s -> s.get());
+        this.stack = stack;
+        this.hoveredWidget = hoveredWidget;
+    }
+    
+    @Override
+    public void render(GuiGraphics raw, int mouseX, int mouseY, float delta) {
+        super.render(raw, mouseX, mouseY, delta);
+        if (this.isHovered()) {
+            Minecraft client = Minecraft.getInstance();
+            raw.renderComponentTooltip(client.font, List.of(
+                EmiPort.translatable("tooltip.emi.resolution"),
+                EmiPort.translatable("tooltip.emi.select_resolution"),
+                EmiPort.translatable("tooltip.emi.default_resolution"),
+                EmiPort.translatable("tooltip.emi.clear_resolution")
+            ), mouseX, mouseY);
+        }
+        stack.render(raw, x + 1, y + 1, delta);
+    }
 
-	@Override
-	public void renderWidget(GuiGraphics raw, int mouseX, int mouseY, float delta) {
-		EmiDrawContext context = EmiDrawContext.wrap(raw);
-		int u = 0;
-		if (this.isHovered()) {
-			u = 18;
-		} else {
-			Widget widget = hoveredWidget.get();
-			if ((widget instanceof SlotWidget slot && slot.getRecipe() != null)
-					|| widget instanceof RecipeDefaultButtonWidget) {
-				u = 36;
-			}
-		}
-		EmiTexture.SLOT.render(context.raw(), x, y, delta);
-		context.drawTexture(EmiRenderHelper.WIDGETS, x, y, u, 128, width, height);
-	}
+    @Override
+    public void renderWidget(GuiGraphics raw, int mouseX, int mouseY, float delta) {
+        EmiDrawContext context = EmiDrawContext.wrap(raw);
+        int u = 0;
+        if (this.isHovered()) {
+            u = 18;
+        } else {
+            Widget widget = hoveredWidget.get();
+            if ((widget instanceof SlotWidget slot && slot.getRecipe() != null)
+                    || widget instanceof RecipeDefaultButtonWidget) {
+                u = 36;
+            }
+        }
+        EmiTexture.SLOT.render(context.raw(), x, y, delta);
+        context.drawTexture(EmiRenderHelper.WIDGETS, x, y, u, 128, width, height);
+    }
 }

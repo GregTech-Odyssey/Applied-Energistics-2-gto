@@ -11,31 +11,31 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 public class JemiRecipeSlotsView implements IRecipeSlotsView {
     private final ObjectArrayList<IRecipeSlotView> slots;
 
-	public JemiRecipeSlotsView(List<JemiRecipeSlot> slots) {
+    public JemiRecipeSlotsView(List<JemiRecipeSlot> slots) {
         this.slots = new ObjectArrayList<>(slots);
-	}
+    }
 
-	@Override
-	public List<IRecipeSlotView> getSlotViews() {
-		return slots;
-	}
+    @Override
+    public List<IRecipeSlotView> getSlotViews() {
+        return slots;
+    }
 
-	@Override
-	public List<IRecipeSlotView> getSlotViews(RecipeIngredientRole role) {
+    @Override
+    public List<IRecipeSlotView> getSlotViews(RecipeIngredientRole role) {
         var result = new ObjectArrayList<IRecipeSlotView>(slots.size());
         for (var slot : slots)
             if (slot.getRole() == role)
                 result.add(slot);
         return result;
-	}
+    }
 
-	@Override
-	public Optional<IRecipeSlotView> findSlotByName(String slotName) {
-		for (IRecipeSlotView slot : slots) {
+    @Override
+    public Optional<IRecipeSlotView> findSlotByName(String slotName) {
+        for (IRecipeSlotView slot : slots) {
             if (Objects.equals(slot.getSlotName().orElse(null), slotName)) {
-				return Optional.of(slot);
-			}
-		}
-		return Optional.empty();
-	}
+                return Optional.of(slot);
+            }
+        }
+        return Optional.empty();
+    }
 }

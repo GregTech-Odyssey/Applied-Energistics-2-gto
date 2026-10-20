@@ -16,38 +16,38 @@ import net.minecraft.tags.TagKey;
 import java.util.List;
 
 public class EmiTagRecipe extends EmiIngredientRecipe {
-	private final List<EmiStack> stacks;
-	private final EmiIngredient ingredient;
-	public final TagKey<?> key;
+    private final List<EmiStack> stacks;
+    private final EmiIngredient ingredient;
+    public final TagKey<?> key;
 
-	public EmiTagRecipe(TagKey<?> key) {
-		this.key = key;
-		this.ingredient = new TagEmiIngredient(key, 1);
-		this.stacks = ingredient.getEmiStacks();
-	}
+    public EmiTagRecipe(TagKey<?> key) {
+        this.key = key;
+        this.ingredient = new TagEmiIngredient(key, 1);
+        this.stacks = ingredient.getEmiStacks();
+    }
 
-	@Override
-	protected EmiIngredient getIngredient() {
-		return ingredient;
-	}
+    @Override
+    protected EmiIngredient getIngredient() {
+        return ingredient;
+    }
 
-	@Override
-	protected List<EmiStack> getStacks() {
-		return stacks;
-	}
+    @Override
+    protected List<EmiStack> getStacks() {
+        return stacks;
+    }
 
-	@Override
-	protected EmiRecipe getRecipeContext(EmiStack stack, int offset) {
-		return new EmiResolutionRecipe(ingredient, stack);
-	}
+    @Override
+    protected EmiRecipe getRecipeContext(EmiStack stack, int offset) {
+        return new EmiResolutionRecipe(ingredient, stack);
+    }
 
-	@Override
-	public EmiRecipeCategory getCategory() {
-		return VanillaPlugin.TAG;
-	}
+    @Override
+    public EmiRecipeCategory getCategory() {
+        return VanillaPlugin.TAG;
+    }
 
-	@Override
-	public ResourceLocation getId() {
-		return EmiPort.id("emi", "/tag/" + key.registry().location().getPath() + "/" + EmiUtil.subId(key.location()));
-	}
+    @Override
+    public ResourceLocation getId() {
+        return EmiPort.id("emi", "/tag/" + key.registry().location().getPath() + "/" + EmiUtil.subId(key.location()));
+    }
 }

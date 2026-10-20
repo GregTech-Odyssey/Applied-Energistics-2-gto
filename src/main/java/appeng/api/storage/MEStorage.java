@@ -252,7 +252,7 @@ public interface MEStorage {
             int n = journalSize;
             var unique = journalUnique;
             if (unique == null) {
-                journalUnique = unique = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<>(n);
+                journalUnique = unique = new ReferenceOpenHashSet<>(n);
             }
             int w = 0;
             for (int i = 0; i < n; i++) {

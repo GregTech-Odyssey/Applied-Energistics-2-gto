@@ -44,7 +44,7 @@ public class ChunkLogger implements ISubCommand {
             for (StackTraceElement e : Thread.currentThread().getStackTrace()) {
                 if (output) {
                     AELog.info(
-                            "		" + e.getClassName() + '.' + e.getMethodName() + " (" + e.getLineNumber() + ')');
+                            "        " + e.getClassName() + '.' + e.getMethodName() + " (" + e.getLineNumber() + ')');
                 } else {
                     output = e.getClassName().contains("EventBus") && e.getMethodName().contains("post");
                 }

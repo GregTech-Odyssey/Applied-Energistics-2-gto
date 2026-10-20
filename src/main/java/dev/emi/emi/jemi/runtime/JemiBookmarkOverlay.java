@@ -13,21 +13,21 @@ import java.util.Optional;
 
 public class JemiBookmarkOverlay implements IBookmarkOverlay {
 
-	@Override
-	public Optional<ITypedIngredient<?>> getIngredientUnderMouse() {
-		EmiStackInteraction stack = EmiScreenManager.getHoveredStack(EmiScreenManager.lastMouseX, EmiScreenManager.lastMouseY, false);
-		if (stack instanceof EmiScreenManager.SidebarEmiStackInteraction sesi && sesi.getType() == SidebarType.FAVORITES && sesi.getStack().getEmiStacks().size() == 1) {
-			return JemiUtil.getTyped(stack.getStack().getEmiStacks().get(0));
-		}
-		return Optional.empty();
-	}
+    @Override
+    public Optional<ITypedIngredient<?>> getIngredientUnderMouse() {
+        EmiStackInteraction stack = EmiScreenManager.getHoveredStack(EmiScreenManager.lastMouseX, EmiScreenManager.lastMouseY, false);
+        if (stack instanceof EmiScreenManager.SidebarEmiStackInteraction sesi && sesi.getType() == SidebarType.FAVORITES && sesi.getStack().getEmiStacks().size() == 1) {
+            return JemiUtil.getTyped(stack.getStack().getEmiStacks().get(0));
+        }
+        return Optional.empty();
+    }
 
-	@Override
-	public <T> @Nullable T getIngredientUnderMouse(IIngredientType<T> ingredientType) {
-		Optional<ITypedIngredient<?>> opt = getIngredientUnderMouse();
-		if (opt.isPresent()) {
-			return opt.get().getIngredient(ingredientType).orElseGet(() -> null);
-		}
-		return null;
-	}
+    @Override
+    public <T> @Nullable T getIngredientUnderMouse(IIngredientType<T> ingredientType) {
+        Optional<ITypedIngredient<?>> opt = getIngredientUnderMouse();
+        if (opt.isPresent()) {
+            return opt.get().getIngredient(ingredientType).orElseGet(() -> null);
+        }
+        return null;
+    }
 }

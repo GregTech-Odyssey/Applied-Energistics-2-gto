@@ -10,33 +10,33 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
 public class EmiGrindstoneRecipe extends EmiAnvilRepairItemRecipe {
-	private static final ResourceLocation BACKGROUND = EmiPort.id("minecraft", "textures/gui/container/grindstone.png");
-	private final int uniq = EmiUtil.RANDOM.nextInt();
+    private static final ResourceLocation BACKGROUND = EmiPort.id("minecraft", "textures/gui/container/grindstone.png");
+    private final int uniq = EmiUtil.RANDOM.nextInt();
 
-	public EmiGrindstoneRecipe(Item tool, ResourceLocation id) {
-		super(tool, id);
-	}
-	@Override
-	public EmiRecipeCategory getCategory() {
-		return VanillaEmiRecipeCategories.GRINDING;
-	}
+    public EmiGrindstoneRecipe(Item tool, ResourceLocation id) {
+        super(tool, id);
+    }
+    @Override
+    public EmiRecipeCategory getCategory() {
+        return VanillaEmiRecipeCategories.GRINDING;
+    }
 
-	@Override
-	public int getDisplayWidth() {
-		return 116;
-	}
+    @Override
+    public int getDisplayWidth() {
+        return 116;
+    }
 
-	@Override
-	public int getDisplayHeight() {
-		return 56;
-	}
+    @Override
+    public int getDisplayHeight() {
+        return 56;
+    }
 
-	@Override
-	public void addWidgets(WidgetHolder widgets) {
-		widgets.addTexture(BACKGROUND, 0, 0, 116, 56, 30, 15);
+    @Override
+    public void addWidgets(WidgetHolder widgets) {
+        widgets.addTexture(BACKGROUND, 0, 0, 116, 56, 30, 15);
 
-		widgets.addGeneratedSlot(r -> getItem(r, 0), uniq, 18, 3).drawBack(false);
-		widgets.addGeneratedSlot(r -> getItem(r, 1), uniq, 18, 24).drawBack(false);
-		widgets.addGeneratedSlot(r -> getItem(r, 2), uniq, 98, 18).drawBack(false).recipeContext(this);
-	}
+        widgets.addGeneratedSlot(r -> getItem(r, 0), uniq, 18, 3).drawBack(false);
+        widgets.addGeneratedSlot(r -> getItem(r, 1), uniq, 18, 24).drawBack(false);
+        widgets.addGeneratedSlot(r -> getItem(r, 2), uniq, 98, 18).drawBack(false).recipeContext(this);
+    }
 }

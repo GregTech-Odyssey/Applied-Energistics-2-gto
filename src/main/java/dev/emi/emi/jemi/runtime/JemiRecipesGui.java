@@ -21,54 +21,54 @@ import java.util.Optional;
 
 public class JemiRecipesGui implements IRecipesGui {
 
-	@Override
-	public void show(List<IFocus<?>> focuses) {
-		for (IFocus<?> focus : focuses) {
-			EmiStack stack = JemiUtil.getStack(focus.getTypedValue());
-			if (!stack.isEmpty()) {
-				RecipeIngredientRole role = focus.getRole();
-				if (role == RecipeIngredientRole.OUTPUT) {
-					EmiApi.displayRecipes(stack);
-				} else {
-					EmiApi.displayUses(stack);
-				}
-			}
-		}
-	}
+    @Override
+    public void show(List<IFocus<?>> focuses) {
+        for (IFocus<?> focus : focuses) {
+            EmiStack stack = JemiUtil.getStack(focus.getTypedValue());
+            if (!stack.isEmpty()) {
+                RecipeIngredientRole role = focus.getRole();
+                if (role == RecipeIngredientRole.OUTPUT) {
+                    EmiApi.displayRecipes(stack);
+                } else {
+                    EmiApi.displayUses(stack);
+                }
+            }
+        }
+    }
 
-	@Override
-	public void showTypes(List<RecipeType<?>> recipeTypes) {
-		for (RecipeType<?> type : recipeTypes) {
-			for (EmiRecipeCategory category : EmiApi.getRecipeManager().getCategories()) {
-				if (category.getId().equals(type.getUid())) {
-					EmiApi.displayRecipeCategory(category);
-				}
-			}
-		}
-	}
+    @Override
+    public void showTypes(List<RecipeType<?>> recipeTypes) {
+        for (RecipeType<?> type : recipeTypes) {
+            for (EmiRecipeCategory category : EmiApi.getRecipeManager().getCategories()) {
+                if (category.getId().equals(type.getUid())) {
+                    EmiApi.displayRecipeCategory(category);
+                }
+            }
+        }
+    }
 
-	@Override
-	public <T> void showRecipes(IRecipeCategory<T> recipeCategory, List<T> recipes, List<IFocus<?>> focuses) {
-		showTypes(List.of(recipeCategory.getRecipeType()));
-	}
+    @Override
+    public <T> void showRecipes(IRecipeCategory<T> recipeCategory, List<T> recipes, List<IFocus<?>> focuses) {
+        showTypes(List.of(recipeCategory.getRecipeType()));
+    }
 
-	@Override
-	public <T> Optional<T> getIngredientUnderMouse(IIngredientType<T> ingredientType) {
-		Minecraft client = Minecraft.getInstance();
-		if (client.screen instanceof RecipeScreen screen) {
-			EmiIngredient stack = screen.getHoveredStack();
-			if (!stack.isEmpty()) {
-				Optional<ITypedIngredient<?>> opt = JemiUtil.getTyped(stack.getEmiStacks().get(0));
-				if (opt.isPresent()) {
-					return opt.get().getIngredient(ingredientType);
-				}
-			}
-		}
-		return Optional.empty();
-	}
+    @Override
+    public <T> Optional<T> getIngredientUnderMouse(IIngredientType<T> ingredientType) {
+        Minecraft client = Minecraft.getInstance();
+        if (client.screen instanceof RecipeScreen screen) {
+            EmiIngredient stack = screen.getHoveredStack();
+            if (!stack.isEmpty()) {
+                Optional<ITypedIngredient<?>> opt = JemiUtil.getTyped(stack.getEmiStacks().get(0));
+                if (opt.isPresent()) {
+                    return opt.get().getIngredient(ingredientType);
+                }
+            }
+        }
+        return Optional.empty();
+    }
 
-	//@Override
-	public Optional<Screen> getParentScreen() {
-		return Optional.empty();
-	}
+    //@Override
+    public Optional<Screen> getParentScreen() {
+        return Optional.empty();
+    }
 }

@@ -9,24 +9,24 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
 public class RecipeBackground extends Widget {
-	private static final ResourceLocation TEXTURE = EmiPort.id("emi", "textures/gui/background.png");
-	private final int x, y, width, height;
+    private static final ResourceLocation TEXTURE = EmiPort.id("emi", "textures/gui/background.png");
+    private final int x, y, width, height;
 
-	public RecipeBackground(int x, int y, int width, int height) {
-		this.x = x;
-		this.y = y;
-		this.width = width;
-		this.height = height;
-	}
+    public RecipeBackground(int x, int y, int width, int height) {
+        this.x = x;
+        this.y = y;
+        this.width = width;
+        this.height = height;
+    }
 
-	@Override
-	public Bounds getBounds() {
-		return Bounds.EMPTY;
-	}
+    @Override
+    public Bounds getBounds() {
+        return Bounds.EMPTY;
+    }
 
-	@Override
-	public void render(GuiGraphics raw, int mouseX, int mouseY, float delta) {
-		EmiDrawContext context = EmiDrawContext.wrap(raw);
-		EmiRenderHelper.drawNinePatch(context, TEXTURE, x, y, width, height, 27, 0, 4, 1);
-	}
+    @Override
+    public void render(GuiGraphics raw, int mouseX, int mouseY, float delta) {
+        EmiDrawContext context = EmiDrawContext.wrap(raw);
+        EmiRenderHelper.drawNinePatch(context, TEXTURE, x, y, width, height, 27, 0, 4, 1);
+    }
 }

@@ -20,68 +20,68 @@ import java.util.Comparator;
 import java.util.List;
 
 public class EmiRecipeCategory implements EmiRenderable {
-	public ResourceLocation id;
-	public EmiRenderable icon, simplified;
-	public Comparator<EmiRecipe> sorter;
-	
-	/**
-	 * A constructor to use only a single renderable for both the icon and simplified icon.
-	 * It is generally recommended that simplified icons be unique and follow the style of vanilla icons.
-	 * 
-	 * {@link EmiStack} instances can be passed as {@link EmiRenderable}
-	 */
-	public EmiRecipeCategory(ResourceLocation id, EmiRenderable icon) {
-		this(id, icon, icon);
-	}
+    public ResourceLocation id;
+    public EmiRenderable icon, simplified;
+    public Comparator<EmiRecipe> sorter;
+    
+    /**
+     * A constructor to use only a single renderable for both the icon and simplified icon.
+     * It is generally recommended that simplified icons be unique and follow the style of vanilla icons.
+     * 
+     * {@link EmiStack} instances can be passed as {@link EmiRenderable}
+     */
+    public EmiRecipeCategory(ResourceLocation id, EmiRenderable icon) {
+        this(id, icon, icon);
+    }
 
-	/**
-	 * {@link EmiStack} instances can be passed as {@link EmiRenderable}
-	 */
-	public EmiRecipeCategory(ResourceLocation id, EmiRenderable icon, EmiRenderable simplified) {
-		this(id, icon, simplified, EmiRecipeSorting.none());
-	}
+    /**
+     * {@link EmiStack} instances can be passed as {@link EmiRenderable}
+     */
+    public EmiRecipeCategory(ResourceLocation id, EmiRenderable icon, EmiRenderable simplified) {
+        this(id, icon, simplified, EmiRecipeSorting.none());
+    }
 
-	/**
-	 * {@link EmiStack} instances can be passed as {@link EmiRenderable}
-	 */
-	public EmiRecipeCategory(ResourceLocation id, EmiRenderable icon, EmiRenderable simplified, Comparator<EmiRecipe> sorter) {
-		this.id = id;
-		this.icon = icon;
-		this.simplified = simplified;
-		this.sorter = sorter;
-	}
+    /**
+     * {@link EmiStack} instances can be passed as {@link EmiRenderable}
+     */
+    public EmiRecipeCategory(ResourceLocation id, EmiRenderable icon, EmiRenderable simplified, Comparator<EmiRecipe> sorter) {
+        this.id = id;
+        this.icon = icon;
+        this.simplified = simplified;
+        this.sorter = sorter;
+    }
 
-	public Component getName() {
-		return EmiPort.translatable(EmiUtil.translateId("emi.category.", getId()));
-	}
+    public Component getName() {
+        return EmiPort.translatable(EmiUtil.translateId("emi.category.", getId()));
+    }
 
-	public ResourceLocation getId() {
-		return id;
-	}
+    public ResourceLocation getId() {
+        return id;
+    }
 
-	@Override
-	public void render(GuiGraphics draw, int x, int y, float delta) {
-		EmiRecipeCategoryProperties.getIcon(this).render(draw, x, y, delta);
-	}
+    @Override
+    public void render(GuiGraphics draw, int x, int y, float delta) {
+        EmiRecipeCategoryProperties.getIcon(this).render(draw, x, y, delta);
+    }
 
-	public void renderSimplified(GuiGraphics draw, int x, int y, float delta) {
-		EmiRecipeCategoryProperties.getSimplifiedIcon(this).render(draw, x, y, delta);
-	}
+    public void renderSimplified(GuiGraphics draw, int x, int y, float delta) {
+        EmiRecipeCategoryProperties.getSimplifiedIcon(this).render(draw, x, y, delta);
+    }
 
-	public List<ClientTooltipComponent> getTooltip() {
-		List<ClientTooltipComponent> list = Lists.newArrayList();
-		list.add(ClientTooltipComponent.create(EmiPort.ordered(getName())));
-		if (EmiUtil.showAdvancedTooltips()) {
-			list.add(ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(id.toString(), ChatFormatting.DARK_GRAY))));
-		}
-		if (EmiConfig.appendModId) {
-			list.add(ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(EmiUtil.getModName(getId().getNamespace()),
-				ChatFormatting.BLUE, ChatFormatting.ITALIC))));
-		}
-		return list;
-	}
+    public List<ClientTooltipComponent> getTooltip() {
+        List<ClientTooltipComponent> list = Lists.newArrayList();
+        list.add(ClientTooltipComponent.create(EmiPort.ordered(getName())));
+        if (EmiUtil.showAdvancedTooltips()) {
+            list.add(ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(id.toString(), ChatFormatting.DARK_GRAY))));
+        }
+        if (EmiConfig.appendModId) {
+            list.add(ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(EmiUtil.getModName(getId().getNamespace()),
+                ChatFormatting.BLUE, ChatFormatting.ITALIC))));
+        }
+        return list;
+    }
 
-	public @Nullable Comparator<EmiRecipe> getSort() {
-		return sorter;
-	}
+    public @Nullable Comparator<EmiRecipe> getSort() {
+        return sorter;
+    }
 }
