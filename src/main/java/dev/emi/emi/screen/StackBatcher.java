@@ -1,8 +1,6 @@
 package dev.emi.emi.screen;
 
-
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import com.mojang.blaze3d.platform.Lighting;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
@@ -21,11 +19,15 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
-
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.*;
+import org.jetbrains.annotations.NotNull;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 /**
  * @author Una "unascribed" Thompson
@@ -46,24 +48,24 @@ public class StackBatcher {
 				clazz = Class.forName("me.jellysquid.mods.sodium.client.render.texture.SpriteUtil");
 			}
 			sodiumSpriteHandle = MethodHandles.lookup()
-				.findStatic(clazz, "markSpriteActive", MethodType.methodType(void.class, TextureAtlasSprite.class));
+                    .findStatic(clazz, "markSpriteActive", MethodType.methodType(void.class, TextureAtlasSprite.class));
 			if (sodiumSpriteHandle != null) {
 				EmiLog.info("Discovered Sodium");
 			}
 
-			if(EmiForgePlatform.isModLoaded("sodium") || EmiForgePlatform.isModLoaded("rubidium")) {
+            if (EmiForgePlatform.isModLoaded("sodium") || EmiForgePlatform.isModLoaded("rubidium")) {
 				// Check for the modern VertexBufferWriter API. If so, we are likely on Sodium 0.5+ (or a derivative),
 				// which can generally handle a custom VertexConsumer properly.
 				try {
 					Class.forName("net.caffeinemc.mods.sodium.api.vertex.buffer.VertexBufferWriter");
-				} catch(Throwable t) {
+                } catch (Throwable t) {
 					// Check for the legacy VBW API which *cannot* handle this
 					try {
 						Class.forName("me.jellysquid.mods.sodium.client.render.vertex.VertexBufferWriter");
 						// Success means the class exists
 						isIncompatibleSodiumLoaded = true;
 						EmiLog.info("Batching stack renderer disabled for compatibility with legacy Sodium");
-					} catch(Throwable t2) {
+                    } catch (Throwable t2) {
 						// Old enough Sodiums shouldn't have an issue
 					}
 				}
@@ -74,15 +76,19 @@ public class StackBatcher {
 
 	public interface Batchable {
 		boolean isSideLit();
+
 		boolean isUnbatchable();
+
 		void setUnbatchable();
+
 		void renderForBatch(MultiBufferSource vcp, GuiGraphics draw, int x, int y, int z, float delta);
 	}
 
 	private final BatcherVertexConsumerProvider imm;
 	private final MultiBufferSource unlitFacade;
-	private final Map<RenderType, VertexBuffer> buffers = new LinkedHashMap<>();
-	private final Set<TextureAtlasSprite> spritesToUpdate = Sets.newHashSet();
+    private final Reference2ObjectLinkedOpenHashMap<RenderType, VertexBuffer> buffers = new Reference2ObjectLinkedOpenHashMap<>();
+    private final Matrix4f matrix = new Matrix4f();
+    private final ReferenceOpenHashSet<TextureAtlasSprite> spritesToUpdate = new ReferenceOpenHashSet<>();
 	private boolean populated = false;
 	private boolean dirty = false;
 	private int x;
@@ -96,7 +102,7 @@ public class StackBatcher {
 	}
 
 	public StackBatcher() {
-		Map<RenderType, BufferBuilder> buffers = new HashMap<>();
+        Reference2ObjectOpenHashMap<RenderType, BufferBuilder> buffers = new Reference2ObjectOpenHashMap<>(6);
 		assign(buffers, RenderType.solid());
 		assign(buffers, RenderType.cutout());
 		assign(buffers, RenderType.translucent());
@@ -113,7 +119,7 @@ public class StackBatcher {
 		unlitFacade = new UnlitFacade(imm);
 	}
 
-	private void assign(Map<RenderType, BufferBuilder> buffers, RenderType layer) {
+    private void assign(Reference2ObjectOpenHashMap<RenderType, BufferBuilder> buffers, RenderType layer) {
 		buffers.put(layer, new BufferBuilder(layer.bufferSize()));
 	}
 
@@ -139,7 +145,8 @@ public class StackBatcher {
 	public void render(Batchable batchable, GuiGraphics draw, int x, int y, float delta) {
 		if (!populated) {
 			try {
-				batchable.renderForBatch(batchable.isSideLit() ? imm : unlitFacade, draw, x-this.x, y+this.y, z, delta);
+                batchable.renderForBatch(batchable.isSideLit() ? imm : unlitFacade, draw, x - this.x, y + this.y, z,
+                        delta);
 			} catch (Throwable t) {
 				if (EmiConfig.devMode) {
 					EmiLog.error("Batchable threw exception during batched rendering. See log for info", t);
@@ -154,10 +161,11 @@ public class StackBatcher {
 	}
 
 	public void render(EmiIngredient stack, GuiGraphics draw, int x, int y, float delta, int flags) {
-		if (stack instanceof Batchable b && !b.isUnbatchable() && isEnabled() && (flags & EmiIngredient.RENDER_ICON) != 0) {
+        if (stack instanceof Batchable b && !b.isUnbatchable() && isEnabled()
+                && (flags & EmiIngredient.RENDER_ICON) != 0) {
 			if (!populated) {
 				try {
-					b.renderForBatch(b.isSideLit() ? imm : unlitFacade, draw, x-this.x, -y-this.y, z, delta);
+                    b.renderForBatch(b.isSideLit() ? imm : unlitFacade, draw, x - this.x, -y - this.y, z, delta);
 					if (sodiumSpriteHandle != null && !stack.isEmpty()) {
 						ItemStack is = stack.getEmiStacks().get(0).getItemStack();
 						Minecraft client = Minecraft.getInstance();
@@ -202,18 +210,18 @@ public class StackBatcher {
 		}
 		RenderSystem.enableDepthTest();
 		Lighting.setupFor3DItems();
-		Matrix4f mat = new Matrix4f(RenderSystem.getModelViewMatrix());
-		mat.mul(new Matrix4f().scale(1, -1, 1));
+        Matrix4f mat = matrix.set(RenderSystem.getModelViewMatrix()).scale(1, -1, 1);
 		// Flipped Y creates an offset
-		mat.mul(new Matrix4f().translation(x, -y - 16, 0));
-		for (Map.Entry<RenderType, VertexBuffer> en : buffers.entrySet()) {
+        mat.translate(x, -y - 16, 0);
+        for (var iterator = buffers.reference2ObjectEntrySet().fastIterator(); iterator.hasNext();) {
+            var en = iterator.next();
 			en.getKey().setupRenderState();
 			EmiPort.setShader(en.getValue(), mat);
 			en.getKey().clearRenderState();
 		}
 		BufferUploader.reset();
 	}
-	
+
 	private void bake() {
 		imm.drawCurrentLayer();
 		buffers.values().forEach(VertexBuffer::close);
@@ -225,7 +233,8 @@ public class StackBatcher {
 
 	public void bake(RenderType layer) {
 		BufferBuilder bldr = imm.getBufferInternal(layer);
-		if (!imm.getActiveConsumers().remove(bldr)) return;
+        if (!imm.getActiveConsumers().remove(bldr))
+            return;
 		VertexBuffer vb = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);
 		EmiPort.upload(vb, bldr);
 		buffers.put(layer, vb);
@@ -234,10 +243,10 @@ public class StackBatcher {
 
 	// Apparently BufferBuilder leaks memory in vanilla. Go figure
 	public static class ClaimedCollection {
-		private Set<StackBatcher> claimed = Sets.newHashSet();
-		private List<StackBatcher> unclaimed = Lists.newArrayList();
+        private final ReferenceOpenHashSet<StackBatcher> claimed = new ReferenceOpenHashSet<>();
+        private final ObjectArrayList<StackBatcher> unclaimed = new ObjectArrayList<>();
 
-		public StackBatcher claim() {
+        public @NotNull StackBatcher claim() {
 			synchronized (this) {
 				StackBatcher batcher;
 				if (unclaimed.isEmpty()) {
@@ -245,15 +254,12 @@ public class StackBatcher {
 				} else {
 					batcher = unclaimed.remove(unclaimed.size() - 1);
 				}
-				if (batcher == null) {
-					batcher = new StackBatcher();
-				}
 				claimed.add(batcher);
 				return batcher;
 			}
 		}
 
-		public void unclaim(StackBatcher batcher) {
+        public void unclaim(@NotNull StackBatcher batcher) {
 			synchronized (this) {
 				claimed.remove(batcher);
 				unclaimed.add(batcher);
@@ -271,16 +277,17 @@ public class StackBatcher {
 	}
 
 	/*
-	 * This class is mostly a copy of a 1.18.2 implementation of VertexConsumerProvider.Immediate
-	 * The reimplementation allows compatibility with shader mods, as well as less hackery.
+     * This class is mostly a copy of a 1.18.2 implementation of VertexConsumerProvider.Immediate The reimplementation
+     * allows compatibility with shader mods, as well as less hackery.
 	 */
 	private static class BatcherVertexConsumerProvider implements MultiBufferSource {
 		protected final BufferBuilder fallbackBuffer;
-		protected final Map<RenderType, BufferBuilder> layerBuffers;
+        protected final Reference2ObjectOpenHashMap<RenderType, BufferBuilder> layerBuffers;
 		protected Optional<RenderType> currentLayer = Optional.empty();
-		protected final Set<BufferBuilder> activeConsumers = Sets.newHashSet();
+        protected final ReferenceOpenHashSet<BufferBuilder> activeConsumers = new ReferenceOpenHashSet<>();
 
-		protected BatcherVertexConsumerProvider(BufferBuilder fallbackBuffer, Map<RenderType, BufferBuilder> layerBuffers) {
+        protected BatcherVertexConsumerProvider(BufferBuilder fallbackBuffer,
+                Reference2ObjectOpenHashMap<RenderType, BufferBuilder> layerBuffers) {
 			this.fallbackBuffer = fallbackBuffer;
 			this.layerBuffers = layerBuffers;
 		}
@@ -291,7 +298,8 @@ public class StackBatcher {
 			BufferBuilder bufferBuilder = this.getBufferInternal(renderLayer);
 			if (!Objects.equals(this.currentLayer, optional)) {
 				RenderType renderLayer2;
-				if (this.currentLayer.isPresent() && !this.layerBuffers.containsKey(renderLayer2 = this.currentLayer.get())) {
+                if (this.currentLayer.isPresent()
+                        && !this.layerBuffers.containsKey(renderLayer2 = this.currentLayer.get())) {
 					this.draw(renderLayer2);
 				}
 				if (this.activeConsumers.add(bufferBuilder)) {
@@ -330,12 +338,12 @@ public class StackBatcher {
 				this.currentLayer = Optional.empty();
 			}
 		}
-		
-		public Map<RenderType, BufferBuilder> getLayerBuffers() {
+
+        public Reference2ObjectOpenHashMap<RenderType, BufferBuilder> getLayerBuffers() {
 			return layerBuffers;
 		}
-		
-		public Set<BufferBuilder> getActiveConsumers() {
+
+        public ReferenceOpenHashSet<BufferBuilder> getActiveConsumers() {
 			return activeConsumers;
 		}
 	}
@@ -365,7 +373,7 @@ public class StackBatcher {
 				delegate.normal(0, 1, 0); // this is the change
 				return this;
 			}
-			
+
 			// all other methods are direct delegation
 
 			@Override
@@ -412,7 +420,7 @@ public class StackBatcher {
 				delegate.color(r, g, b, a);
 				return this;
 			}
-			
+
 		}
 	}
 

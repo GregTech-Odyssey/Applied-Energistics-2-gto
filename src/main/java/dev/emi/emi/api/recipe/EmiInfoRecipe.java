@@ -1,8 +1,5 @@
 package dev.emi.emi.api.recipe;
 
-import dev.emi.emi.api.recipe.EmiRecipe;
-import dev.emi.emi.api.recipe.EmiRecipeCategory;
-import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
@@ -12,20 +9,29 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class EmiInfoRecipe implements EmiRecipe {
 	private static final int STACK_WIDTH = 6, MAX_STACKS = STACK_WIDTH * 3;
 	private static final int PADDING = 4;
 	private static final Minecraft CLIENT = Minecraft.getInstance();
 	private final List<EmiIngredient> stacks;
-	private final List<FormattedCharSequence> text;
+    private final ObjectArrayList<FormattedCharSequence> text;
+    private final ObjectArrayList<EmiStack> outputs;
 	private final ResourceLocation id;
 
 	public EmiInfoRecipe(List<EmiIngredient> stacks, List<Component> text, @Nullable ResourceLocation id) {
 		this.stacks = stacks;
-		this.text = text.stream().flatMap(t -> CLIENT.font.split(t, getDisplayWidth() - 4).stream()).toList();
+        this.text = new ObjectArrayList<>(text.size());
+        for (var component : text)
+            this.text.addAll(CLIENT.font.split(component, getDisplayWidth() - 4));
+        int size = 0;
+        for (var ingredient : stacks)
+            size += ingredient.getEmiStacks().size();
+        this.outputs = new ObjectArrayList<>(size);
+        for (var ingredient : stacks)
+            outputs.addAll(ingredient.getEmiStacks());
 		this.id = id;
 	}
 
@@ -46,7 +52,7 @@ public class EmiInfoRecipe implements EmiRecipe {
 
 	@Override
 	public List<EmiStack> getOutputs() {
-		return stacks.stream().flatMap(ing -> ing.getEmiStacks().stream()).toList();
+        return outputs;
 	}
 
 	@Override

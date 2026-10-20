@@ -13,9 +13,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
-
 import java.util.List;
 import java.util.Random;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class EmiGrindstoneDisenchantingRecipe implements EmiRecipe {
 	private static final ResourceLocation BACKGROUND = EmiPort.id("minecraft", "textures/gui/container/grindstone.png");
@@ -71,14 +71,13 @@ public class EmiGrindstoneDisenchantingRecipe implements EmiRecipe {
 		widgets.addGeneratedSlot(r -> getTool(r, false), uniq, 98, 18).drawBack(false).recipeContext(this);
 	}
 
-	private EmiStack getTool(Random random, Boolean enchanted){
+    private EmiStack getTool(Random random, Boolean enchanted) {
 		ItemStack itemStack = new ItemStack(tool);
 		int enchantments = 1 + Math.max(random.nextInt(5), random.nextInt(3));
 
 		List<Enchantment> list = Lists.newArrayList();
 
-		outer:
-		for (int i = 0; i < enchantments; i++) {
+        outer: for (int i = 0; i < enchantments; i++) {
 			Enchantment enchantment = getEnchantment(random);
 
 			int maxLvl = enchantment.getMaxLevel();
@@ -89,7 +88,7 @@ public class EmiGrindstoneDisenchantingRecipe implements EmiRecipe {
 			if (lvl < minLvl) {
 				lvl = minLvl;
 			}
-			
+
 			for (Enchantment e : list) {
 				if (e == enchantment || !e.isCompatibleWith(enchantment)) {
 					continue outer;
@@ -106,8 +105,12 @@ public class EmiGrindstoneDisenchantingRecipe implements EmiRecipe {
 		return EmiStack.of(itemStack);
 	}
 
-	private Enchantment getEnchantment(Random random){
-		List<Enchantment> enchantments = EmiPort.getEnchantmentRegistry().stream().filter(i -> i.canEnchant(tool.getDefaultInstance())).toList();
+    private Enchantment getEnchantment(Random random) {
+        var item = tool.getDefaultInstance();
+        var enchantments = new ObjectArrayList<Enchantment>();
+        for (var enchantment : EmiPort.getEnchantmentRegistry())
+            if (enchantment.canEnchant(item))
+                enchantments.add(enchantment);
 		int enchantment = random.nextInt(enchantments.size());
 		return enchantments.get(enchantment);
 	}

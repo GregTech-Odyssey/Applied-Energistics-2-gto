@@ -1,40 +1,60 @@
 package dev.emi.emi.runtime;
 
-import com.google.common.collect.Maps;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.EmiUtil;
 import dev.emi.emi.registry.EmiTags;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
-import net.minecraft.core.Holder;
-import net.minecraft.core.HolderSet.Named;
 import net.minecraft.core.Registry;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 // Wrapper around TagKeys
 public class EmiTagKey<T> {
-	public static final Map<TagKey<?>, EmiTagKey<?>> CACHE = Maps.newHashMap();
+    private static final Reference2ObjectOpenHashMap<TagKey<?>, EmiTagKey<?>> KEYS = new Reference2ObjectOpenHashMap<>();
+    public static final Map<TagKey<?>, EmiTagKey<?>> CACHE = KEYS;
 	private final TagKey<T> raw;
-	private List<T> cached;
-	
+    private Registry<T> registry;
+    private ObjectArrayList<T> cached;
+    private ReferenceOpenHashSet<T> cachedSet;
+    private final String idString;
+
 	private EmiTagKey(TagKey<T> raw) {
 		this.raw = raw;
+        this.idString = raw.location().toString();
 		recalculate();
 	}
 
 	public void recalculate() {
-		cached = stream().toList();
+        registry = Minecraft.getInstance().level.registryAccess().registry(raw.registry()).orElseThrow();
+        var holders = registry.getTag(raw).orElse(null);
+        cached = new ObjectArrayList<>(holders == null ? 0 : holders.size());
+        if (holders != null) {
+            boolean fluidRegistry = registry == EmiPort.getFluidRegistry();
+            for (var holder : holders) {
+                var value = holder.value();
+                if (!fluidRegistry || ((Fluid) value).isSource(((Fluid) value).defaultFluidState()))
+                    cached.add(value);
+            }
+        }
+        cachedSet = new ReferenceOpenHashSet<>(cached.size());
+        cachedSet.addAll(cached);
+    }
+
+    public String idString() {
+        return idString;
 	}
 
 	public TagKey<T> raw() {
@@ -49,33 +69,21 @@ public class EmiTagKey<T> {
 		return raw.location();
 	}
 
-	public Registry<T> registry() {
-		Minecraft client = Minecraft.getInstance();
-		return client.level.registryAccess().registry(raw.registry()).orElse(null);
+    public @NotNull Registry<T> registry() {
+        return registry;
 	}
 
 	public Stream<T> stream() {
-		Registry<T> registry = registry();
-		Optional<Named<T>> opt = registry.getTag(raw);
-		if (opt.isEmpty()) {
-			return Stream.of();
-		} else {
-			if (registry == EmiPort.getFluidRegistry()) {
-				return opt.get().stream().filter(o -> {
-					Fluid f = (Fluid) o.value();
-					return f.isSource(f.defaultFluidState());
-				}).map(Holder::value);
-			}
-			return opt.get().stream().map(Holder::value);
-		}
+        // Compatibility boundary for integrations; internal consumers use the cached collections.
+        return cached.stream();
 	}
 
-	public List<T> getList() {
+    public @NotNull @UnmodifiableView List<@NotNull T> getList() {
 		return cached;
 	}
 
-	public Set<T> getSet() {
-		return stream().collect(Collectors.toSet());
+    public @NotNull @UnmodifiableView Set<@NotNull T> getSet() {
+        return cachedSet;
 	}
 
 	public Component getTagName() {
@@ -99,7 +107,8 @@ public class EmiTagKey<T> {
 				return s;
 			}
 		} else {
-			String s = translatePrefix("tag." + registry.getNamespace() + "." + registry.getPath().replace("/", ".") + ".", this.id());
+            String s = translatePrefix(
+                    "tag." + registry.getNamespace() + "." + registry.getPath().replace("/", ".") + ".", this.id());
 			if (s != null) {
 				return s;
 			}
@@ -135,7 +144,7 @@ public class EmiTagKey<T> {
 
 	@SuppressWarnings("unchecked")
 	public static <T> EmiTagKey<T> of(TagKey<T> raw) {
-		return (EmiTagKey<T>) CACHE.computeIfAbsent(raw, k -> new EmiTagKey<>(k));
+        return (EmiTagKey<T>) KEYS.computeIfAbsent(raw, (TagKey<?> key) -> new EmiTagKey<>(key));
 	}
 
 	public static <T> EmiTagKey<T> of(Registry<T> registry, ResourceLocation id) {
@@ -147,7 +156,7 @@ public class EmiTagKey<T> {
 	}
 
 	public static void reload() {
-		for (EmiTagKey<?> key : CACHE.values()) {
+        for (EmiTagKey<?> key : KEYS.values()) {
 			key.recalculate();
 		}
 	}

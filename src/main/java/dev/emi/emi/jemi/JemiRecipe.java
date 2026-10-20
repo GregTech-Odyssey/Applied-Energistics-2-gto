@@ -11,8 +11,6 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.Bounds;
 import dev.emi.emi.api.widget.Widget;
 import dev.emi.emi.api.widget.WidgetHolder;
-import dev.emi.emi.jemi.JemiPlugin;
-import dev.emi.emi.jemi.JemiUtil;
 import dev.emi.emi.jemi.impl.*;
 import dev.emi.emi.jemi.impl.extras.JemiRecipeExtrasBuilder;
 import dev.emi.emi.jemi.impl.extras.JemiWidgetBuilder;
@@ -31,7 +29,6 @@ import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -121,7 +118,8 @@ public class JemiRecipe<T> implements EmiRecipe {
 	@Override
 	@SuppressWarnings("unchecked")
 	public void addWidgets(WidgetHolder widgets) {
-		Optional<IRecipeLayoutDrawable<T>> opt = JemiPlugin.runtime.getRecipeManager().createRecipeLayoutDrawable(category, recipe, FocusGroup.EMPTY);
+        Optional<IRecipeLayoutDrawable<T>> opt = JemiPlugin.runtime.getRecipeManager()
+                .createRecipeLayoutDrawable(category, recipe, FocusGroup.EMPTY);
 		JemiRecipeLayoutBuilder builder = new JemiRecipeLayoutBuilder();
 		category.setRecipe(builder, recipe, JemiPlugin.runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup());
 		for (JemiRecipeSlotBuilder jrsb : builder.slots) {
@@ -131,7 +129,7 @@ public class JemiRecipe<T> implements EmiRecipe {
 			widgets.add(new JemiWidget(0, 0, getDisplayWidth(), getDisplayHeight(), opt.get()));
 			for (JemiRecipeSlotBuilder sb : builder.slots) {
 				JemiRecipeSlot slot = new JemiRecipeSlot(sb);
-				if (slot.tankInfo != null && !slot.getIngredients(JemiUtil.getFluidType()).toList().isEmpty()) {
+                if (slot.tankInfo != null && slot.hasIngredients(JemiUtil.getFluidType())) {
 					widgets.add(new JemiTankWidget(slot, this));
 				} else {
 					widgets.add(new JemiSlotWidget(slot, this));
@@ -140,11 +138,12 @@ public class JemiRecipe<T> implements EmiRecipe {
 		}
 		try {
 			JemiRecipeExtrasBuilder extras = new JemiRecipeExtrasBuilder(null);
-			category.createRecipeExtras(extras, recipe, JemiPlugin.runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup());
+            category.createRecipeExtras(extras, recipe,
+                    JemiPlugin.runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup());
 			for (JemiWidgetBuilder b : extras.widgets) {
 				b.addWidgets(widgets);
 			}
-		} catch(Throwable t) {
+        } catch (Throwable t) {
 			EmiLog.error("Exception adding JEMI extras", t);
 		}
 	}
@@ -195,7 +194,8 @@ public class JemiRecipe<T> implements EmiRecipe {
 
 		@Override
 		public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-			return category.handleInput(recipe, EmiScreenManager.lastMouseX, EmiScreenManager.lastMouseY, InputConstants.getKey(keyCode, scanCode));
+            return category.handleInput(recipe, EmiScreenManager.lastMouseX, EmiScreenManager.lastMouseY,
+                    InputConstants.getKey(keyCode, scanCode));
 		}
 	}
 }

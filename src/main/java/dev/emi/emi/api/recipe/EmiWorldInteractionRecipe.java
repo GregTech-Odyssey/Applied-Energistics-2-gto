@@ -1,6 +1,5 @@
 package dev.emi.emi.api.recipe;
 
-import com.google.common.collect.Lists;
 import dev.emi.emi.api.render.EmiTexture;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
@@ -8,16 +7,15 @@ import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.WidgetHolder;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class EmiWorldInteractionRecipe implements EmiRecipe {
 	private final ResourceLocation id;
 	private final List<WorldIngredient> left, right, outputIngredients;
-	private final List<EmiIngredient> inputs, catalysts;
-	private final List<EmiStack> outputs;
+    private final ObjectArrayList<EmiIngredient> inputs, catalysts;
+    private final ObjectArrayList<EmiStack> outputs;
 	private final boolean supportsRecipeTree;
 	private final int slotHeight;
 	private int width = 125, height;
@@ -28,12 +26,16 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		this.id = builder.id;
 		this.left = builder.left;
 		this.right = builder.right;
-		this.inputs = Stream.concat(left.stream(), right.stream())
-			.filter(i -> !i.catalyst).map(i -> i.stack).toList();
-		this.catalysts = Stream.concat(left.stream(), right.stream())
-			.filter(i -> i.catalyst).map(i -> i.stack).toList();
+        this.inputs = new ObjectArrayList<>(left.size() + right.size());
+        this.catalysts = new ObjectArrayList<>(left.size() + right.size());
+        for (var ingredient : left)
+            (ingredient.catalyst ? catalysts : inputs).add(ingredient.stack);
+        for (var ingredient : right)
+            (ingredient.catalyst ? catalysts : inputs).add(ingredient.stack);
 		this.outputIngredients = builder.output;
-		this.outputs = builder.output.stream().map(i -> (EmiStack) i.stack).toList();
+        this.outputs = new ObjectArrayList<>(builder.output.size());
+        for (var ingredient : builder.output)
+            outputs.add((EmiStack) ingredient.stack);
 		this.supportsRecipeTree = builder.supportsRecipeTree;
 		for (EmiIngredient catalyst : catalysts) {
 			for (EmiStack stack : catalyst.getEmiStacks()) {
@@ -45,7 +47,7 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		totalSize = left.size() + right.size() + outputs.size();
 		if (totalSize > 5) {
 			int[] portions = new int[] {
-				left.size(), right.size(), outputs.size()
+                    left.size(), right.size(), outputs.size()
 			};
 			int[] sizes = new int[] { 1, 1, 1 };
 			for (int i = 0; i < 2; i++) {
@@ -130,33 +132,34 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		int rr = rl + rightSize * 18;
 
 		widgets.addTexture(EmiTexture.PLUS, (lr + rl) / 2 - EmiTexture.PLUS.width / 2, -6 + slotHeight * 9);
-		widgets.addTexture(EmiTexture.EMPTY_ARROW, (rr + ol) / 2 - EmiTexture.EMPTY_ARROW.width / 2, -8 + slotHeight * 9);
+        widgets.addTexture(EmiTexture.EMPTY_ARROW, (rr + ol) / 2 - EmiTexture.EMPTY_ARROW.width / 2,
+                -8 + slotHeight * 9);
 
 		int yo = (slotHeight - leftHeight) * 9;
 		for (int i = 0; i < left.size(); i++) {
 			WorldIngredient wi = left.get(i);
 			widgets.add(wi.mutator.apply(new SlotWidget(wi.stack, i % leftSize * 18, yo + i / leftSize * 18)));
 		}
-		
+
 		yo = (slotHeight - rightHeight) * 9;
 		for (int i = 0; i < right.size(); i++) {
 			WorldIngredient wi = right.get(i);
 			widgets.add(wi.mutator.apply(new SlotWidget(wi.stack, rl + i % rightSize * 18, yo + i / rightSize * 18)
-				.catalyst(wi.catalyst)));
+                    .catalyst(wi.catalyst)));
 		}
-		
+
 		yo = (slotHeight - outputHeight) * 9;
 		for (int i = 0; i < outputIngredients.size(); i++) {
 			WorldIngredient wi = outputIngredients.get(i);
 			widgets.add(wi.mutator.apply(new SlotWidget(wi.stack, ol + i % outputSize * 18, yo + i / outputSize * 18))
-				.recipeContext(this));
+                    .recipeContext(this));
 		}
 	}
-	
+
 	public static class Builder {
-		private final List<WorldIngredient> left = Lists.newArrayList();
-		private final List<WorldIngredient> right = Lists.newArrayList();
-		private final List<WorldIngredient> output = Lists.newArrayList();
+        private final ObjectArrayList<WorldIngredient> left = new ObjectArrayList<>(1);
+        private final ObjectArrayList<WorldIngredient> right = new ObjectArrayList<>(1);
+        private final ObjectArrayList<WorldIngredient> output = new ObjectArrayList<>(1);
 		private boolean supportsRecipeTree = true;
 		private ResourceLocation id = null;
 
@@ -176,8 +179,7 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		}
 
 		/**
-		 * Assigns an identifier to the recipe.
-		 * If not called, the id will be null.
+         * Assigns an identifier to the recipe. If not called, the id will be null.
 		 */
 		public Builder id(ResourceLocation id) {
 			this.id = id;
@@ -185,8 +187,7 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		}
 
 		/**
-		 * Adds an ingredient to the left side of the plus.
-		 * At least one is required.
+         * Adds an ingredient to the left side of the plus. At least one is required.
 		 */
 		public Builder leftInput(EmiIngredient stack) {
 			left.add(new WorldIngredient(stack, false, s -> s));
@@ -194,8 +195,8 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		}
 
 		/**
-		 * Adds an ingredient to the left side of the plus.
-		 * At least one is required.
+         * Adds an ingredient to the left side of the plus. At least one is required.
+         *
 		 * @param mutator Provides a way to add attributes to the slot widget, or entirely replace it.
 		 */
 		public Builder leftInput(EmiIngredient stack, Function<SlotWidget, SlotWidget> mutator) {
@@ -204,10 +205,10 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		}
 
 		/**
-		 * Adds an ingredient to the right side of the plus.
-		 * At least one is required.
-		 * @param catalyst Whether to be not considered a cost in the recipe tree.
-		 * 	Will also make the slot have a catalyst symbol.
+         * Adds an ingredient to the right side of the plus. At least one is required.
+         *
+         * @param catalyst Whether to be not considered a cost in the recipe tree. Will also make the slot have a
+         *                 catalyst symbol.
 		 */
 		public Builder rightInput(EmiIngredient stack, boolean catalyst) {
 			right.add(new WorldIngredient(stack, catalyst, s -> s));
@@ -215,11 +216,11 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		}
 
 		/**
-		 * Adds an ingredient to the right side of the plus.
-		 * At least one is required.
-		 * @param catalyst Whether to be not considered a cost in the recipe tree.
-		 * 	Will also make the slot have a catalyst symbol.
-		 * @param mutator Provides a way to add attributes to the slot widget, or entirely replace it.
+         * Adds an ingredient to the right side of the plus. At least one is required.
+         *
+         * @param catalyst Whether to be not considered a cost in the recipe tree. Will also make the slot have a
+         *                 catalyst symbol.
+         * @param mutator  Provides a way to add attributes to the slot widget, or entirely replace it.
 		 */
 		public Builder rightInput(EmiIngredient stack, boolean catalyst, Function<SlotWidget, SlotWidget> mutator) {
 			right.add(new WorldIngredient(stack, catalyst, mutator));
@@ -227,8 +228,7 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		}
 
 		/**
-		 * Adds an output.
-		 * At least one is required.
+         * Adds an output. At least one is required.
 		 */
 		public Builder output(EmiStack stack) {
 			output.add(new WorldIngredient(stack, false, s -> s));
@@ -236,8 +236,8 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		}
 
 		/**
-		 * Adds an output.
-		 * At least one is required.
+         * Adds an output. At least one is required.
+         *
 		 * @param mutator Provides a way to add attributes to the slot widget, or entirely replace it.
 		 */
 		public Builder output(EmiStack stack, Function<SlotWidget, SlotWidget> mutator) {
@@ -251,6 +251,7 @@ public class EmiWorldInteractionRecipe implements EmiRecipe {
 		}
 	}
 
-	private static record WorldIngredient(EmiIngredient stack, boolean catalyst, Function<SlotWidget, SlotWidget> mutator) {
+    private static record WorldIngredient(EmiIngredient stack, boolean catalyst,
+            Function<SlotWidget, SlotWidget> mutator) {
 	}
 }

@@ -3,31 +3,33 @@ package dev.emi.emi.search;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.runtime.EmiTagKey;
-import dev.emi.emi.search.Query;
-
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.regex.Pattern;
+import net.minecraft.core.Registry;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 public class TagQuery extends Query {
-	private final Set<Object> valid;
+    private final ReferenceOpenHashSet<Object> valid = new ReferenceOpenHashSet<>();
 
 	public TagQuery(String name) {
-		String lowerName = name.toLowerCase();
-		valid = Stream.<EmiTagKey<?>>concat(
-			EmiTagKey.fromRegistry(EmiPort.getItemRegistry()),
-			EmiTagKey.fromRegistry(EmiPort.getBlockRegistry())
-		).filter(t -> {
-			if (t.hasTranslation()) {
-				if (t.getTagName().getString().toLowerCase().contains(lowerName)) {
-					return true;
-				}
+        var lower = name.toLowerCase();
+        collect(EmiPort.getItemRegistry(), valid, lower, null);
+        collect(EmiPort.getBlockRegistry(), valid, lower, null);
+    }
+
+    static void collect(Registry<?> registry, ReferenceOpenHashSet<Object> valid, String name, Pattern pattern) {
+        var tags = registry.getTagNames().iterator();
+        while (tags.hasNext()) {
+            var tag = EmiTagKey.of(tags.next());
+            boolean matches = false;
+            if (tag.hasTranslation()) {
+                var translated = tag.getTagName().getString().toLowerCase();
+                matches = pattern == null ? translated.contains(name) : pattern.matcher(translated).find();
 			}
-			if (t.id().toString().contains(lowerName)) {
-				return true;
-			}
-			return false;
-		}).flatMap(v -> v.stream()).collect(Collectors.toSet());
+            if (!matches)
+                matches = pattern == null ? tag.idString().contains(name) : pattern.matcher(tag.idString()).find();
+            if (matches)
+                valid.addAll(tag.getList());
+        }
 	}
 
 	@Override

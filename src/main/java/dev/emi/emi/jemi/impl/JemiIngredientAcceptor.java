@@ -1,6 +1,5 @@
 package dev.emi.emi.jemi.impl;
 
-import com.google.common.collect.Lists;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
@@ -17,35 +16,37 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class JemiIngredientAcceptor implements IIngredientAcceptor<JemiIngredientAcceptor> {
 	public static final Pattern FLUID_END = Pattern.compile("(^|\\s)([\\d,]+)\\s*mB$");
 	public final RecipeIngredientRole role;
-	public final List<EmiStack> stacks = Lists.newArrayList();
+    public final ObjectArrayList<EmiStack> stacks = new ObjectArrayList<>(1);
 
 	public JemiIngredientAcceptor(RecipeIngredientRole role) {
 		this.role = role;
 	}
 
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	public void coerceStacks(IRecipeSlotTooltipCallback tooltipCallback, Map<IIngredientType<?>, IngredientRenderer<?>> renderers) {
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    public void coerceStacks(IRecipeSlotTooltipCallback tooltipCallback,
+            Map<IIngredientType<?>, IngredientRenderer<?>> renderers) {
 		if (tooltipCallback == null && renderers == null) {
 			return;
 		}
 		for (EmiStack stack : stacks) {
 			ITypedIngredient typed = JemiUtil.getTyped(stack).orElse(null);
 			if (typed != null && (stack instanceof JemiStack || stack.getKey() instanceof Fluid)) {
-				List<Component> base = Lists.newArrayList();
-				if (renderers != null && renderers.containsKey(typed.getType())) {
-					base.addAll(((IngredientRenderer) renderers.get(typed.getType())).renderer().getTooltip(typed.getIngredient(), TooltipFlag.Default.NORMAL));
-				}
-				if (base == null || base.isEmpty()) {
+                var base = new ObjectArrayList<Component>(2);
+                var renderer = renderers == null ? null : renderers.get(typed.getType());
+                if (renderer != null)
+                    base.addAll(((IngredientRenderer) renderer).renderer().getTooltip(typed.getIngredient(),
+                            TooltipFlag.Default.NORMAL));
+                if (base.isEmpty()) {
 					if (tooltipCallback == null) {
 						continue;
 					}
@@ -123,7 +124,7 @@ public class JemiIngredientAcceptor implements IIngredientAcceptor<JemiIngredien
 	}
 
 	@Override
-	@SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
 	public JemiIngredientAcceptor addTypedIngredients(List<ITypedIngredient<?>> ingredients) {
 		for (ITypedIngredient<?> i : ingredients) {
 			addIngredient(((IIngredientType) i.getType()), i.getIngredient());
@@ -132,7 +133,7 @@ public class JemiIngredientAcceptor implements IIngredientAcceptor<JemiIngredien
 	}
 
 	@Override
-	@SuppressWarnings({"rawtypes", "unchecked"})
+    @SuppressWarnings({ "rawtypes", "unchecked" })
 	public JemiIngredientAcceptor addOptionalTypedIngredients(List<Optional<ITypedIngredient<?>>> ingredients) {
 		for (Optional<ITypedIngredient<?>> opt : ingredients) {
 			if (opt.isPresent()) {

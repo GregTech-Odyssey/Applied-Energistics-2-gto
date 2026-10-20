@@ -1,8 +1,6 @@
 package dev.emi.emi.runtime;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import dev.emi.emi.EmiPort;
@@ -12,21 +10,22 @@ import dev.emi.emi.api.stack.serializer.EmiIngredientSerializer;
 import dev.emi.emi.data.EmiData;
 import dev.emi.emi.data.IndexStackData;
 import dev.emi.emi.registry.EmiStackList;
-import dev.emi.emi.runtime.EmiPersistentData;
-
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
+import com.gto.fastcollection.fastutil.O2ZOpenCacheHashMap;
+import com.gto.fastcollection.fastutil.OpenCacheHashSet;
 
 public class EmiHidden {
 	// Data loaded
-	public static Set<EmiIngredient> disabledStacks = Sets.newHashSet();
+    public static Set<EmiIngredient> disabledStacks = new OpenCacheHashSet<>();
 	public static List<IndexStackData.Filter> disabledFilters = Lists.newArrayList();
-	public static Map<String, Boolean> disabledFilterLookup = Maps.newHashMap();
+    private static final O2ZOpenCacheHashMap<String> FILTER_LOOKUP = new O2ZOpenCacheHashMap<>();
+    public static Map<String, Boolean> disabledFilterLookup = FILTER_LOOKUP;
 	// Plugin defined
-	public static Set<EmiIngredient> pluginDisabledStacks = Sets.newHashSet();
+    public static Set<EmiIngredient> pluginDisabledStacks = new OpenCacheHashSet<>();
 	public static List<Predicate<EmiStack>> pluginDisabledFilters = Lists.newArrayList();
 	// User edited
 	public static Set<EmiIngredient> hiddenStacks = new LinkedHashSet<>();
@@ -34,20 +33,29 @@ public class EmiHidden {
 	public static void clear() {
 		disabledStacks.clear();
 		disabledFilters.clear();
-		disabledFilterLookup.clear();
+        FILTER_LOOKUP.clear();
 		pluginDisabledStacks.clear();
 		pluginDisabledFilters.clear();
 	}
 
 	public static void reload() {
-		List<IndexStackData> isds = EmiData.stackData.stream().map(i -> i.get()).filter(i -> i.disable() && (!i.filters().isEmpty() || !i.removed().isEmpty())).toList();
-		for (IndexStackData data : isds) {
-			for (EmiIngredient stack : data.removed()) {
+        for (var supplier : EmiData.stackData) {
+            var data = supplier.get();
+            if (!data.disable())
+                continue;
+            for (var stack : data.removed()) {
 				disabledStacks.add(stack);
 				disabledStacks.addAll(stack.getEmiStacks());
 			}
 			disabledFilters.addAll(data.filters());
 		}
+    }
+
+    private static boolean matchesDisabledFilter(String id) {
+        for (var filter : disabledFilters)
+            if (filter.filter().test(id))
+                return true;
+        return false;
 	}
 
 	public static JsonArray save() {
@@ -80,8 +88,7 @@ public class EmiHidden {
 	}
 
 	public static boolean isDisabled(EmiIngredient stack) {
-		outer:
-		for (EmiStack s : stack.getEmiStacks()) {
+        outer: for (EmiStack s : stack.getEmiStacks()) {
 			if (disabledStacks.contains(s) || pluginDisabledStacks.contains(s)) {
 				continue;
 			}
@@ -90,14 +97,8 @@ public class EmiHidden {
 					continue outer;
 				}
 			}
-			boolean filtered = disabledFilterLookup.computeIfAbsent("" + s.getId(), id -> {
-				for (IndexStackData.Filter filter : disabledFilters) {
-					if (filter.filter().test(id)) {
-						return true;
-					}
-				}
-				return false;
-			});
+            boolean filtered = !disabledFilters.isEmpty() && FILTER_LOOKUP.computeIfAbsent(s.getId().toString(),
+                    (java.util.function.Predicate<String>) EmiHidden::matchesDisabledFilter);
 			if (filtered) {
 				continue;
 			}

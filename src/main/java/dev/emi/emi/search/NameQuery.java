@@ -1,20 +1,19 @@
 package dev.emi.emi.search;
 
-import com.google.common.collect.Sets;
 import dev.emi.emi.api.stack.EmiStack;
-import dev.emi.emi.search.EmiSearch;
-import dev.emi.emi.search.Query;
 import net.minecraft.network.chat.Component;
-
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 public class NameQuery extends Query {
-	private final Set<EmiStack> valid = Sets.newIdentityHashSet();
+    private final ReferenceOpenHashSet<EmiStack> valid;
 	private final String name;
-	
+
 	public NameQuery(String name) {
-		EmiSearch.names.search(name.toLowerCase()).forEach(s -> valid.add(s.stack));
 		this.name = name.toLowerCase();
+        var matches = EmiSearch.names.search(this.name);
+        valid = new ReferenceOpenHashSet<>(matches.size());
+        for (var match : matches)
+            valid.add(match.stack);
 	}
 
 	@Override

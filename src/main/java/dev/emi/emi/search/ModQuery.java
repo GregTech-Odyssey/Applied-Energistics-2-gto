@@ -1,20 +1,19 @@
 package dev.emi.emi.search;
 
-import com.google.common.collect.Sets;
 import dev.emi.emi.EmiUtil;
 import dev.emi.emi.api.stack.EmiStack;
-import dev.emi.emi.search.EmiSearch;
-import dev.emi.emi.search.Query;
-
-import java.util.Set;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 public class ModQuery extends Query {
-	private final Set<EmiStack> valid = Sets.newIdentityHashSet();
+    private final ReferenceOpenHashSet<EmiStack> valid;
 	private final String name;
 
 	public ModQuery(String name) {
 		this.name = name.toLowerCase();
-		EmiSearch.mods.search(this.name).forEach(s -> valid.add(s.stack));
+        var matches = EmiSearch.mods.search(this.name);
+        valid = new ReferenceOpenHashSet<>(matches.size());
+        for (var match : matches)
+            valid.add(match.stack);
 	}
 
 	@Override

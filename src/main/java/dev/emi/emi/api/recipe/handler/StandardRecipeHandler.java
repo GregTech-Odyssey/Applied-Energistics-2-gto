@@ -3,8 +3,6 @@ package dev.emi.emi.api.recipe.handler;
 import dev.emi.emi.EmiClient;
 import dev.emi.emi.api.recipe.EmiPlayerInventory;
 import dev.emi.emi.api.recipe.EmiRecipe;
-import dev.emi.emi.api.recipe.handler.EmiCraftContext;
-import dev.emi.emi.api.recipe.handler.EmiRecipeHandler;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.Bounds;
@@ -20,16 +18,16 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public interface StandardRecipeHandler<T extends AbstractContainerMenu> extends EmiRecipeHandler<T> {
-	
+
 	/**
-	 * @return The slots for the recipe handler to source ingredients from.
-	 * Typically this should include the player's inventory, and crafting slots.
+     * @return The slots for the recipe handler to source ingredients from. Typically this should include the player's
+     *         inventory, and crafting slots.
 	 */
 	List<Slot> getInputSources(T handler);
 
@@ -46,8 +44,8 @@ public interface StandardRecipeHandler<T extends AbstractContainerMenu> extends 
 	}
 
 	/**
-	 * @return The output slot for recipe handlers that support instant interaction, like crafting tables.
-	 * For handlers that have processing time, or where this concept is otherwise inapplicable, null.
+     * @return The output slot for recipe handlers that support instant interaction, like crafting tables. For handlers
+     *         that have processing time, or where this concept is otherwise inapplicable, null.
 	 */
 	default @Nullable Slot getOutputSlot(T handler) {
 		return null;
@@ -55,7 +53,11 @@ public interface StandardRecipeHandler<T extends AbstractContainerMenu> extends 
 
 	@Override
 	default EmiPlayerInventory getInventory(AbstractContainerScreen<T> screen) {
-		return new EmiPlayerInventory(getInputSources(screen.getMenu()).stream().map(Slot::getItem).map(EmiStack::of).toList());
+        var slots = getInputSources(screen.getMenu());
+        var stacks = new ObjectArrayList<EmiStack>(slots.size());
+        for (var slot : slots)
+            stacks.add(EmiStack.of(slot.getItem()));
+        return new EmiPlayerInventory(stacks);
 	}
 
 	@Override
@@ -70,13 +72,15 @@ public interface StandardRecipeHandler<T extends AbstractContainerMenu> extends 
 			if (stacks != null) {
 				Minecraft.getInstance().setScreen(context.getScreen());
 				if (!EmiClient.onServer) {
-					return EmiRecipeFiller.clientFill(this, recipe, context.getScreen(), stacks, context.getDestination());
+                    return EmiRecipeFiller.clientFill(this, recipe, context.getScreen(), stacks,
+                            context.getDestination());
 				} else {
-					EmiClient.sendFillRecipe(this, context.getScreen(), context.getScreenHandler().containerId, switch(context.getDestination()) {
-						case NONE -> 0;
-						case CURSOR -> 1;
-						case INVENTORY -> 2;
-					}, stacks, recipe);
+                    EmiClient.sendFillRecipe(this, context.getScreen(), context.getScreenHandler().containerId,
+                            switch (context.getDestination()) {
+                                case NONE -> 0;
+                                case CURSOR -> 1;
+                                case INVENTORY -> 2;
+                            }, stacks, recipe);
 				}
 				return true;
 			}
@@ -100,7 +104,7 @@ public interface StandardRecipeHandler<T extends AbstractContainerMenu> extends 
 				Bounds bounds = sw.getBounds();
 				if (sw.getRecipe() == null && availableForCrafting.containsKey(stack) && !stack.isEmpty()) {
 					if (availableForCrafting.get(stack)) {
-						//context.fill(bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0x4400FF00);
+                        // context.fill(bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0x4400FF00);
 					} else {
 						context.fill(bounds.x(), bounds.y(), bounds.width(), bounds.height(), 0x44FF0000);
 					}
@@ -108,7 +112,7 @@ public interface StandardRecipeHandler<T extends AbstractContainerMenu> extends 
 			}
 		}
 	}
-	
+
 	private static Map<EmiIngredient, Boolean> getAvailable(EmiRecipe recipe, EmiPlayerInventory inventory) {
 		Map<EmiIngredient, Boolean> availableForCrafting = new IdentityHashMap<>();
 		List<Boolean> list = inventory.getCraftAvailability(recipe);

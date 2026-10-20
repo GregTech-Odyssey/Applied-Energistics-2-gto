@@ -1,7 +1,6 @@
 package dev.emi.emi.registry;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiRegistryAdapter;
@@ -23,22 +22,29 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.FlowingFluid;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import com.gto.fastcollection.fastutil.O2IOpenCacheHashMap;
+import com.gto.fastcollection.fastutil.O2IOpenCustomCacheHashMap;
+import com.gto.fastcollection.fastutil.OpenCacheHashSet;
+import com.gto.fastcollection.fastutil.OpenCustomCacheHashSet;
 
 public class EmiStackList {
-	private static final TagKey<Item> ITEM_HIDDEN = TagKey.create(EmiPort.getItemRegistry().key(), dev.emi.emi.registry.EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
-	private static final TagKey<Block> BLOCK_HIDDEN = TagKey.create(EmiPort.getBlockRegistry().key(), dev.emi.emi.registry.EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
-	private static final TagKey<Fluid> FLUID_HIDDEN = TagKey.create(EmiPort.getFluidRegistry().key(), dev.emi.emi.registry.EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
+    private static final TagKey<Item> ITEM_HIDDEN = TagKey.create(EmiPort.getItemRegistry().key(),
+            dev.emi.emi.registry.EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
+    private static final TagKey<Block> BLOCK_HIDDEN = TagKey.create(EmiPort.getBlockRegistry().key(),
+            dev.emi.emi.registry.EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
+    private static final TagKey<Fluid> FLUID_HIDDEN = TagKey.create(EmiPort.getFluidRegistry().key(),
+            dev.emi.emi.registry.EmiTags.HIDDEN_FROM_RECIPE_VIEWERS);
 	public static List<EmiAlias.Baked> registryAliases = Lists.newArrayList();
 	public static List<Predicate<EmiStack>> invalidators = Lists.newArrayList();
 	public static List<EmiStack> stacks = List.of();
 	public static List<EmiStack> filteredStacks = List.of();
-	private static Object2IntMap<EmiStack> strictIndices = new Object2IntOpenCustomHashMap<>(new StrictHashStrategy());
-	private static Object2IntMap<Object> keyIndices = new Object2IntOpenHashMap<>();
+    private static final O2IOpenCustomCacheHashMap<EmiStack> strictIndices = new O2IOpenCustomCacheHashMap<>(
+            new StrictHashStrategy());
+    private static final O2IOpenCacheHashMap<Object> keyIndices = new O2IOpenCacheHashMap<>();
 
 	public static void clear() {
 		invalidators.clear();
@@ -50,61 +56,74 @@ public class EmiStackList {
 
 	public static void reload() {
 		Minecraft client = Minecraft.getInstance();
-		CreativeModeTab.ItemDisplayParameters context = new CreativeModeTab.ItemDisplayParameters(client.player.connection.enabledFeatures(), false, client.level.registryAccess());
-		List<IndexGroup> groups = Lists.newArrayList();
-		Map<String, IndexGroup> namespaceGroups = new LinkedHashMap<>();
+        CreativeModeTab.ItemDisplayParameters context = new CreativeModeTab.ItemDisplayParameters(
+                client.player.connection.enabledFeatures(), false, client.level.registryAccess());
+        var groups = new ObjectArrayList<IndexGroup>();
+        var namespaceGroups = new LinkedHashMap<String, IndexGroup>();
 		for (Item item : EmiPort.getItemRegistry()) {
 			String itemName = "null";
 			try {
 				itemName = item.toString();
 				EmiStack stack = EmiStack.of(item);
-				namespaceGroups.computeIfAbsent(stack.getId().getNamespace(), (k) -> new IndexGroup()).stacks.add(stack);
+                namespaceGroups.computeIfAbsent(stack.getId().getNamespace(), (k) -> new IndexGroup()).stacks
+                        .add(stack);
 			} catch (Exception e) {
-				EmiLog.error("Item " + itemName + " threw while EMI was attempting to construct the index, items may be missing.", e);
+                EmiLog.error("Item " + itemName
+                        + " threw while EMI was attempting to construct the index, items may be missing.", e);
 			}
 		}
 		if (EmiConfig.indexSource != IndexSource.REGISTERED) {
 			// There is an unwritten convention that ItemGroup.updateEntries is only invoked on the main thread
 			long groupReloadStart = System.currentTimeMillis();
 			EmiLog.info("Reloading item groups on client thread...");
-			Map<CreativeModeTab, Collection<ItemStack>> itemGroupToStacksMap = client.submit(() -> {
-				Map<CreativeModeTab, Collection<ItemStack>> map = new Reference2ReferenceOpenHashMap<>();
-				Consumer<CreativeModeTab> itemGroupConsumer = group -> {
-					String groupName = "null";
-					try {
-						groupName = group.getDisplayName().toString();
-						group.buildContents(context);
-						map.put(group, group.getSearchTabDisplayItems());
-					} catch(Exception e) {
-						EmiLog.error("Creative item group " + groupName + " threw while EMI was attempting to construct the index, items may be missing.", e);
-					}
-				};
-				List<CreativeModeTab> itemGroups = CreativeModeTabs.allTabs();
-				// Category item groups must be updated before non-category ones, otherwise the search group will
-				// read outdated item lists
-				itemGroups.stream().filter(g -> g.getType() == CreativeModeTab.Type.CATEGORY).forEach(itemGroupConsumer);
-				itemGroups.stream().filter(g -> g.getType() != CreativeModeTab.Type.CATEGORY).forEach(itemGroupConsumer);
-				return map;
-			}).join();
-			EmiLog.info("Reloading item groups on client thread took " + (System.currentTimeMillis() - groupReloadStart) + "ms");
+            Reference2ReferenceOpenHashMap<CreativeModeTab, Collection<ItemStack>> itemGroupToStacksMap = client
+                    .submit(() -> {
+                        var map = new Reference2ReferenceOpenHashMap<CreativeModeTab, Collection<ItemStack>>();
+                        Consumer<CreativeModeTab> itemGroupConsumer = group -> {
+                            String groupName = "null";
+                            try {
+                                groupName = group.getDisplayName().toString();
+                                group.buildContents(context);
+                                map.put(group, group.getSearchTabDisplayItems());
+                            } catch (Exception e) {
+                                EmiLog.error("Creative item group " + groupName
+                                        + " threw while EMI was attempting to construct the index, items may be missing.",
+                                        e);
+                            }
+                        };
+                        List<CreativeModeTab> itemGroups = CreativeModeTabs.allTabs();
+                        // Category item groups must be updated before non-category ones, otherwise the search group
+                        // will
+                        // read outdated item lists
+                        for (var group : itemGroups)
+                            if (group.getType() == CreativeModeTab.Type.CATEGORY)
+                                itemGroupConsumer.accept(group);
+                        for (var group : itemGroups)
+                            if (group.getType() != CreativeModeTab.Type.CATEGORY)
+                                itemGroupConsumer.accept(group);
+                        return map;
+                    }).join();
+            EmiLog.info("Reloading item groups on client thread took " + (System.currentTimeMillis() - groupReloadStart)
+                    + "ms");
 			for (CreativeModeTab group : CreativeModeTabs.allTabs()) {
 				String groupName = "null";
 				try {
 					groupName = group.getDisplayName().getString();
-					Object2IntMap<String> usedNamespaces = new Object2IntOpenHashMap<>();
+                    var usedNamespaces = new O2IOpenCacheHashMap<String>();
 					IndexGroup ig = new IndexGroup();
 					Collection<ItemStack> searchStacks = itemGroupToStacksMap.get(group);
 					for (ItemStack stack : searchStacks) {
 						EmiStack es = EmiStack.of(stack);
 						String namespace = es.getId().getNamespace();
-						usedNamespaces.put(namespace, usedNamespaces.getOrDefault(namespace, 0) + 1);
+                        usedNamespaces.addTo(namespace, 1);
 						ig.stacks.add(es);
 					}
 					if (EmiConfig.indexSource == IndexSource.CREATIVE) {
 						for (String namespace : usedNamespaces.keySet()) {
-							if (namespaceGroups.containsKey(namespace)) {
-								IndexGroup ng = namespaceGroups.get(namespace);
-								if (usedNamespaces.getInt(namespace) * 3 >= searchStacks.size() || usedNamespaces.getInt(namespace) * 3 >= ng.stacks.size()) {
+                            IndexGroup ng = namespaceGroups.get(namespace);
+                            if (ng != null) {
+                                if (usedNamespaces.getInt(namespace) * 3 >= searchStacks.size()
+                                        || usedNamespaces.getInt(namespace) * 3 >= ng.stacks.size()) {
 									ng.suppressedBy.add(ig);
 								}
 							}
@@ -112,7 +131,10 @@ public class EmiStackList {
 					}
 					groups.add(ig);
 				} catch (Exception e) {
-					EmiLog.error("Creative item group " + groupName + " threw while EMI was attempting to construct the index, items may be missing.", e);
+                    EmiLog.error(
+                            "Creative item group " + groupName
+                                    + " threw while EMI was attempting to construct the index, items may be missing.",
+                            e);
 				}
 			}
 		}
@@ -122,32 +144,36 @@ public class EmiStackList {
 			String fluidName = null;
 			try {
 				fluidName = fluid.toString();
-				if (fluid.isSource(fluid.defaultFluidState()) || (fluid instanceof FlowingFluid ff && ff.getSource() == Fluids.EMPTY)) {
+                if (fluid.isSource(fluid.defaultFluidState())
+                        || (fluid instanceof FlowingFluid ff && ff.getSource() == Fluids.EMPTY)) {
 					EmiStack fs = EmiStack.of(fluid);
 					fluidGroup.stacks.add(fs);
 				}
 			} catch (Exception e) {
-				EmiLog.error("Fluid  " + fluidName + " threw while EMI was attempting to construct the index, stack may be missing.", e);
+                EmiLog.error("Fluid  " + fluidName
+                        + " threw while EMI was attempting to construct the index, stack may be missing.", e);
 			}
 		}
 		groups.add(fluidGroup);
 
-		Set<EmiStack> added = new ObjectOpenCustomHashSet<>(new StrictHashStrategy());
+        int capacity = 0;
+        for (var group : groups)
+            capacity += group.stacks.size();
+        var added = new OpenCustomCacheHashSet<EmiStack>(capacity, new StrictHashStrategy());
 
-		stacks = Lists.newLinkedList();
+        stacks = new ObjectArrayList<>(capacity);
 		for (IndexGroup group : groups) {
 			if (group.shouldDisplay()) {
 				for (EmiStack stack : group.stacks) {
-					if (!added.contains(stack)) {
+                    if (added.add(stack)) {
 						stacks.add(stack);
-						added.add(stack);
 					}
 				}
 			}
 		}
 	}
 
-	@SuppressWarnings({"deprecation", "unchecked"})
+    @SuppressWarnings({ "deprecation", "unchecked" })
 	private static <T> boolean isHiddenFromRecipeViewers(T key) {
 		if (key instanceof Item i) {
 			if (i instanceof BlockItem bi && bi.getBlock().defaultBlockState().is(BLOCK_HIDDEN)) {
@@ -160,9 +186,11 @@ public class EmiStackList {
 				return true;
 			}
 		} else {
-			EmiRegistryAdapter<T> adapter = (EmiRegistryAdapter<T>) dev.emi.emi.registry.EmiTags.ADAPTERS_BY_CLASS.get(key.getClass());
+            EmiRegistryAdapter<T> adapter = (EmiRegistryAdapter<T>) dev.emi.emi.registry.EmiTags.ADAPTERS_BY_CLASS
+                    .get(key.getClass());
 			if (adapter != null) {
-				return adapter.getRegistry().wrapAsHolder(key).is(TagKey.create(adapter.getRegistry().key(), EmiTags.HIDDEN_FROM_RECIPE_VIEWERS));
+                return adapter.getRegistry().wrapAsHolder(key)
+                        .is(TagKey.create(adapter.getRegistry().key(), EmiTags.HIDDEN_FROM_RECIPE_VIEWERS));
 			}
 		}
 		return false;
@@ -200,7 +228,7 @@ public class EmiStackList {
         for (Supplier<IndexStackData> supplier : EmiData.stackData) {
             IndexStackData data = supplier.get();
             if (!data.removed().isEmpty()) {
-                Set<EmiStack> removed = new com.gto.fastcollection.fastutil.OpenCacheHashSet<>();
+                var removed = new OpenCacheHashSet<EmiStack>(data.removed().size());
                 for (EmiIngredient ingredient : data.removed()) {
                     for (EmiStack stack : ingredient.getEmiStacks()) {
                         removed.add(stack.copy().comparison(c -> EmiPort.compareStrict()));
@@ -245,7 +273,7 @@ public class EmiStackList {
 		for (Supplier<IndexStackData> supplier : EmiData.stackData) {
 			IndexStackData ssd = supplier.get();
 			if (!ssd.removed().isEmpty()) {
-				Set<EmiStack> removed = Sets.newHashSet();
+                var removed = new OpenCacheHashSet<EmiStack>(ssd.removed().size());
 				for (EmiIngredient invalidator : ssd.removed()) {
 					for (EmiStack stack : invalidator.getEmiStacks()) {
 						removed.add(stack.copy().comparison(c -> EmiPort.compareStrict()));
@@ -279,35 +307,44 @@ public class EmiStackList {
 				}
 			}
 		}
-		stacks = stacks.stream().filter(stack -> {
-			String name = "Unknown";
-			String id = "unknown";
-			try {
-				if (stack.isEmpty()) {
-					return false;
-				}
-				name = stack.toString();
-				id = stack.getId().toString();
-				if (name != null && stack.getKey() != null && stack.getName() != null) {
-					return true;
-				}
-				EmiLog.warn("Hiding stack " + name + " with id " + id + " from index due to returning dangerous values");
-				return false;
-			} catch (Throwable t) {
-				EmiLog.error("Hiding stack " + name + " with id " + id + " from index due to throwing errors", t);
-				return false;
-			}
-		}).toList();
-		for (int i = 0; i < stacks.size(); i++) {
-			EmiStack stack = stacks.get(i);
-			strictIndices.put(stack, i);
-			keyIndices.put(stack.getKey(), i);
-		}
-		bakeFiltered();
+        stacks.removeIf(stack -> !isValidStack(stack));
+        strictIndices.clear();
+        keyIndices.clear();
+        for (int i = 0; i < stacks.size(); i++) {
+            EmiStack stack = stacks.get(i);
+            strictIndices.put(stack, i);
+            keyIndices.put(stack.getKey(), i);
+        }
+        bakeFiltered();
+    }
+
+    private static boolean isValidStack(EmiStack stack) {
+
+        String name = "Unknown";
+        String id = "unknown";
+        try {
+            if (stack.isEmpty()) {
+                return false;
+            }
+            name = stack.toString();
+            id = stack.getId().toString();
+            if (name != null && stack.getKey() != null && stack.getName() != null) {
+                return true;
+            }
+            EmiLog.warn("Hiding stack " + name + " with id " + id + " from index due to returning dangerous values");
+            return false;
+        } catch (Throwable t) {
+            EmiLog.error("Hiding stack " + name + " with id " + id + " from index due to throwing errors", t);
+            return false;
+        }
 	}
 
 	public static void bakeFiltered() {
-		filteredStacks = stacks.stream().filter(s -> !EmiHidden.isDisabled(s) && !EmiHidden.isHidden(s)).toList();
+        var filtered = new ObjectArrayList<EmiStack>(stacks.size());
+        for (var stack : stacks)
+            if (!EmiHidden.isDisabled(stack) && !EmiHidden.isHidden(stack))
+                filtered.add(stack);
+        filteredStacks = filtered;
 	}
 
 	public static int getIndex(EmiIngredient ingredient) {
@@ -320,8 +357,8 @@ public class EmiStackList {
 	}
 
 	public static class IndexGroup {
-		public List<EmiStack> stacks = Lists.newArrayList();
-		public Set<IndexGroup> suppressedBy = Sets.newHashSet();
+        public List<EmiStack> stacks = new ObjectArrayList<>();
+        public Set<IndexGroup> suppressedBy = new ReferenceOpenHashSet<>();
 
 		public boolean shouldDisplay() {
 			for (IndexGroup suppressor : suppressedBy) {

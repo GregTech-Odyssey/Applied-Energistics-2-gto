@@ -2,12 +2,10 @@ package appeng.integration.modules.emi;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.material.Fluid;
 
@@ -16,6 +14,7 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.stack.FluidEmiStack;
 import dev.emi.emi.api.stack.ItemEmiStack;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -26,31 +25,38 @@ public final class EmiStackHelper {
     private EmiStackHelper() {
     }
 
-    private static GenericStack toGenericStack(Object key, CompoundTag nbt, long amount) {
-        if (key instanceof Item item) {
-            return new GenericStack(AEItemKey.of(item, nbt), amount);
-        } else if (key instanceof Fluid fluid) {
-            return new GenericStack(AEFluidKey.of(fluid, nbt), amount);
-        }
+    @Nullable
+    public static AEKey toAEKey(@NotNull EmiStack stack) {
+        if (stack.isEmpty())
+            return null;
+        var key = stack.getAEKey();
+        if (key != null)
+            return key;
+        if (stack.getKey() instanceof Item item)
+            return AEItemKey.of(item, stack.getNbt());
+        if (stack.getKey() instanceof Fluid fluid)
+            return AEFluidKey.of(fluid, stack.getNbt());
         return null;
     }
 
     @Nullable
     public static GenericStack toGenericStack(@NotNull EmiStack emiStack) {
-        if (emiStack.isEmpty())
-            return null;
-        var key = emiStack.getAEKey();
-        return key == null ? toGenericStack(emiStack.getKey(), emiStack.getNbt(), emiStack.getAmount())
-                : new GenericStack(key, emiStack.getAmount());
+        var key = toAEKey(emiStack);
+        return key == null ? null : new GenericStack(key, emiStack.getAmount());
     }
 
-    public static List<GenericStack> toGenericStack(@NotNull EmiIngredient emiIngredient) {
-        if (emiIngredient.isEmpty()) {
+    public static List<GenericStack> toGenericStack(@NotNull EmiIngredient ingredient) {
+        if (ingredient.isEmpty())
             return Collections.emptyList();
+        var stacks = ingredient.getEmiStacks();
+        var result = new ObjectArrayList<GenericStack>(stacks.size());
+        long amount = ingredient.getAmount();
+        for (var stack : stacks) {
+            var key = toAEKey(stack);
+            if (key != null)
+                result.add(new GenericStack(key, amount));
         }
-        var originAmount = emiIngredient.getAmount();
-        return emiIngredient.getEmiStacks().stream().map(s -> toGenericStack(s.getKey(), s.getNbt(), originAmount))
-                .filter(Objects::nonNull).toList();
+        return result;
     }
 
     @Nullable
@@ -64,26 +70,23 @@ public final class EmiStackHelper {
         return null;
     }
 
-    public static List<List<GenericStack>> ofInputs(EmiRecipe emiRecipe) {
-        return emiRecipe.getInputs().stream().map(EmiStackHelper::toGenericStack).toList();
+    public static List<List<GenericStack>> ofInputs(EmiRecipe recipe) {
+        var inputs = recipe.getInputs();
+        var result = new ObjectArrayList<List<GenericStack>>(inputs.size());
+        for (var input : inputs)
+            result.add(toGenericStack(input));
+        return result;
     }
 
-    public static List<GenericStack> ofOutputs(EmiRecipe emiRecipe) {
-        return emiRecipe.getOutputs().stream()
-                .map(EmiStackHelper::toGenericStack)
-                .filter(Objects::nonNull)
-                .toList();
+    public static List<GenericStack> ofOutputs(EmiRecipe recipe) {
+        var outputs = recipe.getOutputs();
+        var result = new ObjectArrayList<GenericStack>(outputs.size());
+        for (var output : outputs) {
+            var converted = toGenericStack(output);
+            if (converted != null)
+                result.add(converted);
+        }
+        return result;
     }
 
-    private static List<GenericStack> of(EmiIngredient emiIngredient) {
-        if (emiIngredient.isEmpty())
-            return Collections.emptyList();
-
-        return emiIngredient.getEmiStacks()
-                .stream()
-                .map(EmiStackHelper::toGenericStack)
-                .filter(Objects::nonNull)
-                .map(x -> new GenericStack(x.what(), emiIngredient.getAmount()))
-                .toList();
-    }
 }

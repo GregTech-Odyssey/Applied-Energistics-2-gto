@@ -15,9 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.material.Fluid;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
-import java.util.stream.Collectors;
 import appeng.api.stacks.AEFluidKey;
 
 @ApiStatus.Internal
@@ -103,7 +101,8 @@ public class FluidEmiStack extends dev.emi.emi.api.stack.EmiStack {
 		if (!text.isEmpty()) {
 			list.add(new EmiTextTooltipWrapper(this, EmiPort.ordered(text.get(0))));
 		}
-		list.addAll(text.stream().skip(1).map(EmiTooltipComponents::of).collect(Collectors.toList()));
+        for (int i = 1; i < text.size(); i++)
+            list.add(EmiTooltipComponents.of(text.get(i)));
 		if (amount > 1) {
 			list.add(EmiTooltipComponents.getAmount(this));
 		}

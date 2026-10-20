@@ -1,7 +1,5 @@
 package dev.emi.emi.api;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import dev.emi.emi.VanillaPlugin;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
@@ -25,10 +23,11 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 public class EmiApi {
 	private static final Minecraft client = Minecraft.getInstance();
@@ -84,7 +83,8 @@ public class EmiApi {
      *                        otherwise provided to EMI.
 	 */
 	public static EmiStackInteraction getHoveredStack(boolean includeStandard) {
-		return EmiScreenManager.getHoveredStack(EmiScreenManager.lastMouseX, EmiScreenManager.lastMouseY, includeStandard);
+        return EmiScreenManager.getHoveredStack(EmiScreenManager.lastMouseX, EmiScreenManager.lastMouseY,
+                includeStandard);
 	}
 
 	/**
@@ -113,8 +113,12 @@ public class EmiApi {
 	}
 
 	public static void displayAllRecipes() {
-		EmiRecipeManager manager = EmiApi.getRecipeManager();
-		setPages(manager.getCategories().stream().collect(Collectors.toMap(c -> c, manager::getRecipes)), EmiStack.EMPTY);
+        var manager = getRecipeManager();
+        var categories = manager.getCategories();
+        var recipes = new Reference2ObjectOpenHashMap<EmiRecipeCategory, List<EmiRecipe>>(categories.size());
+        for (var category : categories)
+            recipes.put(category, manager.getRecipes(category));
+        setPages(recipes, EmiStack.EMPTY);
 	}
 
 	public static void displayRecipeCategory(EmiRecipeCategory category) {
@@ -163,13 +167,13 @@ public class EmiApi {
 	public static void displayUses(EmiIngredient stack) {
 		if (!stack.isEmpty())
             setPages(mapRecipes(getUses(stack)), stack);
-		}
+    }
 
     public static List<EmiRecipe> getUses(EmiIngredient stack) {
         var zero = stack.getEmiStacks().getFirst();
         var combined = new it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet<EmiRecipe>();
         combined.addAll(
-						pruneUses(getRecipeManager().getRecipesByInput(zero), stack));
+                pruneUses(getRecipeManager().getRecipesByInput(zero), stack));
         var fluid = getFluidIngredient(stack);
         if (fluid != null)
             combined.addAll(pruneUses(getRecipeManager().getRecipesByInput(fluid), fluid));
@@ -197,7 +201,7 @@ public class EmiApi {
                 var fluid = handler.getFluidInTank(0);
                 if (!fluid.isEmpty())
                     return EmiStack.of(fluid.getFluid(), fluid.getTag(), 1);
-		}
+            }
         }
         return null;
 	}
@@ -246,17 +250,42 @@ public class EmiApi {
 		}
 	}
 
-	private static List<EmiRecipe> pruneSources(List<EmiRecipe> list, EmiStack context) {
-		return list.stream().filter(r -> {
-			return r.getOutputs().stream().anyMatch(i -> i.isEqual(context));
-		}).toList();
+    private static List<EmiRecipe> pruneSources(List<EmiRecipe> recipes, EmiStack context) {
+        var result = new ObjectArrayList<EmiRecipe>(recipes.size());
+        outer: for (var recipe : recipes) {
+            for (var output : recipe.getOutputs()) {
+                if (output.isEqual(context)) {
+                    result.add(recipe);
+                    continue outer;
+                }
+            }
+        }
+        return result;
 	}
 
-	private static List<EmiRecipe> pruneUses(List<EmiRecipe> list, EmiIngredient context) {
-		return list.stream().filter(r -> {
-			return r.getInputs().stream().anyMatch(i -> containsAll(i, context))
-				|| r.getCatalysts().stream().anyMatch(i -> containsAll(i, context));
-		}).sorted((a, b) -> getSmallestPresence(a, context) - getSmallestPresence(b, context)).toList();
+    private static List<EmiRecipe> pruneUses(List<EmiRecipe> recipes, EmiIngredient context) {
+        var result = new ObjectArrayList<EmiRecipe>(recipes.size());
+        var presence = new Reference2IntOpenHashMap<EmiRecipe>(recipes.size());
+        for (var recipe : recipes) {
+            boolean matches = false;
+            for (var input : recipe.getInputs())
+                if (containsAll(input, context)) {
+                    matches = true;
+                    break;
+                }
+            if (!matches)
+                for (var catalyst : recipe.getCatalysts())
+                    if (containsAll(catalyst, context)) {
+                        matches = true;
+                        break;
+                    }
+            if (matches) {
+                result.add(recipe);
+                presence.put(recipe, getSmallestPresence(recipe, context));
+            }
+        }
+        result.sort((a, b) -> Integer.compare(presence.getInt(a), presence.getInt(b)));
+        return result;
 	}
 
 	private static int getSmallestPresence(EmiRecipe recipe, EmiIngredient context) {
@@ -274,16 +303,15 @@ public class EmiApi {
 	}
 
 	private static Map<EmiRecipeCategory, List<EmiRecipe>> mapRecipes(List<EmiRecipe> list) {
-		Map<EmiRecipeCategory, List<EmiRecipe>> map = Maps.newHashMap();
+        var map = new Reference2ObjectOpenHashMap<EmiRecipeCategory, List<EmiRecipe>>();
 		for (EmiRecipe recipe : list) {
-			map.computeIfAbsent(recipe.getCategory(), k -> Lists.newArrayList()).add(recipe);
+            map.computeIfAbsent(recipe.getCategory(), k -> new ObjectArrayList<>()).add(recipe);
 		}
 		return map;
 	}
 
 	private static boolean containsAll(EmiIngredient collection, EmiIngredient ingredient) {
-		outer:
-		for (EmiStack ing : ingredient.getEmiStacks()) {
+        outer: for (EmiStack ing : ingredient.getEmiStacks()) {
 			for (EmiStack col : collection.getEmiStacks()) {
 				if (col.isEqual(ing)) {
 					continue outer;
@@ -295,8 +323,12 @@ public class EmiApi {
 	}
 
 	private static void setPages(Map<EmiRecipeCategory, List<EmiRecipe>> recipes, EmiIngredient stack) {
-		recipes = recipes.entrySet().stream().filter(e -> !e.getValue().isEmpty())
-			.collect(Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        var nonEmpty = new Reference2ObjectOpenHashMap<EmiRecipeCategory, List<EmiRecipe>>(recipes.size());
+        recipes.forEach((category, categoryRecipes) -> {
+            if (!categoryRecipes.isEmpty())
+                nonEmpty.put(category, categoryRecipes);
+        });
+        recipes = nonEmpty;
 		if (!recipes.isEmpty()) {
 			EmiSidebars.lookup(stack);
 			if (getHandledScreen() == null) {

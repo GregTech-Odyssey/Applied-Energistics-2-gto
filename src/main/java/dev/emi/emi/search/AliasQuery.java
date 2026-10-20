@@ -1,17 +1,13 @@
 package dev.emi.emi.search;
 
-import com.google.common.collect.Sets;
 import dev.emi.emi.api.stack.EmiStack;
-import dev.emi.emi.search.EmiSearch;
-import dev.emi.emi.search.Query;
-
-import java.util.Set;
+import com.gto.fastcollection.fastutil.OpenCacheHashSet;
 
 public class AliasQuery extends Query {
-	private final Set<EmiStack> valid;
+    private final OpenCacheHashSet<EmiStack> valid;
 
 	public AliasQuery(String name) {
-		valid = Sets.newHashSet(EmiSearch.aliases.search(name.toLowerCase()));
+        valid = new OpenCacheHashSet<>(EmiSearch.aliases.search(name.toLowerCase()));
 	}
 
 	@Override

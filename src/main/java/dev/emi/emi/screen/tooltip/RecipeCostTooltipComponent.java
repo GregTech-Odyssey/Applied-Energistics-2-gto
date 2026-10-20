@@ -10,13 +10,11 @@ import dev.emi.emi.bom.FlatMaterialCost;
 import dev.emi.emi.bom.MaterialTree;
 import dev.emi.emi.registry.EmiStackList;
 import dev.emi.emi.runtime.EmiDrawContext;
-import dev.emi.emi.screen.tooltip.EmiTooltipComponent;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
-
 import java.util.List;
-import java.util.stream.Stream;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class RecipeCostTooltipComponent implements EmiTooltipComponent {
 	private static final Component COST = EmiPort.translatable("emi.cost_per");
@@ -37,13 +35,12 @@ public class RecipeCostTooltipComponent implements EmiTooltipComponent {
 
 	public void addNodes() {
 		double batches = tree.batches;
-		List<FlatMaterialCost> costs = Stream.concat(
-			tree.cost.costs.values().stream(),
-			tree.cost.chanceCosts.values().stream()
-		).sorted((a, b) -> Integer.compare(
-			EmiStackList.getIndex(a.ingredient.getEmiStacks().get(0)),
-			EmiStackList.getIndex(b.ingredient.getEmiStacks().get(0))
-		)).toList();
+        var costs = new ObjectArrayList<FlatMaterialCost>(tree.cost.costs.size() + tree.cost.chanceCosts.size());
+        costs.addAll(tree.cost.costs.values());
+        costs.addAll(tree.cost.chanceCosts.values());
+        costs.sort((a, b) -> Integer.compare(
+                EmiStackList.getIndex(a.ingredient.getEmiStacks().get(0)),
+                EmiStackList.getIndex(b.ingredient.getEmiStacks().get(0))));
 		for (FlatMaterialCost cost : costs) {
 			if (cost instanceof ChanceMaterialCost cmc) {
 				nodes.add(new Node(cost.ingredient, cost.amount / batches * cmc.chance, true));
@@ -111,7 +108,8 @@ public class RecipeCostTooltipComponent implements EmiTooltipComponent {
 		public Node(EmiIngredient stack, double amount, boolean chanced) {
 			this.stack = stack;
 			if (chanced) {
-				text = EmiPort.append(EmiPort.literal("≈"), EmiRenderHelper.getAmountText(stack, amount)).withStyle(ChatFormatting.GOLD);
+                text = EmiPort.append(EmiPort.literal("≈"), EmiRenderHelper.getAmountText(stack, amount))
+                        .withStyle(ChatFormatting.GOLD);
 			} else {
 				text = EmiRenderHelper.getAmountText(stack, amount);
 			}

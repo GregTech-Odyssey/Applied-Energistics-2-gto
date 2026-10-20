@@ -3,7 +3,6 @@ package dev.emi.emi.registry;
 import appeng.mixins.emi.accessor.CraftingResultSlotAccessor;
 import appeng.mixins.emi.accessor.HandledScreenAccessor;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.EmiStackProvider;
@@ -19,23 +18,24 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeType;
-
 import java.util.List;
 import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 public class EmiStackProviders {
-	public static Map<Class<?>, List<EmiStackProvider<?>>> fromClass = Maps.newHashMap();
+    public static Map<Class<?>, List<EmiStackProvider<?>>> fromClass = new Reference2ObjectOpenHashMap<>();
 	public static List<EmiStackProvider<?>> generic = Lists.newArrayList();
 
 	public static void clear() {
 		fromClass.clear();
 		generic.clear();
 	}
-	
-	@SuppressWarnings({"unchecked", "rawtypes"})
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
 	public static EmiStackInteraction getStackAt(Screen screen, int x, int y, boolean notClick) {
-		if (fromClass.containsKey(screen.getClass())) {
-			for (EmiStackProvider provider : fromClass.get(screen.getClass())) {
+        var registered = fromClass.get(screen.getClass());
+        if (registered != null) {
+            for (EmiStackProvider provider : registered) {
 				EmiStackInteraction stack = provider.getStackAt(screen, x, y);
 				if (!stack.isEmpty() && (notClick || stack.isClickable())) {
 					return stack;
@@ -58,8 +58,8 @@ public class EmiStackProviders {
 						try {
 							CraftingContainer inv = ((CraftingResultSlotAccessor) craf).getInput();
 							Minecraft client = Minecraft.getInstance();
-							List<CraftingRecipe> list
-								= client.level.getRecipeManager().getRecipesFor(RecipeType.CRAFTING, inv, client.level);
+                            List<CraftingRecipe> list = client.level.getRecipeManager()
+                                    .getRecipesFor(RecipeType.CRAFTING, inv, client.level);
 							if (!list.isEmpty()) {
 								ResourceLocation id = EmiPort.getId(list.get(0));
 								EmiRecipe recipe = EmiApi.getRecipeManager().getRecipe(id);

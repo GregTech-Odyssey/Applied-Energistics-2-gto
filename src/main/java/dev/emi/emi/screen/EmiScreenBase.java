@@ -1,6 +1,5 @@
 package dev.emi.emi.screen;
 
-import com.google.common.collect.Lists;
 import dev.emi.emi.api.EmiScreenBoundsProvider;
 import dev.emi.emi.api.widget.Bounds;
 import appeng.mixins.emi.accessor.HandledScreenAccessor;
@@ -9,16 +8,14 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeUpdateListener;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 public class EmiScreenBase {
 
-	private static final Map<Class<?>, List<EmiScreenBoundsProvider<?>>> PROVIDERS_BY_CLASS = new HashMap<>();
-	private static final List<EmiScreenBoundsProvider<Screen>> GENERIC_PROVIDERS = new ArrayList<>();
+    private static final Reference2ObjectOpenHashMap<Class<?>, List<EmiScreenBoundsProvider<?>>> PROVIDERS_BY_CLASS = new Reference2ObjectOpenHashMap<>();
+    private static final ObjectArrayList<EmiScreenBoundsProvider<Screen>> GENERIC_PROVIDERS = new ObjectArrayList<>();
 
 	private final Screen screen;
 	private final Bounds bounds;
@@ -48,7 +45,7 @@ public class EmiScreenBase {
 	}
 
 	public static <T extends Screen> void addScreenBoundsProvider(Class<T> clazz, EmiScreenBoundsProvider<T> provider) {
-		PROVIDERS_BY_CLASS.computeIfAbsent(clazz, k -> Lists.newArrayList()).add(provider);
+        PROVIDERS_BY_CLASS.computeIfAbsent(clazz, k -> new ObjectArrayList<>(1)).add(provider);
 	}
 
 	public static void addGenericScreenBoundsProvider(EmiScreenBoundsProvider<Screen> provider) {
@@ -94,7 +91,8 @@ public class EmiScreenBase {
 						extra = 177;
 					}
 				}
-				Bounds bounds = new Bounds(hsa.getX() - extra, hsa.getY(), hsa.getBackgroundWidth() + extra, hsa.getBackgroundHeight());
+                Bounds bounds = new Bounds(hsa.getX() - extra, hsa.getY(), hsa.getBackgroundWidth() + extra,
+                        hsa.getBackgroundHeight());
 				return new EmiScreenBase(screen, bounds);
 			}
 		} else if (screen instanceof RecipeScreen rs) {

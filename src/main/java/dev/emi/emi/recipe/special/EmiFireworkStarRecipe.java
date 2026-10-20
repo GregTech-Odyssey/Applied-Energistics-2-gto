@@ -9,26 +9,25 @@ import dev.emi.emi.api.widget.SlotWidget;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
-
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 
 public class EmiFireworkStarRecipe extends EmiPatternCraftingRecipe {
 	private static final List<DyeItem> DYES = Stream.of(DyeColor.values()).map(DyeItem::byColor).toList();
 
-	private static final List<Item> SHAPES = List.of(Items.FIRE_CHARGE, Items.FEATHER, Items.GOLD_NUGGET, Items.SKELETON_SKULL, Items.WITHER_SKELETON_SKULL, Items.CREEPER_HEAD, Items.PLAYER_HEAD, Items.DRAGON_HEAD, Items.ZOMBIE_HEAD);
+    private static final List<Item> SHAPES = List.of(Items.FIRE_CHARGE, Items.FEATHER, Items.GOLD_NUGGET,
+            Items.SKELETON_SKULL, Items.WITHER_SKELETON_SKULL, Items.CREEPER_HEAD, Items.PLAYER_HEAD, Items.DRAGON_HEAD,
+            Items.ZOMBIE_HEAD);
 
 	private static final List<Item> EFFECTS = List.of(Items.DIAMOND, Items.GLOWSTONE_DUST);
 
 	public EmiFireworkStarRecipe(ResourceLocation id) {
 		super(List.of(
-				EmiIngredient.of(DYES.stream().map(i -> (EmiIngredient) EmiStack.of(i)).collect(Collectors.toList())),
-						EmiIngredient.of(SHAPES.stream().map(i -> (EmiIngredient) EmiStack.of(i)).collect(Collectors.toList())),
-						EmiIngredient.of(EFFECTS.stream().map(i -> (EmiIngredient) EmiStack.of(i)).collect(Collectors.toList())),
-						EmiStack.of(Items.GUNPOWDER)),
+                EmiIngredient.ofItems(DYES),
+                EmiIngredient.ofItems(SHAPES),
+                EmiIngredient.ofItems(EFFECTS),
+                EmiStack.of(Items.GUNPOWDER)),
 				EmiStack.of(Items.FIREWORK_STAR), id);
 	}
 
@@ -52,6 +51,7 @@ public class EmiFireworkStarRecipe extends EmiPatternCraftingRecipe {
 	public SlotWidget getOutputWidget(int x, int y) {
 		return new GeneratedSlotWidget(this::getFireworkStar, unique, x, y);
 	}
+
 	private List<DyeItem> getDyes(Random random, int max) {
 		List<DyeItem> dyes = Lists.newArrayList();
 		int amount = 1 + random.nextInt(max);
@@ -75,7 +75,7 @@ public class EmiFireworkStarRecipe extends EmiPatternCraftingRecipe {
 			items.add(SHAPES.get(amount));
 		}
 
-		items.addAll(getDyes(random, 8-items.size()));
+        items.addAll(getDyes(random, 8 - items.size()));
 
 		return items;
 	}
@@ -126,4 +126,3 @@ public class EmiFireworkStarRecipe extends EmiPatternCraftingRecipe {
 		return EmiStack.of(stack);
 	}
 }
-

@@ -1,15 +1,13 @@
 package appeng.integration.modules.jeirei;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.function.Predicate;
 
 import com.google.common.math.LongMath;
 
-import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.NonNullList;
@@ -17,6 +15,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 import appeng.api.stacks.AEItemKey;
@@ -41,11 +40,11 @@ public final class EncodingHelper {
      * Order of priority: - Craftable Items - Undamaged Items - Items the player has the most of
      */
     static final Comparator<GridInventoryEntry> ENTRY_COMPARATOR = Comparator
-            .comparing(GridInventoryEntry::isCraftable)
-            .thenComparing(EncodingHelper::isUndamaged)
-            .thenComparing(GridInventoryEntry::getStoredAmount);
+            .<GridInventoryEntry>comparingInt(entry -> entry.isCraftable() ? 1 : 0)
+            .thenComparingInt(entry -> isUndamaged(entry) ? 1 : 0)
+            .thenComparingLong(GridInventoryEntry::getStoredAmount);
 
-    private static Boolean isUndamaged(GridInventoryEntry entry) {
+    private static boolean isUndamaged(GridInventoryEntry entry) {
         return !(entry.getWhat() instanceof AEItemKey itemKey) || !itemKey.isDamaged();
     }
 
@@ -60,28 +59,28 @@ public final class EncodingHelper {
                 genericIngredients,
                 ingredientPriorities,
                 menu.getProcessingInputSlots());
-        encodeBestMatchingStacksIntoSlots(
-                // For the outputs, it's only one possible item per slot
-                genericResults.stream().map(List::of).toList(),
-                ingredientPriorities,
-                menu.getProcessingOutputSlots());
+        var outputs = new ObjectArrayList<GenericStack>(genericResults.size());
+        for (var output : genericResults)
+            addOrMerge(outputs, output);
+        writeSlots(outputs, menu.getProcessingOutputSlots());
     }
 
     private static void encodeBestMatchingStacksIntoSlots(List<List<GenericStack>> possibleInputsBySlot,
             Reference2IntOpenHashMap<AEKey> ingredientPriorities,
             FakeSlot[] slots) {
-        var encodedInputs = new ArrayList<GenericStack>();
+        var encodedInputs = new ObjectArrayList<GenericStack>(possibleInputsBySlot.size());
         for (var genericIngredient : possibleInputsBySlot) {
             if (!genericIngredient.isEmpty()) {
                 addOrMerge(encodedInputs, findBestIngredient(ingredientPriorities, genericIngredient));
             }
         }
 
+        writeSlots(encodedInputs, slots);
+    }
+
+    private static void writeSlots(ObjectArrayList<GenericStack> stacks, FakeSlot[] slots) {
         for (int i = 0; i < slots.length; i++) {
-            var slot = slots[i];
-            var stack = (i < encodedInputs.size()) ? GenericStack.wrapInItemStack(encodedInputs.get(i))
-                    : ItemStack.EMPTY;
-            slot.setFilterTo(stack);
+            slots[i].setFilterTo(i < stacks.size() ? GenericStack.wrapInItemStack(stacks.get(i)) : ItemStack.EMPTY);
         }
     }
 
@@ -129,21 +128,29 @@ public final class EncodingHelper {
                 // Due to how some crafting recipes work, the ingredient can match more than just one item in the
                 // network inventory. We'll find all network inventory entries that it matches and sort them
                 // according to their suitability for encoding a pattern
-                var bestNetworkIngredient = prioritizedNetworkInv.entrySet().stream()
-                        .filter(ni -> ni.getKey() instanceof AEItemKey itemKey && itemKey.matches(ingredient))
-                        .max(Comparator.comparingInt(Map.Entry::getValue))
-                        .map(entry -> entry.getKey() instanceof AEItemKey itemKey ? itemKey.toStack() : null);
-
-                // To avoid encoding hidden entries, we'll cycle through the ingredient and try to find a visible
-                // stack, otherwise we'll use the first entry.
-                var bestIngredient = bestNetworkIngredient.orElseGet(() -> {
-                    for (var stack : ingredient.getItems()) {
-                        if (visiblePredicate.test(stack)) {
-                            return stack;
+                AEItemKey bestKey = null;
+                int bestPriority = Integer.MIN_VALUE;
+                for (var iterator = prioritizedNetworkInv.reference2IntEntrySet().fastIterator(); iterator.hasNext();) {
+                    var entry = iterator.next();
+                    if (entry.getKey() instanceof AEItemKey itemKey && itemKey.matches(ingredient)
+                            && (bestKey == null || entry.getIntValue() > bestPriority)) {
+                        bestKey = itemKey;
+                        bestPriority = entry.getIntValue();
+                    }
+                }
+                ItemStack bestIngredient;
+                if (bestKey != null) {
+                    bestIngredient = bestKey.toStack();
+                } else {
+                    var candidates = ingredient.getItems();
+                    bestIngredient = candidates[0];
+                    for (var candidate : candidates) {
+                        if (visiblePredicate.test(candidate)) {
+                            bestIngredient = candidate;
+                            break;
                         }
                     }
-                    return ingredient.getItems()[0];
-                });
+                }
 
                 encodedInputs.set(slot, bestIngredient);
             }
@@ -179,20 +186,27 @@ public final class EncodingHelper {
 
     }
 
-    // Given a set of possible ingredients, find the one that has the highest priority
-    public static GenericStack findBestIngredient(Reference2IntOpenHashMap<AEKey> ingredientPriorities,
-            List<GenericStack> possibleIngredients) {
-        return possibleIngredients.stream()
-                .map(gi -> Pair.of(gi, ingredientPriorities.getOrDefault(gi.what(), Integer.MIN_VALUE)))
-                .max(Comparator.comparingInt(Pair::getRight))
-                .map(Pair::getLeft)
-                .orElseThrow();
+    /** Selects the highest priority from a nonempty list, keeping its first candidate when priorities tie. */
+    public static @NotNull GenericStack findBestIngredient(
+            @NotNull Reference2IntOpenHashMap<AEKey> ingredientPriorities,
+            @NotNull List<GenericStack> possibleIngredients) {
+        var best = possibleIngredients.getFirst();
+        int priority = ingredientPriorities.getOrDefault(best.what(), Integer.MIN_VALUE);
+        for (int i = 1; i < possibleIngredients.size(); i++) {
+            var candidate = possibleIngredients.get(i);
+            int candidatePriority = ingredientPriorities.getOrDefault(candidate.what(), Integer.MIN_VALUE);
+            if (candidatePriority > priority) {
+                best = candidate;
+                priority = candidatePriority;
+            }
+        }
+        return best;
     }
 
     /**
      * In processing mode it makes sense to merge stacks of the same type together.
      */
-    private static void addOrMerge(List<GenericStack> stacks, GenericStack newStack) {
+    private static void addOrMerge(ObjectArrayList<GenericStack> stacks, GenericStack newStack) {
         for (int i = 0; i < stacks.size(); i++) {
             var existingStack = stacks.get(i);
             if (Objects.equals(existingStack.what(), newStack.what())) {
@@ -220,15 +234,12 @@ public final class EncodingHelper {
      */
     public static Reference2IntOpenHashMap<AEKey> getIngredientPriorities(MEStorageMenu menu,
             Comparator<GridInventoryEntry> comparator) {
-        var orderedEntries = menu.getClientRepo().getAllEntries()
-                .stream()
-                .sorted(comparator)
-                .map(GridInventoryEntry::getWhat)
-                .toList();
+        var orderedEntries = new ObjectArrayList<>(menu.getClientRepo().getAllEntries());
+        orderedEntries.sort(comparator);
 
         var result = new AEKeyIntMap<AEKey>(orderedEntries.size());
         for (int i = 0; i < orderedEntries.size(); i++) {
-            result.put(orderedEntries.get(i), i);
+            result.put(orderedEntries.get(i).getWhat(), i);
         }
 
         // Also consider the player inventory, but only as the last resort

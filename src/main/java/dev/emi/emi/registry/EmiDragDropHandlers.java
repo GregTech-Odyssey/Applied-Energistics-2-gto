@@ -1,7 +1,6 @@
 package dev.emi.emi.registry;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import dev.emi.emi.api.EmiDragDropHandler;
 import dev.emi.emi.api.stack.EmiIngredient;
 import appeng.mixins.emi.accessor.HandledScreenAccessor;
@@ -10,12 +9,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-
 import java.util.List;
 import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 
 public class EmiDragDropHandlers {
-	public static Map<Class<?>, List<EmiDragDropHandler<?>>> fromClass = Maps.newHashMap();
+    public static Map<Class<?>, List<EmiDragDropHandler<?>>> fromClass = new Reference2ObjectOpenHashMap<>();
 	public static List<EmiDragDropHandler<?>> generic = Lists.newArrayList();
 
 	public static void clear() {
@@ -23,10 +22,12 @@ public class EmiDragDropHandlers {
 		generic.clear();
 	}
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
-	public static void render(Screen screen, EmiIngredient stack, GuiGraphics draw, int mouseX, int mouseY, float delta) {
-		if (fromClass.containsKey(screen.getClass())) {
-			for (EmiDragDropHandler handler : fromClass.get(screen.getClass())) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public static void render(Screen screen, EmiIngredient stack, GuiGraphics draw, int mouseX, int mouseY,
+            float delta) {
+        var registered = fromClass.get(screen.getClass());
+        if (registered != null) {
+            for (EmiDragDropHandler handler : registered) {
 				handler.render(screen, stack, draw, mouseX, mouseY, delta);
 			}
 		}
@@ -34,8 +35,8 @@ public class EmiDragDropHandlers {
 			handler.render(screen, stack, draw, mouseX, mouseY, delta);
 		}
 	}
-	
-	@SuppressWarnings({"unchecked", "rawtypes"})
+
+    @SuppressWarnings({ "unchecked", "rawtypes" })
 	public static boolean dropStacks(Screen screen, List<? extends EmiIngredient> stacks, int x, int y) {
 		if (stacks == null || stacks.isEmpty()) {
 			return false;
@@ -49,8 +50,9 @@ public class EmiDragDropHandlers {
 		if (dropStacksToAe2PatternInputs(screen, stacks, x, y)) {
 			return true;
 		}
-		if (fromClass.containsKey(screen.getClass())) {
-			for (EmiDragDropHandler handler : fromClass.get(screen.getClass())) {
+        var registered = fromClass.get(screen.getClass());
+        if (registered != null) {
+            for (EmiDragDropHandler handler : registered) {
 				if (handler.dropStacks(screen, stacks, x, y)) {
 					return true;
 				}
@@ -64,7 +66,8 @@ public class EmiDragDropHandlers {
 		return dropStacksThroughSingleHandlers(screen, stacks, x, y);
 	}
 
-	private static boolean dropStacksThroughSingleHandlers(Screen screen, List<? extends EmiIngredient> stacks, int x, int y) {
+    private static boolean dropStacksThroughSingleHandlers(Screen screen, List<? extends EmiIngredient> stacks, int x,
+            int y) {
 		if (!(screen instanceof AbstractContainerScreen<?> handled)) {
 			return false;
 		}
@@ -133,7 +136,8 @@ public class EmiDragDropHandlers {
 		return true;
 	}
 
-	private static boolean dropStacksToAe2PatternInputs(Screen screen, List<? extends EmiIngredient> stacks, int x, int y) {
+    private static boolean dropStacksToAe2PatternInputs(Screen screen, List<? extends EmiIngredient> stacks, int x,
+            int y) {
 		if (!(screen instanceof AbstractContainerScreen<?> handled)) {
 			return false;
 		}
@@ -247,7 +251,8 @@ public class EmiDragDropHandlers {
 		return slot.isActive();
 	}
 
-	private static boolean dropStacksToAe2StorageBus(Screen screen, List<? extends EmiIngredient> stacks, int x, int y) {
+    private static boolean dropStacksToAe2StorageBus(Screen screen, List<? extends EmiIngredient> stacks, int x,
+            int y) {
 		if (!(screen instanceof AbstractContainerScreen<?> handled) || !isAe2StorageBus(handled)) {
 			return false;
 		}
@@ -428,7 +433,8 @@ public class EmiDragDropHandlers {
 		}
 	}
 
-	private static boolean dropStacksToCellWorkbench(Screen screen, List<? extends EmiIngredient> stacks, int x, int y) {
+    private static boolean dropStacksToCellWorkbench(Screen screen, List<? extends EmiIngredient> stacks, int x,
+            int y) {
 		if (!(screen instanceof AbstractContainerScreen<?> handled)) {
 			return false;
 		}
@@ -493,10 +499,11 @@ public class EmiDragDropHandlers {
 		return false;
 	}
 
-	@SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({ "unchecked", "rawtypes" })
 	public static boolean dropStack(Screen screen, EmiIngredient stack, int x, int y) {
-		if (fromClass.containsKey(screen.getClass())) {
-			for (EmiDragDropHandler handler : fromClass.get(screen.getClass())) {
+        var registered = fromClass.get(screen.getClass());
+        if (registered != null) {
+            for (EmiDragDropHandler handler : registered) {
 				if (handler.dropStack(screen, stack, x, y)) {
 					return true;
 				}

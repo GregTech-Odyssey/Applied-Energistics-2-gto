@@ -24,8 +24,6 @@ import dev.emi.emi.registry.EmiStackList;
 import dev.emi.emi.runtime.EmiDrawContext;
 import dev.emi.emi.runtime.EmiFavorites;
 import dev.emi.emi.runtime.EmiHistory;
-import dev.emi.emi.screen.RecipeScreen;
-import dev.emi.emi.screen.StackBatcher;
 import dev.emi.emi.screen.StackBatcher.Batchable;
 import dev.emi.emi.screen.tooltip.EmiTooltip;
 import dev.emi.emi.screen.tooltip.RecipeTooltipComponent;
@@ -41,13 +39,11 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
 import org.lwjgl.glfw.GLFW;
-
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class BoMScreen extends Screen {
 	private static final int NODE_WIDTH = 30;
@@ -103,21 +99,24 @@ public class BoMScreen extends Screen {
 			nodeHeight = getNodeHeight(BoM.tree.goal);
 			playerInv = EmiPlayerInventory.of(minecraft.player);
 			BoM.tree.calculateProgress(playerInv);
-			Map<EmiIngredient, FlatMaterialCost> progressCosts = BoM.tree.cost.costs.values().stream()
-				.collect(Collectors.toMap(c -> c.ingredient, c -> c));
-			Map<EmiIngredient, ChanceMaterialCost> chanceProgressCosts = BoM.tree.cost.chanceCosts.values().stream()
-				.collect(Collectors.toMap(c -> c.ingredient, c -> c));
-				
+            var progressCosts = new O2OOpenCacheHashMap<EmiIngredient, FlatMaterialCost>(BoM.tree.cost.costs.size());
+            for (var cost : BoM.tree.cost.costs.values())
+                progressCosts.put(cost.ingredient, cost);
+            var chanceProgressCosts = new O2OOpenCacheHashMap<EmiIngredient, ChanceMaterialCost>(
+                    BoM.tree.cost.chanceCosts.size());
+            for (var cost : BoM.tree.cost.chanceCosts.values())
+                chanceProgressCosts.put(cost.ingredient, cost);
+
 			costs.clear();
 			BoM.tree.calculateCost();
 
-			List<FlatMaterialCost> treeCosts = Stream.concat(
-				BoM.tree.cost.costs.values().stream(),
-				BoM.tree.cost.chanceCosts.values().stream()
-			).sorted((a, b) -> Integer.compare(
-				EmiStackList.getIndex(a.ingredient.getEmiStacks().get(0)),
-				EmiStackList.getIndex(b.ingredient.getEmiStacks().get(0))
-			)).toList();
+            var treeCosts = new ObjectArrayList<FlatMaterialCost>(
+                    BoM.tree.cost.costs.size() + BoM.tree.cost.chanceCosts.size());
+            treeCosts.addAll(BoM.tree.cost.costs.values());
+            treeCosts.addAll(BoM.tree.cost.chanceCosts.values());
+            treeCosts.sort((a, b) -> Integer.compare(
+                    EmiStackList.getIndex(a.ingredient.getEmiStacks().get(0)),
+                    EmiStackList.getIndex(b.ingredient.getEmiStacks().get(0))));
 			int cy = nodeHeight * NODE_VERTICAL_SPACING * 2;
 			int costX = 0;
 			for (FlatMaterialCost node : treeCosts) {
@@ -128,7 +127,8 @@ public class BoMScreen extends Screen {
 							cost.alreadyDone = node.getEffectiveAmount();
 						} else {
 							ChanceMaterialCost progress = chanceProgressCosts.get(node.ingredient);
-							cost.alreadyDone = (long) Math.ceil(cmc.amount * cmc.chance - progress.amount * progress.chance);
+                            cost.alreadyDone = (long) Math
+                                    .ceil(cmc.amount * cmc.chance - progress.amount * progress.chance);
 						}
 					} else {
 						if (!progressCosts.containsKey(node.ingredient)) {
@@ -152,13 +152,13 @@ public class BoMScreen extends Screen {
 
 			List<Cost> remainders = Lists.newArrayList();
 
-			List<FlatMaterialCost> remainderCosts = Stream.concat(
-				BoM.tree.cost.remainders.values().stream(),
-				BoM.tree.cost.chanceRemainders.values().stream()
-			).sorted((a, b) -> Integer.compare(
-				EmiStackList.getIndex(a.ingredient.getEmiStacks().get(0)),
-				EmiStackList.getIndex(b.ingredient.getEmiStacks().get(0))
-			)).toList();
+            var remainderCosts = new ObjectArrayList<FlatMaterialCost>(
+                    BoM.tree.cost.remainders.size() + BoM.tree.cost.chanceRemainders.size());
+            remainderCosts.addAll(BoM.tree.cost.remainders.values());
+            remainderCosts.addAll(BoM.tree.cost.chanceRemainders.values());
+            remainderCosts.sort((a, b) -> Integer.compare(
+                    EmiStackList.getIndex(a.ingredient.getEmiStacks().get(0)),
+                    EmiStackList.getIndex(b.ingredient.getEmiStacks().get(0))));
 			cy += 40;
 			int remainderX = 0;
 			for (FlatMaterialCost node : remainderCosts) {
@@ -231,7 +231,8 @@ public class BoMScreen extends Screen {
 			if (mode.contains(mx, my)) {
 				context.setColor(0.5f, 0.6f, 1f, 1f);
 			}
-			context.drawTexture(EmiRenderHelper.WIDGETS, mode.x(), mode.y(), BoM.craftingMode ? 16 : 0, 146, mode.width(), mode.height());
+            context.drawTexture(EmiRenderHelper.WIDGETS, mode.x(), mode.y(), BoM.craftingMode ? 16 : 0, 146,
+                    mode.width(), mode.height());
 			context.setColor(1f, 1f, 1f, 1f);
 			batcher.draw();
 		} else {
@@ -256,14 +257,15 @@ public class BoMScreen extends Screen {
 		} else if (BoM.tree != null && batches.contains(mx, my)) {
 			List<ClientTooltipComponent> list = Lists.newArrayList();
 			list.addAll(EmiTooltip.splitTranslate("tooltip.emi.bom.batch_size", BoM.tree.batches));
-			list.add(EmiTooltipComponents.of(EmiPort.translatable("tooltip.emi.bom.batch_size.ideal", EmiBind.LEFT_CLICK.getBindText())));
+            list.add(EmiTooltipComponents
+                    .of(EmiPort.translatable("tooltip.emi.bom.batch_size.ideal", EmiBind.LEFT_CLICK.getBindText())));
 			EmiRenderHelper.drawTooltip(this, context, list, mouseX, mouseY);
 		} else if (BoM.tree != null && mode.contains(mx, my)) {
 			String key = BoM.craftingMode ? "tooltip.emi.bom.mode.craft" : "tooltip.emi.bom.mode.view";
 			List<ClientTooltipComponent> list = EmiTooltip.splitTranslate(key, BoM.tree.batches);
 			EmiRenderHelper.drawTooltip(this, context, list, mouseX, mouseY);
 		} else if (help.contains(mouseX, mouseY)) {
-			List<ClientTooltipComponent> list =  EmiTooltip.splitTranslate("tooltip.emi.bom.help");
+            List<ClientTooltipComponent> list = EmiTooltip.splitTranslate("tooltip.emi.bom.help");
 			EmiRenderHelper.drawTooltip(this, context, list, width - 18, height - 18, width);
 		}
 	}
@@ -467,13 +469,15 @@ public class BoMScreen extends Screen {
 				}
 			}
 		} else if (mode.contains(mx, my)) {
-			Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+            Minecraft.getInstance().getSoundManager()
+                    .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
 			BoM.craftingMode = !BoM.craftingMode;
 			recalculateTree();
 		} else if (batches.contains(mx, my) && BoM.tree != null) {
 			long ideal = BoM.tree.cost.getIdealBatch(BoM.tree.goal, 1, 1);
 			if (ideal != BoM.tree.batches) {
-				Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
+                Minecraft.getInstance().getSoundManager()
+                        .play(SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0f));
 				BoM.tree.batches = ideal;
 				recalculateTree();
 			}
@@ -553,7 +557,8 @@ public class BoMScreen extends Screen {
 		}
 
 		public void render(EmiDrawContext context) {
-			batcher.render(cost.ingredient, context.raw(), x, y, 0, ~(EmiIngredient.RENDER_AMOUNT | EmiIngredient.RENDER_REMAINDER));
+            batcher.render(cost.ingredient, context.raw(), x, y, 0,
+                    ~(EmiIngredient.RENDER_AMOUNT | EmiIngredient.RENDER_REMAINDER));
 			EmiRenderHelper.renderAmount(context, x, y, getAmountText());
 		}
 
@@ -561,15 +566,17 @@ public class BoMScreen extends Screen {
 			long adjusted = cost.getEffectiveAmount();
 			Component totalText;
 			if (cost instanceof ChanceMaterialCost cmc) {
-				totalText = EmiPort.append(EmiPort.literal("≈"), EmiRenderHelper.getAmountText(cost.ingredient, adjusted))
-					.withStyle(ChatFormatting.GOLD);
+                totalText = EmiPort
+                        .append(EmiPort.literal("≈"), EmiRenderHelper.getAmountText(cost.ingredient, adjusted))
+                        .withStyle(ChatFormatting.GOLD);
 			} else {
 				totalText = EmiRenderHelper.getAmountText(cost.ingredient, adjusted);
 			}
 			if (!remainder && BoM.craftingMode) {
 				long amount = alreadyDone;
 				if (amount < adjusted) {
-					Component amountText = amount == 0 ? EmiPort.literal("0") : (EmiRenderHelper.getAmountText(cost.ingredient, amount));
+                    Component amountText = amount == 0 ? EmiPort.literal("0")
+                            : (EmiRenderHelper.getAmountText(cost.ingredient, amount));
 					MutableComponent text = EmiPort.append(EmiPort.literal("", ChatFormatting.RED), amountText);
 					text = EmiPort.append(text, EmiPort.literal("/"));
 					text = EmiPort.append(text, totalText);
@@ -667,8 +674,9 @@ public class BoMScreen extends Screen {
 			if (parent != null) {
 				context.push();
 
-				setColor(context, parent.node, node.consumeChance != 1 || (resolution != null && resolution.consumeChance != 1), false);
-				
+                setColor(context, parent.node,
+                        node.consumeChance != 1 || (resolution != null && resolution.consumeChance != 1), false);
+
 				int nx = x;
 				int ny = y;
 				int px = parent.x;
@@ -708,7 +716,8 @@ public class BoMScreen extends Screen {
 				drawLine(context, lx, ly, hx, ly);
 				drawLine(context, lx, hy, hx, hy);
 				EmiRecipeCategory cat = node.recipe.getCategory();
-				if (StackBatcher.isEnabled() && EmiRecipeCategoryProperties.getSimplifiedIcon(cat) instanceof Batchable b) {
+                if (StackBatcher.isEnabled()
+                        && EmiRecipeCategoryProperties.getSimplifiedIcon(cat) instanceof Batchable b) {
 					batcher.render(b, context.raw(), x - 18 + midOffset, y - 8, delta);
 				} else {
 					cat.renderSimplified(context.raw(), x - 18 + midOffset, y - 8, delta);
@@ -744,7 +753,7 @@ public class BoMScreen extends Screen {
 				a = Math.max(a, node.amount);
 				return EmiPort.append(EmiPort.literal("≈"),
 						EmiRenderHelper.getAmountText(node.ingredient, a))
-					.withStyle(ChatFormatting.GOLD);
+                        .withStyle(ChatFormatting.GOLD);
 			} else {
 				return EmiRenderHelper.getAmountText(node.ingredient, amount);
 			}

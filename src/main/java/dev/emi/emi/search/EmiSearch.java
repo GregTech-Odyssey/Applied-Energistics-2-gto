@@ -1,7 +1,6 @@
 package dev.emi.emi.search;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.EmiUtil;
 import dev.emi.emi.api.stack.EmiIngredient;
@@ -20,28 +19,28 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class EmiSearch {
 	public static final Pattern TOKENS = Pattern.compile(
-		"-?[@#$]?" // Any query can be negated or prefixed with type
-		+ "(" // Query contents
-			+ "\\/(\\\\.|[^\\\\\\/])+\\/" // Any regex contents, for example `/some thing/`
-			+ "|"
-			+ "\\\"(\\.|[^\\\"])+\\\"" // Any quoted contents, for example, `"some thing"`
-			+ "|"
-			+ "[^\\s|]+" // Any raw contents, split on space
-			+ "|"
-			+ "\\|" // Literal OR symbol
-			+ "|"
-			+ "\\&" // Literal AND symbol (currently ignored since queries AND by deafult, but parsed)
-		+ ")");
+            "-?[@#$]?" // Any query can be negated or prefixed with type
+                    + "(" // Query contents
+                    + "\\/(\\\\.|[^\\\\\\/])+\\/" // Any regex contents, for example `/some thing/`
+                    + "|"
+                    + "\\\"(\\.|[^\\\"])+\\\"" // Any quoted contents, for example, `"some thing"`
+                    + "|"
+                    + "[^\\s|]+" // Any raw contents, split on space
+                    + "|"
+                    + "\\|" // Literal OR symbol
+                    + "|"
+                    + "\\&" // Literal AND symbol (currently ignored since queries AND by deafult, but parsed)
+                    + ")");
 	private static volatile SearchWorker currentWorker = null;
 	public static volatile Thread searchThread = null;
 	public static volatile List<? extends EmiIngredient> stacks = EmiStackList.stacks;
@@ -101,7 +100,7 @@ public class EmiSearch {
 		SuffixArray<dev.emi.emi.search.SearchStack> tooltips = new SuffixArray<>();
 		SuffixArray<dev.emi.emi.search.SearchStack> mods = new SuffixArray<>();
 		SuffixArray<EmiStack> aliases = new SuffixArray<>();
-		Set<EmiStack> bakedStacks = Sets.newIdentityHashSet();
+        var bakedStacks = new it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet<EmiStack>(EmiStackList.stacks.size());
 		boolean old = EmiConfig.appendItemModId;
 		EmiConfig.appendItemModId = false;
 		for (EmiStack stack : EmiStackList.stacks) {
@@ -229,20 +228,24 @@ public class EmiSearch {
 				if (negated) {
 					q = q.substring(1);
 				}
-				if (q.isEmpty()) {
-					continue;
-				}
-				if (q.equals("&")) {
-					// Default behavior
-					continue;
-				} else if (q.equals("|")) {
-					if (!queries.isEmpty()) {
-						full.add(new LogicalAndQuery(queries));
-						queries = Lists.newArrayList();
-					}
-					continue;
-				}
-				QueryType type = QueryType.fromString(q);
+                switch (q) {
+                    case "" -> {
+                        continue;
+                    }
+                    case "&" -> {
+                        // Default behavior
+                        continue;
+                        // Default behavior
+                    }
+                    case "|" -> {
+                        if (!queries.isEmpty()) {
+                            full.add(new LogicalAndQuery(queries));
+                            queries = Lists.newArrayList();
+                        }
+                        continue;
+                    }
+                }
+                QueryType type = QueryType.fromString(q);
 				Function<String, Query> constructor = type.queryConstructor;
 				Function<String, Query> regexConstructor = type.regexQueryConstructor;
 				if (type == QueryType.DEFAULT) {
@@ -266,8 +269,18 @@ public class EmiSearch {
 					// TODO add config
 					constructors.add(AliasQuery::new);
 					if (constructors.size() > 1) {
-						constructor = name -> new dev.emi.emi.search.LogicalOrQuery(constructors.stream().map(c -> c.apply(name)).toList());
-						regexConstructor = name -> new dev.emi.emi.search.LogicalOrQuery(regexConstructors.stream().map(c -> c.apply(name)).toList());
+                        constructor = name -> {
+                            var alternatives = new ObjectArrayList<Query>(constructors.size());
+                            for (var factory : constructors)
+                                alternatives.add(factory.apply(name));
+                            return new LogicalOrQuery(alternatives);
+                        };
+                        regexConstructor = name -> {
+                            var alternatives = new ObjectArrayList<Query>(regexConstructors.size());
+                            for (var factory : regexConstructors)
+                                alternatives.add(factory.apply(name));
+                            return new LogicalOrQuery(alternatives);
+                        };
 					}
 				}
 				addQuery(q.substring(type.prefix.length()), negated, queries, constructor, regexConstructor);
@@ -296,7 +309,8 @@ public class EmiSearch {
 			}
 		}
 
-		private static void addQuery(String s, boolean negated, List<Query> queries, Function<String, Query> normal, Function<String, Query> regex) {
+        private static void addQuery(String s, boolean negated, List<Query> queries, Function<String, Query> normal,
+                Function<String, Query> regex) {
 			Query q;
 			if (s.length() > 1 && s.startsWith("/") && s.endsWith("/")) {
 				q = regex.apply(s.substring(1, s.length() - 1));

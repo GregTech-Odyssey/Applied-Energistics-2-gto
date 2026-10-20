@@ -9,22 +9,22 @@ import dev.emi.emi.api.widget.SlotWidget;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.block.FlowerBlock;
-
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
 public class EmiSuspiciousStewRecipe extends EmiPatternCraftingRecipe {
 	private static final List<Item> FLOWERS = EmiPort.getItemRegistry().stream()
-		.filter(i -> i instanceof BlockItem bi && bi.getBlock() instanceof FlowerBlock).collect(Collectors.toList());
+            .filter(i -> i instanceof BlockItem bi && bi.getBlock() instanceof FlowerBlock)
+            .collect(Collectors.toList());
 
 	public EmiSuspiciousStewRecipe(ResourceLocation id) {
 		super(List.of(
 				EmiStack.of(Items.BOWL),
 				EmiStack.of(Items.RED_MUSHROOM),
 				EmiStack.of(Items.BROWN_MUSHROOM),
-				EmiIngredient.of(FLOWERS.stream().map(i -> (EmiIngredient) EmiStack.of(i)).collect(Collectors.toList()))),
-			EmiStack.of(Items.SUSPICIOUS_STEW), id);
+                EmiIngredient.ofItems(FLOWERS)),
+                EmiStack.of(Items.SUSPICIOUS_STEW), id);
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public class EmiSuspiciousStewRecipe extends EmiPatternCraftingRecipe {
 			return EmiStack.of(stack);
 		}, unique, x, y);
 	}
-	
+
 	private Item getFlower(Random random) {
 		return FLOWERS.get(random.nextInt(FLOWERS.size()));
 	}

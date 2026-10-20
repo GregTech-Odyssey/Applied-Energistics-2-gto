@@ -61,6 +61,23 @@ class EmiRecipeIndexTest {
     }
 
     @Test
+    void repeatedRegistrationAndOverlappingCatalystsDoNotDuplicateIndexResults() {
+        var stack = new TestStack(new Object(), null);
+        var category = mock(EmiRecipeCategory.class);
+        var first = mock(EmiRecipe.class);
+        var second = mock(EmiRecipe.class);
+        for (var recipe : List.of(first, second)) {
+            when(recipe.getCategory()).thenReturn(category);
+            when(recipe.getInputs()).thenReturn(List.of(stack, stack.copy()));
+            when(recipe.getCatalysts()).thenReturn(List.of(stack.copy()));
+            when(recipe.getOutputs()).thenReturn(List.of(stack.copy(), stack.copy()));
+        }
+        var index = new EmiRecipeIndex(List.of(category), Map.of(), List.of(first, second, first));
+        assertEquals(List.of(first, second), index.getRecipesByInput(stack));
+        assertEquals(List.of(first, second), index.getRecipesByOutput(stack));
+    }
+
+    @Test
     void strictComparisonKeepsNbtVariantsSeparate() {
         var key = new Object();
         var firstTag = new CompoundTag();

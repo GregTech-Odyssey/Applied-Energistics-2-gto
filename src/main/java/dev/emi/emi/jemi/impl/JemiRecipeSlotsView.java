@@ -1,20 +1,18 @@
 package dev.emi.emi.jemi.impl;
 
-import com.google.common.collect.Lists;
-import dev.emi.emi.jemi.impl.JemiRecipeSlot;
 import mezz.jei.api.gui.ingredient.IRecipeSlotView;
 import mezz.jei.api.gui.ingredient.IRecipeSlotsView;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class JemiRecipeSlotsView implements IRecipeSlotsView {
-	private List<IRecipeSlotView> slots = Lists.newArrayList();
+    private final ObjectArrayList<IRecipeSlotView> slots;
 
 	public JemiRecipeSlotsView(List<JemiRecipeSlot> slots) {
-		this.slots.addAll(slots);
+        this.slots = new ObjectArrayList<>(slots);
 	}
 
 	@Override
@@ -24,13 +22,17 @@ public class JemiRecipeSlotsView implements IRecipeSlotsView {
 
 	@Override
 	public List<IRecipeSlotView> getSlotViews(RecipeIngredientRole role) {
-		return slots.stream().filter(s -> Objects.equals(s.getRole(), role)).toList();
+        var result = new ObjectArrayList<IRecipeSlotView>(slots.size());
+        for (var slot : slots)
+            if (slot.getRole() == role)
+                result.add(slot);
+        return result;
 	}
 
 	@Override
 	public Optional<IRecipeSlotView> findSlotByName(String slotName) {
 		for (IRecipeSlotView slot : slots) {
-			if (Objects.equals(slot.getSlotName().orElseGet(() -> null), slotName)) {
+            if (Objects.equals(slot.getSlotName().orElse(null), slotName)) {
 				return Optional.of(slot);
 			}
 		}

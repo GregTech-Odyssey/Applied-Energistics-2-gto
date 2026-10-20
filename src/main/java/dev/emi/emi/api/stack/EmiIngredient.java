@@ -9,21 +9,27 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
-
-import java.util.Arrays;
 import java.util.List;
+import java.util.Collection;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
+import net.minecraft.world.level.ItemLike;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public interface EmiIngredient extends EmiRenderable {
 	public static final int RENDER_ICON = 1;
 	public static final int RENDER_AMOUNT = 2;
 	public static final int RENDER_INGREDIENT = 4;
 	public static final int RENDER_REMAINDER = 8;
-	
+
 	/**
-	 * @return The {@link EmiStack}s represented by this ingredient.
-	 * 	List is never empty. For an empty ingredient, us {@link EmiStack#EMPTY}
+     * @return The {@link EmiStack}s represented by this ingredient. List is never empty. For an empty ingredient, us
+     *         {@link EmiStack#EMPTY}
 	 */
-	List<EmiStack> getEmiStacks();
+    @NotNull
+    @UnmodifiableView
+    List<@NotNull EmiStack> getEmiStacks();
 
 	default boolean isEmpty() {
 		for (EmiStack stack : getEmiStacks()) {
@@ -75,7 +81,7 @@ public interface EmiIngredient extends EmiRenderable {
 		return EmiIngredient.of(EmiTags.getRawValues(EmiTagKey.of(key)), amount);
 	}
 
-	public static EmiIngredient of(Ingredient ingredient) {
+    public static EmiIngredient of(@Nullable Ingredient ingredient) {
 		if (ingredient == null || ingredient.isEmpty()) {
 			return EmiStack.EMPTY;
 		}
@@ -93,11 +99,22 @@ public interface EmiIngredient extends EmiRenderable {
 		return of(ingredient, amount);
 	}
 
-	public static EmiIngredient of(Ingredient ingredient, long amount) {
+    public static EmiIngredient of(@Nullable Ingredient ingredient, long amount) {
 		if (ingredient == null || ingredient.isEmpty()) {
 			return EmiStack.EMPTY;
 		}
-		return EmiTags.getIngredient(Item.class, Arrays.stream(ingredient.getItems()).map(EmiStack::of).toList(), amount);
+        var items = ingredient.getItems();
+        var stacks = new ObjectArrayList<EmiStack>(items.length);
+        for (var item : items)
+            stacks.add(EmiStack.of(item));
+        return EmiTags.getIngredient(Item.class, stacks, amount);
+    }
+
+    static @NotNull EmiIngredient ofItems(@NotNull Collection<? extends ItemLike> items) {
+        var stacks = new ObjectArrayList<EmiIngredient>(items.size());
+        for (var item : items)
+            stacks.add(EmiStack.of(item));
+        return of(stacks);
 	}
 
 	public static EmiIngredient of(List<? extends EmiIngredient> list) {
@@ -123,7 +140,10 @@ public interface EmiIngredient extends EmiRenderable {
 			}
 			if (internalAmount > 1) {
 				amount = internalAmount;
-				list = list.stream().map(st -> st.copy().setAmount(1)).toList();
+                var normalized = new ObjectArrayList<EmiIngredient>(list.size());
+                for (var ingredient : list)
+                    normalized.add(ingredient.copy().setAmount(1));
+                list = normalized;
 			}
 			Class<?> tagType = null;
 			for (EmiIngredient i : list) {
@@ -138,7 +158,13 @@ public interface EmiIngredient extends EmiRenderable {
 					}
 				}
 			}
-			return EmiTags.getIngredient(tagType, list.stream().flatMap(i -> i.getEmiStacks().stream()).toList(), amount);
+            int size = 0;
+            for (var ingredient : list)
+                size += ingredient.getEmiStacks().size();
+            var flattened = new ObjectArrayList<EmiStack>(size);
+            for (var ingredient : list)
+                flattened.addAll(ingredient.getEmiStacks());
+            return EmiTags.getIngredient(tagType, flattened, amount);
 		}
 	}
 }

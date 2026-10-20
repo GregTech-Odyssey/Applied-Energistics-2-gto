@@ -4,7 +4,6 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.jemi.JemiUtil;
-import dev.emi.emi.jemi.impl.JemiRecipeSlotBuilder;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.ingredient.IRecipeSlotRichTooltipCallback;
 import mezz.jei.api.gui.ingredient.IRecipeSlotTooltipCallback;
@@ -14,10 +13,11 @@ import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.gui.GuiGraphics;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unchecked")
 public class JemiRecipeSlot implements IRecipeSlotView {
@@ -25,11 +25,11 @@ public class JemiRecipeSlot implements IRecipeSlotView {
 	public final boolean large, defaultBackground;
 	public final int x, y;
 	public final Optional<String> name;
-	public final IRecipeSlotTooltipCallback tooltipCallback;
-	public final IRecipeSlotRichTooltipCallback richTooltipCallback;
-	public final OffsetDrawable background, overlay;
+    public final @Nullable IRecipeSlotTooltipCallback tooltipCallback;
+    public final @Nullable IRecipeSlotRichTooltipCallback richTooltipCallback;
+    public final @Nullable OffsetDrawable background, overlay;
 	public final Map<IIngredientType<?>, IngredientRenderer<?>> renderers;
-	public final TankInfo tankInfo;
+    public final @Nullable TankInfo tankInfo;
 	public final EmiIngredient stack;
 	public SlotWidget widget;
 	public int highlight = 0;
@@ -67,13 +67,31 @@ public class JemiRecipeSlot implements IRecipeSlotView {
 	}
 
 	@Override
-	public <T> Stream<T> getIngredients(IIngredientType<T> ingredientType) {
-		return (Stream<T>) getAllIngredients().filter(t -> t.getType() == ingredientType).map(t -> t.getIngredient());
+    public <T> @NotNull Stream<T> getIngredients(@NotNull IIngredientType<T> ingredientType) {
+        // JEI requires a lazy Stream: one fused stage keeps findFirst() from expanding every alternative.
+        return stack.getEmiStacks().stream().<T>mapMulti((candidate, consumer) -> {
+            var typed = JemiUtil.getTyped(candidate).orElse(null);
+            if (typed != null && typed.getType() == ingredientType)
+                consumer.accept((T) typed.getIngredient());
+        });
+    }
+
+    public boolean hasIngredients(@NotNull IIngredientType<?> ingredientType) {
+        for (var candidate : stack.getEmiStacks()) {
+            var typed = JemiUtil.getTyped(candidate).orElse(null);
+            if (typed != null && typed.getType() == ingredientType)
+                return true;
+        }
+        return false;
 	}
 
 	@Override
-	public Stream<ITypedIngredient<?>> getAllIngredients() {
-		return stack.getEmiStacks().stream().map(JemiUtil::getTyped).filter(Optional::isPresent).map(Optional::get);
+    public @NotNull Stream<ITypedIngredient<?>> getAllIngredients() {
+        return stack.getEmiStacks().stream().mapMulti((candidate, consumer) -> {
+            var typed = JemiUtil.getTyped(candidate).orElse(null);
+            if (typed != null)
+                consumer.accept(typed);
+        });
 	}
 
 	@Override
@@ -110,10 +128,10 @@ public class JemiRecipeSlot implements IRecipeSlotView {
 		this.highlight = color;
 	}
 
-	public static record OffsetDrawable(IDrawable drawable, int xOff, int yOff){
+    public static record OffsetDrawable(IDrawable drawable, int xOff, int yOff) {
 	}
 
-	public static record IngredientRenderer<T>(IIngredientType<T> type, IIngredientRenderer<T> renderer){
+    public static record IngredientRenderer<T>(IIngredientType<T> type, IIngredientRenderer<T> renderer) {
 	}
 
 	public static record TankInfo(int width, int height, long capacity, boolean showCapacity) {

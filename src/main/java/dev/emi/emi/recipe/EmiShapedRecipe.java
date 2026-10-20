@@ -1,6 +1,5 @@
 package dev.emi.emi.recipe;
 
-import com.google.common.collect.Lists;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.EmiUtil;
 import dev.emi.emi.api.recipe.EmiCraftingRecipe;
@@ -9,8 +8,8 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.runtime.EmiLog;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
-
 import java.util.List;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class EmiShapedRecipe extends EmiCraftingRecipe {
 
@@ -62,7 +61,7 @@ public class EmiShapedRecipe extends EmiCraftingRecipe {
 	}
 
 	private static List<EmiIngredient> padIngredients(ShapedRecipe recipe) {
-		List<EmiIngredient> list = Lists.newArrayList();
+        var list = new ObjectArrayList<EmiIngredient>(9);
 		int i = 0;
 		for (int y = 0; y < 3; y++) {
 			for (int x = 0; x < 3; x++) {

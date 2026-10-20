@@ -2,141 +2,66 @@ package dev.emi.emi.runtime;
 
 import dev.emi.emi.api.stack.EmiStack;
 import net.minecraft.world.item.ItemStack;
-
-import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Predicate;
+import java.util.function.ToLongFunction;
+import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.item.Item;
+import appeng.api.stacks.AEItemKey;
 
 public final class EmiCraftingToolCompat {
-	private static final String GT_TOOL_INTERFACE = "com.gregtechceu.gtceu.api.item.IGTTool";
-	private static final Map<Class<?>, Boolean> GT_TOOL_CACHE = new ConcurrentHashMap<>();
-	private static final Map<Class<?>, Method> TOOL_STATS_METHOD_CACHE = new ConcurrentHashMap<>();
-	private static final Map<Class<?>, Method> CRAFT_DAMAGE_METHOD_CACHE = new ConcurrentHashMap<>();
+    private static Predicate<Item> toolPredicate = item -> false;
+    private static ToLongFunction<ItemStack> craftingUses = stack -> -1;
 
 	private EmiCraftingToolCompat() {
 	}
 
-	public static boolean isGtTool(EmiStack stack) {
-		return stack != null && !stack.isEmpty() && isGtTool(stack.getItemStack());
+    /** Called during EMI registration; the uses function must only read its shared stack argument. */
+    public static void setGtToolSupport(@NotNull Predicate<Item> predicate, @NotNull ToLongFunction<ItemStack> uses) {
+        toolPredicate = predicate;
+        craftingUses = uses;
 	}
 
-	public static boolean isGtTool(ItemStack stack) {
-		if (stack == null || stack.isEmpty()) {
-			return false;
-		}
-		return GT_TOOL_CACHE.computeIfAbsent(stack.getItem().getClass(), EmiCraftingToolCompat::implementsGtTool);
+    public static boolean isGtTool(@NotNull EmiStack stack) {
+        return !stack.isEmpty() && stack.getKey() instanceof Item item && toolPredicate.test(item);
 	}
 
-	public static boolean isReusable(EmiStack stack) {
-		if (stack == null || stack.isEmpty()) {
+    public static boolean isGtTool(@NotNull ItemStack stack) {
+        return !stack.isEmpty() && toolPredicate.test(stack.getItem());
+    }
+
+    public static boolean isReusable(@NotNull EmiStack stack) {
+        if (stack.isEmpty())
 			return false;
-		}
-		if (isGtTool(stack)) {
+        if (isGtTool(stack))
+            return true;
+        var remainder = stack.getRemainder();
+        return !remainder.isEmpty() && remainder.getKey().equals(stack.getKey());
+    }
+
+    public static long getSafeCraftingUses(@NotNull EmiStack stack) {
+        if (!isGtTool(stack))
+            return -1;
+        var item = stack.getAEKey();
+        return craftingUses.applyAsLong(item instanceof AEItemKey key ? key.getReadOnlyStack() : stack.getItemStack());
+    }
+
+    public static long getSafeCraftingUses(@NotNull ItemStack stack) {
+        return isGtTool(stack) ? craftingUses.applyAsLong(stack) : -1;
+    }
+
+    public static boolean matches(@NotNull EmiStack expected, @NotNull EmiStack actual) {
+        if (expected.isEmpty() || actual.isEmpty())
+            return false;
+        if (expected.isEqual(actual))
 			return true;
-		}
-		try {
-			EmiStack remainder = stack.getRemainder();
-			return remainder != null && !remainder.isEmpty() && remainder.getKey().equals(stack.getKey());
-		} catch (Throwable ignored) {
+        return expected.getKey().equals(actual.getKey())
+                && (isReusable(expected) || isGtTool(expected) && isGtTool(actual));
+    }
+
+    public static boolean matches(@NotNull ItemStack expected, @NotNull ItemStack actual) {
+        if (expected.isEmpty() || actual.isEmpty())
 			return false;
-		}
-	}
-
-	public static long getSafeCraftingUses(EmiStack stack) {
-		if (stack == null || stack.isEmpty()) {
-			return -1L;
-		}
-		return getSafeCraftingUses(stack.getItemStack());
-	}
-
-	public static long getSafeCraftingUses(ItemStack stack) {
-		if (!isGtTool(stack)) {
-			return -1L;
-		}
-		if (!stack.isDamageableItem()) {
-			return Long.MAX_VALUE;
-		}
-		int maxDamage = stack.getMaxDamage();
-		int damage = stack.getDamageValue();
-		if (maxDamage <= 0) {
-			return Long.MAX_VALUE;
-		}
-		int damagePerCraft = getToolDamagePerCraft(stack);
-		if (damagePerCraft <= 0) {
-			return 0L;
-		}
-		long remaining = Math.max(0L, (long) maxDamage - damage);
-		return remaining / damagePerCraft;
-	}
-
-	public static boolean matches(EmiStack expected, EmiStack actual) {
-		if (expected == null || actual == null || expected.isEmpty() || actual.isEmpty()) {
-			return false;
-		}
-		if (expected.isEqual(actual)) {
-			return true;
-		}
-		if (isReusable(expected) && expected.getKey().equals(actual.getKey())) {
-			return true;
-		}
-		ItemStack expectedStack = expected.getItemStack();
-		ItemStack actualStack = actual.getItemStack();
-		return isGtTool(expectedStack) && isGtTool(actualStack) && expectedStack.getItem() == actualStack.getItem();
-	}
-
-	public static boolean matches(ItemStack expected, ItemStack actual) {
-		if (expected == null || actual == null || expected.isEmpty() || actual.isEmpty()) {
-			return false;
-		}
-		if (ItemStack.isSameItemSameTags(expected, actual)) {
-			return true;
-		}
-		return isGtTool(expected) && isGtTool(actual) && expected.getItem() == actual.getItem();
-	}
-
-	private static int getToolDamagePerCraft(ItemStack stack) {
-		try {
-			Object item = stack.getItem();
-			Method statsMethod = TOOL_STATS_METHOD_CACHE.computeIfAbsent(item.getClass(), type -> {
-				try {
-					return type.getMethod("getToolStats");
-				} catch (ReflectiveOperationException ignored) {
-					return null;
-				}
-			});
-			if (statsMethod == null) {
-				return 0;
-			}
-			Object stats = statsMethod.invoke(item);
-			if (stats == null) {
-				return 0;
-			}
-			Method damageMethod = CRAFT_DAMAGE_METHOD_CACHE.computeIfAbsent(stats.getClass(), type -> {
-				try {
-					return type.getMethod("getToolDamagePerCraft", ItemStack.class);
-				} catch (ReflectiveOperationException ignored) {
-					return null;
-				}
-			});
-			if (damageMethod == null) {
-				return 0;
-			}
-			Object value = damageMethod.invoke(stats, stack);
-			return value instanceof Number number ? Math.max(0, number.intValue()) : 0;
-		} catch (Throwable ignored) {
-			return 0;
-		}
-	}
-
-	private static boolean implementsGtTool(Class<?> type) {
-		if (type == null) {
-			return false;
-		}
-		for (Class<?> iface : type.getInterfaces()) {
-			if (GT_TOOL_INTERFACE.equals(iface.getName()) || implementsGtTool(iface)) {
-				return true;
-			}
-		}
-		return implementsGtTool(type.getSuperclass());
-	}
+        return ItemStack.isSameItemSameTags(expected, actual)
+                || expected.getItem() == actual.getItem() && isGtTool(expected) && isGtTool(actual);
+    }
 }

@@ -12,10 +12,8 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-
 import java.util.List;
 import java.util.Random;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class EmiFireworkStarFadeRecipe extends EmiPatternCraftingRecipe {
@@ -23,8 +21,8 @@ public class EmiFireworkStarFadeRecipe extends EmiPatternCraftingRecipe {
 
 	public EmiFireworkStarFadeRecipe(ResourceLocation id) {
 		super(List.of(
-			EmiIngredient.of(DYES.stream().map(i -> (EmiIngredient) EmiStack.of(i)).collect(Collectors.toList())),
-			EmiStack.of(Items.FIREWORK_STAR)), EmiStack.of(Items.FIREWORK_STAR), id);
+                EmiIngredient.ofItems(DYES),
+                EmiStack.of(Items.FIREWORK_STAR)), EmiStack.of(Items.FIREWORK_STAR), id);
 	}
 
 	@Override
@@ -78,7 +76,7 @@ public class EmiFireworkStarFadeRecipe extends EmiPatternCraftingRecipe {
 		} else if (amount == 1) {
 			explosion.putByte("Trail", (byte) 1);
 			items++;
-		} else if (amount == 2){
+        } else if (amount == 2) {
 			explosion.putByte("Trail", (byte) 1);
 			explosion.putByte("Flicker", (byte) 1);
 			items = items + 2;

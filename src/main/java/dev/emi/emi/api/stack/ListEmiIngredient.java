@@ -8,24 +8,41 @@ import dev.emi.emi.screen.tooltip.IngredientTooltipComponent;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
 import org.jetbrains.annotations.ApiStatus;
-
 import java.util.List;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 @ApiStatus.Internal
 public class ListEmiIngredient implements EmiIngredient {
 	private final List<? extends EmiIngredient> ingredients;
-	private final List<EmiStack> fullList;
+    private final ObjectArrayList<EmiStack> fullList;
+    private final int hash;
 	private long amount;
 	private float chance = 1;
 
+    /** Ingredients must contain at least one stack; normalize empty inputs through {@link EmiIngredient#of(List)}. */
 	@ApiStatus.Internal
-	public ListEmiIngredient(List<? extends EmiIngredient> ingredients, long amount) {
+    public ListEmiIngredient(@NotNull List<? extends @NotNull EmiIngredient> ingredients, long amount) {
 		this.ingredients = ingredients;
-		this.fullList = ingredients.stream().flatMap(i -> i.getEmiStacks().stream()).toList();
-		if (fullList.isEmpty()) {
-			throw new IllegalArgumentException("ListEmiIngredient cannot be empty");
-		}
+        int size = 0;
+        for (var ingredient : ingredients)
+            size += ingredient.getEmiStacks().size();
+        this.fullList = new ObjectArrayList<>(size);
+        for (var ingredient : ingredients)
+            fullList.addAll(ingredient.getEmiStacks());
+        this.hash = fullList.hashCode();
+        this.amount = amount;
+    }
+
+    private ListEmiIngredient(List<? extends EmiIngredient> ingredients, ObjectArrayList<EmiStack> fullList,
+            int hash, long amount, float chance) {
+        this.ingredients = ingredients;
+        this.fullList = fullList;
+        this.hash = hash;
 		this.amount = amount;
+        this.chance = chance;
 	}
 
 	@Override
@@ -38,14 +55,12 @@ public class ListEmiIngredient implements EmiIngredient {
 
 	@Override
 	public int hashCode() {
-		return fullList.hashCode();
+        return hash;
 	}
 
 	@Override
 	public EmiIngredient copy() {
-		EmiIngredient stack = new ListEmiIngredient(ingredients, amount);
-		stack.setChance(chance);
-		return stack;
+        return new ListEmiIngredient(ingredients, fullList, hash, amount, chance);
 	}
 
 	@Override
@@ -54,7 +69,7 @@ public class ListEmiIngredient implements EmiIngredient {
 	}
 
 	@Override
-	public List<EmiStack> getEmiStacks() {
+    public @NotNull @UnmodifiableView List<@NotNull EmiStack> getEmiStacks() {
 		return fullList;
 	}
 
@@ -64,7 +79,8 @@ public class ListEmiIngredient implements EmiIngredient {
 	}
 
 	@Override
-	public EmiIngredient setAmount(long amount) {
+    @Contract("_ -> this")
+    public @NotNull EmiIngredient setAmount(long amount) {
 		this.amount = amount;
 		return this;
 	}
@@ -75,7 +91,8 @@ public class ListEmiIngredient implements EmiIngredient {
 	}
 
 	@Override
-	public EmiIngredient setChance(float chance) {
+    @Contract("_ -> this")
+    public @NotNull EmiIngredient setChance(float chance) {
 		this.chance = chance;
 		return this;
 	}

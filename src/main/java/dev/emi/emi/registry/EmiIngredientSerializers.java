@@ -1,6 +1,5 @@
 package dev.emi.emi.registry;
 
-import com.google.common.collect.Maps;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import dev.emi.emi.api.stack.EmiIngredient;
@@ -11,23 +10,27 @@ import net.minecraft.util.GsonHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
 public class EmiIngredientSerializers {
-	public static final Map<Class<?>, EmiIngredientSerializer<?>> BY_CLASS = Maps.newHashMap();
-	public static final Map<String, EmiIngredientSerializer<?>> BY_TYPE = Maps.newHashMap();
+	public static final Map<Class<?>, EmiIngredientSerializer<?>> BY_CLASS = new Reference2ObjectOpenHashMap<>();
+	public static final Map<String, EmiIngredientSerializer<?>> BY_TYPE = new O2OOpenCacheHashMap<>();
 
 	public static void clear() {
 		BY_CLASS.clear();
 		BY_TYPE.clear();
 	}
 
-	public static @Nullable JsonElement serialize(EmiIngredient ingredient) {
-		if (ingredient == null || !BY_CLASS.containsKey(ingredient.getClass())) {
+	public static @Nullable JsonElement serialize(@Nullable EmiIngredient ingredient) {
+		if (ingredient == null) {
 			return null;
 		}
+		var serializer = (EmiIngredientSerializer) BY_CLASS.get(ingredient.getClass());
+		if (serializer == null) return null;
 		try {
-			return ((EmiIngredientSerializer) BY_CLASS.get(ingredient.getClass())).serialize(ingredient);
+			return serializer.serialize(ingredient);
 		} catch (Exception e) {
 			EmiLog.error("Exception serializing stack " + ingredient, e);
 			return null;

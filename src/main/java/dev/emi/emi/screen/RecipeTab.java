@@ -6,33 +6,37 @@ import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.config.EmiConfig;
 import dev.emi.emi.config.SidebarSide;
-import dev.emi.emi.screen.RecipeDisplay;
-import dev.emi.emi.screen.RecipeScreen;
-import dev.emi.emi.screen.WidgetGroup;
-
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class RecipeTab {
 	private static final int RECIPE_PADDING = 10;
-	private final List<RecipeDisplay> displays;
+    private final ObjectArrayList<RecipeDisplay> displays;
 	private final int width;
 	private List<List<RecipeDisplay>> pages = Lists.newArrayList();
 	public final EmiRecipeCategory category;
 
-	public RecipeTab(EmiRecipeCategory category, List<EmiRecipe> recipes) {
+    public RecipeTab(@NotNull EmiRecipeCategory category, @NotNull List<EmiRecipe> recipes) {
 		this.category = category;
-		displays = recipes.stream().map(r -> {
+        displays = new ObjectArrayList<>(recipes.size());
+        int maxWidth = 0;
+        for (var recipe : recipes) {
+            RecipeDisplay display;
 			try {
-				return new RecipeDisplay(r);
-			} catch (Throwable t) {
-				return new RecipeDisplay(t);
+                display = new RecipeDisplay(recipe);
+            } catch (Throwable failure) {
+                display = new RecipeDisplay(failure);
 			}
-		}).toList();
-		width = displays.stream().map(RecipeDisplay::getWidth).max(Integer::compareTo).orElse(0);
+            displays.add(display);
+            maxWidth = Math.max(maxWidth, display.getWidth());
+        }
+        width = maxWidth;
 	}
 
-	public List<dev.emi.emi.screen.WidgetGroup> constructWidgets(int page, int x, int y, int backgroundWidth, int backgroundHeight) {
-		List<WidgetGroup> groups = Lists.newArrayList();
+    public List<dev.emi.emi.screen.WidgetGroup> constructWidgets(int page, int x, int y, int backgroundWidth,
+            int backgroundHeight) {
+        var groups = new ObjectArrayList<WidgetGroup>(pages.get(page).size());
 		int width = backgroundWidth - 16;
 		int height = getVerticalRecipeSpace(backgroundHeight);
 		int off = 0;

@@ -8,20 +8,20 @@ import dev.emi.emi.api.widget.GeneratedSlotWidget;
 import dev.emi.emi.api.widget.SlotWidget;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.*;
-
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class EmiArmorDyeRecipe extends EmiPatternCraftingRecipe {
-	private static final List<DyeItem> DYES = Stream.of(DyeColor.values()).map(c -> DyeItem.byColor(c)).collect(Collectors.toList());
+    private static final List<DyeItem> DYES = Stream.of(DyeColor.values()).map(c -> DyeItem.byColor(c))
+            .collect(Collectors.toList());
 	private final Item armor;
 
 	public EmiArmorDyeRecipe(Item armor, ResourceLocation id) {
 		super(List.of(
-			EmiIngredient.of(DYES.stream().map(i -> (EmiIngredient) EmiStack.of(i)).collect(Collectors.toList())),
-			EmiStack.of(armor)), EmiStack.of(armor), id);
+                EmiIngredient.ofItems(DYES),
+                EmiStack.of(armor)), EmiStack.of(armor), id);
 		this.armor = armor;
 	}
 
@@ -47,7 +47,7 @@ public class EmiArmorDyeRecipe extends EmiPatternCraftingRecipe {
 			return EmiStack.of(DyeableLeatherItem.dyeArmor(new ItemStack(armor), getDyes(r)));
 		}, unique, x, y);
 	}
-	
+
 	private List<DyeItem> getDyes(Random random) {
 		List<DyeItem> dyes = Lists.newArrayList();
 		int amount = 1 + random.nextInt(8);
