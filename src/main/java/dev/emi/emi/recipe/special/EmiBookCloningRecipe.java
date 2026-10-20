@@ -18,7 +18,6 @@ import java.util.Random;
 import java.util.stream.Stream;
 
 public class EmiBookCloningRecipe extends EmiPatternCraftingRecipe {
-	// TODO more book stuff
 	private static final List<String> AUTHORS = List.of(
 		"Emi", "A Rabbit", "[REDACTED]", "Jeb", "The Multiversal Author's Guild", "Another Book", "A Collection of Branches",
 		"Unknown"

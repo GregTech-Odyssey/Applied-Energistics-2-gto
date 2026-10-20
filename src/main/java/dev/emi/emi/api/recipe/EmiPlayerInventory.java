@@ -2,7 +2,6 @@ package dev.emi.emi.api.recipe;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.recipe.handler.EmiCraftContext;
@@ -24,19 +23,18 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.ApiStatus;
 
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
+
+import com.gto.fastcollection.fastutil.OpenCacheHashSet;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 @SuppressWarnings({"unchecked", "rawtypes"})
 public class EmiPlayerInventory {
 	private final Comparison none = Comparison.DEFAULT_COMPARISON;
 	private final Comparison strict = EmiPort.compareStrict();
 	public Map<EmiStack, EmiStack> inventory = Maps.newHashMap();
-	
+
 	@Deprecated
 	@ApiStatus.Internal
 	public EmiPlayerInventory(Player entity) {
@@ -47,7 +45,7 @@ public class EmiPlayerInventory {
 			}
 			List<EmiRecipeHandler<?>> handlers = (List) EmiRecipeFiller.getAllHandlers(screen);
 			if (!handlers.isEmpty()) {
-				if (handlers.get(0) instanceof StandardRecipeHandler standard) {
+				if (handlers.getFirst() instanceof StandardRecipeHandler standard) {
 					List<Slot> slots = standard.getInputSources(screen.getMenu());
 					for (Slot slot : slots) {
 						if (slot.mayPickup(entity)) {
@@ -82,7 +80,7 @@ public class EmiPlayerInventory {
 		if (screen != null) {
 			List<EmiRecipeHandler<?>> handlers = (List) EmiRecipeFiller.getAllHandlers(screen);
 			if (!handlers.isEmpty()) {
-				return handlers.get(0).getInventory((AbstractContainerScreen) screen);
+				return handlers.getFirst().getInventory((AbstractContainerScreen) screen);
 			}
 		}
 		if (entity == null) {
@@ -111,12 +109,11 @@ public class EmiPlayerInventory {
 		if (!handlers.isEmpty()) {
 			EmiCraftContext context = new EmiCraftContext(screen, this, EmiCraftContext.Type.CRAFTABLE);
 			return r -> {
-				for (int i = 0; i < handlers.size(); i++) {
-					EmiRecipeHandler handler = handlers.get(i);
-					if (handler.supportsRecipe(r)) {
-						return handler.canCraft(r, context);
-					}
-				}
+                for (EmiRecipeHandler handler : handlers) {
+                    if (handler.supportsRecipe(r)) {
+                        return handler.canCraft(r, context);
+                    }
+                }
 				return false;
 			};
 		}
@@ -124,25 +121,22 @@ public class EmiPlayerInventory {
 	}
 
 	public List<EmiIngredient> getCraftables() {
-		Predicate<dev.emi.emi.api.recipe.EmiRecipe> predicate = getPredicate();
-		if (predicate == null) {
-			return List.of();
+        var predicate = getPredicate();
+		if (predicate == null)
+            return Collections.emptyList();
+        var recipes = new OpenCacheHashSet<EmiRecipe>(inventory.size());
+		for (var stack : inventory.keySet()) {
+            recipes.addAll(EmiApi.getRecipeManager().getRecipesByInput(stack));
 		}
-		Set<dev.emi.emi.api.recipe.EmiRecipe> set = Sets.newHashSet();
-		for (EmiStack stack : inventory.keySet()) {
-			set.addAll(EmiApi.getRecipeManager().getRecipesByInput(stack));
+        var craftables = new ObjectArrayList<EmiIngredient>(recipes.size());
+        for (var recipe : recipes) {
+            if (!recipe.hideCraftable() && !recipe.getOutputs().isEmpty() && predicate.test(recipe)) {
+                craftables.add(new EmiFavorite.Craftable(recipe));
 		}
-		return set.stream().filter(r -> !r.hideCraftable() && predicate.test(r) && r.getOutputs().size() > 0)
-			.map(r -> new EmiFavorite.Craftable(r))
-			.sorted((a, b) -> {
-				int i = Integer.compare(
-					EmiStackList.getIndex(a.getStack()),
-					EmiStackList.getIndex(b.getStack()));
-				if (i != 0) {
-					return i;
 				}
-				return Long.compare(a.getAmount(), b.getAmount());
-			}).collect(Collectors.toList());
+        craftables.sort(Comparator.comparingInt((EmiIngredient a) -> EmiStackList.getIndex(((EmiFavorite) a).getStack()))
+                .thenComparingLong(EmiIngredient::getAmount));
+        return craftables;
 	}
 
 	public List<Boolean> getCraftAvailability(dev.emi.emi.api.recipe.EmiRecipe recipe) {
@@ -298,21 +292,14 @@ public class EmiPlayerInventory {
 	}
 
 	public boolean isEqual(EmiPlayerInventory other) {
-		if (other == null) {
+		if (other == null || other.inventory.size() != inventory.size())
 			return false;
-		}
-		Comparison comparison = Comparison.of((a, b) -> {
-			return strict.compare(a, b) && a.getAmount() == b.getAmount();
-		});
-		if (other.inventory.size() != inventory.size()) {
-			return false;
-		} else {
-			for (EmiStack stack : inventory.keySet()) {
-				if (!other.inventory.containsKey(stack) || !other.inventory.get(stack).isEqual(stack, comparison)) {
+        for (var stack : inventory.values()) {
+            var candidate = other.inventory.get(stack);
+            if (candidate == null || candidate.getAmount() != stack.getAmount() || !strict.compare(candidate, stack)) {
 					return false;
 				}
 			}
-		}
 		return true;
 	}
 }

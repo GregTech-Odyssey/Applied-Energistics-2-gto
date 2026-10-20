@@ -44,16 +44,28 @@ import java.text.DecimalFormat;
 import java.util.List;
 
 public class EmiRenderHelper {
+	public static void renderAmount(dev.emi.emi.runtime.EmiDrawContext context, int x, int y,
+            dev.emi.emi.api.stack.EmiStack stack, long amount, net.minecraft.network.chat.Component fallback) {
+        var key = stack.getAEKey();
+        if (amount > 99 && key != null) {
+            var text = key.formatAmount(amount, appeng.api.stacks.AmountFormat.SLOT);
+            appeng.client.gui.me.common.StackSizeRenderer.renderSizeLabel(context.raw(),
+                    net.minecraft.client.Minecraft.getInstance().font, x + 1, y + 1, text, false);
+        } else {
+            renderAmount(context, x, y, fallback);
+        }
+    }
+
 	public static final DecimalFormat TEXT_FORMAT = new DecimalFormat("#,###.##");
 	public static final Component EMPTY_TEXT = dev.emi.emi.EmiPort.literal("");
 	public static final Minecraft CLIENT = Minecraft.getInstance();
-	public static final ResourceLocation WIDGETS = dev.emi.emi.EmiPort.id("dev/emi/emi", "textures/gui/widgets.png");
-	public static final ResourceLocation BUTTONS = dev.emi.emi.EmiPort.id("dev/emi/emi", "textures/gui/buttons.png");
-	public static final ResourceLocation BACKGROUND = dev.emi.emi.EmiPort.id("dev/emi/emi", "textures/gui/background.png");
-	public static final ResourceLocation GRID = dev.emi.emi.EmiPort.id("dev/emi/emi", "textures/gui/grid.png");
-	public static final ResourceLocation DASH = dev.emi.emi.EmiPort.id("dev/emi/emi", "textures/gui/dash.png");
-	public static final ResourceLocation CONFIG = dev.emi.emi.EmiPort.id("dev/emi/emi", "textures/gui/config.png");
-	public static final ResourceLocation PIECES = dev.emi.emi.EmiPort.id("dev/emi/emi", "textures/gui/pieces.png");
+	public static final ResourceLocation WIDGETS = dev.emi.emi.EmiPort.id("emi", "textures/gui/widgets.png");
+	public static final ResourceLocation BUTTONS = dev.emi.emi.EmiPort.id("emi", "textures/gui/buttons.png");
+	public static final ResourceLocation BACKGROUND = dev.emi.emi.EmiPort.id("emi", "textures/gui/background.png");
+	public static final ResourceLocation GRID = dev.emi.emi.EmiPort.id("emi", "textures/gui/grid.png");
+	public static final ResourceLocation DASH = dev.emi.emi.EmiPort.id("emi", "textures/gui/dash.png");
+	public static final ResourceLocation CONFIG = dev.emi.emi.EmiPort.id("emi", "textures/gui/config.png");
+	public static final ResourceLocation PIECES = dev.emi.emi.EmiPort.id("emi", "textures/gui/pieces.png");
 
 	public static void drawNinePatch(EmiDrawContext context, ResourceLocation texture, int x, int y, int w, int h, int u, int v, int cornerLength, int centerLength) {
 		int cor = cornerLength;
@@ -91,11 +103,11 @@ public class EmiRenderHelper {
 		RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 		RenderSystem.setShaderTexture(0, sprite.atlasLocation());
 		RenderSystem.enableBlend();
-		
+
 		float r = ((color >> 16) & 255) / 256f;
 		float g = ((color >> 8) & 255) / 256f;
 		float b = (color & 255) / 256f;
-		
+
 		BufferBuilder bufferBuilder = Tesselator.getInstance().getBuilder();
 		bufferBuilder.begin(Mode.QUADS, DefaultVertexFormat.POSITION_COLOR_TEX);
 		float xMin = (float) x;

@@ -46,7 +46,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class RecipeScreen extends Screen {
-	private static final ResourceLocation TEXTURE = EmiPort.id("dev/emi/emi", "textures/gui/background.png");
+	private static final ResourceLocation TEXTURE = EmiPort.id("emi", "textures/gui/background.png");
 	private static final long RECIPE_FILTER_DEBOUNCE_MS = 140L;
 	private static final ScheduledExecutorService RECIPE_FILTER_EXECUTOR = Executors.newSingleThreadScheduledExecutor(runnable -> {
 		Thread thread = new Thread(runnable, "EMI-RecipeFilter");
@@ -122,7 +122,7 @@ public class RecipeScreen extends Screen {
 		x = (this.width - backgroundWidth) / 2;
 		y = (this.height - backgroundHeight) / 2 + 1;
 		this.tabPageSize = (minimumWidth - 32) / 24;
-		
+
 		for (SizedButtonWidget widget : arrows) {
 			addRenderableWidget(widget);
 		}
@@ -157,7 +157,7 @@ public class RecipeScreen extends Screen {
 						tabs.add(tab);
 					}
 				}
-				
+
 				tab = -1;
 				setPage(tabPage, 0, 0);
 			}
@@ -218,11 +218,13 @@ public class RecipeScreen extends Screen {
 		}
 
 		EmiRenderHelper.drawNinePatch(context, TEXTURE, x + 19 + buttonOff, y + 5, minimumWidth - 38, 12, 0, 16, 3, 6);
-		//EmiRenderHelper.drawScroll(context, x + 19 + buttonOff, y + 5 + 10, minimumWidth - 38, 2, tab, tabs.size(), -1);
+        // EmiRenderHelper.drawScroll(context, x + 19 + buttonOff, y + 5 + 10, minimumWidth - 38, 2, tab, tabs.size(),
+        // -1);
 		EmiRenderHelper.drawNinePatch(context, TEXTURE, x + 19 + buttonOff, y + 19, minimumWidth - 38, 12, 0, 16, 3, 6);
-		//EmiRenderHelper.drawScroll(context, x + 19 + buttonOff, y + 19 + 10, minimumWidth - 38, 2, page, tabs.get(tab).getPageCount(), -1);
-		
-		boolean categoryHovered = mouseX >= x + 19 + buttonOff && mouseY >= y + 5 && mouseX < x + minimumWidth + buttonOff - 19 && mouseY < y + 5 + 12;
+        // EmiRenderHelper.drawScroll(context, x + 19 + buttonOff, y + 19 + 10, minimumWidth - 38, 2, page,
+        // tabs.get(tab).getPageCount(), -1);
+
+        boolean categoryHovered = mouseX >= x + 19 + buttonOff && mouseY >= y + 5 && mouseX < x + minimumWidth + buttonOff - 19 && mouseY < y + 5 + 12;
 		int categoryNameColor = categoryHovered ? 0x22ffff : 0xffffff;
 
 		RecipeTab tab = tabs.get(this.tab);
@@ -243,10 +245,13 @@ public class RecipeScreen extends Screen {
 			if (workstationAmount <= 0) {
 				offset = 18;
 			}
+            int columns = Math.max(1, (workstationAmount + getWorkstationRows() - 1) / getWorkstationRows());
+            int sideHeight = 10 + 18 * Math.min(workstationAmount, getWorkstationRows()) + offset;
 			if (EmiConfig.workstationLocation == SidebarSide.LEFT) {
-				EmiRenderHelper.drawNinePatch(context, TEXTURE, bounds.x() - 5, bounds.y() - 5, 28, 10 + 18 * workstationAmount + offset, 36, 0, 5, 1);
+				EmiRenderHelper.drawNinePatch(context, TEXTURE, bounds.x() - 5 - (columns - 1) * 18, bounds.y() - 5, 28 + (columns - 1) * 18, sideHeight, 36, 0, 5, 1);
 			} else if (EmiConfig.workstationLocation == SidebarSide.RIGHT) {
-				EmiRenderHelper.drawNinePatch(context, TEXTURE, bounds.x() - 5, bounds.y() - 5, 28, 10 + 18 * workstationAmount + offset, 47, 0, 5, 1);
+				EmiRenderHelper.drawNinePatch(context, TEXTURE, bounds.x() - 5, bounds.y() - 5, 28 + (columns - 1) * 18,
+                        sideHeight, 47, 0, 5, 1);
 			} else if (EmiConfig.workstationLocation == SidebarSide.BOTTOM) {
 				EmiRenderHelper.drawNinePatch(context, TEXTURE, bounds.x() - 5, bounds.y() - 5, 10 + 18 * workstationAmount + offset, 28, 58, 0, 5, 1);
 			}
@@ -339,11 +344,12 @@ public class RecipeScreen extends Screen {
 	}
 
 	public int getMaxWorkstations() {
-		return switch (EmiConfig.workstationLocation) {
-			case LEFT, RIGHT -> (this.backgroundHeight - getResolveOffset() - 18) / 18; 
-			case BOTTOM -> (this.backgroundWidth - getResolveOffset() - 18) / 18;
-			default -> 0;
-		};
+		return EmiConfig.workstationLocation == SidebarSide.LEFT || EmiConfig.workstationLocation == SidebarSide.RIGHT
+                || EmiConfig.workstationLocation == SidebarSide.BOTTOM ? Integer.MAX_VALUE : 0;
+    }
+
+    private int getWorkstationRows() {
+        return Math.max(1, (backgroundHeight - getResolveOffset() - 18) / 18);
 	}
 
 	public int getResolveOffset() {
@@ -351,17 +357,16 @@ public class RecipeScreen extends Screen {
 	}
 
 	public Bounds getWorkstationBounds(int i) {
-		int offset = 0;
-		if (i == -1) {
-			i = 0;
-			offset = -getResolveOffset();
-		}
+		int offset = i == -1 ? -getResolveOffset() : 0;
+        i = Math.max(0, i);
+        int column = i / getWorkstationRows();
+        int row = i % getWorkstationRows();
 		if (EmiConfig.workstationLocation == SidebarSide.LEFT) {
-			return new Bounds(this.x - 18, this.y + 9 + getResolveOffset() + i * 18 + offset, 18, 18);
+			return new Bounds(x - (column + 1) * 18, y + 9 + getResolveOffset() + row * 18 + offset, 18, 18);
 		} else if (EmiConfig.workstationLocation == SidebarSide.RIGHT) {
-			return new Bounds(this.x + this.backgroundWidth, this.y + 9 + getResolveOffset() + i * 18 + offset, 18, 18);
+			return new Bounds(x + backgroundWidth + column * 18, y + 9 + getResolveOffset() + row * 18 + offset, 18, 18);
 		} else if (EmiConfig.workstationLocation == SidebarSide.BOTTOM) {
-			return new Bounds(this.x + 5 + getResolveOffset() + i * 18 + offset, this.y + this.backgroundHeight - 23, 18, 18);
+			return new Bounds(x + 5 + getResolveOffset() + i * 18 + offset, y + backgroundHeight - 23, 18, 18);
 		}
 		return Bounds.EMPTY;
 	}

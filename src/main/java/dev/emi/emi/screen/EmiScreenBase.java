@@ -41,7 +41,7 @@ public class EmiScreenBase {
 	public boolean isEmpty() {
 		return screen == null;
 	}
-	
+
 	public static EmiScreenBase getCurrent() {
 		Minecraft client = Minecraft.getInstance();
 		return of(client.screen);
@@ -85,7 +85,9 @@ public class EmiScreenBase {
 		if (screen instanceof AbstractContainerScreen hs) {
 			HandledScreenAccessor hsa = (HandledScreenAccessor) hs;
 			AbstractContainerMenu sh = hs.getMenu();
-			if (sh.slots != null && !sh.slots.isEmpty()) {
+			if (sh.slots != null && (!sh.slots.isEmpty()
+                    || screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?>
+                    || screen instanceof appeng.client.gui.me.crafting.CraftConfirmScreen)) {
 				int extra = 0;
 				if (hs instanceof RecipeUpdateListener provider) {
 					if (provider.getRecipeBookComponent().isVisible()) {

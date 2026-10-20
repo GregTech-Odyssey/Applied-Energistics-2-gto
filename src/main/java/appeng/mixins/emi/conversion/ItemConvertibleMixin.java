@@ -13,11 +13,11 @@ public interface ItemConvertibleMixin extends EmiStackConvertible {
 
     @Override
     default EmiStack emi() {
-        return EmiStack.of((Item) (Object) this);
+        return EmiStack.of((Item) this);
     }
 
     @Override
     default EmiStack emi(long amount) {
-        return EmiStack.of((Item) (Object) this, amount);
+        return EmiStack.of((Item) this, amount);
     }
 }

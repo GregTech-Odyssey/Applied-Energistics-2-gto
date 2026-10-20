@@ -70,7 +70,7 @@ public class EmiReloadManager {
 			}
 		}
 	}
-	
+
 	public static void reload() {
 		synchronized (EmiReloadManager.class) {
 			step(EmiPort.literal("Starting Reload"));
@@ -103,7 +103,7 @@ public class EmiReloadManager {
 	public static int getStatus() {
 		return status;
 	}
-	
+
 	private static class ReloadWorker implements Runnable {
 
 		@Override
@@ -144,7 +144,7 @@ public class EmiReloadManager {
 					List<EmiPluginContainer> plugins = Lists.newArrayList();
 					plugins.addAll(EmiForgePlatform.getPlugins().stream()
 						.sorted((a, b) -> Integer.compare(entrypointPriority(a), entrypointPriority(b))).toList());
-					
+
 					if (EmiForgePlatform.isModLoaded("jei")) {
 						plugins.add(new EmiPluginContainer(new JemiPlugin(), "jemi"));
 					}
@@ -175,7 +175,7 @@ public class EmiReloadManager {
 						continue;
 					}
 					EmiRegistry registry = new EmiRegistryImpl();
-					
+
 					for (EmiPluginContainer container : plugins) {
 						step(EmiPort.literal("Loading plugin from " + container.id()), 10_000);
 						long start = System.currentTimeMillis();
@@ -215,7 +215,7 @@ public class EmiReloadManager {
 					BoM.reload();
 					EmiPersistentData.load();
 					step(EmiPort.literal("Baking search"), 15_000);
-					EmiSearch.bake();
+					EmiSearch.bakeAsync();
 					step(EmiPort.literal("Finishing up"));
 					EmiScreenManager.search.update();
 					EmiScreenManager.forceRecalculate();
@@ -234,7 +234,7 @@ public class EmiReloadManager {
 		}
 
 		private final static int entrypointPriority(EmiPluginContainer container) {
-			return container.id().equals("dev/emi/emi") ? 0 : 1;
+			return container.id().equals("emi") ? 0 : 1;
 		}
 	}
 }

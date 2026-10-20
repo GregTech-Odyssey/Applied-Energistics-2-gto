@@ -58,7 +58,7 @@ public class WidgetGroup implements WidgetHolder {
 			errors.add(new RecipeError(RecipeError.Severity.WARNING, EmiTooltip.splitTranslate("emi.dev.null_recipe_id")));
 		} else if (EmiDev.duplicateRecipeIds.contains(id)) {
 			List<ClientTooltipComponent> tooltip = Lists.newArrayList();
-			if (Objects.equals(id.getNamespace(), "minecraft") || Objects.equals(id.getNamespace(), "dev/emi/emi")) {
+			if (Objects.equals(id.getNamespace(), "minecraft") || Objects.equals(id.getNamespace(), "emi")) {
 				tooltip.addAll(EmiTooltip.splitTranslate("emi.dev.duplicate_vanilla_recipe_id", id));
 			} else {
 				tooltip.addAll(EmiTooltip.splitTranslate("emi.dev.duplicate_recipe_id", id));

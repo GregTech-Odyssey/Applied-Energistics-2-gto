@@ -14,7 +14,7 @@ import java.util.List;
 
 @ApiStatus.Internal
 public class EmptyEmiStack extends EmiStack {
-	private static final ResourceLocation ID = EmiPort.id("dev/emi/emi", "empty");
+	private static final ResourceLocation ID = EmiPort.id("emi", "empty");
 
 	@Override
 	public EmiStack getRemainder() {
@@ -35,11 +35,11 @@ public class EmptyEmiStack extends EmiStack {
 	public EmiStack copy() {
 		return EMPTY;
 	}
-	
+
 	public EmiStack setAmount(long amount) {
 		return this;
 	}
-	
+
 	public EmiStack setChance(float chance) {
 		return this;
 	}

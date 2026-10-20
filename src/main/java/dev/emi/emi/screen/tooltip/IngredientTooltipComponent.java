@@ -9,10 +9,10 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
 public class IngredientTooltipComponent implements EmiTooltipComponent {
-	private static final ResourceLocation TEXTURE = EmiPort.id("dev/emi/emi", "textures/gui/widgets.png");
+	private static final ResourceLocation TEXTURE = EmiPort.id("emi", "textures/gui/widgets.png");
 	private static final int MAX_DISPLAYED = 63;
 	private final List<? extends EmiIngredient> ingredients;
-	
+
 	public IngredientTooltipComponent(List<? extends EmiIngredient> ingredients) {
 		this.ingredients = ingredients;
 	}

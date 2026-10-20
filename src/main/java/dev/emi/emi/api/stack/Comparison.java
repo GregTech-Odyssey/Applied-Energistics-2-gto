@@ -7,7 +7,11 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public class Comparison {
-	private static final Comparison COMPARE_NBT = Comparison.compareData(stack -> stack.getNbt()); 
+	private static final Comparison COMPARE_NBT = Comparison.of((a, b) -> {
+        var ak = a.getAEKey();
+        var bk = b.getAEKey();
+        return ak != null && bk != null ? ak == bk : Objects.equals(a.getNbt(), b.getNbt());
+    }, stack -> Objects.hashCode(stack.getNbt()));
 	public static final Comparison DEFAULT_COMPARISON = Comparison.of((a, b) -> true);
 	private Predicate predicate;
 	private HashFunction hash;
@@ -26,8 +30,9 @@ public class Comparison {
 	}
 
 	/**
-	 * Creates a comparison method based on data from a stack (String name, Potion, Integer id)
-	 * Uses the data type's equals and hashCode functions for comparison
+     * Creates a comparison method based on data from a stack (String name, Potion, Integer id) Uses the data type's
+     * equals and hashCode functions for comparison
+     *
 	 * @param function A function that returns the comparable data from two stacks with equal keys
 	 */
 	public static <T> Comparison compareData(Function<dev.emi.emi.api.stack.EmiStack, T> function) {

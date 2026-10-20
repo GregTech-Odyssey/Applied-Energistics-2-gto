@@ -544,7 +544,7 @@ final class GtceuElectricBlastFurnaceRule implements PlannerMachineRule {
 			return false;
 		}
 		String name = type.getName().toLowerCase(java.util.Locale.ROOT);
-		return name.contains("recipe") || name.contains("dev/emi/emi") || name.startsWith("com.gregtechceu.")
+		return name.contains("recipe") || name.contains("emi") || name.startsWith("com.gregtechceu.")
 			|| name.startsWith("com.lowdragmc.");
 	}
 

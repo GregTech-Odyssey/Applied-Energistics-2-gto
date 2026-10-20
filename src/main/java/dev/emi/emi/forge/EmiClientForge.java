@@ -33,11 +33,11 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.Arrays;
 
-@Mod.EventBusSubscriber(modid = "dev/emi/emi", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@Mod.EventBusSubscriber(modid = "emi", bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public class EmiClientForge {
 	private static final KeyMapping PRODUCTION_PLANNER_KEY = new KeyMapping(
 		"Production Planner", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_UNKNOWN, "EMI");
-	
+
 	@SubscribeEvent
 	public static void clientInit(FMLClientSetupEvent event) {
 		StackBatcher.EXTRA_RENDER_LAYERS.addAll(Arrays.stream(ForgeRenderTypes.values()).map(f -> f.get()).toList());
@@ -75,7 +75,7 @@ public class EmiClientForge {
 
 	@SubscribeEvent
 	public static void registerResourceReloaders(RegisterClientReloadListenersEvent event) {
-		EmiData.init(reloader -> event.registerReloadListener(reloader));
+		EmiData.init(event::registerReloadListener);
 	}
 
 	public static void recipesReloaded(RecipesUpdatedEvent event) {

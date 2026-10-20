@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import java.util.List;
 
 public class MicroTextRenderer {
-	private static final ResourceLocation TEXTURE = EmiPort.id("dev/emi/emi", "textures/gui/microfont.png");
+	private static final ResourceLocation TEXTURE = EmiPort.id("emi", "textures/gui/microfont.png");
 	private static final Char2ObjectMap<MicroChar> MICRO_CHARS = new Char2ObjectOpenHashMap<>();
 	private static final List<UnitScale> QUANTITY_SCALES = List.of(
 		new UnitScale("", 0),
@@ -50,7 +50,7 @@ public class MicroTextRenderer {
 		addMicroChar(new MicroChar('B', 5, 13, 14)); // Also B for buckets
 		addMicroChar(new MicroChar('T', 5, 18, 14));
 		addMicroChar(new MicroChar('Q', 5, 23, 14));
-	
+
 		addMicroChar(new MicroChar('L', 5, 0, 28));
 		addMicroChar(new MicroChar('d', 5, 5, 28));
 		addMicroChar(new MicroChar('m', 5, 10, 28));
@@ -61,7 +61,7 @@ public class MicroTextRenderer {
 	private static void addMicroChar(MicroChar c) {
 		MICRO_CHARS.put(c.c, c);
 	}
-	
+
 	public static void render(EmiDrawContext context, long amount, boolean volume, int constraint, int right, int bottom) {
 		render(context, amount, volume, constraint, right, bottom, -1);
 	}

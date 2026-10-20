@@ -37,7 +37,7 @@ public class EmiDataLoader<T> extends SimplePreparableReloadListener<T>
 	public T prepare(ResourceManager manager, ProfilerFiller profiler) {
 		T t = baseSupplier.get();
 		for (ResourceLocation id : EmiPort.findResources(manager, path, i -> i.endsWith(".json"))) {
-			if (!id.getNamespace().equals("dev/emi/emi")) {
+			if (!id.getNamespace().equals("emi")) {
 				continue;
 			}
 			for (Resource resource : manager.getResourceStack(id)) {

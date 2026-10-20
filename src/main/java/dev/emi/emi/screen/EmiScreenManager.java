@@ -596,13 +596,16 @@ public class EmiScreenManager {
 	}
 
 	public static void render(EmiDrawContext context, int mouseX, int mouseY, float delta) {
-		EmiProfiler.push("dev/emi/emi");
+		EmiProfiler.push("emi");
 		updateMouse(mouseX, mouseY);
 		recalculate();
 		dev.emi.emi.screen.EmiScreenBase base = dev.emi.emi.screen.EmiScreenBase.getCurrent();
 		if (base.isEmpty()) {
 			EmiProfiler.pop();
 			return;
+        }
+        if (EmiSearch.searchBaking) {
+            context.drawTextWithShadow(EmiPort.literal("Baking search"), getDebugTextX(), base.screen().height - 26);
 		}
 		boolean visible = !isDisabled();
 		emi.visible = EmiConfig.emiConfigButtonVisibility.resolve(visible);
@@ -864,7 +867,7 @@ public class EmiScreenManager {
 			for (EmiFavorite.Synthetic fav : syntheticFavorites) {
 				synfavs.addAll(fav.getEmiStacks());
 			}
-			
+
 			try {
 				AbstractContainerScreen<?> hs = EmiApi.getHandledScreen();
 				for (EmiRecipeHandler handler : EmiRecipeFiller.getAllHandlers(hs)) {
@@ -1406,7 +1409,7 @@ public class EmiScreenManager {
 			return false;
 		}
 	}
-	
+
 	private static boolean deleteCursor(int mx, int my) {
 		if (client.screen instanceof AbstractContainerScreen<?> handled) {
 			ItemStack cursor = handled.getMenu().getCarried();

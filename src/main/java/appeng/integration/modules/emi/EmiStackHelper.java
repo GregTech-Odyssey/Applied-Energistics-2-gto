@@ -14,6 +14,8 @@ import net.minecraft.world.level.material.Fluid;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.stack.FluidEmiStack;
+import dev.emi.emi.api.stack.ItemEmiStack;
 
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
@@ -37,7 +39,9 @@ public final class EmiStackHelper {
     public static GenericStack toGenericStack(@NotNull EmiStack emiStack) {
         if (emiStack.isEmpty())
             return null;
-        return toGenericStack(emiStack.getKey(), emiStack.getNbt(), emiStack.getAmount());
+        var key = emiStack.getAEKey();
+        return key == null ? toGenericStack(emiStack.getKey(), emiStack.getNbt(), emiStack.getAmount())
+                : new GenericStack(key, emiStack.getAmount());
     }
 
     public static List<GenericStack> toGenericStack(@NotNull EmiIngredient emiIngredient) {
@@ -53,9 +57,9 @@ public final class EmiStackHelper {
     public static EmiStack toEmiStack(@NotNull GenericStack stack) {
         AEKey key = stack.what();
         if (key instanceof AEItemKey itemKey) {
-            return EmiStack.of(itemKey.getItem(), itemKey.getTag(), stack.amount());
+            return new ItemEmiStack(itemKey, stack.amount());
         } else if (key instanceof AEFluidKey fluidKey) {
-            return EmiStack.of(fluidKey.getFluid(), fluidKey.getTag(), stack.amount());
+            return new FluidEmiStack(fluidKey, stack.amount());
         }
         return null;
     }

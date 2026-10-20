@@ -11,8 +11,6 @@ import dev.emi.emi.config.IndexSource;
 import dev.emi.emi.data.EmiAlias;
 import dev.emi.emi.data.EmiData;
 import dev.emi.emi.data.IndexStackData;
-import dev.emi.emi.registry.EmiComparisonDefaults;
-import dev.emi.emi.registry.EmiTags;
 import dev.emi.emi.runtime.EmiHidden;
 import dev.emi.emi.runtime.EmiLog;
 import it.unimi.dsi.fastutil.Hash;
@@ -135,7 +133,7 @@ public class EmiStackList {
 		groups.add(fluidGroup);
 
 		Set<EmiStack> added = new ObjectOpenCustomHashSet<>(new StrictHashStrategy());
-		
+
 		stacks = Lists.newLinkedList();
 		for (IndexGroup group : groups) {
 			if (group.shouldDisplay()) {
@@ -168,6 +166,60 @@ public class EmiStackList {
 			}
 		}
 		return false;
+	}
+
+	public static void bake(List<EmiStack> suppliedStacks) {
+        stacks = suppliedStacks;
+        removeHiddenStacks(stacks);
+        strictIndices.clear();
+        keyIndices.clear();
+        for (int i = 0; i < stacks.size(); i++) {
+            var stack = stacks.get(i);
+            strictIndices.put(stack, i);
+            keyIndices.put(stack.getKey(), i);
+        }
+        bakeFiltered();
+    }
+
+    private static void removeHiddenStacks(List<EmiStack> stacks) {
+        var invalidators = EmiStackList.invalidators;
+        stacks.removeIf(s -> {
+            try {
+                if (s.isEmpty())
+                    return true;
+                for (Predicate<EmiStack> invalidator : invalidators) {
+                    if (invalidator.test(s))
+                        return true;
+                }
+                return isHiddenFromRecipeViewers(s.getKey());
+            } catch (Throwable t) {
+                EmiLog.error("Stack threw error while baking", t);
+                return true;
+            }
+        });
+        for (Supplier<IndexStackData> supplier : EmiData.stackData) {
+            IndexStackData data = supplier.get();
+            if (!data.removed().isEmpty()) {
+                Set<EmiStack> removed = new com.gto.fastcollection.fastutil.OpenCacheHashSet<>();
+                for (EmiIngredient ingredient : data.removed()) {
+                    for (EmiStack stack : ingredient.getEmiStacks()) {
+                        removed.add(stack.copy().comparison(c -> EmiPort.compareStrict()));
+                    }
+                }
+                stacks.removeAll(removed);
+            }
+            if (!data.filters().isEmpty()) {
+                var filters = data.filters();
+                stacks.removeIf(s -> {
+                    String id = String.valueOf(s.getId());
+                    for (IndexStackData.Filter filter : filters) {
+                        if (filter.filter().test(id))
+                            return true;
+                    }
+                    return false;
+                });
+            }
+        }
 	}
 
 	public static void bake() {
@@ -262,7 +314,7 @@ public class EmiStackList {
 		EmiStack stack = ingredient.getEmiStacks().get(0);
 		int ret = strictIndices.getOrDefault(stack, Integer.MAX_VALUE);
 		if (ret == Integer.MAX_VALUE) {
-			ret = keyIndices.getOrDefault(stack, ret);
+			ret = keyIndices.getOrDefault(stack.getKey(), ret);
 		}
 		return ret;
 	}

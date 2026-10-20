@@ -9,7 +9,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 
 public class RecipeBackground extends Widget {
-	private static final ResourceLocation TEXTURE = EmiPort.id("dev/emi/emi", "textures/gui/background.png");
+	private static final ResourceLocation TEXTURE = EmiPort.id("emi", "textures/gui/background.png");
 	private final int x, y, width, height;
 
 	public RecipeBackground(int x, int y, int width, int height) {

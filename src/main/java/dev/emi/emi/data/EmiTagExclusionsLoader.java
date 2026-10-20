@@ -25,7 +25,7 @@ public class EmiTagExclusionsLoader extends SimplePreparableReloadListener<TagEx
 	public TagExclusions prepare(ResourceManager manager, ProfilerFiller profiler) {
 		TagExclusions exclusions = new TagExclusions();
 		for (ResourceLocation id : EmiPort.findResources(manager, "tag/exclusions", i -> i.endsWith(".json"))) {
-			if (!id.getNamespace().equals("dev/emi/emi")) {
+			if (!id.getNamespace().equals("emi")) {
 				continue;
 			}
 			try {

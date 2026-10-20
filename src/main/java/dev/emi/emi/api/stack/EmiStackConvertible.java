@@ -18,7 +18,7 @@ public interface EmiStackConvertible {
 	 */
 	@OnlyIn(Dist.CLIENT)
 	@ApiStatus.Experimental
-	default dev.emi.emi.api.stack.EmiStack emi() {
+	default EmiStack emi() {
 		throw new IllegalStateException();
 	}
 

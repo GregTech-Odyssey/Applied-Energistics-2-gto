@@ -50,6 +50,52 @@ public class EmiSearch {
 	public static SuffixArray<dev.emi.emi.search.SearchStack> names, tooltips, mods;
 	public static SuffixArray<EmiStack> aliases;
 
+    public static volatile boolean searchBaked;
+    public static volatile boolean searchBaking;
+    private static final Object BAKE_LOCK = new Object();
+    private static volatile String bakedKey;
+    private static volatile List<EmiStack> bakedSource;
+
+    public static void bakeAsync() {
+        if (searchBaked && EmiStackList.stacks == bakedSource && searchKey().equals(bakedKey))
+            return;
+        var worker = new Thread(EmiSearch::bakeSearch, "EMI Search Bake");
+        worker.setPriority(Thread.MIN_PRIORITY);
+        worker.setDaemon(true);
+        worker.start();
+    }
+
+    private static void bakeSearch() {
+        synchronized (BAKE_LOCK) {
+            var key = searchKey();
+            if (searchBaked && EmiStackList.stacks == bakedSource && key.equals(bakedKey))
+                return;
+            boolean appendItemModId = EmiConfig.appendItemModId;
+            searchBaking = true;
+            try {
+                var source = EmiStackList.stacks;
+                bake();
+                bakedSource = source;
+                bakedKey = key;
+                searchBaked = true;
+            } catch (Throwable error) {
+                EmiLog.error("Error when baking search:", error);
+            } finally {
+                EmiConfig.appendItemModId = appendItemModId;
+                searchBaking = false;
+            }
+        }
+        var client = net.minecraft.client.Minecraft.getInstance();
+        if (client.level != null)
+            client.execute(EmiSearch::update);
+    }
+
+    private static String searchKey() {
+        var client = net.minecraft.client.Minecraft.getInstance();
+        return client.getLanguageManager().getSelected() + '|'
+                + String.join(",", client.getResourcePackRepository().getSelectedIds());
+    }
+
 	public static void bake() {
 		SuffixArray<dev.emi.emi.search.SearchStack> names = new SuffixArray<>();
 		SuffixArray<dev.emi.emi.search.SearchStack> tooltips = new SuffixArray<>();
@@ -133,13 +179,30 @@ public class EmiSearch {
 	}
 
 	public static void search(String query) {
-		synchronized (EmiSearch.class) {
-			SearchWorker worker = new SearchWorker(query, EmiScreenManager.getSearchSource());
-			currentWorker = worker;
-			
-			searchThread = new Thread(worker);
-			searchThread.setDaemon(true);
-			searchThread.start();
+        try {
+            var source = EmiScreenManager.getSearchSource();
+            if (!searchBaked) {
+                EmiSearch.stacks = source;
+                return;
+            }
+            EmiSearch.CompiledQuery compiled = new EmiSearch.CompiledQuery(query);
+            EmiSearch.compiledQuery = compiled;
+            if (compiled.isEmpty()) {
+                EmiSearch.stacks = source;
+                return;
+            }
+            List<EmiIngredient> stacks = new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(source.size());
+            source.forEach(stack -> {
+                List<EmiStack> ess = stack.getEmiStacks();
+                if (ess.size() == 1) {
+                    if (compiled.test(ess.getFirst())) {
+                        stacks.add(stack);
+                    }
+                }
+            });
+            EmiSearch.stacks = stacks;
+        } catch (Exception e) {
+            EmiLog.error("Error when attempting to search:", e);
 		}
 	}
 

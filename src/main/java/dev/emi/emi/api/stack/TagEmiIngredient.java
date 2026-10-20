@@ -127,22 +127,22 @@ public class TagEmiIngredient implements EmiIngredient {
 				context.matrices().translate(x + 8, y + 8, 150);
 				context.matrices().mulPoseMatrix(new Matrix4f().scaling(1.0f, -1.0f, 1.0f));
 				context.matrices().scale(16.0f, 16.0f, 16.0f);
-				
+
 				model.getTransforms().getTransform(ItemDisplayContext.GUI).apply(false, context.matrices());
 				context.matrices().translate(-0.5f, -0.5f, -0.5f);
-				
+
 				if (!model.usesBlockLight()) {
 					Lighting.setupForFlatItems();
 				}
 				MultiBufferSource.BufferSource immediate = context.raw().bufferSource();
-				
+
 				((ItemRendererAccessor) client.getItemRenderer())
 					.invokeRenderBakedItemModel(model,
-						ItemStack.EMPTY, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, context.matrices(), 
+						ItemStack.EMPTY, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY, context.matrices(),
 						ItemRenderer.getFoilBufferDirect(immediate,
 							Sheets.translucentCullBlockSheet(), true, false));
 				immediate.endBatch();
-				
+
 				if (!model.usesBlockLight()) {
 					Lighting.setupFor3DItems();
 				}
@@ -155,7 +155,7 @@ public class TagEmiIngredient implements EmiIngredient {
 			if (amount != 1) {
 				count += amount;
 			}
-			EmiRenderHelper.renderAmount(context, x, y, EmiPort.literal(count));
+			EmiRenderHelper.renderAmount(context, x, y, getEmiStacks().getFirst(), getAmount(), EmiPort.literal(count));
 		}
 		if ((flags & RENDER_INGREDIENT) != 0) {
 			EmiRender.renderTagIcon(this, context.raw(), x, y);

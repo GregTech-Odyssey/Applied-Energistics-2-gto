@@ -17,12 +17,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.Function;
+import appeng.api.stacks.AEKey;
 
 /**
- * An abstract representation of a resource in EMI.
- * Can be an item, a fluid, or something else.
+ * An abstract representation of a resource in EMI. Can be an item, a fluid, or something else.
  */
-public abstract class EmiStack implements dev.emi.emi.api.stack.EmiIngredient {
+public abstract class EmiStack implements EmiIngredient {
 	public static final EmiStack EMPTY = new EmptyEmiStack();
 	private EmiStack remainder = EMPTY;
 	protected Comparison comparison = Comparison.DEFAULT_COMPARISON;
@@ -63,7 +63,7 @@ public abstract class EmiStack implements dev.emi.emi.api.stack.EmiIngredient {
 	public long getAmount() {
 		return amount;
 	}
-	
+
 	public EmiStack setAmount(long amount) {
 		this.amount = amount;
 		return this;
@@ -72,7 +72,7 @@ public abstract class EmiStack implements dev.emi.emi.api.stack.EmiIngredient {
 	public float getChance() {
 		return chance;
 	}
-	
+
 	public EmiStack setChance(float chance) {
 		this.chance = chance;
 		return this;
@@ -85,6 +85,11 @@ public abstract class EmiStack implements dev.emi.emi.api.stack.EmiIngredient {
 	}
 
 	public abstract Object getKey();
+
+    /** Returns the canonical AE key for item/fluid stacks, or null for custom resources. */
+    public @Nullable AEKey getAEKey() {
+        return null;
+    }
 
 	@SuppressWarnings("unchecked")
 	public <T> @Nullable T getKeyOfType(Class<T> clazz) {

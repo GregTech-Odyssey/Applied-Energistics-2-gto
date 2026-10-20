@@ -180,7 +180,7 @@ public final class EncodingHelper {
     }
 
     // Given a set of possible ingredients, find the one that has the highest priority
-    private static GenericStack findBestIngredient(Reference2IntOpenHashMap<AEKey> ingredientPriorities,
+    public static GenericStack findBestIngredient(Reference2IntOpenHashMap<AEKey> ingredientPriorities,
             List<GenericStack> possibleIngredients) {
         return possibleIngredients.stream()
                 .map(gi -> Pair.of(gi, ingredientPriorities.getOrDefault(gi.what(), Integer.MIN_VALUE)))

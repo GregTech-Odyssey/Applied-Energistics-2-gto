@@ -100,7 +100,7 @@ public final class EmiForgePlatform {
 			for (ModFileScanData.AnnotationData annot : data.getAnnotations()) {
 				try {
 					if (entrypointType.equals(annot.annotationType())) {
-						mods.add(data.getIModInfoData().get(0).getMods().get(0).getModId());
+						mods.add(data.getIModInfoData().getFirst().getMods().getFirst().getModId());
 					}
 				} catch (Throwable t) {
 					EmiLog.error("Exception constructing entrypoint:");
@@ -143,7 +143,7 @@ public final class EmiForgePlatform {
 				for (PotionBrewing.Mix<Potion> recipe : PotionBrewing.POTION_MIXES) {
 					try {
 						if (recipe.ingredient.getItems().length > 0) {
-							ResourceLocation id = EmiPort.id("dev/emi/emi", "/brewing/" + pid
+							ResourceLocation id = EmiPort.id("emi", "/brewing/" + pid
 								+ "/" + EmiUtil.subId(recipe.ingredient.getItems()[0].getItem())
 								+ "/" + EmiUtil.subId(EmiPort.getPotionRegistry().getKey(recipe.from.get()))
 								+ "/" + EmiUtil.subId(EmiPort.getPotionRegistry().getKey(recipe.to.get())));
@@ -170,7 +170,7 @@ public final class EmiForgePlatform {
 							return;
 						}
 						if (PotionBrewing.isBrewablePotion(potion)) {
-							ResourceLocation id = EmiPort.id("dev/emi/emi", "brewing/item/"
+							ResourceLocation id = EmiPort.id("emi", "brewing/item/"
 								+ EmiUtil.subId(entry.unwrapKey().get().location()) + "/" + gid + "/" + iid + "/" + oid);
 							registry.addRecipe(new EmiBrewingRecipe(
 								EmiStack.of(EmiPort.setPotion(new ItemStack(recipe.from.get()), potion)), EmiIngredient.of(recipe.ingredient),
@@ -195,7 +195,7 @@ public final class EmiForgePlatform {
 						EmiStack input = EmiStack.of(is);
 						EmiIngredient ingredient = EmiIngredient.of(recipe.getIngredient());
 						EmiStack output = EmiStack.of(recipe.getOutput(is, recipe.getIngredient().getItems()[0]));
-						ResourceLocation id = EmiPort.id("dev/emi/emi", "brewing/forge/"
+						ResourceLocation id = EmiPort.id("emi", "brewing/forge/"
 							+ EmiUtil.subId(input.getId()) + "/"
 							+ EmiUtil.subId(ingredient.getEmiStacks().get(0).getId()) + "/"
 							+ EmiUtil.subId(output.getId()));
@@ -237,7 +237,12 @@ public final class EmiForgePlatform {
 	}
 
 	public static List<Component> getFluidTooltip(Fluid fluid, CompoundTag nbt) {
-		return List.of(getFluidName(fluid, nbt));
+        var name = getFluidName(fluid, nbt);
+        if (Minecraft.getInstance().options.advancedItemTooltips) {
+            return List.of(name, Component.literal(fluid.getFluidType().toString())
+                    .withStyle(net.minecraft.ChatFormatting.DARK_GRAY));
+        }
+        return List.of(name);
 	}
 
 	public static boolean isFloatyFluid(FluidEmiStack stack) {

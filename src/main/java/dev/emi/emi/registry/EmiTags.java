@@ -10,6 +10,7 @@ import dev.emi.emi.runtime.EmiHidden;
 import dev.emi.emi.runtime.EmiReloadLog;
 import dev.emi.emi.runtime.EmiTagKey;
 import dev.emi.emi.util.InheritanceMap;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceKey;
@@ -23,14 +24,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class EmiTags {
-	public static final InheritanceMap<EmiRegistryAdapter<?>> ADAPTERS_BY_CLASS = new InheritanceMap<>(Maps.newHashMap());
-	public static final Map<Registry<?>, EmiRegistryAdapter<?>> ADAPTERS_BY_REGISTRY = Maps.newHashMap();
+	public static final InheritanceMap<EmiRegistryAdapter<?>> ADAPTERS_BY_CLASS = new InheritanceMap<>(
+            new Reference2ObjectOpenHashMap<>());
+	public static final Reference2ObjectOpenHashMap<Registry<?>, EmiRegistryAdapter<?>> ADAPTERS_BY_REGISTRY = new Reference2ObjectOpenHashMap<>();
 	public static final ResourceLocation HIDDEN_FROM_RECIPE_VIEWERS = EmiPort.id("forge", "hidden_from_recipe_viewers");
-	public static final Map<TagKey<?>, ResourceLocation> MODELED_TAGS = Maps.newHashMap();
+	public static final Reference2ObjectOpenHashMap<TagKey<?>, ResourceLocation> MODELED_TAGS = new Reference2ObjectOpenHashMap<>();
 	private static final Map<Set<?>, List<EmiTagKey<?>>> CACHED_TAGS = Maps.newHashMap();
-	private static final Map<EmiTagKey<?>, List<?>> TAG_VALUES = Maps.newHashMap();
+	private static final Reference2ObjectOpenHashMap<EmiTagKey<?>, List<?>> TAG_VALUES = new Reference2ObjectOpenHashMap<>();
 	private static final Map<ResourceLocation, List<EmiTagKey<?>>> SORTED_TAGS = Maps.newHashMap();
 	public static final List<EmiTagKey<?>> TAGS = Lists.newArrayList();
 	public static TagExclusions exclusions = new TagExclusions();
@@ -71,7 +74,7 @@ public class EmiTags {
 				map.put((T) stack.getKey(), stack);
 			}
 		}
-		if (map.size() == 0) {
+		if (map.isEmpty()) {
 			return EmiStack.EMPTY;
 		} else if (map.size() == 1) {
 			return map.values().stream().toList().get(0).copy().setAmount(amount);
@@ -104,21 +107,20 @@ public class EmiTags {
 					break;
 				}
 			}
-			CACHED_TAGS.put((Set) original, (List) keys);
+			CACHED_TAGS.put(original, (List) keys);
 		}
 
 		if (keys == null || keys.isEmpty()) {
 			return new ListEmiIngredient(stacks.stream().toList(), amount);
 		} else if (map.isEmpty()) {
 			if (keys.size() == 1) {
-				return tagIngredient(keys.get(0), amount);
+				return tagIngredient(keys.getFirst(), amount);
 			} else {
 				return new ListEmiIngredient(keys.stream().map(k -> tagIngredient(k, 1)).toList(), amount);
 			}
 		} else {
-			return new ListEmiIngredient(List.of(map.values().stream().map(i -> i.copy().setAmount(1)).toList(),
-					keys.stream().map(k -> tagIngredient(k, 1)).toList())
-				.stream().flatMap(a -> a.stream()).toList(), amount);
+			return new ListEmiIngredient(Stream.of(map.values().stream().map(i -> i.copy().setAmount(1)).toList(),
+					keys.stream().map(k -> tagIngredient(k, 1)).toList()).flatMap(a -> a.stream()).toList(), amount);
 		}
 	}
 
@@ -155,14 +157,14 @@ public class EmiTags {
 			String path = id.getPath();
 			path = path.substring(0, path.length() - 5);
 			String[] parts = path.substring(17).split("/");
-			if (id.getNamespace().equals("dev/emi/emi") && parts.length > 1) {
+			if (id.getNamespace().equals("emi") && parts.length > 1) {
 				ResourceLocation mid = new ModelResourceLocation(id.getNamespace(), path.substring(12), "inventory");
 				EmiTags.MODELED_TAGS.put(TagKey.create(EmiPort.getItemRegistry().key(), EmiPort.id(parts[0], path.substring(18 + parts[0].length()))), mid);
 				consumer.accept(mid);
 			}
 		}
 	}
-	
+
 	public static void reload() {
 		EmiTagKey.reload();
 		TAGS.clear();
@@ -226,16 +228,15 @@ public class EmiTags {
 
 	private static <T> List<EmiTagKey<T>> consolodateTags(List<EmiTagKey<T>> tags) {
 		Map<Set<T>, EmiTagKey<T>> map = Maps.newHashMap();
-		for (int i = 0; i < tags.size(); i++) {
-			EmiTagKey<T> key = tags.get(i);
-			Set<T> values = key.getSet();
-			EmiTagKey<T> original = map.get(values);
-			if (original != null) {
-				map.put(values, betterTag(key, original));
-			} else {
-				map.put(values, key);
-			}
-		}
+        for (EmiTagKey<T> key : tags) {
+            Set<T> values = key.getSet();
+            EmiTagKey<T> original = map.get(values);
+            if (original != null) {
+                map.put(values, betterTag(key, original));
+            } else {
+                map.put(values, key);
+            }
+        }
 		return map.values().stream().toList();
 	}
 

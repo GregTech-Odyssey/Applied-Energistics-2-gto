@@ -7,8 +7,6 @@ import dev.emi.emi.api.recipe.EmiCraftingRecipe;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.runtime.EmiLog;
-import net.minecraft.world.inventory.TransientCraftingContainer;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
 
@@ -23,23 +21,35 @@ public class EmiShapedRecipe extends EmiCraftingRecipe {
 
 	public static void setRemainders(List<EmiIngredient> input, CraftingRecipe recipe) {
 		try {
-			TransientCraftingContainer inv = EmiUtil.getCraftingInventory();
-			for (int i = 0; i < input.size(); i++) {
-				if (input.get(i).isEmpty()) {
+            var inv = EmiUtil.getCraftingInventory();
+            var size = input.size();
+			for (int i = 0; i < size; i++) {
+                var ingredient = input.get(i);
+                if (ingredient.isEmpty())
+                    continue;
+                var stacks = ingredient.getEmiStacks();
+                boolean hasPossibleRemainder = false;
+                for (var st : stacks) {
+                    var test = st.getItemStack();
+                    if (test.getItem().hasCraftingRemainingItem(test)) {
+                        hasPossibleRemainder = true;
+                        break;
+                    }
+                }
+                if (!hasPossibleRemainder) {
 					continue;
 				}
-				for (int j = 0; j < input.size(); j++) {
-					if (j == i) {
+				for (int j = 0; j < size; j++) {
+					if (j == i)
 						continue;
-					}
-					if (!input.get(j).isEmpty()) {
-						inv.setItem(j, input.get(j).getEmiStacks().get(0).getItemStack().copy());
+                    ingredient = input.get(j);
+                    if (!ingredient.isEmpty()) {
+						inv.setItem(j, ingredient.getEmiStacks().getFirst().getItemStack());
 					}
 				}
-				List<EmiStack> stacks = input.get(i).getEmiStacks();
-				for (EmiStack stack : stacks) {
-					inv.setItem(i, stack.getItemStack().copy());
-					ItemStack remainder = recipe.getRemainingItems(inv).get(i);
+                for (var stack : stacks) {
+					inv.setItem(i, stack.getItemStack());
+                    var remainder = recipe.getRemainingItems(inv).get(i);
 					if (!remainder.isEmpty()) {
 						stack.setRemainder(EmiStack.of(remainder));
 					}

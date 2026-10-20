@@ -68,6 +68,19 @@ import java.util.stream.Stream;
 
 @JeiPlugin
 public class JemiPlugin implements IModPlugin, EmiPlugin {
+    public static volatile Runnable deferredJeiStarter;
+
+    public static void startDeferredJei() {
+        Runnable starter = deferredJeiStarter;
+        if (starter == null)
+            return;
+        try {
+            starter.run();
+        } finally {
+            deferredJeiStarter = null;
+        }
+    }
+
 	private static final Map<EmiRecipeCategory, IRecipeCategory<?>> CATEGORY_MAP = Maps.newHashMap();
 	private static ISubtypeManager subtypeManager;
 	public static IJeiRuntime runtime;
@@ -125,6 +138,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
 	@Override
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	public void register(EmiRegistry registry) {
+        startDeferredJei();
 		EmiLog.info("[JEMI] Waiting for JEI to finish reloading...");
 		EmiReloadManager.step(EmiPort.literal("Waiting for JEI to finish..."), 20_000);
 		try {
@@ -202,7 +216,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
 		categoryMap.put(RecipeTypes.FUELING, VanillaEmiRecipeCategories.FUEL);
 		categoryMap.put(RecipeTypes.COMPOSTING, VanillaEmiRecipeCategories.COMPOSTING);
 		categoryMap.put(RecipeTypes.INFORMATION, VanillaEmiRecipeCategories.INFO);
-		
+
 		CATEGORY_MAP.clear();
 		EmiRecipeFiller.extraHandlers = JemiPlugin::getRecipeHandler;
 
@@ -285,7 +299,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
 			}
 			identical.computeIfAbsent(text, k -> Lists.newArrayList()).addAll(group.getKey());
 		}
-		
+
 		for (Component text : identical.keySet()) {
 			registry.addRecipe(new EmiInfoRecipe(identical.get(text).stream().map(s -> (EmiIngredient) s).toList(), List.of(text), null));
 		}
@@ -325,7 +339,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
 								public List<EmiStack> getOutputs() {
 									return outputs;
 								}
-								
+
 								@Override
 								public SlotWidget getInputWidget(int slot, int x, int y) {
 									if (slot <= inputs.size()) {
@@ -339,7 +353,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
 								public SlotWidget getOutputWidget(int x, int y) {
 									return new GeneratedSlotWidget(r -> outputs.get(r.nextInt(outputs.size())), recipe.hashCode(), x, y);
 								}
-								
+
 							};
 						} else {
 							replacement = new EmiCraftingRecipe(inputs, outputs.get(0), category.getRegistryName(recipe), builder.shapeless);

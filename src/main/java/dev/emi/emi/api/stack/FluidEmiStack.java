@@ -18,14 +18,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import appeng.api.stacks.AEFluidKey;
 
 @ApiStatus.Internal
 public class FluidEmiStack extends dev.emi.emi.api.stack.EmiStack {
-	private final Fluid fluid;
-	private final CompoundTag nbt;
+	private final AEFluidKey fluid;
 
 	public FluidEmiStack(Fluid fluid) {
-		this(fluid, null);
+		this.fluid = AEFluidKey.of(fluid);
+        this.amount = 0;
 	}
 
 	public FluidEmiStack(Fluid fluid, @Nullable CompoundTag nbt) {
@@ -33,14 +34,18 @@ public class FluidEmiStack extends dev.emi.emi.api.stack.EmiStack {
 	}
 
 	public FluidEmiStack(Fluid fluid, @Nullable CompoundTag nbt, long amount) {
+		this.fluid = AEFluidKey.of(fluid, nbt);
+		this.amount = amount;
+    }
+
+    public FluidEmiStack(AEFluidKey fluid, long amount) {
 		this.fluid = fluid;
-		this.nbt = nbt;
 		this.amount = amount;
 	}
 
 	@Override
-	public dev.emi.emi.api.stack.EmiStack copy() {
-		EmiStack e = new FluidEmiStack(fluid, nbt, amount);
+	public EmiStack copy() {
+		EmiStack e = new FluidEmiStack(fluid, amount);
 		e.setChance(chance);
 		e.setRemainder(getRemainder().copy());
 		e.comparison = comparison;
@@ -54,17 +59,22 @@ public class FluidEmiStack extends dev.emi.emi.api.stack.EmiStack {
 
 	@Override
 	public CompoundTag getNbt() {
-		return nbt;
+		return fluid.getTag();
 	}
 
 	@Override
 	public Object getKey() {
+        return fluid.getFluid();
+    }
+
+    @Override
+    public AEFluidKey getAEKey() {
 		return fluid;
 	}
 
 	@Override
 	public ResourceLocation getId() {
-		return EmiPort.getFluidRegistry().getKey(fluid);
+		return fluid.getId();
 	}
 
 	@Override
@@ -83,7 +93,7 @@ public class FluidEmiStack extends dev.emi.emi.api.stack.EmiStack {
 
 	@Override
 	public List<Component> getTooltipText() {
-		return EmiForgePlatform.getFluidTooltip(fluid, nbt);
+		return EmiForgePlatform.getFluidTooltip(fluid.getFluid(), getNbt());
 	}
 
 	@Override
@@ -97,7 +107,7 @@ public class FluidEmiStack extends dev.emi.emi.api.stack.EmiStack {
 		if (amount > 1) {
 			list.add(EmiTooltipComponents.getAmount(this));
 		}
-		String namespace = EmiPort.getFluidRegistry().getKey(fluid).getNamespace();
+		String namespace = EmiPort.getFluidRegistry().getKey(fluid.getFluid()).getNamespace();
 		EmiTooltipComponents.appendModName(list, namespace);
 		list.addAll(super.getTooltip());
 		return list;
@@ -105,7 +115,7 @@ public class FluidEmiStack extends dev.emi.emi.api.stack.EmiStack {
 
 	@Override
 	public Component getName() {
-		return EmiForgePlatform.getFluidName(fluid, nbt);
+		return EmiForgePlatform.getFluidName(fluid.getFluid(), getNbt());
 	}
 
 	static class FluidEntry {

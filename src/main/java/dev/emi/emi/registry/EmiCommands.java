@@ -18,9 +18,9 @@ public class EmiCommands {
 	public static final byte VIEW_TREE = 0x02;
 	public static final byte TREE_GOAL = 0x11;
 	public static final byte TREE_RESOLUTION = 0x12;
-	
+
 	public static void registerCommands(CommandDispatcher<CommandSourceStack> dispatcher) {
-		dispatcher.register(literal("dev/emi/emi")
+		dispatcher.register(literal("emi")
 			.requires(source -> source.hasPermission(2))
 			.then(
 				literal("view")

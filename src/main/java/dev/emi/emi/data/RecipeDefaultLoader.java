@@ -22,7 +22,7 @@ public class RecipeDefaultLoader extends SimplePreparableReloadListener<RecipeDe
 	protected RecipeDefaults prepare(ResourceManager manager, ProfilerFiller profiler) {
 		RecipeDefaults defaults = new RecipeDefaults();
 		for (ResourceLocation id : EmiPort.findResources(manager, "recipe/defaults", i -> i.endsWith(".json"))) {
-			if (!id.getNamespace().equals("dev/emi/emi")) {
+			if (!id.getNamespace().equals("emi")) {
 				continue;
 			}
 			try {
@@ -42,7 +42,7 @@ public class RecipeDefaultLoader extends SimplePreparableReloadListener<RecipeDe
 	protected void apply(RecipeDefaults prepared, ResourceManager manager, ProfilerFiller profiler) {
 		BoM.setDefaults(prepared);
 	}
-	
+
 	@Override
 	public ResourceLocation getEmiId() {
 		return ID;

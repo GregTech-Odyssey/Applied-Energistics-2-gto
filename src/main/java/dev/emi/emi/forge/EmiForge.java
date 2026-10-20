@@ -10,7 +10,7 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.PacketDistributor;
 
-@Mod("dev/emi/emi")
+@Mod("emi")
 public class EmiForge {
 
 	public EmiForge() {

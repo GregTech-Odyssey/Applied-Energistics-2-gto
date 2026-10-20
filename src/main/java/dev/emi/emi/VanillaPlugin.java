@@ -72,7 +72,7 @@ import static dev.emi.emi.api.recipe.VanillaEmiRecipeCategories.*;
 public class VanillaPlugin implements EmiPlugin {
 	public static EmiRecipeCategory TAG = new EmiRecipeCategory(dev.emi.emi.EmiPort.id("emi:tag"),
 		EmiStack.of(Items.NAME_TAG), simplifiedRenderer(240, 208), EmiRecipeSorting.none());
-	
+
 	public static EmiRecipeCategory INGREDIENT = new EmiRecipeCategory(dev.emi.emi.EmiPort.id("emi:ingredient"),
 		EmiStack.of(Items.COMPASS), simplifiedRenderer(240, 208));
 	public static EmiRecipeCategory RESOLUTION = new EmiRecipeCategory(dev.emi.emi.EmiPort.id("emi:resolution"),
@@ -246,7 +246,7 @@ public class VanillaPlugin implements EmiPlugin {
 						paper, paper, paper, paper,
 						EmiStack.of(Items.FILLED_MAP),
 						paper, paper, paper, paper
-				), 
+				),
 						EmiStack.of(Items.FILLED_MAP),
 						id, false), recipe);
 			} else if (recipe instanceof ShapedRecipe shaped && recipe.canCraftInDimensions(3, 3)) {
@@ -499,7 +499,7 @@ public class VanillaPlugin implements EmiPlugin {
 			ResourceLocation id = synthetic("world/stripping", dev.emi.emi.EmiUtil.subId(entry.getKey()));
 			addRecipeSafe(registry, () -> basicWorld(EmiStack.of(entry.getKey()), axes, EmiStack.of(entry.getValue()), id));
 		}
-		
+
 		EmiIngredient shears = damagedTool(EmiStack.of(Items.SHEARS), 1);
 		addRecipeSafe(registry, () -> EmiWorldInteractionRecipe.builder()
 			.id(synthetic("world/shearing", "minecraft/pumpkin"))
@@ -599,7 +599,7 @@ public class VanillaPlugin implements EmiPlugin {
 			.rightInput(waterCatalyst, false)
 			.output(EmiStack.of(Items.OBSIDIAN))
 			.build());
-	
+
 		EmiStack soulSoil = EmiStack.of(Items.SOUL_SOIL);
 		soulSoil.setRemainder(soulSoil);
 		EmiStack blueIce = EmiStack.of(Items.BLUE_ICE);
@@ -620,7 +620,7 @@ public class VanillaPlugin implements EmiPlugin {
 			Item bucket = fluid.getBucket();
 			if (fluid.isSource(fluid.defaultFluidState()) && !fluid.defaultFluidState().createLegacyBlock().isAir() && bucket != Items.AIR && fluid instanceof FlowingFluid) {
 				addRecipeSafe(registry, () -> basicWorld(EmiStack.of(Items.BUCKET), EmiStack.of(fluid, FluidUnit.BUCKET), EmiStack.of(bucket),
-					synthetic("dev/emi/emi", "bucket_filling/" + dev.emi.emi.EmiUtil.subId(fluid)), false));
+					synthetic("emi", "bucket_filling/" + dev.emi.emi.EmiUtil.subId(fluid)), false));
 			}
 		});
 
@@ -720,7 +720,7 @@ public class VanillaPlugin implements EmiPlugin {
 	}
 
 	private static ResourceLocation synthetic(String type, String name) {
-		return dev.emi.emi.EmiPort.id("dev/emi/emi", "/" + type + "/" + name);
+		return dev.emi.emi.EmiPort.id("emi", "/" + type + "/" + name);
 	}
 
 	private static <C extends Container, T extends Recipe<C>> Iterable<T> getRecipes(EmiRegistry registry, RecipeType<T> type) {

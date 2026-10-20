@@ -116,6 +116,7 @@ public class EmiFavorites {
 			}
 		}
 		EmiFavoriteGroups.onFavoritesChanged();
+        appeng.integration.modules.emi.EmiFavoriteKeyCache.recalculate();
 	}
 
 	static JsonArray takeEmbeddedFavoriteGroups() {
@@ -277,6 +278,7 @@ public class EmiFavorites {
 			dev.emi.emi.runtime.EmiFavorite removed = favorites.remove(index);
 			forgetFavoritePage(removed);
 			EmiFavoriteGroups.onFavoritesChanged();
+            appeng.integration.modules.emi.EmiFavoriteKeyCache.recalculate();
 			return true;
 		}
 		return false;
@@ -328,6 +330,7 @@ public class EmiFavorites {
 		}
 		setFavoritePage(favorite, targetPage);
 		EmiFavoriteGroups.onFavoritesChanged();
+        appeng.integration.modules.emi.EmiFavoriteKeyCache.recalculate();
 		dev.emi.emi.runtime.EmiPersistentData.save();
 	}
 
@@ -373,6 +376,7 @@ public class EmiFavorites {
 			}
 		}
 		EmiFavoriteGroups.onFavoritesChanged();
+        appeng.integration.modules.emi.EmiFavoriteKeyCache.recalculate();
 		dev.emi.emi.runtime.EmiPersistentData.save();
 	}
 
@@ -390,6 +394,7 @@ public class EmiFavorites {
 
 	static void finishFavoriteBatch() {
 		EmiFavoriteGroups.onFavoritesChanged();
+        appeng.integration.modules.emi.EmiFavoriteKeyCache.recalculate();
 		dev.emi.emi.runtime.EmiPersistentData.save();
 	}
 
@@ -437,6 +442,7 @@ public class EmiFavorites {
 		}
 		if (!removed.isEmpty()) {
 			EmiFavoriteGroups.onFavoritesChanged();
+            appeng.integration.modules.emi.EmiFavoriteKeyCache.recalculate();
 			dev.emi.emi.runtime.EmiPersistentData.save();
 		}
 		return removed;
@@ -465,6 +471,7 @@ public class EmiFavorites {
 				favorites.remove(i);
 				forgetFavoritePage(favorite);
 				EmiFavoriteGroups.onFavoritesChanged();
+                appeng.integration.modules.emi.EmiFavoriteKeyCache.recalculate();
 				EmiPersistentData.save();
 				return true;
 			}

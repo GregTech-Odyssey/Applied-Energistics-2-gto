@@ -25,13 +25,13 @@ import net.minecraft.world.item.*;
 import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
+import appeng.api.stacks.AEItemKey;
 
 @ApiStatus.Internal
-public class ItemEmiStack extends dev.emi.emi.api.stack.EmiStack implements Batchable {
+public class ItemEmiStack extends EmiStack implements Batchable {
 	private static final Minecraft client = Minecraft.getInstance();
 
-	private final Item item;
-	private final CompoundTag nbt;
+	private final AEItemKey item;
 
 	private boolean unbatchable;
 
@@ -40,27 +40,28 @@ public class ItemEmiStack extends dev.emi.emi.api.stack.EmiStack implements Batc
 	}
 
 	public ItemEmiStack(ItemStack stack, long amount) {
-		this(stack.getItem(), stack.getTag(), amount);
+		this.item = AEItemKey.of(stack.getItem(), stack.getTag());
+        this.amount = amount;
 	}
 
 	public ItemEmiStack(Item item, CompoundTag nbt, long amount) {
+		this.item = AEItemKey.of(item, nbt);
+		this.amount = amount;
+    }
+
+    public ItemEmiStack(AEItemKey item, long amount) {
 		this.item = item;
-		this.nbt = nbt != null ? nbt.copy() : null;
 		this.amount = amount;
 	}
 
 	@Override
 	public ItemStack getItemStack() {
-		ItemStack stack = new ItemStack(this.item, (int) this.amount);
-		if (this.nbt != null) {
-			stack.setTag(this.nbt);
-		}
-		return stack;
+        return item.toStack((int) amount);
 	}
 
 	@Override
-	public dev.emi.emi.api.stack.EmiStack copy() {
-		EmiStack e = new ItemEmiStack(item, nbt, amount);
+	public EmiStack copy() {
+		EmiStack e = new ItemEmiStack(item, amount);
 		e.setChance(chance);
 		e.setRemainder(getRemainder().copy());
 		e.comparison = comparison;
@@ -69,22 +70,27 @@ public class ItemEmiStack extends dev.emi.emi.api.stack.EmiStack implements Batc
 
 	@Override
 	public boolean isEmpty() {
-		return amount == 0 || item == Items.AIR;
+		return amount == 0 || item.getItem() == Items.AIR;
 	}
 
 	@Override
 	public CompoundTag getNbt() {
-		return nbt;
+		return item.getTag();
 	}
 
 	@Override
 	public Object getKey() {
+        return item.getItem();
+    }
+
+    @Override
+    public AEItemKey getAEKey() {
 		return item;
 	}
 
 	@Override
 	public ResourceLocation getId() {
-		return EmiPort.getItemRegistry().getKey(item);
+		return item.getId();
 	}
 
 	@Override
@@ -101,30 +107,30 @@ public class ItemEmiStack extends dev.emi.emi.api.stack.EmiStack implements Batc
 			if (amount != 1) {
 				count += amount;
 			}
-			EmiRenderHelper.renderAmount(context, x, y, EmiPort.literal(count));
+			EmiRenderHelper.renderAmount(context, x, y, this, amount, EmiPort.literal(count));
 		}
 		if ((flags & RENDER_REMAINDER) != 0) {
 			EmiRender.renderRemainderIcon(this, context.raw(), x, y);
 		}
 	}
-	
+
 	@Override
 	public boolean isSideLit() {
 		return client.getItemRenderer().getModel(getItemStack(), null, null, 0).usesBlockLight();
 	}
-	
+
 	@Override
 	public boolean isUnbatchable() {
 		ItemStack stack = getItemStack();
 		return unbatchable || stack.hasFoil() || stack.isDamaged() || !EmiForgePlatform.canBatch(stack)
 			|| client.getItemRenderer().getModel(getItemStack(), null, null, 0).isCustomRenderer();
 	}
-	
+
 	@Override
 	public void setUnbatchable() {
 		this.unbatchable = true;
 	}
-	
+
 	@Override
 	public void renderForBatch(MultiBufferSource vcp, GuiGraphics draw, int x, int y, int z, float delta) {
 		EmiDrawContext context = EmiDrawContext.wrap(draw);

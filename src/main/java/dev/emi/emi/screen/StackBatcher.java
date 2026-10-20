@@ -150,7 +150,7 @@ public class StackBatcher {
 	}
 
 	public void render(EmiIngredient stack, GuiGraphics draw, int x, int y, float delta) {
-		render(stack, draw, x, y, delta, -1 ^ EmiIngredient.RENDER_AMOUNT);
+		render(stack, draw, x, y, delta, ~EmiIngredient.RENDER_AMOUNT);
 	}
 
 	public void render(EmiIngredient stack, GuiGraphics draw, int x, int y, float delta, int flags) {

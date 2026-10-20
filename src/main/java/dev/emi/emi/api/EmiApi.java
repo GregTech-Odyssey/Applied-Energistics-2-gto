@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class EmiApi {
 	private static final Minecraft client = Minecraft.getInstance();
@@ -69,10 +68,10 @@ public class EmiApi {
 	}
 
 	/**
-	 * Gets the currently hovered EmiIngredient at the provided screen coordinates,
-	 * or {@link EmiStack#EMPTY} if none.
-	 * @param includeStandard Whether to include the EmiIngredient representation of
-	 * 	standard stacks in slots or otherwise provided to EMI.
+     * Gets the currently hovered EmiIngredient at the provided screen coordinates, or {@link EmiStack#EMPTY} if none.
+     *
+     * @param includeStandard Whether to include the EmiIngredient representation of standard stacks in slots or
+     *                        otherwise provided to EMI.
 	 */
 	public static EmiStackInteraction getHoveredStack(int mouseX, int mouseY, boolean includeStandard) {
 		return EmiScreenManager.getHoveredStack(mouseX, mouseY, includeStandard);
@@ -80,16 +79,17 @@ public class EmiApi {
 
 	/**
 	 * Gets the currently hovered EmiIngredient at the mouse or {@link EmiStack#EMPTY} if none.
-	 * @param includeStandard Whether to include the EmiIngredient representation of
-	 * 	standard stacks in slots or otherwise provided to EMI.
+     *
+     * @param includeStandard Whether to include the EmiIngredient representation of standard stacks in slots or
+     *                        otherwise provided to EMI.
 	 */
 	public static EmiStackInteraction getHoveredStack(boolean includeStandard) {
 		return EmiScreenManager.getHoveredStack(EmiScreenManager.lastMouseX, EmiScreenManager.lastMouseY, includeStandard);
 	}
 
 	/**
-	 * @return Recipe context associated with specific ingredient implementations.
-	 *  This could be favorites, craftables, or something else.
+     * @return Recipe context associated with specific ingredient implementations. This could be favorites, craftables,
+     *         or something else.
 	 */
 	public static @Nullable EmiRecipe getRecipeContext(EmiIngredient stack) {
 		if (stack instanceof EmiFavorite fav) {
@@ -114,7 +114,7 @@ public class EmiApi {
 
 	public static void displayAllRecipes() {
 		EmiRecipeManager manager = EmiApi.getRecipeManager();
-		setPages(manager.getCategories().stream().collect(Collectors.toMap(c -> c, c -> manager.getRecipes(c))), EmiStack.EMPTY);
+		setPages(manager.getCategories().stream().collect(Collectors.toMap(c -> c, manager::getRecipes)), EmiStack.EMPTY);
 	}
 
 	public static void displayRecipeCategory(EmiRecipeCategory category) {
@@ -124,36 +124,82 @@ public class EmiApi {
 	public static void displayRecipe(EmiRecipe recipe) {
 		setPages(Map.of(recipe.getCategory(), List.of(recipe)), EmiStack.EMPTY);
 	}
-	
+
 	public static void displayRecipes(EmiIngredient stack) {
+		if (stack.isEmpty())
+            return;
 		if (stack instanceof EmiFavorite fav) {
 			stack = fav.getStack();
 		}
 		if (stack instanceof TagEmiIngredient tag) {
-			for (EmiRecipe recipe : getRecipeManager().getRecipes(VanillaPlugin.TAG)) {
+			for (EmiRecipe recipe : EmiApi.getRecipeManager().getRecipes(VanillaPlugin.TAG)) {
 				if (recipe instanceof EmiTagRecipe tr && tr.key.equals(tag.key)) {
 					setPages(Map.of(VanillaPlugin.TAG, List.of(recipe)), stack);
 					break;
 				}
 			}
-		} else if (stack instanceof ListEmiIngredient list) {
+		} else if (stack instanceof ListEmiIngredient) {
 			setPages(Map.of(VanillaPlugin.INGREDIENT, List.of(new EmiSyntheticIngredientRecipe(stack))), stack);
-		} else if (stack.getEmiStacks().size() == 1) {
-			EmiStack es = stack.getEmiStacks().get(0);
-			setPages(mapRecipes(pruneSources(EmiApi.getRecipeManager().getRecipesByOutput(es), es)), stack);
-			focusRecipe(BoM.getRecipe(es));
+		} else {
+            var recipesByOutput = new it.unimi.dsi.fastutil.objects.ObjectArrayList<EmiRecipe>();
+            var fluid = getFluidIngredient(stack);
+            EmiStack es = stack.getEmiStacks().getFirst();
+            if (fluid != null) {
+                EmiStack fes = fluid.getEmiStacks().getFirst();
+                recipesByOutput.addAll(pruneSources(EmiApi.getRecipeManager().getRecipesByOutput(fes), fes));
+            }
+            if (stack.getEmiStacks().size() == 1) {
+                recipesByOutput.addAll(pruneSources(EmiApi.getRecipeManager().getRecipesByOutput(es), es));
+            } else if (!recipesByOutput.isEmpty()) {
+                es = fluid.getEmiStacks().getFirst();
+            }
+            if (recipesByOutput.isEmpty())
+                return;
+            setPages(mapRecipes(recipesByOutput), stack);
+            EmiApi.focusRecipe(BoM.getRecipe(es));
 		}
 	}
 
 	public static void displayUses(EmiIngredient stack) {
-		if (!stack.isEmpty()) {
-			EmiStack zero = stack.getEmiStacks().get(0);
-			Map<EmiRecipeCategory, List<EmiRecipe>> map
-				= mapRecipes(Stream.concat(
-						pruneUses(getRecipeManager().getRecipesByInput(zero), stack).stream(),
-						EmiRecipes.byWorkstation.getOrDefault(zero, List.of()).stream()).distinct().toList());
-			setPages(map, stack);
+		if (!stack.isEmpty())
+            setPages(mapRecipes(getUses(stack)), stack);
 		}
+
+    public static List<EmiRecipe> getUses(EmiIngredient stack) {
+        var zero = stack.getEmiStacks().getFirst();
+        var combined = new it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet<EmiRecipe>();
+        combined.addAll(
+						pruneUses(getRecipeManager().getRecipesByInput(zero), stack));
+        var fluid = getFluidIngredient(stack);
+        if (fluid != null)
+            combined.addAll(pruneUses(getRecipeManager().getRecipesByInput(fluid), fluid));
+        combined.addAll(EmiRecipes.byWorkstation.getOrDefault(zero, java.util.Collections.emptyList()));
+        return new it.unimi.dsi.fastutil.objects.ObjectArrayList<>(combined);
+    }
+
+    public static @Nullable EmiStack getFluidIngredient(EmiIngredient ingredient) {
+        if (!(ingredient instanceof EmiStack stack))
+            return null;
+        if (stack.getKey() instanceof net.minecraft.world.item.BucketItem bucket) {
+            var fluid = bucket.getFluid();
+            return fluid == net.minecraft.world.level.material.Fluids.EMPTY ? null : EmiStack.of(fluid);
+        }
+        var item = stack.getItemStack();
+        var wrapped = appeng.api.stacks.GenericStack.fromItemStack(item);
+        if (wrapped != null && wrapped.what() instanceof appeng.api.stacks.AEFluidKey fluid) {
+            return new FluidEmiStack(fluid, 1);
+        }
+        if (stack.hasNbt()) {
+            var handler = item
+                    .getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.FLUID_HANDLER_ITEM)
+                    .orElse(null);
+            if (handler != null && handler.getTanks() > 0) {
+                var fluid = handler.getFluidInTank(0);
+                if (!fluid.isEmpty())
+                    return EmiStack.of(fluid.getFluid(), fluid.getTag(), 1);
+		}
+        }
+        return null;
 	}
 
 	public static void viewRecipeTree() {
