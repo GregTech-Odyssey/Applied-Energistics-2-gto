@@ -60,10 +60,10 @@ description="A Mod about Matter, Energy and using them to conquer the world.."
 # EMI is shipped by this fork; keep its mod identity for existing plugins.
 [[mods]]
 modId="emi"
-version="1.1.24-crazer.1"
+version="1.1.24+1.20.1"
 displayName="EMI"
-authors="Emi, Crazerium"
-credits="EMI by Emi (emilyploszaj); EMI fork enhancements by Crazerium; MIT License (LICENSE-EMI)."
+authors="Emi"
+credits="EMI 1.1.24+1.20.1 by Emi (emilyploszaj); MIT License (LICENSE-EMI)."
 description="Item and recipe viewer included with the GTO AE fork."
 
 [[dependencies.emi]]

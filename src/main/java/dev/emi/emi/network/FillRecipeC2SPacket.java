@@ -1,10 +1,12 @@
 package dev.emi.emi.network;
 
+import java.util.List;
+import java.util.function.Consumer;
+
 import com.google.common.collect.Lists;
-import dev.emi.emi.network.EmiNetwork;
-import dev.emi.emi.network.EmiPacket;
-import dev.emi.emi.runtime.EmiCraftingToolCompat;
-import dev.emi.emi.runtime.EmiLog;
+
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
@@ -12,10 +14,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.function.Consumer;
+import dev.emi.emi.runtime.EmiLog;
 
 public class FillRecipeC2SPacket implements EmiPacket {
     private final int syncId;
@@ -24,7 +24,8 @@ public class FillRecipeC2SPacket implements EmiPacket {
     private final int output;
     private final List<ItemStack> stacks;
 
-    public FillRecipeC2SPacket(AbstractContainerMenu handler, int action, List<Slot> slots, List<Slot> crafting, @Nullable Slot output, List<ItemStack> stacks) {
+    public FillRecipeC2SPacket(AbstractContainerMenu handler, int action, List<Slot> slots, List<Slot> crafting,
+            @Nullable Slot output, List<ItemStack> stacks) {
         this.syncId = handler.containerId;
         this.action = action;
         this.slots = slots.stream().map(s -> s == null ? -1 : s.index).toList();
@@ -120,7 +121,7 @@ public class FillRecipeC2SPacket implements EmiPacket {
                     s.onTake(player, taken);
                 }
             }
-            try {    
+            try {
                 for (int i = 0; i < stacks.size(); i++) {
                     ItemStack stack = stacks.get(i);
                     if (stack.isEmpty()) {
@@ -135,8 +136,10 @@ public class FillRecipeC2SPacket implements EmiPacket {
                         return;
                     } else {
                         Slot s = crafting.get(i);
-                        if (s != null && s.mayPlace(stack) && stack.getCount() <= s.getMaxStackSize() && stack.getCount() <= stack.getMaxStackSize()) {
-                            if (!s.getItem().isEmpty()) { // Make sure we don't accidentally delete any items that could have been placed in this slot
+                        if (s != null && s.mayPlace(stack) && stack.getCount() <= s.getMaxStackSize()
+                                && stack.getCount() <= stack.getMaxStackSize()) {
+                            if (!s.getItem().isEmpty()) { // Make sure we don't accidentally delete any items that could
+                                                          // have been placed in this slot
                                 if (s.mayPickup(player)) {
                                     ItemStack taken = s.getItem();
                                     rubble.add(taken.copy());
@@ -183,7 +186,7 @@ public class FillRecipeC2SPacket implements EmiPacket {
         }
         return list;
     }
-    
+
     private static void writeCompressedSlots(List<Integer> list, FriendlyByteBuf buf) {
         List<Consumer<FriendlyByteBuf>> postWrite = Lists.newArrayList();
         int groups = 0;
@@ -207,7 +210,8 @@ public class FillRecipeC2SPacket implements EmiPacket {
         }
     }
 
-    private static int grabMatching(Player player, List<Slot> slots, List<ItemStack> rubble, List<Slot> crafting, ItemStack stack) {
+    private static int grabMatching(Player player, List<Slot> slots, List<ItemStack> rubble, List<Slot> crafting,
+            ItemStack stack) {
         int amount = stack.getCount();
         int grabbed = 0;
         for (int i = 0; i < rubble.size(); i++) {
@@ -215,7 +219,7 @@ public class FillRecipeC2SPacket implements EmiPacket {
                 return grabbed;
             }
             ItemStack r = rubble.get(i);
-            if (ItemStack.isSameItemSameTags(stack, r) || EmiCraftingToolCompat.matches(stack, r)) {
+            if (ItemStack.isSameItemSameTags(stack, r)) {
                 int wanted = amount - grabbed;
                 if (r.getCount() <= wanted) {
                     grabbed += r.getCount();
@@ -235,7 +239,7 @@ public class FillRecipeC2SPacket implements EmiPacket {
                 continue;
             }
             ItemStack st = s.getItem();
-            if (ItemStack.isSameItemSameTags(stack, st) || EmiCraftingToolCompat.matches(stack, st)) {
+            if (ItemStack.isSameItemSameTags(stack, st)) {
                 int wanted = amount - grabbed;
                 ItemStack taken = st.copy();
                 if (st.getCount() <= wanted) {

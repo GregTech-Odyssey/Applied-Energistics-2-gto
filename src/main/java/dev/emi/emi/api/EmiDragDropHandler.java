@@ -1,17 +1,5 @@
 package dev.emi.emi.api;
 
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
-import dev.emi.emi.api.stack.EmiIngredient;
-import dev.emi.emi.api.widget.Bounds;
-import appeng.mixins.emi.accessor.HandledScreenAccessor;
-import dev.emi.emi.runtime.EmiDrawContext;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.Slot;
-
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -20,17 +8,26 @@ import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
+
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.widget.Bounds;
+import dev.emi.emi.runtime.EmiDrawContext;
+
+import appeng.mixins.emi.accessor.HandledScreenAccessor;
+
 public interface EmiDragDropHandler<T extends Screen> {
-    
     /**
-     * Called when a stack is released while being dragged.
-     * @return Whether to consume the event.
+     * Called when a stack is released while being dragged. Returns whether to consume the event.
      */
     boolean dropStack(T screen, EmiIngredient stack, int x, int y);
-
-    default boolean dropStacks(T screen, List<? extends EmiIngredient> stacks, int x, int y) {
-        return false;
-    }
 
     /**
      * Called when a stack is being dragged.
@@ -39,8 +36,7 @@ public interface EmiDragDropHandler<T extends Screen> {
     }
 
     /**
-     * A simple, bounds based drag drop handler.
-     * Bounds are rendered while a stack is dragged.
+     * A simple, bounds based drag drop handler. Bounds are rendered while a stack is dragged.
      */
     public static class BoundsBased<T extends Screen> implements EmiDragDropHandler<T> {
         private final Function<T, Map<Bounds, Consumer<EmiIngredient>>> bounds;
@@ -70,39 +66,6 @@ public interface EmiDragDropHandler<T extends Screen> {
         }
 
         @Override
-        public boolean dropStacks(T screen, List<? extends EmiIngredient> stacks, int x, int y) {
-            if (stacks == null || stacks.isEmpty()) {
-                return false;
-            }
-            Map<Bounds, Consumer<EmiIngredient>> bounds = this.bounds.apply(screen);
-            boolean inside = false;
-            for (Bounds bound : bounds.keySet()) {
-                if (bound.contains(x, y)) {
-                    inside = true;
-                    break;
-                }
-            }
-            if (!inside) {
-                return false;
-            }
-            List<Map.Entry<Bounds, Consumer<EmiIngredient>>> targets = Lists.newArrayList(bounds.entrySet());
-            targets.sort((a, b) -> {
-                int yCompare = Integer.compare(a.getKey().y(), b.getKey().y());
-                return yCompare != 0 ? yCompare : Integer.compare(a.getKey().x(), b.getKey().x());
-            });
-            int target = 0;
-            boolean placed = false;
-            for (EmiIngredient stack : stacks) {
-                if (stack == null || stack.isEmpty() || target >= targets.size()) {
-                    continue;
-                }
-                targets.get(target++).getValue().accept(stack);
-                placed = true;
-            }
-            return placed;
-        }
-
-        @Override
         public void render(T screen, EmiIngredient dragged, GuiGraphics draw, int mouseX, int mouseY, float delta) {
             EmiDrawContext context = EmiDrawContext.wrap(draw);
             for (Bounds b : bounds.apply(screen).keySet()) {
@@ -112,13 +75,11 @@ public interface EmiDragDropHandler<T extends Screen> {
     }
 
     /**
-     * A simple, slot based drag drop handler.
-     * Slots render a highlight while a stack is dragged.
+     * A simple, slot based drag drop handler. Slots render a highlight while a stack is dragged.
      */
     public static class SlotBased<T extends AbstractContainerScreen<?>> extends BoundsBased<T> {
-        
         /**
-         * @param slots A function to get a list of slot targets given a screen
+         * @param slots    A function to get a list of slot targets given a screen
          * @param consumer A consumer for dropped stacks
          */
         public SlotBased(Function<T, Collection<Slot>> slots, TriConsumer<T, Slot, EmiIngredient> consumer) {
@@ -127,13 +88,14 @@ public interface EmiDragDropHandler<T extends Screen> {
 
         /**
          * @param slotFilter A filter for which slots are valid targets
-         * @param consumer A consumer for dropped stacks
+         * @param consumer   A consumer for dropped stacks
          */
         public SlotBased(BiPredicate<T, Slot> slotFilter, TriConsumer<T, Slot, EmiIngredient> consumer) {
             super(t -> SlotBased.<T>map(t, screen -> filter(screen, slotFilter), consumer));
         }
 
-        private static <T extends AbstractContainerScreen<?>> Collection<Slot> filter(T t, BiPredicate<T, Slot> slotFilter) {
+        private static <T extends AbstractContainerScreen<?>> Collection<Slot> filter(T t,
+                BiPredicate<T, Slot> slotFilter) {
             List<Slot> slots = Lists.newArrayList();
             AbstractContainerMenu handler = t.getMenu();
             for (Slot slot : handler.slots) {
@@ -144,12 +106,12 @@ public interface EmiDragDropHandler<T extends Screen> {
             return slots;
         }
 
-        private static <T extends AbstractContainerScreen<?>> Map<Bounds, Consumer<EmiIngredient>>
-                map(T t, Function<T, Collection<Slot>> slots, TriConsumer<T, Slot, EmiIngredient> consumer) {
+        private static <T extends AbstractContainerScreen<?>> Map<Bounds, Consumer<EmiIngredient>> map(T t,
+                Function<T, Collection<Slot>> slots, TriConsumer<T, Slot, EmiIngredient> consumer) {
             Map<Bounds, Consumer<EmiIngredient>> map = Maps.newHashMap();
             for (Slot slot : slots.apply(t)) {
                 map.put(new Bounds(((HandledScreenAccessor) t).getX() + slot.x - 1,
-                    ((HandledScreenAccessor) t).getY() + slot.y - 1, 18, 18), i -> consumer.accept(t, slot, i));
+                        ((HandledScreenAccessor) t).getY() + slot.y - 1, 18, 18), i -> consumer.accept(t, slot, i));
             }
             return map;
         }

@@ -1,9 +1,15 @@
 package dev.emi.emi.runtime;
 
+import java.util.List;
+
 import com.google.common.collect.Lists;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -14,10 +20,6 @@ import dev.emi.emi.config.EmiConfig;
 import dev.emi.emi.config.SidebarType;
 import dev.emi.emi.registry.EmiStackList;
 import dev.emi.emi.screen.EmiScreenManager;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-
-import java.util.List;
 
 public class EmiSidebars {
     public static List<EmiIngredient> craftables = List.of();
@@ -28,7 +30,7 @@ public class EmiSidebars {
         return switch (type) {
             case INDEX -> EmiConfig.editMode ? EmiStackList.stacks : EmiStackList.filteredStacks;
             case CRAFTABLES -> craftables;
-            case FAVORITES -> EmiFavoriteGroups.sidebarFavorites();
+            case FAVORITES -> EmiFavorites.favoriteSidebar;
             case LOOKUP_HISTORY -> lookupHistory;
             case CRAFT_HISTORY -> craftHistory;
             case EMPTY -> List.of();
@@ -75,7 +77,6 @@ public class EmiSidebars {
             }
         }
         json.add("lookup_history", arr);
-
         arr = new JsonArray();
         for (int i = 0; i < 1024; i++) {
             if (i >= craftHistory.size()) {
@@ -100,7 +101,6 @@ public class EmiSidebars {
                 }
             }
         }
-
         craftHistory.clear();
         if (GsonHelper.isArrayNode(json, "craft_history")) {
             for (JsonElement el : GsonHelper.getAsJsonArray(json, "craft_history")) {

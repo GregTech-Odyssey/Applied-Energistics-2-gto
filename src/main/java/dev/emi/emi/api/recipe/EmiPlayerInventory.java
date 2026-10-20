@@ -1,5 +1,20 @@
 package dev.emi.emi.api.recipe;
 
+import java.util.*;
+import java.util.function.Predicate;
+
+import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
+
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.recipe.handler.EmiCraftContext;
@@ -10,23 +25,11 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.registry.EmiRecipeFiller;
 import dev.emi.emi.registry.EmiStackList;
-import dev.emi.emi.runtime.EmiCraftingToolCompat;
 import dev.emi.emi.runtime.EmiFavorite;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
-import org.jetbrains.annotations.ApiStatus;
-import java.util.*;
-import java.util.function.Predicate;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import it.unimi.dsi.fastutil.booleans.BooleanArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2LongOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class EmiPlayerInventory {
@@ -36,7 +39,6 @@ public class EmiPlayerInventory {
     private final O2OOpenCacheHashMap<EmiStack, EmiStack> contents;
     public final Map<EmiStack, EmiStack> inventory;
     private final Reference2LongOpenHashMap<EmiStack> used = new Reference2LongOpenHashMap<>();
-    private final Reference2LongOpenHashMap<EmiStack> reservedReusable = new Reference2LongOpenHashMap<>();
 
     @Deprecated
     @ApiStatus.Internal
@@ -97,15 +99,12 @@ public class EmiPlayerInventory {
     }
 
     private void addStack(ItemStack is) {
-        EmiStack stack = EmiStack.of(is).comparison(c -> EmiCraftingToolCompat.isGtTool(is) ? strict : none);
+        EmiStack stack = EmiStack.of(is).comparison(c -> none);
         addStack(stack);
     }
 
     private void addStack(EmiStack stack) {
         if (!stack.isEmpty()) {
-            if (EmiCraftingToolCompat.isGtTool(stack)) {
-                stack = stack.copy().comparison(c -> strict);
-            }
             contents.merge(stack, stack, (a, b) -> a.setAmount(a.getAmount() + b.getAmount()));
         }
     }
@@ -149,14 +148,9 @@ public class EmiPlayerInventory {
 
     public List<Boolean> getCraftAvailability(EmiRecipe recipe) {
         used.clear();
-        reservedReusable.clear();
         var states = new BooleanArrayList(recipe.getInputs().size());
-        for (EmiIngredient ingredient : recipe.getInputs()) {
-            if (ingredient.isEmpty()) {
-                states.add(true);
-                continue;
-            }
-            states.add(reserveIngredient(ingredient, 1L, used, reservedReusable));
+        for (var ingredient : recipe.getInputs()) {
+            states.add(reserveIngredient(ingredient, 1));
         }
         return states;
     }
@@ -167,136 +161,27 @@ public class EmiPlayerInventory {
 
     public boolean canCraft(EmiRecipe recipe, long amount) {
         used.clear();
-        reservedReusable.clear();
-        for (EmiIngredient ingredient : recipe.getInputs()) {
-            if (ingredient.isEmpty()) {
-                continue;
-            }
-            if (!reserveIngredient(ingredient, Math.max(1L, amount), used, reservedReusable)) {
+        for (var ingredient : recipe.getInputs()) {
+            if (!ingredient.isEmpty() && !reserveIngredient(ingredient, amount)) {
                 return false;
             }
         }
         return true;
     }
 
-    private boolean reserveIngredient(EmiIngredient ingredient, long crafts, Reference2LongOpenHashMap<EmiStack> used,
-            Reference2LongOpenHashMap<EmiStack> reservedReusable) {
-        for (EmiStack stack : ingredient.getEmiStacks()) {
-            if (stack.isEmpty()) {
-                continue;
-            }
-            boolean reusable = EmiCraftingToolCompat.isReusable(stack);
-            if (reusable) {
-                long requiredInstances = Math.max(1L, stack.getAmount());
-                EmiStack identity = findReusableCandidate(stack, crafts, requiredInstances, reservedReusable);
-                if (identity != null) {
-                    reservedReusable.put(identity,
-                            safeAdd(reservedReusable.getLong(identity), requiredInstances));
+    private boolean reserveIngredient(EmiIngredient ingredient, long amount) {
+        for (var stack : ingredient.getEmiStacks()) {
+            var identity = contents.get(stack);
+            if (identity != null) {
+                long desired = stack.getAmount() * amount;
+                long alreadyUsed = used.getLong(identity);
+                if (identity.getAmount() - alreadyUsed >= desired) {
+                    used.put(identity, desired + alreadyUsed);
                     return true;
                 }
-                continue;
-            }
-            long desired = safeMultiply(Math.max(1L, stack.getAmount()), crafts);
-            EmiStack identity = findMatching(stack);
-            if (identity == null) {
-                continue;
-            }
-            long alreadyUsed = used.getLong(identity);
-            long available = identity.getAmount() - alreadyUsed;
-            if (available >= desired) {
-                used.put(identity, desired + alreadyUsed);
-                return true;
             }
         }
         return false;
-    }
-
-    private @Nullable EmiStack findReusableCandidate(@NotNull EmiStack expected, long crafts, long requiredInstances,
-            Reference2LongOpenHashMap<EmiStack> reservedReusable) {
-        EmiStack best = null;
-        long bestUses = -1L;
-        for (EmiStack candidate : contents.values()) {
-            if (candidate.isEmpty() || !EmiCraftingToolCompat.matches(expected, candidate)) {
-                continue;
-            }
-            long reserved = reservedReusable.getLong(candidate);
-            if (candidate.getAmount() - reserved < requiredInstances) {
-                continue;
-            }
-            if (EmiCraftingToolCompat.isGtTool(candidate)) {
-                long uses = EmiCraftingToolCompat.getSafeCraftingUses(candidate);
-                if (uses < crafts) {
-                    continue;
-                }
-                if (best == null || uses > bestUses) {
-                    best = candidate;
-                    bestUses = uses;
-                }
-            } else if (best == null) {
-                best = candidate;
-            }
-        }
-        return best;
-    }
-
-    private static long safeMultiply(long a, long b) {
-        if (a <= 0L || b <= 0L) {
-            return 0L;
-        }
-        if (a > Long.MAX_VALUE / b) {
-            return Long.MAX_VALUE;
-        }
-        return a * b;
-    }
-
-    private static long safeAdd(long a, long b) {
-        if (b > 0L && a > Long.MAX_VALUE - b) {
-            return Long.MAX_VALUE;
-        }
-        return a + b;
-    }
-
-    private @Nullable EmiStack findMatching(@NotNull EmiStack stack) {
-        EmiStack identity = contents.get(stack);
-        if (identity != null) {
-            return identity;
-        }
-        if (!EmiCraftingToolCompat.isGtTool(stack)) {
-            return null;
-        }
-        EmiStack best = null;
-        long bestUses = -1L;
-        for (EmiStack candidate : contents.values()) {
-            if (!EmiCraftingToolCompat.matches(stack, candidate)) {
-                continue;
-            }
-            long uses = EmiCraftingToolCompat.getSafeCraftingUses(candidate);
-            if (best == null || uses > bestUses) {
-                best = candidate;
-                bestUses = uses;
-            }
-        }
-        return best;
-    }
-
-    private long getReusableCraftingUses(EmiStack stack) {
-        long total = 0L;
-        for (EmiStack candidate : contents.values()) {
-            if (!EmiCraftingToolCompat.matches(stack, candidate)) {
-                continue;
-            }
-            long uses = EmiCraftingToolCompat.getSafeCraftingUses(candidate);
-            if (uses == Long.MAX_VALUE) {
-                return Long.MAX_VALUE;
-            }
-            if (uses > 0L) {
-                if (total > Long.MAX_VALUE - uses) {
-                    return Long.MAX_VALUE;
-                }
-                total += uses;
-            }
-        }
-        return total;
     }
 
     public boolean isEqual(EmiPlayerInventory other) {

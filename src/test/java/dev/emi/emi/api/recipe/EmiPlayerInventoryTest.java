@@ -42,4 +42,21 @@ class EmiPlayerInventoryTest {
             assertTrue(inventory.canCraft(oneInput));
         }
     }
+
+    @Test
+    void craftingRemaindersDoNotBypassInputQuantityChecks() {
+        var stack = mock(EmiStack.class);
+        when(stack.getKey()).thenReturn(new Object());
+        when(stack.getAmount()).thenReturn(1L);
+        when(stack.getEmiStacks()).thenReturn(List.of(stack));
+        when(stack.getRemainder()).thenReturn(stack);
+        var recipe = mock(EmiRecipe.class);
+        when(recipe.getInputs()).thenReturn(List.of(stack));
+        try (var api = mockStatic(EmiApi.class)) {
+            var inventory = new EmiPlayerInventory(List.of(stack));
+            assertTrue(inventory.canCraft(recipe));
+            assertFalse(inventory.canCraft(recipe, 2));
+            assertEquals(List.of(true), inventory.getCraftAvailability(recipe));
+        }
+    }
 }

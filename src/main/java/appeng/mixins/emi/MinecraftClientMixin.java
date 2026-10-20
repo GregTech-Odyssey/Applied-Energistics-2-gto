@@ -16,7 +16,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import dev.emi.emi.EmiClient;
 import dev.emi.emi.runtime.EmiLog;
 import dev.emi.emi.runtime.EmiReloadManager;
-import dev.emi.emi.screen.FavoriteGroupSidebar;
 
 @Mixin(Minecraft.class)
 public class MinecraftClientMixin {
@@ -34,11 +33,6 @@ public class MinecraftClientMixin {
                 }
             }, Executors.newFixedThreadPool(1));
         }
-    }
-
-    @Inject(at = @At("RETURN"), method = "tick()V")
-    private void emi$favoriteCraftTick(CallbackInfo info) {
-        FavoriteGroupSidebar.tick();
     }
 
     @Inject(at = @At("HEAD"), method = "clearLevel(Lnet/minecraft/client/gui/screens/Screen;)V")

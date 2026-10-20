@@ -4,10 +4,9 @@ EMI: original author Emi (emilyploszaj), copyright (c) 2022 Emi.
 Source: https://github.com/emilyploszaj/emi
 License: MIT; full copyright and permission notice in LICENSE-EMI.
 
-EMI fork: enhancements by Crazerium; Forge port and GTO integration by
-Hophenby and GregTech Odyssey contributors.
-Source: https://github.com/GregTech-Odyssey/emi/tree/crazerium-1.20.1
-License: MIT; retains the original EMI notice in LICENSE-EMI.
+Bundled EMI is based on upstream version 1.1.24+1.20.1,
+commit 23d251ea8ea3a5fd7d760948f36014b185eac69f.
+Forge/Mojang mappings and GTO integration are maintained in this repository.
 Included source: dev.emi.emi, corresponding appeng.mixins.emi adaptations,
 and assets/emi.
 

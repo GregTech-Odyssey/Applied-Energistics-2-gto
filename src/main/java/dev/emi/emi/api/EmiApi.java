@@ -1,12 +1,28 @@
 package dev.emi.emi.api;
 
-import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.GenericStack;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.InventoryScreen;
+import net.minecraft.world.item.BucketItem;
+import net.minecraft.world.level.material.Fluids;
+
 import dev.emi.emi.VanillaPlugin;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.recipe.EmiRecipeManager;
 import dev.emi.emi.api.stack.*;
+import dev.emi.emi.api.stack.EmiIngredient;
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.stack.EmiStackInteraction;
+import dev.emi.emi.api.stack.ListEmiIngredient;
+import dev.emi.emi.api.stack.TagEmiIngredient;
 import dev.emi.emi.bom.BoM;
 import dev.emi.emi.config.EmiConfig;
 import dev.emi.emi.recipe.EmiSyntheticIngredientRecipe;
@@ -18,23 +34,14 @@ import dev.emi.emi.runtime.EmiHistory;
 import dev.emi.emi.runtime.EmiSidebars;
 import dev.emi.emi.screen.BoMScreen;
 import dev.emi.emi.screen.EmiScreenManager;
-import dev.emi.emi.screen.ProductionPlannerScreen;
 import dev.emi.emi.screen.RecipeScreen;
-import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.world.item.BucketItem;
-import net.minecraft.world.level.material.Fluids;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
+
+import appeng.api.stacks.AEFluidKey;
+import appeng.api.stacks.GenericStack;
 
 public class EmiApi {
     private static final Minecraft client = Minecraft.getInstance();
@@ -107,15 +114,12 @@ public class EmiApi {
 
     public static AbstractContainerScreen<?> getHandledScreen() {
         Screen s = client.screen;
-        if (s instanceof ProductionPlannerScreen.Host host) return host.planner().old;
         if (s instanceof AbstractContainerScreen<?> hs) {
             return hs;
         } else if (s instanceof RecipeScreen rs) {
             return rs.old;
         } else if (s instanceof BoMScreen bs) {
             return bs.old;
-        } else if (s instanceof ProductionPlannerScreen ps) {
-            return ps.old;
         }
         return null;
     }
@@ -180,8 +184,7 @@ public class EmiApi {
     public static List<EmiRecipe> getUses(EmiIngredient stack) {
         var zero = stack.getEmiStacks().getFirst();
         var combined = new ReferenceLinkedOpenHashSet<EmiRecipe>();
-        combined.addAll(
-                pruneUses(getRecipeManager().getRecipesByInput(zero), stack));
+        combined.addAll(pruneUses(getRecipeManager().getRecipesByInput(zero), stack));
         var fluid = getFluidIngredient(stack);
         if (fluid != null)
             combined.addAll(pruneUses(getRecipeManager().getRecipesByInput(fluid), fluid));
@@ -228,17 +231,6 @@ public class EmiApi {
         }
     }
 
-    public static void viewProductionPlanner() {
-        if (client.screen == null) {
-            client.setScreen(new InventoryScreen(client.player));
-        }
-        AbstractContainerScreen<?> old = getHandledScreen();
-        if (old != null) {
-            push();
-            client.setScreen(ProductionPlannerScreen.create(old));
-        }
-    }
-
     public static void focusRecipe(EmiRecipe recipe) {
         if (client.screen instanceof RecipeScreen rs) {
             rs.focusRecipe(recipe);
@@ -246,16 +238,10 @@ public class EmiApi {
     }
 
     private static void push() {
-        if (client.screen instanceof ProductionPlannerScreen.Host) {
-            EmiHistory.push(client.screen);
-            return;
-        }
         if (client.screen instanceof RecipeScreen rs) {
             EmiHistory.push(rs);
         } else if (client.screen instanceof BoMScreen bs) {
             EmiHistory.push(bs);
-        } else if (client.screen instanceof ProductionPlannerScreen ps) {
-            EmiHistory.push(ps);
         } else {
             EmiHistory.clear();
             EmiHistory.push(client.screen);
@@ -346,18 +332,12 @@ public class EmiApi {
             if (getHandledScreen() == null) {
                 client.setScreen(new InventoryScreen(client.player));
             }
-            if (client.screen instanceof ProductionPlannerScreen.Host host) {
-                push();
-                client.setScreen(new RecipeScreen(host.planner().old, recipes));
-            } else if (client.screen instanceof AbstractContainerScreen<?> hs) {
+            if (client.screen instanceof AbstractContainerScreen<?> hs) {
                 push();
                 client.setScreen(new RecipeScreen(hs, recipes));
             } else if (client.screen instanceof BoMScreen bs) {
                 push();
                 client.setScreen(new RecipeScreen(bs.old, recipes));
-            } else if (client.screen instanceof ProductionPlannerScreen ps) {
-                push();
-                client.setScreen(new RecipeScreen(ps.old, recipes));
             } else if (client.screen instanceof RecipeScreen rs) {
                 push();
                 RecipeScreen n = new RecipeScreen(rs.old, recipes);

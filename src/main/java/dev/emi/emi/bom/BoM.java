@@ -1,11 +1,19 @@
 package dev.emi.emi.bom;
 
+import java.util.Map;
+import java.util.Set;
+
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.GsonHelper;
+
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.EmiApi;
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -16,13 +24,6 @@ import dev.emi.emi.api.stack.TagEmiIngredient;
 import dev.emi.emi.api.stack.serializer.EmiIngredientSerializer;
 import dev.emi.emi.data.RecipeDefaults;
 import dev.emi.emi.runtime.EmiPersistentData;
-import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.GsonHelper;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class BoM {
     private static RecipeDefaults defaults = new RecipeDefaults();
@@ -124,7 +125,8 @@ public class BoM {
         for (String key : addedTags.keySet()) {
             EmiIngredient tag = EmiIngredientSerializer.getDeserialized(new JsonPrimitive(key));
             EmiIngredient stack = EmiIngredientSerializer.getDeserialized(addedTags.get(key));
-            if (!tag.isEmpty() && !stack.isEmpty() && stack.getEmiStacks().size() == 1 && tag.getEmiStacks().containsAll(stack.getEmiStacks())) {
+            if (!tag.isEmpty() && !stack.isEmpty() && stack.getEmiStacks().size() == 1
+                    && tag.getEmiStacks().containsAll(stack.getEmiStacks())) {
                 addedRecipes.put(tag, new EmiResolutionRecipe(tag, stack.getEmiStacks().get(0)));
             }
         }
@@ -135,7 +137,8 @@ public class BoM {
     }
 
     public static boolean isRecipeEnabled(EmiRecipe recipe) {
-        return !disabledRecipes.contains(recipe) && (defaultRecipes.values().contains(recipe) || addedRecipes.values().contains(recipe));
+        return !disabledRecipes.contains(recipe)
+                && (defaultRecipes.values().contains(recipe) || addedRecipes.values().contains(recipe));
     }
 
     public static DefaultStatus getRecipeStatus(EmiRecipe recipe) {
@@ -201,27 +204,6 @@ public class BoM {
         recalculate();
     }
 
-    public static void setRecipeOutputs(EmiRecipe recipe, List<EmiStack> selectedOutputs) {
-        boolean disableFallback = false;
-        for (EmiStack output : recipe.getOutputs()) {
-            if (selectedOutputs.contains(output)) {
-                addedRecipes.put(output, recipe);
-            } else {
-                addedRecipes.remove(output, recipe);
-                if (defaultRecipes.get(output) == recipe) {
-                    disableFallback = true;
-                }
-            }
-        }
-        if (disableFallback) {
-            disabledRecipes.add(recipe);
-        } else {
-            disabledRecipes.remove(recipe);
-        }
-        EmiPersistentData.save();
-        recalculate();
-    }
-
     public static void removeRecipe(EmiRecipe recipe) {
         for (EmiStack stack : recipe.getOutputs()) {
             addedRecipes.remove(stack, recipe);
@@ -255,8 +237,6 @@ public class BoM {
     }
 
     public static enum DefaultStatus {
-        EMPTY,
-        PARTIAL,
-        FULL
+        EMPTY, PARTIAL, FULL
     }
 }

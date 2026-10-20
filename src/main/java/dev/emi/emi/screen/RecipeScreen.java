@@ -1,6 +1,23 @@
 package dev.emi.emi.screen;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.common.collect.Lists;
+
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.glfw.GLFW;
+
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvents;
+
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.EmiRenderHelper;
 import dev.emi.emi.api.EmiApi;
@@ -25,38 +42,11 @@ import dev.emi.emi.runtime.EmiHistory;
 import dev.emi.emi.runtime.EmiLog;
 import dev.emi.emi.screen.widget.ResolutionButtonWidget;
 import dev.emi.emi.screen.widget.SizedButtonWidget;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.client.resources.language.I18n;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvents;
-import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2IntOpenHashMap;
 
 public class RecipeScreen extends Screen {
     private static final ResourceLocation TEXTURE = EmiPort.id("emi", "textures/gui/background.png");
-    private static final long RECIPE_FILTER_DEBOUNCE_MS = 140L;
-    private static final ScheduledExecutorService RECIPE_FILTER_EXECUTOR = Executors
-            .newSingleThreadScheduledExecutor(runnable -> {
-                Thread thread = new Thread(runnable, "EMI-RecipeFilter");
-                thread.setDaemon(true);
-                thread.setPriority(Thread.NORM_PRIORITY - 1);
-                return thread;
-            });
     public static @Nullable EmiIngredient resolve = null;
     private Map<EmiRecipeCategory, List<EmiRecipe>> recipes;
     public AbstractContainerScreen<?> old;
@@ -69,42 +59,6 @@ public class RecipeScreen extends Screen {
     private Widget hoveredWidget = null, pressedSlot = null;
     private ResolutionButtonWidget resolutionButton;
     private double scrollAcc = 0;
-    private final EmiRecipeSearchIndex recipeSearchIndex = new EmiRecipeSearchIndex();
-    private EditBox recipeFilterField;
-    private String recipeFilterQuery = "";
-    private boolean recipeFilterActive;
-    private boolean recipeFilterHelpPinned;
-    private boolean recipeFilterFiltering;
-    private boolean recipeFilterSuppressNextHashCharacter;
-    private volatile long recipeFilterGeneration;
-    private ScheduledFuture<?> pendingRecipeFilter;
-    private EmiRecipeCategory recipeFilterCategory;
-    private EmiRecipeCategory recipeFilterAppliedCategory;
-    private int recipeFilterTotalCount;
-    private int recipeFilterCount;
-    private int recipeFilterToggleX;
-    private int recipeFilterToggleY;
-    private int recipeFilterX;
-    private int recipeFilterY;
-    private int recipeFilterWidth;
-    private int recipeFilterHelpX;
-    private int recipeFilterHelpY;
-    private final String[] recipeFilterHelpLines = {
-            "",
-            I18n.get("emi.recipe_filter.syntax.text"),
-            I18n.get("emi.recipe_filter.syntax.inputs"),
-            I18n.get("emi.recipe_filter.syntax.outputs"),
-            I18n.get("emi.recipe_filter.syntax.mod"),
-            I18n.get("emi.recipe_filter.syntax.tooltip"),
-            I18n.get("emi.recipe_filter.syntax.tag"),
-            I18n.get("emi.recipe_filter.syntax.id"),
-            I18n.get("emi.recipe_filter.syntax.formula"),
-            I18n.get("emi.recipe_filter.syntax.voltage"),
-            I18n.get("emi.recipe_filter.syntax.exclude"),
-            I18n.get("emi.recipe_filter.syntax.or"),
-            I18n.get("emi.recipe_filter.syntax.phrase")
-    };
-    private final String recipeFilterSearchingText = I18n.get("emi.recipe_filter.searching");
     private int minimumWidth = 176;
     int backgroundWidth = minimumWidth;
     int backgroundHeight = 200;
@@ -115,16 +69,16 @@ public class RecipeScreen extends Screen {
         super(EmiPort.translatable("screen.emi.recipe"));
         this.old = old;
         arrows = List.of(
-                new SizedButtonWidget(x + 2, y - 18, 12, 12, 0, 0,
-                        () -> tabs.size() > tabPageSize, w -> setPage(tabPage - 1, tab, page)),
-                new SizedButtonWidget(x + backgroundWidth - 14, y - 18, 12, 12, 12, 0,
-                        () -> tabs.size() > tabPageSize, w -> setPage(tabPage + 1, tab, page)),
-                new SizedButtonWidget(x + 5, y + 5, 12, 12, 0, 0,
-                        () -> tabs.size() > 1, w -> setPage(tabPage, tab - 1, 0)),
-                new SizedButtonWidget(x + backgroundWidth - 17, y + 5, 12, 12, 12, 0,
-                        () -> tabs.size() > 1, w -> setPage(tabPage, tab + 1, 0)),
-                new SizedButtonWidget(x + 5, y + 18, 12, 12, 0, 0,
-                        () -> tabs.get(tab).getPageCount() > 1, w -> setPage(tabPage, tab, page - 1)),
+                new SizedButtonWidget(x + 2, y - 18, 12, 12, 0, 0, () -> tabs.size() > tabPageSize,
+                        w -> setPage(tabPage - 1, tab, page)),
+                new SizedButtonWidget(x + backgroundWidth - 14, y - 18, 12, 12, 12, 0, () -> tabs.size() > tabPageSize,
+                        w -> setPage(tabPage + 1, tab, page)),
+                new SizedButtonWidget(x + 5, y + 5, 12, 12, 0, 0, () -> tabs.size() > 1,
+                        w -> setPage(tabPage, tab - 1, 0)),
+                new SizedButtonWidget(x + backgroundWidth - 17, y + 5, 12, 12, 12, 0, () -> tabs.size() > 1,
+                        w -> setPage(tabPage, tab + 1, 0)),
+                new SizedButtonWidget(x + 5, y + 18, 12, 12, 0, 0, () -> tabs.get(tab).getPageCount() > 1,
+                        w -> setPage(tabPage, tab, page - 1)),
                 new SizedButtonWidget(x + backgroundWidth - 17, y + 18, 12, 12, 12, 0,
                         () -> tabs.get(tab).getPageCount() > 1, w -> setPage(tabPage, tab, page + 1)));
         resolve = null;
@@ -140,7 +94,6 @@ public class RecipeScreen extends Screen {
         x = (this.width - backgroundWidth) / 2;
         y = (this.height - backgroundHeight) / 2 + 1;
         this.tabPageSize = (minimumWidth - 32) / 24;
-
         for (SizedButtonWidget widget : arrows) {
             addRenderableWidget(widget);
         }
@@ -171,22 +124,14 @@ public class RecipeScreen extends Screen {
                         tabs.add(tab);
                     }
                 }
-
                 tab = -1;
                 setPage(tabPage, 0, 0);
-            }
-            // setPages(recipes);
+            } // setPages(recipes);
             if (current != null) {
                 focusRecipe(current);
             }
         }
         setRecipePageWidth(backgroundWidth);
-        recipeFilterAppliedCategory = null;
-        recipeFilterCategory = null;
-        layoutRecipeFilter();
-        if (recipeFilterActive && !recipeFilterQuery.isBlank()) {
-            syncRecipeFilterCategory();
-        }
     }
 
     private void setRecipePageWidth(int width) {
@@ -204,7 +149,6 @@ public class RecipeScreen extends Screen {
         this.arrows.get(3).x = this.x + minimumWidth - 17 + buttonOff;
         this.arrows.get(4).x = this.x + 5 + buttonOff;
         this.arrows.get(5).x = this.x + minimumWidth - 17 + buttonOff;
-
         this.arrows.get(0).y = this.y - 18;
         this.arrows.get(1).y = this.y - 18;
         this.arrows.get(2).y = this.y + 5;
@@ -220,7 +164,6 @@ public class RecipeScreen extends Screen {
         this.renderBackground(context.raw());
         context.resetColor();
         EmiRenderHelper.drawNinePatch(context, TEXTURE, x, y, backgroundWidth, backgroundHeight, 0, 0, 4, 1);
-
         int tp = tabPage * tabPageSize;
         int off = 0;
         for (int i = tp; i < tabs.size() && i < tp + tabPageSize; i++) {
@@ -230,18 +173,44 @@ public class RecipeScreen extends Screen {
                     i == this.tab ? 9 : 18, 0, 4, 1);
             tab.category.render(context.raw(), x + tabOff + off++ * 24 + 20, y - 20 - (i == this.tab ? 2 : 0), delta);
         }
-
-        EmiRenderHelper.drawNinePatch(context, TEXTURE, x + 19 + buttonOff, y + 5, minimumWidth - 38, 12, 0, 16, 3, 6);
-        // EmiRenderHelper.drawScroll(context, x + 19 + buttonOff, y + 5 + 10, minimumWidth - 38, 2, tab, tabs.size(),
+        EmiRenderHelper.drawNinePatch(context, TEXTURE, x + 19 + buttonOff, y + 5, minimumWidth - 38, 12, 0, 16, 3, 6); // EmiRenderHelper.drawScroll(context,
+                                                                                                                        // x
+                                                                                                                        // +
+                                                                                                                        // 19
+                                                                                                                        // +
+                                                                                                                        // buttonOff,
+                                                                                                                        // y
+                                                                                                                        // +
+                                                                                                                        // 5
+                                                                                                                        // +
+                                                                                                                        // 10,
+                                                                                                                        // minimumWidth
+                                                                                                                        // -
+                                                                                                                        // 38,
+                                                                                                                        // 2,
+                                                                                                                        // tab,
+                                                                                                                        // tabs.size(),
         // -1);
-        EmiRenderHelper.drawNinePatch(context, TEXTURE, x + 19 + buttonOff, y + 19, minimumWidth - 38, 12, 0, 16, 3, 6);
-        // EmiRenderHelper.drawScroll(context, x + 19 + buttonOff, y + 19 + 10, minimumWidth - 38, 2, page,
+        EmiRenderHelper.drawNinePatch(context, TEXTURE, x + 19 + buttonOff, y + 19, minimumWidth - 38, 12, 0, 16, 3, 6); // EmiRenderHelper.drawScroll(context,
+                                                                                                                         // x
+                                                                                                                         // +
+                                                                                                                         // 19
+                                                                                                                         // +
+                                                                                                                         // buttonOff,
+                                                                                                                         // y
+                                                                                                                         // +
+                                                                                                                         // 19
+                                                                                                                         // +
+                                                                                                                         // 10,
+                                                                                                                         // minimumWidth
+                                                                                                                         // -
+                                                                                                                         // 38,
+                                                                                                                         // 2,
+                                                                                                                         // page,
         // tabs.get(tab).getPageCount(), -1);
-
         boolean categoryHovered = mouseX >= x + 19 + buttonOff && mouseY >= y + 5
                 && mouseX < x + minimumWidth + buttonOff - 19 && mouseY < y + 5 + 12;
         int categoryNameColor = categoryHovered ? 0x22ffff : 0xffffff;
-
         RecipeTab tab = tabs.get(this.tab);
         Component text = tab.category.getName();
         if (minecraft.font.width(text) > minimumWidth - 40) {
@@ -253,7 +222,6 @@ public class RecipeScreen extends Screen {
         context.drawCenteredTextWithShadow(
                 EmiRenderHelper.getPageText(this.page + 1, tab.getPageCount(), minimumWidth - 40),
                 x + backgroundWidth / 2, y + 21, 0xffffff);
-
         List<EmiIngredient> workstations = EmiApi.getRecipeManager().getWorkstations(tab.category);
         int workstationAmount = Math.min(workstations.size(), getMaxWorkstations());
         if (workstationAmount > 0 || resolve != null) {
@@ -314,9 +282,8 @@ public class RecipeScreen extends Screen {
         EmiScreenManager.drawForeground(context, mouseX, mouseY, delta);
         super.render(context.raw(), mouseX, mouseY, delta);
         if (categoryHovered) {
-            context.raw().renderComponentTooltip(minecraft.font, List.of(
-                    tab.category.getName(),
-                    EmiPort.translatable("emi.view_all_recipes")), mouseX, mouseY);
+            context.raw().renderComponentTooltip(minecraft.font,
+                    List.of(tab.category.getName(), EmiPort.translatable("emi.view_all_recipes")), mouseX, mouseY);
         }
         hoveredWidget = null;
         outer: for (WidgetGroup group : currentPage) {
@@ -338,12 +305,10 @@ public class RecipeScreen extends Screen {
                 group.error(e);
             }
         }
-
         RecipeTab rTab = getTabAt(mouseX, mouseY);
         if (rTab != null) {
             EmiRenderHelper.drawTooltip(this, context, rTab.category.getTooltip(), mouseX, mouseY);
         }
-        renderRecipeFilter(raw, mouseX, mouseY, delta);
     }
 
     public EmiIngredient getHoveredStack() {
@@ -474,28 +439,6 @@ public class RecipeScreen extends Screen {
         int mx = (int) mouseX;
         int my = (int) mouseY;
         pressedSlot = null;
-        layoutRecipeFilter();
-        if (isRecipeFilterToggleHovered(mouseX, mouseY)) {
-            toggleRecipeFilter();
-            return true;
-        }
-        if (recipeFilterActive) {
-            if (isRecipeFilterHelpHovered(mouseX, mouseY)) {
-                recipeFilterHelpPinned = !recipeFilterHelpPinned;
-                return true;
-            }
-            if (recipeFilterField != null && recipeFilterField.mouseClicked(mouseX, mouseY, button)) {
-                EmiPort.focus(recipeFilterField, true);
-                return true;
-            }
-            if (!recipeFilterFiltering && recipeFilterCount == 0 && !recipeFilterQuery.isBlank()
-                    && isRecipeFilterAreaHovered(mouseX, mouseY)) {
-                return true;
-            }
-            if (recipeFilterField != null) {
-                EmiPort.focus(recipeFilterField, false);
-            }
-        }
         if (mouseX >= x + 19 + buttonOff && mouseY >= y + 5 && mouseX < x + minimumWidth + buttonOff - 19
                 && mouseY <= y + 5 + 12) {
             EmiApi.displayAllRecipes();
@@ -614,20 +557,6 @@ public class RecipeScreen extends Screen {
 
     @Override
     public boolean charTyped(char chr, int modifiers) {
-        if (recipeFilterActive && recipeFilterField != null && recipeFilterField.isFocused()) {
-            if (recipeFilterSuppressNextHashCharacter) {
-                recipeFilterSuppressNextHashCharacter = false;
-                if (chr == '#' || chr == '№') {
-                    return true;
-                }
-            }
-            if (chr == '№') {
-                recipeFilterField.insertText("#");
-                return true;
-            }
-            recipeFilterField.charTyped(chr, modifiers);
-            return true;
-        }
         if (EmiScreenManager.search.charTyped(chr, modifiers)) {
             return true;
         }
@@ -636,23 +565,6 @@ public class RecipeScreen extends Screen {
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (recipeFilterActive && recipeFilterField != null && recipeFilterField.isFocused()) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
-                closeRecipeFilter();
-                return true;
-            }
-            if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-                EmiPort.focus(recipeFilterField, false);
-                return true;
-            }
-            if (keyCode == GLFW.GLFW_KEY_3 && (modifiers & GLFW.GLFW_MOD_SHIFT) != 0) {
-                recipeFilterField.insertText("#");
-                recipeFilterSuppressNextHashCharacter = true;
-                return true;
-            }
-            recipeFilterField.keyPressed(keyCode, scanCode, modifiers);
-            return true;
-        }
         if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
             this.onClose();
             return true;
@@ -662,7 +574,6 @@ public class RecipeScreen extends Screen {
             this.onClose();
             return true;
         }
-
         for (WidgetGroup group : currentPage) {
             try {
                 int mx = EmiScreenManager.lastMouseX - group.x();
@@ -694,389 +605,6 @@ public class RecipeScreen extends Screen {
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
-    private void layoutRecipeFilter() {
-        int newToggleX = x + buttonOff + 20;
-        int newToggleY = y + 19;
-        int newHelpX = x + buttonOff + minimumWidth - 32;
-        int newHelpY = y + 19;
-        int newX = newToggleX + 15;
-        int newY = y + 18;
-        int newWidth = Math.max(54, newHelpX - newX - 3);
-
-        if (recipeFilterField != null
-                && newToggleX == recipeFilterToggleX
-                && newToggleY == recipeFilterToggleY
-                && newHelpX == recipeFilterHelpX
-                && newHelpY == recipeFilterHelpY
-                && newX == recipeFilterX
-                && newY == recipeFilterY
-                && newWidth == recipeFilterWidth) {
-            return;
-        }
-
-        boolean focused = recipeFilterActive && recipeFilterField != null && recipeFilterField.isFocused();
-        recipeFilterToggleX = newToggleX;
-        recipeFilterToggleY = newToggleY;
-        recipeFilterHelpX = newHelpX;
-        recipeFilterHelpY = newHelpY;
-        recipeFilterX = newX;
-        recipeFilterY = newY;
-        recipeFilterWidth = newWidth;
-
-        EditBox field = new EditBox(minecraft.font, recipeFilterX, recipeFilterY,
-                recipeFilterWidth, 14, EmiPort.translatable("emi.recipe_filter.title"));
-        field.setMaxLength(256);
-        field.setSuggestion(recipeFilterQuery.isEmpty() ? I18n.get("emi.recipe_filter.hint") : "");
-        field.setValue(recipeFilterQuery);
-        updateRecipeFilterColor(field);
-        field.setResponder(this::onRecipeFilterChanged);
-        EmiPort.focus(field, focused);
-        recipeFilterField = field;
-    }
-
-    private void renderRecipeFilter(GuiGraphics raw, int mouseX, int mouseY, float delta) {
-        if (tabs.isEmpty()) {
-            return;
-        }
-        layoutRecipeFilter();
-        syncRecipeFilterCategory();
-        renderRecipeFilterToggle(raw, mouseX, mouseY);
-        if (!recipeFilterActive || recipeFilterField == null) {
-            return;
-        }
-
-        if (!recipeFilterFiltering && recipeFilterCount == 0 && !recipeFilterQuery.isBlank()) {
-            renderNoRecipeFilterMatches(raw);
-        }
-
-        recipeFilterField.render(raw, mouseX, mouseY, delta);
-        renderRecipeFilterHelpButton(raw, mouseX, mouseY);
-        if (recipeFilterHelpPinned || isRecipeFilterHelpHovered(mouseX, mouseY)) {
-            renderRecipeFilterHelp(raw);
-        }
-    }
-
-    private void renderRecipeFilterToggle(GuiGraphics raw, int mouseX, int mouseY) {
-        boolean hovered = isRecipeFilterToggleHovered(mouseX, mouseY);
-        int bg = hovered || recipeFilterActive || !recipeFilterQuery.isBlank() ? 0xE0808080 : 0xD0404040;
-        int sx = recipeFilterToggleX;
-        int sy = recipeFilterToggleY;
-        raw.fill(sx, sy, sx + 12, sy + 12, bg);
-        int color = 0xFFFFFFFF;
-        raw.fill(sx + 3, sy + 3, sx + 8, sy + 4, color);
-        raw.fill(sx + 3, sy + 4, sx + 4, sy + 8, color);
-        raw.fill(sx + 7, sy + 4, sx + 8, sy + 8, color);
-        raw.fill(sx + 4, sy + 7, sx + 8, sy + 8, color);
-        raw.fill(sx + 8, sy + 8, sx + 9, sy + 9, color);
-        raw.fill(sx + 9, sy + 9, sx + 11, sy + 11, color);
-    }
-
-    private void renderRecipeFilterHelpButton(GuiGraphics raw, int mouseX, int mouseY) {
-        boolean hovered = isRecipeFilterHelpHovered(mouseX, mouseY);
-        int bg = hovered || recipeFilterHelpPinned ? 0xE0808080 : 0xD0404040;
-        raw.fill(recipeFilterHelpX, recipeFilterHelpY, recipeFilterHelpX + 12, recipeFilterHelpY + 12, bg);
-        EmiDrawContext.wrap(raw).drawCenteredTextWithShadow(EmiPort.literal("?"), recipeFilterHelpX + 6,
-                recipeFilterHelpY + 2, 0xFFFFFF);
-    }
-
-    private void renderNoRecipeFilterMatches(GuiGraphics raw) {
-        int left = x + 4;
-        int top = y + 34;
-        int right = x + backgroundWidth - 4;
-        int bottom = y + backgroundHeight - 4;
-        if (right <= left || bottom <= top) {
-            return;
-        }
-        raw.fill(left, top, right, bottom, 0xEE101010);
-        EmiDrawContext.wrap(raw).drawCenteredTextWithShadow(
-                EmiPort.translatable("emi.recipe_filter.no_matches"),
-                (left + right) / 2,
-                top + Math.max(8, (bottom - top) / 2 - 4),
-                0xFF7777);
-    }
-
-    private void renderRecipeFilterHelp(GuiGraphics raw) {
-        String[] lines = recipeFilterHelpLines;
-        lines[0] = recipeFilterFiltering ? recipeFilterSearchingText
-                : I18n.get("emi.recipe_filter.count", recipeFilterCount, recipeFilterTotalCount);
-
-        int width = 0;
-        for (String line : lines) {
-            width = Math.max(width, minecraft.font.width(line));
-        }
-        width += 12;
-        int helpHeight = lines.length * 11 + 8;
-        int helpX = Math.min(recipeFilterX, this.width - width - 4);
-        int helpY = recipeFilterY + 16;
-        if (helpY + helpHeight > this.height - 4) {
-            helpY = Math.max(4, recipeFilterY - helpHeight - 2);
-        }
-
-        raw.pose().pushPose();
-        raw.pose().translate(0, 0, 500);
-        raw.fill(helpX, helpY, helpX + width, helpY + helpHeight, 0xEE101010);
-        raw.fill(helpX, helpY, helpX + width, helpY + 1, 0xFF7F7F7F);
-        raw.fill(helpX, helpY + helpHeight - 1, helpX + width, helpY + helpHeight, 0xFF7F7F7F);
-        EmiDrawContext context = EmiDrawContext.wrap(raw);
-        int ty = helpY + 5;
-        for (int i = 0; i < lines.length; i++) {
-            int color = i == 0 ? 0xFFFFFF : recipeFilterSyntaxColor(lines[i]);
-            context.drawText(EmiPort.literal(lines[i]), helpX + 6, ty, color);
-            ty += 11;
-        }
-        raw.pose().popPose();
-    }
-
-    private int recipeFilterSyntaxColor(String line) {
-        if (line.startsWith("<"))
-            return 0x55FF55;
-        if (line.startsWith(">"))
-            return 0xFFAA55;
-        if (line.startsWith("@"))
-            return 0xFF55FF;
-        if (line.startsWith("#"))
-            return 0xFFFF55;
-        if (line.startsWith("$"))
-            return 0x55FFFF;
-        if (line.startsWith("&"))
-            return 0x55AAFF;
-        if (line.startsWith("="))
-            return 0xAAFFAA;
-        if (line.startsWith("%"))
-            return 0xFFAA55;
-        if (line.startsWith("-"))
-            return 0xFF7777;
-        return 0xDDDDDD;
-    }
-
-    private boolean isRecipeFilterToggleHovered(double mouseX, double mouseY) {
-        return mouseX >= recipeFilterToggleX && mouseX < recipeFilterToggleX + 12
-                && mouseY >= recipeFilterToggleY && mouseY < recipeFilterToggleY + 12;
-    }
-
-    private boolean isRecipeFilterHelpHovered(double mouseX, double mouseY) {
-        return recipeFilterActive
-                && mouseX >= recipeFilterHelpX && mouseX < recipeFilterHelpX + 12
-                && mouseY >= recipeFilterHelpY && mouseY < recipeFilterHelpY + 12;
-    }
-
-    private boolean isRecipeFilterAreaHovered(double mouseX, double mouseY) {
-        int top = y + 34;
-        return mouseX >= x && mouseX < x + backgroundWidth
-                && mouseY >= top && mouseY < y + backgroundHeight;
-    }
-
-    private void toggleRecipeFilter() {
-        if (recipeFilterActive) {
-            closeRecipeFilter();
-            return;
-        }
-        recipeFilterActive = true;
-        recipeFilterHelpPinned = false;
-        syncRecipeFilterCategory();
-        layoutRecipeFilter();
-        if (recipeFilterField != null) {
-            EmiPort.focus(recipeFilterField, true);
-        }
-    }
-
-    private void closeRecipeFilter() {
-        recipeFilterActive = false;
-        recipeFilterHelpPinned = false;
-        recipeFilterSuppressNextHashCharacter = false;
-        cancelPendingRecipeFilter();
-        if (recipeFilterField != null) {
-            EmiPort.focus(recipeFilterField, false);
-            if (!recipeFilterQuery.isBlank()) {
-                recipeFilterField.setValue("");
-                return;
-            }
-        }
-        recipeFilterGeneration++;
-        recipeFilterFiltering = false;
-        restoreRecipeFilterAppliedCategory(true);
-    }
-
-    private void syncRecipeFilterCategory() {
-        if (tabs.isEmpty() || tab < 0 || tab >= tabs.size()) {
-            return;
-        }
-        EmiRecipeCategory category = tabs.get(tab).category;
-        if (recipeFilterCategory == category) {
-            if (recipeFilterQuery.isBlank()) {
-                List<EmiRecipe> source = originalRecipeFilterRecipes(category);
-                recipeFilterTotalCount = source.size();
-                recipeFilterCount = source.size();
-            }
-            return;
-        }
-
-        if (recipeFilterAppliedCategory != null && recipeFilterAppliedCategory != category) {
-            restoreRecipeFilterAppliedCategory(false);
-        }
-        recipeFilterCategory = category;
-        List<EmiRecipe> source = originalRecipeFilterRecipes(category);
-        recipeFilterTotalCount = source.size();
-        recipeFilterCount = source.size();
-        if (recipeFilterActive && !recipeFilterQuery.isBlank()) {
-            scheduleRecipeFilter(category, recipeFilterQuery);
-        }
-    }
-
-    private void onRecipeFilterChanged(String value) {
-        recipeFilterQuery = value == null ? "" : value;
-        recipeFilterSuppressNextHashCharacter = false;
-        if (recipeFilterField != null) {
-            recipeFilterField.setSuggestion(recipeFilterQuery.isEmpty() ? I18n.get("emi.recipe_filter.hint") : "");
-        }
-        syncRecipeFilterCategory();
-        if (recipeFilterQuery.isBlank()) {
-            recipeFilterGeneration++;
-            recipeFilterFiltering = false;
-            cancelPendingRecipeFilter();
-            restoreRecipeFilterAppliedCategory(true);
-            List<EmiRecipe> source = originalRecipeFilterRecipes(recipeFilterCategory);
-            recipeFilterTotalCount = source.size();
-            recipeFilterCount = source.size();
-            updateRecipeFilterColor(recipeFilterField);
-            return;
-        }
-        if (recipeFilterCategory != null) {
-            scheduleRecipeFilter(recipeFilterCategory, recipeFilterQuery);
-        }
-    }
-
-    private void scheduleRecipeFilter(EmiRecipeCategory category, String querySnapshot) {
-        cancelPendingRecipeFilter();
-        long generation = ++recipeFilterGeneration;
-        recipeFilterFiltering = true;
-        updateRecipeFilterColor(recipeFilterField);
-        pendingRecipeFilter = RECIPE_FILTER_EXECUTOR.schedule(
-                () -> computeRecipeFilter(category, querySnapshot, generation),
-                RECIPE_FILTER_DEBOUNCE_MS,
-                TimeUnit.MILLISECONDS);
-    }
-
-    private void computeRecipeFilter(EmiRecipeCategory category, String querySnapshot, long generation) {
-        if (generation != recipeFilterGeneration) {
-            return;
-        }
-        List<EmiRecipe> source = originalRecipeFilterRecipes(category);
-        RecipeFilterQuery parsed = RecipeFilterQuery.parse(querySnapshot);
-        List<EmiRecipe> accepted = Lists.newArrayList();
-        if (parsed.isEmpty()) {
-            accepted.addAll(source);
-        } else {
-            for (int i = 0; i < source.size(); i++) {
-                if ((i & 127) == 0 && generation != recipeFilterGeneration) {
-                    return;
-                }
-                EmiRecipe recipe = source.get(i);
-                if (parsed.test(recipeSearchIndex.document(recipe))) {
-                    accepted.add(recipe);
-                }
-            }
-        }
-        if (generation != recipeFilterGeneration) {
-            return;
-        }
-        List<EmiRecipe> result = List.copyOf(accepted);
-        minecraft.execute(() -> applyRecipeFilter(category, querySnapshot, generation, source.size(), result));
-    }
-
-    private void applyRecipeFilter(EmiRecipeCategory category, String querySnapshot, long generation,
-            int sourceCount, List<EmiRecipe> result) {
-        if (minecraft.screen != this
-                || generation != recipeFilterGeneration
-                || recipeFilterCategory != category
-                || !recipeFilterQuery.equals(querySnapshot)) {
-            return;
-        }
-        recipeFilterFiltering = false;
-        pendingRecipeFilter = null;
-        recipeFilterTotalCount = sourceCount;
-        recipeFilterCount = result.size();
-        updateRecipeFilterColor(recipeFilterField);
-        if (result.isEmpty()) {
-            return;
-        }
-        if (recipeFilterAppliedCategory != null && recipeFilterAppliedCategory != category) {
-            restoreRecipeFilterAppliedCategory(false);
-        }
-        if (replaceRecipeFilterTab(category, result, true)) {
-            recipeFilterAppliedCategory = category;
-        }
-    }
-
-    private boolean replaceRecipeFilterTab(EmiRecipeCategory category, List<EmiRecipe> newRecipes, boolean focus) {
-        int index = -1;
-        for (int i = 0; i < tabs.size(); i++) {
-            if (tabs.get(i).category == category || tabs.get(i).category.equals(category)) {
-                index = i;
-                break;
-            }
-        }
-        if (index < 0 && recipeFilterCategory == category && tab >= 0 && tab < tabs.size()) {
-            index = tab;
-        }
-        if (index < 0) {
-            return false;
-        }
-        RecipeTab replacement = new RecipeTab(category, newRecipes);
-        replacement.bakePages(backgroundHeight);
-        tabs.set(index, replacement);
-        if (focus) {
-            setPage(tabPage, index, 0);
-        }
-        return true;
-    }
-
-    private void restoreRecipeFilterAppliedCategory(boolean focusIfCurrent) {
-        if (recipeFilterAppliedCategory == null) {
-            return;
-        }
-        EmiRecipeCategory category = recipeFilterAppliedCategory;
-        recipeFilterAppliedCategory = null;
-        List<EmiRecipe> source = originalRecipeFilterRecipes(category);
-        if (source.isEmpty()) {
-            return;
-        }
-        boolean focus = focusIfCurrent && recipeFilterCategory == category;
-        replaceRecipeFilterTab(category, source, focus);
-    }
-
-    private List<EmiRecipe> originalRecipeFilterRecipes(EmiRecipeCategory category) {
-        if (recipes == null || category == null) {
-            return List.of();
-        }
-        List<EmiRecipe> source = recipes.get(category);
-        return source == null ? List.of() : source;
-    }
-
-    private void updateRecipeFilterColor(EditBox field) {
-        if (field == null) {
-            return;
-        }
-        int color;
-        if (recipeFilterFiltering) {
-            color = 0xFFFFAA;
-        } else if (!recipeFilterQuery.isBlank() && recipeFilterCount == 0) {
-            color = 0xFF5555;
-        } else {
-            color = 0xE0E0E0;
-        }
-        field.setTextColor(color);
-        field.setTextColorUneditable(color);
-    }
-
-    private void cancelPendingRecipeFilter() {
-        ScheduledFuture<?> future = pendingRecipeFilter;
-        pendingRecipeFilter = null;
-        if (future != null) {
-            future.cancel(false);
-        }
-    }
-
     public WidgetGroup getGroup(Widget widget) {
         for (WidgetGroup group : currentPage) {
             if (group.widgets.contains(widget)) {
@@ -1088,7 +616,6 @@ public class RecipeScreen extends Screen {
 
     @Override
     public void onClose() {
-        cancelPendingRecipeFilter();
         EmiHistory.popUntil(s -> !(s instanceof RecipeScreen), old);
     }
 

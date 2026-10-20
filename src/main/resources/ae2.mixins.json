@@ -46,7 +46,6 @@
     "VariantDeserializerMixin",
     "WrappedGenericStackTooltipModIdMixin",
     "emi.AbstractInventoryScreenMixin",
-    "emi.ChatHudMixin",
     "emi.DrawContextMixin",
     "emi.KeyboardMixin",
     "emi.MinecraftClientMixin",

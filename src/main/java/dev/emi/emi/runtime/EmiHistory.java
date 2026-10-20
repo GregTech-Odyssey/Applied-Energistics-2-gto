@@ -1,19 +1,20 @@
 package dev.emi.emi.runtime;
 
+import java.util.List;
+import java.util.function.Predicate;
+
 import com.google.common.collect.Lists;
-import dev.emi.emi.api.EmiApi;
-import dev.emi.emi.screen.ProductionPlannerScreen;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
-import java.util.List;
-import java.util.function.Predicate;
+import dev.emi.emi.api.EmiApi;
 
 public class EmiHistory {
     private static final List<Screen> HISTORIES = Lists.newArrayList();
     private static final List<Screen> FORWARD_HISTORIES = Lists.newArrayList();
-    
+
     public static boolean isEmpty() {
         return HISTORIES.isEmpty();
     }
@@ -29,7 +30,7 @@ public class EmiHistory {
 
     public static void pop() {
         Minecraft client = Minecraft.getInstance();
-        if (client.screen instanceof AbstractContainerScreen && !(client.screen instanceof ProductionPlannerScreen.Host)) {
+        if (client.screen instanceof AbstractContainerScreen) {
             clear();
             return;
         }
@@ -40,7 +41,8 @@ public class EmiHistory {
             client.setScreen(popped);
         } else {
             AbstractContainerScreen<?> screen = EmiApi.getHandledScreen();
-            if (screen != null) client.setScreen(screen);
+            if (screen != null)
+                client.setScreen(screen);
         }
     }
 

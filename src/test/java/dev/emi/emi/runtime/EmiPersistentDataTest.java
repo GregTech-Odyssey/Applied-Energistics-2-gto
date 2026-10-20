@@ -42,14 +42,14 @@ class EmiPersistentDataTest {
     void normalizesMissingAndMalformedSectionsWithoutLosingExtensionData() throws Exception {
         var json = EmiPersistentData.load(new StringReader("""
                 {"favorites":false,"lookup_history":null,"hidden_stacks":{},
-                 "recipe_defaults":[],"favorite_page_count":3,"bookmark_trees":{"saved":true}}
+                 "recipe_defaults":[],"extension_count":3,"extension_data":{"saved":true}}
                 """), null);
         assertTrue(json.getAsJsonArray("favorites").isEmpty());
         assertTrue(json.getAsJsonArray("lookup_history").isEmpty());
         assertTrue(json.getAsJsonArray("craft_history").isEmpty());
         assertTrue(json.getAsJsonArray("hidden_stacks").isEmpty());
         assertEquals(0, json.getAsJsonObject("recipe_defaults").size());
-        assertEquals(3, json.get("favorite_page_count").getAsInt());
-        assertTrue(json.getAsJsonObject("bookmark_trees").get("saved").getAsBoolean());
+        assertEquals(3, json.get("extension_count").getAsInt());
+        assertTrue(json.getAsJsonObject("extension_data").get("saved").getAsBoolean());
     }
 }

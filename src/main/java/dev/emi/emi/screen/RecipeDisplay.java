@@ -1,6 +1,12 @@
 package dev.emi.emi.screen;
 
+import java.util.List;
+
 import com.google.common.collect.Lists;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.EmiUtil;
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -12,12 +18,10 @@ import dev.emi.emi.config.EmiConfig;
 import dev.emi.emi.registry.EmiRecipeFiller;
 import dev.emi.emi.registry.EmiRecipes;
 import dev.emi.emi.runtime.EmiLog;
-import dev.emi.emi.screen.WidgetGroup;
 import dev.emi.emi.widget.*;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
-
-import java.util.List;
+import dev.emi.emi.widget.RecipeDefaultButtonWidget;
+import dev.emi.emi.widget.RecipeScreenshotButtonWidget;
+import dev.emi.emi.widget.RecipeTreeButtonWidget;
 
 public class RecipeDisplay {
     public static final int DISPLAY_PADDING = 8;
@@ -28,19 +32,13 @@ public class RecipeDisplay {
     private int leftWidth = 0, rightWidth = 0;
     private int rows = 0;
     public Throwable exception;
-    
+
     public RecipeDisplay(EmiRecipe recipe) {
         this.recipe = recipe;
         width = recipe.getDisplayWidth();
         height = recipe.getDisplayHeight();
         if (EmiRecipeFiller.isSupported(recipe) && EmiConfig.recipeFillButton) {
             rightButtons.add(ButtonType.FILL);
-        }
-        if (recipe.getId() != null && !recipe.getOutputs().isEmpty()) {
-            rightButtons.add(ButtonType.OVERLAY);
-        }
-        if (recipe.getId() != null && !recipe.getInputs().isEmpty() && !recipe.getOutputs().isEmpty()) {
-            rightButtons.add(ButtonType.PLANNER);
         }
         if (recipe.supportsRecipeTree()) {
             if (EmiConfig.recipeTreeButton) {
@@ -56,9 +54,8 @@ public class RecipeDisplay {
         rows = Math.max(1, (height + DISPLAY_PADDING + 2) / 14);
         leftWidth = Math.max(0, (leftButtons.size() + rows - 1) / rows * 14 - 1);
         rightWidth = Math.max(0, (rightButtons.size() + rows - 1) / rows * 14 - 1);
-    }
+    } // Error display
 
-    // Error display
     public RecipeDisplay(Throwable exception) {
         this.recipe = null;
         this.width = 128;
@@ -89,18 +86,20 @@ public class RecipeDisplay {
             } catch (Throwable t) {
                 EmiLog.error("Error constructing recipe widgets", t);
                 widgets = new WidgetGroup(recipe, wx, wy, wWidth, wHeight);
-                widgets.add(new TextWidget(EmiPort.ordered(EmiPort.translatable("emi.error.recipe.render")),
-                    wWidth / 2, wHeight / 2 - 5, ChatFormatting.RED.getColor(), true).horizontalAlign(Alignment.CENTER));
+                widgets.add(new TextWidget(EmiPort.ordered(EmiPort.translatable("emi.error.recipe.render")), wWidth / 2,
+                        wHeight / 2 - 5, ChatFormatting.RED.getColor(), true).horizontalAlign(Alignment.CENTER));
                 if (exception != null) {
-                    List<Component> text = EmiUtil.getStackTrace(exception).stream().map(s -> (Component) EmiPort.literal(s)).toList();
+                    List<Component> text = EmiUtil.getStackTrace(exception).stream()
+                            .map(s -> (Component) EmiPort.literal(s)).toList();
                     widgets.addTooltipText(text, 0, 0, wWidth, wHeight);
                 }
             }
         } else {
-            widgets.add(new TextWidget(EmiPort.ordered(EmiPort.translatable("emi.error.recipe.initialize")),
-                wWidth / 2, wHeight / 2 - 5, ChatFormatting.RED.getColor(), true).horizontalAlign(Alignment.CENTER));
+            widgets.add(new TextWidget(EmiPort.ordered(EmiPort.translatable("emi.error.recipe.initialize")), wWidth / 2,
+                    wHeight / 2 - 5, ChatFormatting.RED.getColor(), true).horizontalAlign(Alignment.CENTER));
             if (exception != null) {
-                List<Component> text = EmiUtil.getStackTrace(exception).stream().map(s -> (Component) EmiPort.literal(s)).toList();
+                List<Component> text = EmiUtil.getStackTrace(exception).stream()
+                        .map(s -> (Component) EmiPort.literal(s)).toList();
                 widgets.addTooltipText(text, 0, 0, wWidth, wHeight);
             }
         }
@@ -123,8 +122,6 @@ public class RecipeDisplay {
                     case TREE -> new RecipeTreeButtonWidget(bx, by, recipe);
                     case DEFAULT -> new RecipeDefaultButtonWidget(bx, by, recipe);
                     case SCREENSHOT -> new RecipeScreenshotButtonWidget(bx, by, recipe);
-                    case OVERLAY -> new RecipeOverlayButtonWidget(bx, by, recipe);
-                    case PLANNER -> new RecipePlannerButtonWidget(bx, by, recipe);
                 });
                 yOff += 14;
             }
@@ -150,11 +147,6 @@ public class RecipeDisplay {
     }
 
     private static enum ButtonType {
-        FILL,
-        TREE,
-        DEFAULT,
-        SCREENSHOT,
-        OVERLAY,
-        PLANNER
+        FILL, TREE, DEFAULT, SCREENSHOT
     }
 }

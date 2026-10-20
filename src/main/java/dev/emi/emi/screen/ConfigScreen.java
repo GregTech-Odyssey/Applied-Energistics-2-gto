@@ -1,26 +1,18 @@
 package dev.emi.emi.screen;
 
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.emi.emi.EmiPort;
-import dev.emi.emi.EmiRenderHelper;
-import dev.emi.emi.api.render.EmiTooltipComponents;
-import dev.emi.emi.com.unascribed.qdcss.QDCSS;
-import dev.emi.emi.config.*;
-import dev.emi.emi.config.EmiConfig.Comment;
-import dev.emi.emi.config.EmiConfig.ConfigGroup;
-import dev.emi.emi.config.EmiConfig.ConfigGroupEnd;
-import dev.emi.emi.config.EmiConfig.ConfigValue;
-import dev.emi.emi.input.EmiBind;
-import dev.emi.emi.input.EmiBind.ModifiedKey;
-import dev.emi.emi.input.EmiInput;
-import dev.emi.emi.planner.PlannerText;
-import dev.emi.emi.runtime.EmiDrawContext;
-import dev.emi.emi.runtime.EmiLog;
-import dev.emi.emi.screen.widget.SizedButtonWidget;
-import dev.emi.emi.screen.widget.config.*;
-import dev.emi.emi.search.EmiSearch;
+
+import org.lwjgl.glfw.GLFW;
+
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -31,19 +23,49 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
-import org.lwjgl.glfw.GLFW;
 
-import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import dev.emi.emi.EmiPort;
+import dev.emi.emi.EmiRenderHelper;
+import dev.emi.emi.api.render.EmiTooltipComponents;
+import dev.emi.emi.com.unascribed.qdcss.QDCSS;
+import dev.emi.emi.config.*;
+import dev.emi.emi.config.ConfigEnum;
+import dev.emi.emi.config.EmiConfig;
+import dev.emi.emi.config.EmiConfig.Comment;
+import dev.emi.emi.config.EmiConfig.ConfigGroup;
+import dev.emi.emi.config.EmiConfig.ConfigGroupEnd;
+import dev.emi.emi.config.EmiConfig.ConfigValue;
+import dev.emi.emi.config.IntGroup;
+import dev.emi.emi.config.ScreenAlign;
+import dev.emi.emi.config.SidebarPages;
+import dev.emi.emi.config.SidebarSubpanels;
+import dev.emi.emi.input.EmiBind;
+import dev.emi.emi.input.EmiBind.ModifiedKey;
+import dev.emi.emi.input.EmiInput;
+import dev.emi.emi.runtime.EmiDrawContext;
+import dev.emi.emi.runtime.EmiLog;
+import dev.emi.emi.screen.widget.SizedButtonWidget;
+import dev.emi.emi.screen.widget.config.*;
+import dev.emi.emi.screen.widget.config.BooleanWidget;
+import dev.emi.emi.screen.widget.config.ConfigEntryWidget;
+import dev.emi.emi.screen.widget.config.ConfigJumpButton;
+import dev.emi.emi.screen.widget.config.ConfigSearch;
+import dev.emi.emi.screen.widget.config.EmiBindWidget;
+import dev.emi.emi.screen.widget.config.EmiNameWidget;
+import dev.emi.emi.screen.widget.config.EnumWidget;
+import dev.emi.emi.screen.widget.config.GroupNameWidget;
+import dev.emi.emi.screen.widget.config.IntGroupWidget;
+import dev.emi.emi.screen.widget.config.IntWidget;
+import dev.emi.emi.screen.widget.config.ListWidget;
+import dev.emi.emi.screen.widget.config.ScreenAlignWidget;
+import dev.emi.emi.screen.widget.config.SidebarPagesWidget;
+import dev.emi.emi.screen.widget.config.SidebarSubpanelsWidget;
+import dev.emi.emi.screen.widget.config.SubGroupNameWidget;
+import dev.emi.emi.search.EmiSearch;
 
 public class ConfigScreen extends Screen {
     private static final int maxWidth = 240;
     private Screen last;
-    private final boolean groupingOnly;
     private ConfigSearch search;
     public ListWidget list;
     public EmiBind activeBind;
@@ -54,15 +76,8 @@ public class ConfigScreen extends Screen {
     public Button resetButton;
 
     public ConfigScreen(Screen last) {
-        this(last, false);
-    }
-
-    public ConfigScreen(Screen last, boolean groupingOnly) {
-        super(groupingOnly
-                ? EmiPort.literal(PlannerText.tr("sidebar.config.group", "Sidebar Grouping"))
-                : EmiPort.translatable("screen.emi.config"));
+        super(EmiPort.translatable("screen.emi.config"));
         this.last = last;
-        this.groupingOnly = groupingOnly;
         originalConfig = EmiConfig.getSavedConfig();
     }
 
@@ -71,48 +86,6 @@ public class ConfigScreen extends Screen {
         activeBindOffset = offset;
         activeModifiers = 0;
         lastModifier = 0;
-    }
-
-    private static Component getGroupText(String key) {
-        if (key.equals("ui.sidebar-grouping")) {
-            return EmiPort.literal(PlannerText.tr("sidebar.config.group", "Sidebar Grouping"));
-        }
-        return EmiPort.translatable("config.emi.group." + key.replace('-', '_'));
-    }
-
-    private static Component getConfigText(String key) {
-        String value = switch (key) {
-            case "ui.sidebar-grouping-enabled" -> PlannerText.tr("sidebar.config.enabled", "Enable Sidebar Grouping");
-            case "ui.sidebar-grouping-gt-tag-prefix" -> PlannerText.tr("sidebar.config.gt_prefix", "Group GT Material Forms");
-            case "ui.sidebar-grouping-gt-wires" -> PlannerText.tr("sidebar.config.gt_wires", "Group GT Wires");
-            case "ui.sidebar-grouping-gt-cables" -> PlannerText.tr("sidebar.config.gt_cables", "Group GT Cables");
-            case "ui.sidebar-grouping-gt-pipes" -> PlannerText.tr("sidebar.config.gt_pipes", "Group GT Pipes");
-            case "ui.sidebar-grouping-gt-fluid-buckets" -> PlannerText.tr("sidebar.config.gt_fluid_buckets", "Group Fluid Buckets");
-            case "ui.sidebar-grouping-gt-fluids" -> PlannerText.tr("sidebar.config.gt_fluids", "Group GT Fluids");
-            case "ui.sidebar-grouping-gt-surface-rocks" -> PlannerText.tr("sidebar.config.gt_surface_rocks", "Group Surface Rocks");
-            case "ui.sidebar-grouping-gt-turbine-blades" -> PlannerText.tr("sidebar.config.gt_turbine_blades", "Group Turbine Blades");
-            case "ui.sidebar-grouping-gt-drill-heads" -> PlannerText.tr("sidebar.config.gt_drill_heads", "Group Drill Heads");
-            case "ui.sidebar-grouping-gt-frames" -> PlannerText.tr("sidebar.config.gt_frames", "Group Frames");
-            case "ui.sidebar-grouping-gt-coil-blocks" -> PlannerText.tr("sidebar.config.gt_coil_blocks", "Group Coil Blocks");
-            case "ui.sidebar-grouping-tier-rules" -> PlannerText.tr("sidebar.config.tier_rules", "Group Tier Variants");
-            case "ui.sidebar-grouping-circuits" -> PlannerText.tr("sidebar.config.circuits", "Group GT Circuits");
-            case "ui.sidebar-grouping-spawn-eggs" -> PlannerText.tr("sidebar.config.spawn_eggs", "Group Spawn Eggs");
-            case "ui.sidebar-grouping-tools" -> PlannerText.tr("sidebar.config.tools", "Group Tools");
-            case "ui.sidebar-grouping-armor" -> PlannerText.tr("sidebar.config.armor", "Group Armor");
-            case "ui.sidebar-grouping-weapons" -> PlannerText.tr("sidebar.config.weapons", "Group Weapons");
-            case "ui.sidebar-grouping-chisel-blocks" -> PlannerText.tr("sidebar.config.chisel_blocks", "Group Chisel Blocks");
-            case "ui.sidebar-grouping-color-rules" -> PlannerText.tr("sidebar.config.color_rules", "Group Color Variants");
-            case "ui.sidebar-grouping-wood-rules" -> PlannerText.tr("sidebar.config.wood_rules", "Group Wood Variants");
-            case "ui.sidebar-grouping-same-item-id" -> PlannerText.tr("sidebar.config.same_id", "Group Same Item ID");
-            case "ui.sidebar-grouping-tier-prefixes" -> PlannerText.tr("sidebar.config.tier_prefixes", "Tier Prefixes");
-            case "ui.sidebar-grouping-color-prefixes" -> PlannerText.tr("sidebar.config.color_prefixes", "Color Prefixes");
-            case "ui.sidebar-grouping-wood-prefixes" -> PlannerText.tr("sidebar.config.wood_prefixes", "Wood Prefixes");
-            case "ui.sidebar-grouping-custom-rules-enabled" -> PlannerText.tr("sidebar.config.custom_rules_enabled", "Enable Custom ID Rules");
-            case "ui.sidebar-grouping-custom-rules" -> PlannerText.tr("sidebar.config.custom_rules", "Custom ID Rules");
-            case "ui.sidebar-grouping-blacklist" -> PlannerText.tr("sidebar.config.blacklist", "Grouping Blacklist");
-            default -> null;
-        };
-        return value == null ? EmiPort.translatable("config.emi." + key.replace('-', '_')) : EmiPort.literal(value);
     }
 
     @Override
@@ -130,10 +103,10 @@ public class ConfigScreen extends Screen {
         Comment comment = field.getAnnotation(Comment.class);
         if (I18n.exists(key)) {
             text = (List<ClientTooltipComponent>) (Object) Arrays.stream(I18n.get(key).split("\n"))
-                .map(EmiPort::literal).map(EmiTooltipComponents::of).toList();
+                    .map(EmiPort::literal).map(EmiTooltipComponents::of).toList();
         } else if (comment != null) {
             text = (List<ClientTooltipComponent>) (Object) Arrays.stream(comment.value().split("\n"))
-                .map(EmiPort::literal).map(EmiTooltipComponents::of).toList();
+                    .map(EmiPort::literal).map(EmiTooltipComponents::of).toList();
         } else {
             text = null;
         }
@@ -146,9 +119,7 @@ public class ConfigScreen extends Screen {
     @Override
     @SuppressWarnings("unchecked")
     protected void init() {
-        super.init();
-
-        // Persistent-ish state
+        super.init(); // Persistent-ish state
         int scroll = 0;
         String query = "";
         Set<String> collapsed = Sets.newHashSet();
@@ -163,36 +134,37 @@ public class ConfigScreen extends Screen {
                 }
             }
         }
-
         list = new ListWidget(minecraft, width, height, 40, height - 60);
         this.addRenderableOnly(new EmiNameWidget(width / 2, 16));
         int w = Math.min(400, width - 40) / 4 * 4;
         int x = (width - w) / 2;
         search = new ConfigSearch(x + 3, height - 51, w / 2 - 4, 18);
         this.addRenderableOnly(search.field);
-        this.resetButton = EmiPort.newButton(x + 2, height - 30, w / 2 - 2, 20, EmiPort.translatable("gui.done"), button -> {
-            EmiConfig.loadConfig(QDCSS.load("revert", originalConfig));
-            Minecraft client = Minecraft.getInstance();
-            this.init(client, client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight());
-        });
-        this.addRenderableWidget(EmiPort.newButton(x + w / 2 + 2, height - 30, w / 2 - 2, 20, EmiPort.translatable("gui.done"), button -> {
-            this.onClose();
-        }));
-        this.addRenderableWidget(EmiPort.newButton(x + w / 2 + 2, height - 52, w / 2 - 24, 20, EmiPort.translatable("screen.emi.presets"), button -> {
-            Minecraft client = Minecraft.getInstance();
-            client.setScreen(new ConfigPresetScreen(this));
-        }));
+        this.resetButton = EmiPort.newButton(x + 2, height - 30, w / 2 - 2, 20, EmiPort.translatable("gui.done"),
+                button -> {
+                    EmiConfig.loadConfig(QDCSS.load("revert", originalConfig));
+                    Minecraft client = Minecraft.getInstance();
+                    this.init(client, client.getWindow().getGuiScaledWidth(), client.getWindow().getGuiScaledHeight());
+                });
+        this.addRenderableWidget(EmiPort.newButton(x + w / 2 + 2, height - 30, w / 2 - 2, 20,
+                EmiPort.translatable("gui.done"), button -> {
+                    this.onClose();
+                }));
+        this.addRenderableWidget(EmiPort.newButton(x + w / 2 + 2, height - 52, w / 2 - 24, 20,
+                EmiPort.translatable("screen.emi.presets"), button -> {
+                    Minecraft client = Minecraft.getInstance();
+                    client.setScreen(new ConfigPresetScreen(this));
+                }));
         this.addRenderableWidget(new SizedButtonWidget(x + w - 20, height - 52, 20, 20, 164, 0, () -> true, widget -> {
             EmiConfig.setGlobalState(!EmiConfig.useGlobalConfig);
             ConfigScreen.this.resize(minecraft, width, height);
         }, () -> (EmiConfig.useGlobalConfig ? 40 : 0), () -> {
             return (List<Component>) (Object) Arrays.stream(I18n.get("tooltip.emi.config.global").split("\n"))
-                .map(s -> minecraft.font.getSplitter().splitLines(FormattedText.of(s), maxWidth, Style.EMPTY))
-                .flatMap(l -> l.stream()).map(v -> EmiPort.literal(v.getString())).toList();
+                    .map(s -> minecraft.font.getSplitter().splitLines(FormattedText.of(s), maxWidth, Style.EMPTY))
+                    .flatMap(l -> l.stream()).map(v -> EmiPort.literal(v.getString())).toList();
         }));
         this.addRenderableWidget(resetButton);
         this.addWidget(search.field);
-
         try {
             String lastGroup = "";
             GroupNameWidget lastGroupWidget = null;
@@ -202,9 +174,6 @@ public class ConfigScreen extends Screen {
             for (Field field : EmiConfig.class.getFields()) {
                 ConfigValue annot = field.getAnnotation(ConfigValue.class);
                 if (annot != null) {
-                    if (groupingOnly && !annot.value().startsWith("ui.sidebar-grouping")) {
-                        continue;
-                    }
                     String group = annot.value().split("\\.")[0];
                     if (group.equals("persistent")) {
                         continue;
@@ -221,7 +190,8 @@ public class ConfigScreen extends Screen {
                     ConfigGroup configGroup = field.getAnnotation(ConfigGroup.class);
                     if (configGroup != null) {
                         currentGroup = configGroup;
-                        Component text = getGroupText(configGroup.value());
+                        Component text = EmiPort
+                                .translatable("config.emi.group." + configGroup.value().replace('-', '_'));
                         currentSubGroupWidget = new SubGroupNameWidget(configGroup.value(), text);
                         if (collapsed.contains(text.getString())) {
                             currentSubGroupWidget.collapsed = true;
@@ -230,68 +200,62 @@ public class ConfigScreen extends Screen {
                         list.addEntry(currentSubGroupWidget);
                     }
                     Predicate<?> predicate = EmiConfig.FILTERS.getOrDefault(annot.value(), v -> true);
-                    Component translation = getConfigText(annot.value());
+                    Component translation = EmiPort.translatable("config.emi." + annot.value().replace('-', '_'));
                     ConfigEntryWidget entry = null;
                     if (field.getType() == boolean.class) {
-                        entry = new BooleanWidget(translation, getFieldTooltip(field), searchSupplier, new Mutator<Boolean>() {
+                        entry = new BooleanWidget(translation, getFieldTooltip(field), searchSupplier,
+                                new Mutator<Boolean>() {
+                                    public Boolean getValue() {
+                                        try {
+                                            return field.getBoolean(null);
+                                        } catch (Exception e) {
+                                        }
+                                        return false;
+                                    }
 
-                            public Boolean getValue() {
-                                try {
-                                    return field.getBoolean(null);
-                                } catch(Exception e) {}
-                                return false;
-                            }
-
-                            public void setValue(Boolean value) {
-                                try {
-                                    field.setBoolean(null, value);
-                                } catch (Exception e) {}
-                            }                        
-                        });
+                                    public void setValue(Boolean value) {
+                                        try {
+                                            field.setBoolean(null, value);
+                                        } catch (Exception e) {
+                                        }
+                                    }
+                                });
                     } else if (field.getType() == int.class) {
-                        entry = new IntWidget(translation, getFieldTooltip(field), searchSupplier, new Mutator<Integer>() {
+                        entry = new IntWidget(translation, getFieldTooltip(field), searchSupplier,
+                                new Mutator<Integer>() {
+                                    public Integer getValue() {
+                                        try {
+                                            return field.getInt(null);
+                                        } catch (Exception e) {
+                                        }
+                                        return -1;
+                                    }
 
-                            public Integer getValue() {
-                                try {
-                                    return field.getInt(null);
-                                } catch(Exception e) {}
-                                return -1;
-                            }
-
-                            public void setValue(Integer value) {
-                                try {
-                                    field.setInt(null, value);
-                                } catch (Exception e) {}
-                            }                        
-                        });
-                    } else if (field.getType() == String.class) {
-                        entry = new StringWidget(translation, getFieldTooltip(field), searchSupplier, new Mutator<String>() {
-
-                            public String getValue() {
-                                try {
-                                    return (String) field.get(null);
-                                } catch (Exception e) {}
-                                return "";
-                            }
-
-                            public void setValue(String value) {
-                                try {
-                                    field.set(null, value);
-                                } catch (Exception e) {}
-                            }
-                        });
+                                    public void setValue(Integer value) {
+                                        try {
+                                            field.setInt(null, value);
+                                        } catch (Exception e) {
+                                        }
+                                    }
+                                });
                     } else if (field.getType() == EmiBind.class) {
-                        entry = new EmiBindWidget(this, getFieldTooltip(field), searchSupplier, (EmiBind) field.get(null));
+                        entry = new EmiBindWidget(this, getFieldTooltip(field), searchSupplier,
+                                (EmiBind) field.get(null));
                     } else if (field.getType() == ScreenAlign.class) {
-                        entry = new ScreenAlignWidget(translation, getFieldTooltip(field), searchSupplier, objectMutator(field));
+                        entry = new ScreenAlignWidget(translation, getFieldTooltip(field), searchSupplier,
+                                objectMutator(field));
                     } else if (field.getType() == SidebarPages.class) {
-                        entry = new SidebarPagesWidget(translation, getFieldTooltip(field), searchSupplier, objectMutator(field));
+                        entry = new SidebarPagesWidget(translation, getFieldTooltip(field), searchSupplier,
+                                objectMutator(field));
                     } else if (field.getType() == SidebarSubpanels.class) {
-                        entry = new SidebarSubpanelsWidget(translation, getFieldTooltip(field), searchSupplier, objectMutator(field));
+                        entry = new SidebarSubpanelsWidget(translation, getFieldTooltip(field), searchSupplier,
+                                objectMutator(field));
                     } else if (IntGroup.class.isAssignableFrom(field.getType())) {
-                        entry = new IntGroupWidget(translation, getFieldTooltip(field), searchSupplier, objectMutator(field));
+                        entry = new IntGroupWidget(translation, getFieldTooltip(field), searchSupplier,
+                                objectMutator(field));
                     } else if (ConfigEnum.class.isAssignableFrom(field.getType())) {
-                        entry = new EnumWidget(translation, getFieldTooltip(field), searchSupplier, objectMutator(field), (Predicate<ConfigEnum>) predicate);
+                        entry = new EnumWidget(translation, getFieldTooltip(field), searchSupplier,
+                                objectMutator(field), (Predicate<ConfigEnum>) predicate);
                     }
                     boolean endGroup = field.getAnnotation(ConfigGroupEnd.class) != null;
                     if (entry != null) {
@@ -316,7 +280,6 @@ public class ConfigScreen extends Screen {
         } catch (Exception e) {
             EmiLog.error("Error initializing config screen", e);
         }
-
         this.addWidget(list);
         list.setScrollAmount(scroll);
         search.setText(query);
@@ -325,19 +288,12 @@ public class ConfigScreen extends Screen {
     }
 
     private void addJumpButtons() {
-        List<String> jumps = Lists.newArrayList(
-            "general", "general.search",
-            "ui", "ui.left-sidebar", "ui.right-sidebar", "ui.top-sidebar", "ui.bottom-sidebar",
-            "binds", "binds.crafts", "binds.cheats",
-            "dev"
-        );
-        List<List<String>> removes = List.of(
-            List.of("binds.cheats"),
-            List.of("general.search"),
-            List.of("ui.top-sidebar", "ui.bottom-sidebar"),
-            List.of("binds.crafts"),
-            List.of("ui.left-sidebar", "ui.right-sidebar")
-        );
+        List<String> jumps = Lists.newArrayList("general", "general.search", "ui", "ui.left-sidebar",
+                "ui.right-sidebar", "ui.top-sidebar", "ui.bottom-sidebar", "binds", "binds.crafts", "binds.cheats",
+                "dev");
+        List<List<String>> removes = List.of(List.of("binds.cheats"), List.of("general.search"),
+                List.of("ui.top-sidebar", "ui.bottom-sidebar"), List.of("binds.crafts"),
+                List.of("ui.left-sidebar", "ui.right-sidebar"));
         int space = list.getLogicalHeight() - 10;
         for (List<String> r : removes) {
             if (jumps.size() * 16 > space) {
@@ -354,9 +310,8 @@ public class ConfigScreen extends Screen {
             } else {
                 u += 16;
             }
-            this.addRenderableWidget(new ConfigJumpButton(
-                2 + (newGroup ? 0 : 8), y, u, v, w -> jump(s),
-                List.of(EmiPort.translatable("config.emi.group." + s.replace('-', '_')))));
+            this.addRenderableWidget(new ConfigJumpButton(2 + (newGroup ? 0 : 8), y, u, v, w -> jump(s),
+                    List.of(EmiPort.translatable("config.emi.group." + s.replace('-', '_')))));
             y += 16;
         }
     }
@@ -380,7 +335,7 @@ public class ConfigScreen extends Screen {
             public T getValue() {
                 try {
                     return (T) field.get(null);
-                } catch(Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
@@ -388,15 +343,14 @@ public class ConfigScreen extends Screen {
             public void setValue(T en) {
                 try {
                     field.set(null, en);
-                } catch(Exception e) {
+                } catch (Exception e) {
                     throw new RuntimeException(e);
                 }
             }
         };
     }
 
-    public void updateChanges() {
-        // Split on the blank lines between config options
+    public void updateChanges() { // Split on the blank lines between config options
         String[] oLines = originalConfig.split("\n\n");
         String[] cLines = EmiConfig.getSavedConfig().split("\n\n");
         int different = 0;
@@ -411,7 +365,7 @@ public class ConfigScreen extends Screen {
         this.resetButton.active = different > 0;
         this.resetButton.setMessage(EmiPort.translatable("screen.emi.config.reset", different));
     }
-    
+
     @Override
     public void render(GuiGraphics raw, int mouseX, int mouseY, float delta) {
         EmiDrawContext context = EmiDrawContext.wrap(raw);
@@ -420,15 +374,17 @@ public class ConfigScreen extends Screen {
         list.render(context.raw(), mouseX, mouseY, delta);
         super.render(context.raw(), mouseX, mouseY, delta);
         if (list.getHoveredEntry() != null) {
-            EmiRenderHelper.drawTooltip(this, context, list.getHoveredEntry().getTooltip(mouseX, mouseY), mouseX, mouseY, Math.min(width / 2 - 16, maxWidth));
+            EmiRenderHelper.drawTooltip(this, context, list.getHoveredEntry().getTooltip(mouseX, mouseY), mouseX,
+                    mouseY, Math.min(width / 2 - 16, maxWidth));
         }
     }
-    
+
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (activeBind != null) {
             pushModifier(0);
-            activeBind.setBind(activeBindOffset, new ModifiedKey(InputConstants.Type.MOUSE.getOrCreate(button), activeModifiers));
+            activeBind.setBind(activeBindOffset,
+                    new ModifiedKey(InputConstants.Type.MOUSE.getOrCreate(button), activeModifiers));
             activeBind = null;
             return true;
         }
@@ -451,14 +407,14 @@ public class ConfigScreen extends Screen {
                 if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
                     activeBind.setBind(activeBindOffset, new ModifiedKey(InputConstants.UNKNOWN, 0));
                 } else {
-                    activeBind.setBind(activeBindOffset, new ModifiedKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode), activeModifiers));
+                    activeBind.setBind(activeBindOffset,
+                            new ModifiedKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode), activeModifiers));
                 }
                 activeBind = null;
                 updateChanges();
             }
             return true;
-        } else {
-            // Element nesting causes crashing for cycling, for some reason
+        } else { // Element nesting causes crashing for cycling, for some reason
             if (keyCode == GLFW.GLFW_KEY_TAB) {
                 return false;
             }
@@ -488,7 +444,8 @@ public class ConfigScreen extends Screen {
         if (activeBind != null) {
             activeModifiers &= ~EmiInput.maskFromCode(keyCode);
             if (keyCode == lastModifier) {
-                activeBind.setBind(activeBindOffset, new ModifiedKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode), activeModifiers));
+                activeBind.setBind(activeBindOffset,
+                        new ModifiedKey(InputConstants.Type.KEYSYM.getOrCreate(keyCode), activeModifiers));
                 activeBind = null;
             }
             return true;
@@ -503,6 +460,7 @@ public class ConfigScreen extends Screen {
 
     public abstract class Mutator<T> {
         protected abstract T getValue();
+
         protected abstract void setValue(T value);
 
         public T get() {

@@ -26,11 +26,9 @@ A Minecraft mod about Matter, Energy and using them to conquer the world...
   - (c) 2013 - 2020 AlgorithmX2 et al
   - [![License](https://img.shields.io/badge/License-LGPLv3-blue.svg?style=flat-square)](https://raw.githubusercontent.com/AppliedEnergistics/Applied-Energistics-2/rv2/LICENSE)
 * Bundled [EMI](https://github.com/emilyploszaj/emi)
+  - Based on upstream `1.1.24+1.20.1` (`23d251ea8ea3a5fd7d760948f36014b185eac69f`), with GTO integration maintained in this repository.
   - Original author: [Emi (emilyploszaj)](https://github.com/emilyploszaj), copyright (c) 2022 Emi.
   - [MIT License](src/main/resources/LICENSE-EMI).
-* Bundled [EMI fork](https://github.com/GregTech-Odyssey/emi/tree/crazerium-1.20.1)
-  - Fork enhancements by [Crazerium](https://github.com/Crazerium); Forge port and GTO integration by Hophenby and GregTech Odyssey contributors.
-  - [MIT License](src/main/resources/LICENSE-EMI), retaining the original EMI copyright notice.
 * Bundled [EMI Trades](https://github.com/Prismwork/EMITrades/tree/xplat/1.20.1)
   - Original authors: Prismwork and Flamarine; copyright (c) 2022-2023 Prismwork.
   - [MIT License](src/main/resources/LICENSE-EMITrades). Ported and adapted to Forge/Mojang mappings in this repository.
@@ -55,6 +53,6 @@ You install this mod by putting it into the `minecraft/mods/` folder. It has no 
 
 ## Credits
 
-EMI, the Crazerium EMI fork, and EMI Trades are included in this mod. Their MIT notices are retained in `LICENSE-EMI`, `LICENSE-EMITrades`, and `NOTICE` inside the distributed jars. Install the AE fork without standalone EMI or EMI Trades jars.
+EMI 1.1.24+1.20.1 and EMI Trades are included in this mod. Their MIT notices are retained in `LICENSE-EMI`, `LICENSE-EMITrades`, and `NOTICE` inside the distributed jars. Install the AE fork without standalone EMI or EMI Trades jars.
 
 Thanks to all of our [contributors](https://github.com/GregTech-Odyssey/Applied-Energistics-2-gto/graphs/contributors)!
