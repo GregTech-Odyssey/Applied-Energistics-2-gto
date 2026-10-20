@@ -25,9 +25,6 @@ import com.glodblock.github.extendedae.common.EPPItemAndBlock;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -389,11 +386,13 @@ public class PatternAccessTermMenu extends AEBaseMenu {
         private final InternalInventory client;
         // This is a reference to the real inventory used by this machine
         private final InternalInventory server;
+        private final ItemStack[] seen;
 
         public ContainerTracker(PatternContainer container, InternalInventory patterns, PatternContainerGroup group) {
             this.container = container;
             this.server = patterns;
             this.client = new AppEngInternalInventory(this.server.size());
+            this.seen = new ItemStack[this.server.size()];
             this.group = group;
             this.sortBy = container.getTerminalSortOrder();
         }
@@ -402,6 +401,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             var slots = new Int2ObjectArrayMap<ItemStack>(server.size());
             for (int i = 0; i < server.size(); i++) {
                 var stack = server.getStackInSlot(i);
+                seen[i] = stack;
                 if (!stack.isEmpty()) {
                     slots.put(i, stack);
                     client.setItemDirect(i, stack.copy());
@@ -427,6 +427,7 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             for (int i = 0; i < changedSlots.size(); i++) {
                 var slot = changedSlots.getInt(i);
                 var stack = server.getStackInSlot(slot);
+                seen[slot] = stack;
                 // "update" client side.
                 client.setItemDirect(slot, stack.isEmpty() ? ItemStack.EMPTY : stack.copy());
                 slots.put(slot, stack);
@@ -440,44 +441,31 @@ public class PatternAccessTermMenu extends AEBaseMenu {
         @Nullable
         private IntList detectChangedSlots() {
             IntList changedSlots = null;
-            for (int x = 0; x < server.size(); x++) {
-                if (isDifferent(server.getStackInSlot(x), client.getStackInSlot(x))) {
+            int size = Math.min(server.size(), seen.length);
+            for (int x = 0; x < size; x++) {
+                var stack = server.getStackInSlot(x);
+                var known = client.getStackInSlot(x);
+                if (stack == seen[x] && stack.getCount() == known.getCount()) {
+                    continue;
+                }
+                if (isDifferent(stack, known)) {
                     if (changedSlots == null) {
                         changedSlots = new IntArrayList();
                     }
                     changedSlots.add(x);
+                } else {
+                    seen[x] = stack;
                 }
             }
             return changedSlots;
         }
 
         private static boolean isDifferent(ItemStack a, ItemStack b) {
-            if (a == b)
-                return false;
             if (a.isEmpty() && b.isEmpty())
                 return false;
             if (a.isEmpty() || b.isEmpty())
                 return true;
-
-            if (a.getItem() == b.getItem()) {
-                var at = a.getTag();
-                var bt = b.getTag();
-                if (at == null && bt == null)
-                    return false;
-                if (at == null || bt == null)
-                    return true;
-                var oa = at.tags.get("out");
-                var ob = bt.tags.get("out");
-                if (oa instanceof ListTag la && la.getFirst() instanceof CompoundTag ca &&
-                        ca.tags.get("id") instanceof StringTag sa &&
-                        ob instanceof ListTag lb &&
-                        lb.getFirst() instanceof CompoundTag cb &&
-                        cb.tags.get("id") instanceof StringTag sb) {
-                    return !sa.equals(sb);
-                }
-                return false;
-            }
-            return true;
+            return !ItemStack.matches(a, b);
         }
     }
 
