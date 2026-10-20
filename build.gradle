@@ -423,6 +423,9 @@ jar {
 task sourcesJar(type: Jar) {
     archiveClassifier = "sources"
     from sourceSets.main.allJava
+    from("src/main/resources") {
+        include "NOTICE", "LICENSE-EMI", "LICENSE-EMITrades"
+    }
 }
 
 artifacts {
@@ -434,7 +437,7 @@ artifacts {
 spotless {
 
     java {
-        target('src/*/java/appeng/**/*.java', 'src/*/java/gto_ae/**/*.java')
+        target('src/*/java/appeng/**/*.java', 'src/*/java/gto_ae/**/*.java', 'src/*/java/io/github/prismwork/emitrades/**/*.java')
 
         endWithNewline()
         indentWithSpaces()

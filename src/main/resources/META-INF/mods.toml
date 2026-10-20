@@ -61,7 +61,8 @@ description="A Mod about Matter, Energy and using them to conquer the world.."
 modId="emi"
 version="1.1.24-crazer.1"
 displayName="EMI"
-authors="Emi"
+authors="Emi, Crazerium"
+credits="EMI by Emi (emilyploszaj); EMI fork enhancements by Crazerium; MIT License (LICENSE-EMI)."
 description="Item and recipe viewer included with the GTO AE fork."
 
 [[dependencies.emi]]
@@ -76,4 +77,20 @@ modId="jei"
 mandatory=false
 versionRange="[15.20.0.0,)"
 ordering="BEFORE"
+side="CLIENT"
+
+# EMI Trades is bundled; preserve its identity and reject duplicate standalone jars.
+[[mods]]
+modId="emitrades"
+version="1.2.1-gto.1"
+displayName="EMI Trades"
+authors="Prismwork, Flamarine"
+credits="Original EMI Trades by Prismwork and Flamarine; MIT License (LICENSE-EMITrades). Adapted by GregTech Odyssey."
+description="Villager and wandering trader recipes for the bundled EMI."
+
+[[dependencies.emitrades]]
+modId="emi"
+mandatory=true
+versionRange="[1.0,)"
+ordering="NONE"
 side="CLIENT"

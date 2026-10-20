@@ -54,6 +54,7 @@
     "emi.RecipeBookWidgetMixin",
     "emi.ScreenMixin",
     "emi.ToastManagerMixin",
+    "emi.TradeClientLevelMixin",
     "emi.accessor.BakedModelManagerAccessor",
     "emi.accessor.DrawContextAccessor",
     "emi.accessor.HandledScreenAccessor",
