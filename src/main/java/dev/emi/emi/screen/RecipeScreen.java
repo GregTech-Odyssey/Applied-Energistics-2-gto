@@ -250,9 +250,11 @@ public class RecipeScreen extends Screen {
                     .literal(minecraft.font.substrByWidth(text, (minimumWidth - 40) - extraWidth).getString() + "...");
         }
         context.drawCenteredTextWithShadow(text, x + backgroundWidth / 2, y + 7, categoryNameColor);
-        context.drawCenteredTextWithShadow(
-                EmiRenderHelper.getPageText(this.page + 1, tab.getPageCount(), minimumWidth - 40),
-                x + backgroundWidth / 2, y + 21, 0xffffff);
+        if (!recipeFilterActive || recipeFilterField == null) {
+            context.drawCenteredTextWithShadow(
+                    EmiRenderHelper.getPageText(this.page + 1, tab.getPageCount(), minimumWidth - 40),
+                    x + backgroundWidth / 2, y + 21, 0xffffff);
+        }
 
         List<EmiIngredient> workstations = EmiApi.getRecipeManager().getWorkstations(tab.category);
         int workstationAmount = Math.min(workstations.size(), getMaxWorkstations());

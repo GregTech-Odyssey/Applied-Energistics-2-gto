@@ -3,6 +3,7 @@ package dev.emi.emi.planner;
 import dev.emi.emi.planner.compat.PlannerMachineCompatRegistry;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.locale.Language;
 
 import java.util.Map;
 
@@ -670,11 +671,22 @@ public final class PlannerText {
     }
 
     public static String tr(String key, String english) {
+        return resolve(key, english, false);
+    }
+
+    public static String tr(String key, String english, Object... args) {
+        return String.format(resolve(key, english, true), args);
+    }
+
+    private static String resolve(String key, String english, boolean raw) {
         String translationKey = "emi.production_planner." + key;
         String translated = null;
         try {
             if (I18n.exists(translationKey)) {
-                translated = I18n.get(translationKey);
+                // I18n.get 无参时仍会执行 String.format，含 %d 的模板会变成 "Format error: ..."
+                translated = raw
+                        ? Language.getInstance().getOrDefault(translationKey)
+                        : I18n.get(translationKey);
             }
         } catch (Throwable ignored) {
         }
@@ -694,10 +706,6 @@ public final class PlannerText {
         }
 
         return translated != null && !translated.equals(translationKey) ? translated : english;
-    }
-
-    public static String tr(String key, String english, Object... args) {
-        return String.format(tr(key, english), args);
     }
 
     public static boolean isRussian() {
