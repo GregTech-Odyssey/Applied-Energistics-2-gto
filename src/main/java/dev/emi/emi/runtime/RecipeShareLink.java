@@ -51,9 +51,9 @@ public final class RecipeShareLink {
         if (client.player != null) {
             String name = recipeName(recipe);
             if (added) {
-                client.player.displayClientMessage(EmiPort.literal("Added EMI bookmark: " + name).withStyle(ChatFormatting.GREEN), false);
+                client.player.displayClientMessage(EmiPort.translatable("emi.bookmark.share.added", name).withStyle(ChatFormatting.GREEN), false);
             } else {
-                client.player.displayClientMessage(EmiPort.literal("EMI bookmark already exists: " + name).withStyle(ChatFormatting.YELLOW), false);
+                client.player.displayClientMessage(EmiPort.translatable("emi.bookmark.share.exists", name).withStyle(ChatFormatting.YELLOW), false);
             }
         }
         return true;
@@ -79,7 +79,7 @@ public final class RecipeShareLink {
         }
 
         MutableComponent result = Component.literal(raw.substring(0, start));
-        MutableComponent clickable = EmiPort.literal("[Click to add bookmark: " + recipeName(recipe) + "]");
+        MutableComponent clickable = EmiPort.translatable("emi.bookmark.share.add", recipeName(recipe));
         clickable.setStyle(Style.EMPTY
             .withColor(ChatFormatting.GOLD)
             .withUnderlined(true)

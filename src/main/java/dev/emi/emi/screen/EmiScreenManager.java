@@ -614,7 +614,7 @@ public class EmiScreenManager {
             return;
         }
         if (EmiSearch.searchBaking) {
-            context.drawTextWithShadow(EmiPort.literal("Baking search"), getDebugTextX(), base.screen().height - 26);
+            context.drawTextWithShadow(EmiPort.translatable("emi.reload.baking_search"), getDebugTextX(), base.screen().height - 26);
         }
         boolean visible = !isDisabled();
         emi.visible = EmiConfig.emiConfigButtonVisibility.resolve(visible);
@@ -817,8 +817,8 @@ public class EmiScreenManager {
             try {
                 EmiLog.error("Error rendering tooltip", e);
                 List<ClientTooltipComponent> list = List.of(
-                        EmiTooltipComponents.of(EmiPort.literal("Error rendering tooltip", ChatFormatting.RED)),
-                        EmiTooltipComponents.of(EmiPort.literal("See log", ChatFormatting.GRAY)));
+                        EmiTooltipComponents.of(EmiPort.translatable("emi.error.tooltip").withStyle(ChatFormatting.RED)),
+                        EmiTooltipComponents.of(EmiPort.translatable("emi.error.see_log").withStyle(ChatFormatting.GRAY)));
                 EmiRenderHelper.drawTooltip(base.screen(), context, list, mouseX, mouseY);
             } catch (Exception e2) {
                 EmiLog.error("Critical error rendering tooltip", e);
@@ -833,18 +833,18 @@ public class EmiScreenManager {
             Screen screen = base.screen();
             EmiProfiler.swap("dev");
             int color = 0xFFFFFF;
-            Component title = EmiPort.literal("EMI Dev Mode");
+            Component title = EmiPort.translatable("emi.dev.title");
             int off = -16;
             int devTextX = getDebugTextX();
             if (!EmiReloadLog.warnings.isEmpty()) {
                 color = 0xFF0000;
                 off = -11;
-                String warnCount = EmiReloadLog.warningCount + " Warnings";
-                context.drawTextWithShadow(EmiPort.literal(warnCount), devTextX, screen.height - 21, color);
+                Component warnCount = EmiPort.translatable("emi.dev.warning_count", EmiReloadLog.warningCount);
+                context.drawTextWithShadow(warnCount, devTextX, screen.height - 21, color);
                 int width = Math.max(client.font.width(title), client.font.width(warnCount));
                 if (mouseX >= devTextX && mouseX < width + devTextX && mouseY > screen.height - 28) {
                     var tooltip = new ObjectArrayList<Component>(EmiReloadLog.warnings.size() + 1);
-                    tooltip.add(EmiPort.literal(" EMI detected some issues, see log for full details"));
+                    tooltip.add(EmiPort.translatable("emi.dev.issues"));
                     for (var warning : EmiReloadLog.warnings) {
                         var text = warning;
                         if (text.length() > 10 && client.font.width(text) > screen.width - 20) {
@@ -1662,8 +1662,8 @@ public class EmiScreenManager {
                 context.fill(bounds.right() - border, bounds.top(), border, bounds.height(), color);
                 int cx = (bounds.left() + bounds.right()) / 2;
                 int cy = (bounds.top() + bounds.bottom()) / 2;
-                context.drawCenteredText(EmiPort.literal("Render Error"), cx, cy - 6, color);
-                context.drawCenteredText(EmiPort.literal("See Log"), cx, cy + 6, color);
+                context.drawCenteredText(EmiPort.translatable("emi.error.render"), cx, cy - 6, color);
+                context.drawCenteredText(EmiPort.translatable("emi.error.see_log"), cx, cy + 6, color);
             } catch (Exception e) {
                 EmiLog.error("Critical error rendering sidebar", e);
             }

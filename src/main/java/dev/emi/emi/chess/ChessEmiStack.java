@@ -140,6 +140,6 @@ class ChessEmiStack extends EmiStack {
 
     @Override
     public Component getName() {
-        return EmiPort.literal("Chess Piece");
+        return EmiPort.translatable("emi.chess.piece");
     }
 }

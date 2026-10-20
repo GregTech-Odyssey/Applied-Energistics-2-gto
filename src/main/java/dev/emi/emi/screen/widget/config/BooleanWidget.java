@@ -28,9 +28,9 @@ public class BooleanWidget extends ConfigEntryWidget {
 
     public Component getText() {
         if (mutator.get()) {
-            return EmiPort.literal("true", ChatFormatting.GREEN);
+            return EmiPort.translatable("options.on", ChatFormatting.GREEN);
         } else {
-            return EmiPort.literal("false", ChatFormatting.RED);
+            return EmiPort.translatable("options.off", ChatFormatting.RED);
         }
     }
 

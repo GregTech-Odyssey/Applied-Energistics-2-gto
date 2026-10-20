@@ -107,6 +107,7 @@ public class EmiApi {
 
     public static AbstractContainerScreen<?> getHandledScreen() {
         Screen s = client.screen;
+        if (s instanceof ProductionPlannerScreen.Host host) return host.planner().old;
         if (s instanceof AbstractContainerScreen<?> hs) {
             return hs;
         } else if (s instanceof RecipeScreen rs) {
@@ -234,7 +235,7 @@ public class EmiApi {
         AbstractContainerScreen<?> old = getHandledScreen();
         if (old != null) {
             push();
-            client.setScreen(new ProductionPlannerScreen(old));
+            client.setScreen(ProductionPlannerScreen.create(old));
         }
     }
 
@@ -245,6 +246,10 @@ public class EmiApi {
     }
 
     private static void push() {
+        if (client.screen instanceof ProductionPlannerScreen.Host) {
+            EmiHistory.push(client.screen);
+            return;
+        }
         if (client.screen instanceof RecipeScreen rs) {
             EmiHistory.push(rs);
         } else if (client.screen instanceof BoMScreen bs) {
@@ -341,7 +346,10 @@ public class EmiApi {
             if (getHandledScreen() == null) {
                 client.setScreen(new InventoryScreen(client.player));
             }
-            if (client.screen instanceof AbstractContainerScreen<?> hs) {
+            if (client.screen instanceof ProductionPlannerScreen.Host host) {
+                push();
+                client.setScreen(new RecipeScreen(host.planner().old, recipes));
+            } else if (client.screen instanceof AbstractContainerScreen<?> hs) {
                 push();
                 client.setScreen(new RecipeScreen(hs, recipes));
             } else if (client.screen instanceof BoMScreen bs) {

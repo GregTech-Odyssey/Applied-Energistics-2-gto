@@ -30,8 +30,42 @@ import org.lwjgl.glfw.GLFW;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.function.Function;
 
 public class ProductionPlannerScreen extends Screen {
+    private static volatile Function<AbstractContainerScreen<?>, Screen> screenFactory = ProductionPlannerScreen::new;
+
+    /** UI integrations preserve the original inventory and EMI history through this host. */
+    public interface Host {
+        ProductionPlannerScreen planner();
+    }
+
+    public static void setScreenFactory(Function<AbstractContainerScreen<?>, Screen> factory) {
+        screenFactory = factory;
+    }
+
+    public static Screen create(AbstractContainerScreen<?> parent) {
+        return screenFactory.apply(parent);
+    }
+
+    private Screen uiHost = this;
+
+    public void bindUIHost(Screen host) {
+        uiHost = host;
+    }
+
+    public static double displayMultiplier() {
+        return displayTimeUnit.multiplier;
+    }
+
+    public static String displaySuffix() {
+        return displayTimeUnit.suffix;
+    }
+
+    public static void cycleDisplayTimeUnit() {
+        displayTimeUnit = displayTimeUnit.next();
+    }
+
     private static final int HEADER_HEIGHT = 26;
     private static final int SUMMARY_TOP = 28;
     private static final int SUMMARY_HEIGHT = 90;
@@ -545,7 +579,7 @@ public class ProductionPlannerScreen extends Screen {
         }
     }
 
-    private List<PlannerDisplayRow> buildPlannerDisplayRows(Line line) {
+    public List<PlannerDisplayRow> buildPlannerDisplayRows(Line line) {
         List<PlannerDisplayRow> rows = new ArrayList<>();
         appendPlannerDisplayRows(line, 0, 0, rows);
         return rows;
@@ -623,7 +657,7 @@ public class ProductionPlannerScreen extends Screen {
         drawButton(context, groupsButton, mouseX, mouseY, (compact ? PlannerText.tr("footer.groups_short", "GROUPS") : PlannerText.tr("footer.groups", "GROUPS")) + " " + line.getGroups().size(), groupsOpen);
         drawButton(context, toolsButton, mouseX, mouseY, PlannerText.tr("footer.tools", "TOOLS"), toolsOpen);
         if (SHOW_GTO_AUDIT) {
-            drawButton(context, gtoAuditButton, mouseX, mouseY, "GTO AUDIT", false);
+            drawButton(context, gtoAuditButton, mouseX, mouseY, PlannerText.tr("tools.gto_audit", "GTO AUDIT"), false);
         }
         String hint = !lineTransferStatus.isBlank()
             ? lineTransferStatus
@@ -906,8 +940,9 @@ public class ProductionPlannerScreen extends Screen {
                 }
                 String role = startupRoleLabel(row.role());
                 String left = role + "  |  " + row.stack().getName().getString();
-                String right = "MIN " + formatStartupAmount(row.stack(), row.minimum(), row.approximate())
-                    + "   BUF " + formatStartupAmount(row.stack(), row.recommended(), row.approximate());
+                String right = PlannerText.tr("startup.stock", "MIN %s   BUF %s",
+                    formatStartupAmount(row.stack(), row.minimum(), row.approximate()),
+                    formatStartupAmount(row.stack(), row.recommended(), row.approximate()));
                 int rightWidth = font.width(right);
                 context.drawTextWithShadow(EmiPort.literal(font.plainSubstrByWidth(left, Math.max(40, rb.width() - rightWidth - (tx - rb.x()) - 16))),
                     tx, rb.y() + 5, 0xFFFFFFFF);
@@ -973,7 +1008,7 @@ public class ProductionPlannerScreen extends Screen {
     }
 
 
-    private String buildSummaryText(Line line) {
+    public String buildSummaryText(Line line) {
         List<BuildSummaryRow> rows = collectBuildSummary(line);
         PowerSummary power = calculatePower(line);
         PlanTotals totals = calculate(line);
@@ -1069,7 +1104,7 @@ public class ProductionPlannerScreen extends Screen {
         }
     }
 
-    private String formatReportRate(EmiStack stack, double perSecond, boolean approximate) {
+    public String formatReportRate(EmiStack stack, double perSecond, boolean approximate) {
         double display = toDisplayRate(perSecond);
         String compact = formatCompactRate(display, approximate);
         String exact = formatGroupedExact(display);
@@ -1082,7 +1117,7 @@ public class ProductionPlannerScreen extends Screen {
         return compactWithUnit + " (" + exactWithUnit + ")";
     }
 
-    private List<FlowSummaryRow> collectFlowSummary(Line line, PlanTotals totals) {
+    public List<FlowSummaryRow> collectFlowSummary(Line line, PlanTotals totals) {
         List<FlowSummaryRow> rows = new ArrayList<>();
         for (Target target : line.getTargets()) {
             rows.add(new FlowSummaryRow(target.getMode() == TargetMode.INPUT ? PlannerText.tr("flow.in_target", "IN TARGET") : PlannerText.tr("flow.out_target", "OUT TARGET"), target.getStack(),
@@ -1101,7 +1136,7 @@ public class ProductionPlannerScreen extends Screen {
     }
 
 
-    private List<BuildSummaryRow> collectBuildSummary(Line line) {
+    public List<BuildSummaryRow> collectBuildSummary(Line line) {
         Map<String, MutableBuildSummary> grouped = new LinkedHashMap<>();
         for (Entry entry : line.getEntries()) {
             EmiRecipe recipe = entry.getRecipe();
@@ -2094,9 +2129,9 @@ public class ProductionPlannerScreen extends Screen {
             return;
         }
         if (SHOW_GTO_AUDIT && gtoAuditButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, "Scan every GTO machine exposed as an EMI workstation",
-                "Classifies AUTO / AUTO + OVERRIDE / OVERRIDE ONLY / SUSPICIOUS NONE / NONE",
-                "Writes the full report to latest.log and copies it to the clipboard");
+            drawTooltip(context, mouseX, mouseY, PlannerText.tr("tooltip.gto_audit", "Scan every GTO machine exposed as an EMI workstation"),
+                PlannerText.tr("tooltip.gto_audit2", "Classifies AUTO / AUTO + OVERRIDE / OVERRIDE ONLY / SUSPICIOUS NONE / NONE"),
+                PlannerText.tr("tooltip.gto_audit3", "Writes the full report to latest.log and copies it to the clipboard"));
             return;
         }
         if (powerBounds.contains(mouseX, mouseY)) {
@@ -2856,7 +2891,7 @@ public class ProductionPlannerScreen extends Screen {
             groupsOpen = false;
             toolsOpen = false;
             ProductionPlanner.save();
-            Minecraft.getInstance().setScreen(new ProductionPlannerGraphScreen(this));
+            Minecraft.getInstance().setScreen(ProductionPlannerGraphScreen.create(this));
             return true;
         }
         if (toolsOpen && toolsMenuBounds.contains(mx, my)) {
@@ -3078,7 +3113,7 @@ public class ProductionPlannerScreen extends Screen {
     }
 
 
-    private boolean openRecipeReplacement(Line line, Entry entry) {
+    public boolean openRecipeReplacement(Line line, Entry entry) {
         if (line == null || entry == null || entry.getRecipe() == null) {
             return false;
         }
@@ -3113,7 +3148,7 @@ public class ProductionPlannerScreen extends Screen {
         pendingStackButton = -1;
     }
 
-    private boolean openStackRecipes(EmiStack stack) {
+    public boolean openStackRecipes(EmiStack stack) {
         if (stack == null || stack.isEmpty()) {
             return false;
         }
@@ -3125,7 +3160,7 @@ public class ProductionPlannerScreen extends Screen {
         return openRecipeScreen(stack, recipes, preferred);
     }
 
-    private boolean openStackUses(EmiStack stack) {
+    public boolean openStackUses(EmiStack stack) {
         if (stack == null || stack.isEmpty()) {
             return false;
         }
@@ -3152,7 +3187,7 @@ public class ProductionPlannerScreen extends Screen {
         EmiSidebars.lookup(context);
         Minecraft client = Minecraft.getInstance();
         RecipeScreen recipeScreen = new RecipeScreen(old, pages);
-        EmiHistory.push(this);
+        EmiHistory.push(uiHost);
         client.setScreen(recipeScreen);
         if (client.screen != recipeScreen) {
             return false;
@@ -3862,14 +3897,18 @@ public class ProductionPlannerScreen extends Screen {
     }
 
     private boolean matchesSearch(Line line, PlannerDisplayRow row, String query) {
+        return searchText(line, row).contains(query);
+    }
+
+    public String searchText(Line line, PlannerDisplayRow row) {
         StringBuilder haystack = new StringBuilder();
         if (row.group != null) {
             haystack.append(row.group.getDisplayName(line));
-            return normalizeSearch(haystack.toString()).contains(query);
+            return normalizeSearch(haystack.toString());
         }
         Entry entry = row.entry;
         if (entry == null) {
-            return false;
+            return "";
         }
         EmiRecipe recipe = entry.getRecipe();
         appendSearchText(haystack, entry.getRecipeId());
@@ -3895,7 +3934,7 @@ public class ProductionPlannerScreen extends Screen {
                 appendSearchStack(haystack, stack);
             }
         }
-        return normalizeSearch(haystack.toString()).contains(query);
+        return normalizeSearch(haystack.toString());
     }
 
     private void appendSearchIngredient(StringBuilder haystack, EmiIngredient ingredient) {
@@ -3989,7 +4028,7 @@ public class ProductionPlannerScreen extends Screen {
         searchField.render(raw, mouseX, mouseY, delta);
     }
 
-    private String localizedProfileDescription(MachineProfile profile) {
+    public String localizedProfileDescription(MachineProfile profile) {
         if (profile == null) return "";
         String description = profile.description();
         return switch (profile.id()) {
@@ -4100,7 +4139,7 @@ public class ProductionPlannerScreen extends Screen {
         };
     }
 
-    private String recipeName(EmiRecipe recipe) {
+    public String recipeName(EmiRecipe recipe) {
         for (EmiStack stack : recipe.getOutputs()) {
             if (!stack.isEmpty()) {
                 return stack.getName().getString();
@@ -4109,7 +4148,7 @@ public class ProductionPlannerScreen extends Screen {
         return recipe.getId() == null ? recipe.getCategory().getName().getString() : recipe.getId().toString();
     }
 
-    private PowerSummary calculatePower(Line line) {
+    public PowerSummary calculatePower(Line line) {
         double averageEUt = 0.0D;
         int knownEntries = 0;
         int unknownEntries = 0;
@@ -4128,7 +4167,7 @@ public class ProductionPlannerScreen extends Screen {
         return new PowerSummary(averageEUt, knownEntries, unknownEntries);
     }
 
-    private PlanTotals calculate(Line line) {
+    public PlanTotals calculate(Line line) {
         Map<EmiStack, MutableFlow> map = new LinkedHashMap<>();
         for (Entry entry : line.getEntries()) {
             EmiRecipe recipe = entry.getRecipe();
@@ -4170,7 +4209,7 @@ public class ProductionPlannerScreen extends Screen {
         return new PlanTotals(external, internal, outputs);
     }
 
-    private List<RateStack> recipeInputs(EmiRecipe recipe, double rate) {
+    public List<RateStack> recipeInputs(EmiRecipe recipe, double rate) {
         List<RateStack> result = new ArrayList<>();
         for (EmiIngredient ingredient : recipe.getInputs()) {
             if (ingredient == null || ingredient.isEmpty()) {
@@ -4192,7 +4231,7 @@ public class ProductionPlannerScreen extends Screen {
         return result;
     }
 
-    private List<RateStack> recipeOutputs(EmiRecipe recipe, double rate) {
+    public List<RateStack> recipeOutputs(EmiRecipe recipe, double rate) {
         List<RateStack> result = new ArrayList<>();
         for (EmiStack stack : recipe.getOutputs()) {
             if (stack == null || stack.isEmpty() || ProductionPlanner.isStartupOnlyOutput(recipe, stack)) {
@@ -4247,12 +4286,12 @@ public class ProductionPlannerScreen extends Screen {
         return perSecond * displayTimeUnit.multiplier;
     }
 
-    private String formatStartupAmount(EmiStack stack, double amount, boolean approximate) {
+    public String formatStartupAmount(EmiStack stack, double amount, boolean approximate) {
         String value = formatCompactRate(amount, approximate);
         return stack != null && stack.getKey() instanceof Fluid ? value + " mB" : value;
     }
 
-    private String startupRoleLabel(ResourceRole role) {
+    public String startupRoleLabel(ResourceRole role) {
         return switch (role) {
             case CATALYST -> PlannerText.tr("startup.role.catalyst", "CATALYST");
             case TOOL -> PlannerText.tr("startup.role.tool", "TOOL");
@@ -4263,7 +4302,7 @@ public class ProductionPlannerScreen extends Screen {
         };
     }
 
-    private String startupRoleDescription(ResourceRole role) {
+    public String startupRoleDescription(ResourceRole role) {
         return switch (role) {
             case CATALYST -> PlannerText.tr("startup.desc.catalyst", "Input is explicitly returned by the recipe and is only needed to prime the running machines");
             case TOOL -> PlannerText.tr("startup.desc.tool", "Reusable/damageable crafting tool; counted as a startup requirement, not a per-second input");
@@ -4285,11 +4324,11 @@ public class ProductionPlannerScreen extends Screen {
         };
     }
 
-    private String formatDisplayRate(double perSecond) {
+    public String formatDisplayRate(double perSecond) {
         return formatRate(toDisplayRate(perSecond));
     }
 
-    private String formatExactDisplayRate(double perSecond) {
+    public String formatExactDisplayRate(double perSecond) {
         return formatExactRate(toDisplayRate(perSecond));
     }
 
@@ -4341,7 +4380,7 @@ public class ProductionPlannerScreen extends Screen {
         return trimNumber(value, 4);
     }
 
-    private String formatSummaryPower(double value) {
+    public String formatSummaryPower(double value) {
         return formatCompactRate(value, false) + " EU/t (" + formatGroupedExact(value) + " EU/t)";
     }
 
@@ -4415,7 +4454,7 @@ public class ProductionPlannerScreen extends Screen {
             context.drawStack(profile.icon(), bounds.x() + 3, bounds.y() + 2, EmiIngredient.RENDER_ICON);
             textX = bounds.x() + 22;
         }
-        String label = profile == null ? "Generic GT" : profile.displayName();
+        String label = profile == null ? PlannerText.tr("machine.generic", "Generic GT") : profile.displayName();
         String trimmed = font.plainSubstrByWidth(label, Math.max(4, bounds.right() - textX - 3));
         context.drawTextWithShadow(EmiPort.literal(trimmed), textX, bounds.y() + 6, 0xFFFFFFFF);
     }
@@ -4492,11 +4531,11 @@ public class ProductionPlannerScreen extends Screen {
         }
     }
 
-    private record BuildSummaryRow(String machineName, EmiStack icon, int voltageTier, String voltageName, int parallel,
+    public record BuildSummaryRow(String machineName, EmiStack icon, int voltageTier, String voltageName, int parallel,
             String config, int machines, int recipeRows, double averageEUt, boolean unknownPower, boolean provisional) {
     }
 
-    private record FlowSummaryRow(String section, EmiStack stack, double rate, boolean approximate, int color) {
+    public record FlowSummaryRow(String section, EmiStack stack, double rate, boolean approximate, int color) {
     }
 
     private record BuildSummaryHitbox(Bounds bounds, BuildSummaryRow row) {
@@ -4549,7 +4588,7 @@ public class ProductionPlannerScreen extends Screen {
             int rateX, int rateW, int recipeX, int inputsX, int outputsX) {
     }
 
-    private record PlannerDisplayRow(Entry entry, Group group, int depth) {
+    public record PlannerDisplayRow(Entry entry, Group group, int depth) {
     }
 
     private static final class RowHitbox {
@@ -4624,13 +4663,13 @@ public class ProductionPlannerScreen extends Screen {
         }
     }
 
-    private record PowerSummary(double averageEUt, int knownEntries, int unknownEntries) {
+    public record PowerSummary(double averageEUt, int knownEntries, int unknownEntries) {
     }
 
-    private static final class RateStack {
-        private final EmiStack stack;
-        private final double amount;
-        private final boolean approximate;
+    public static final class RateStack {
+        public final EmiStack stack;
+        public final double amount;
+        public final boolean approximate;
 
         private RateStack(EmiStack stack, double amount, boolean approximate) {
             this.stack = stack;
@@ -4650,15 +4689,15 @@ public class ProductionPlannerScreen extends Screen {
         }
     }
 
-    private static final class Flow {
-        private final EmiStack stack;
-        private final double input;
-        private final double output;
-        private final double internal;
-        private final double external;
-        private final boolean approximate;
-        private final String displayAmount;
-        private final double displayValue;
+    public static final class Flow {
+        public final EmiStack stack;
+        public final double input;
+        public final double output;
+        public final double internal;
+        public final double external;
+        public final boolean approximate;
+        public final String displayAmount;
+        public final double displayValue;
 
         private Flow(EmiStack stack, double input, double output, double internal, double external,
                 boolean approximate, String displayAmount) {
@@ -4679,6 +4718,6 @@ public class ProductionPlannerScreen extends Screen {
         }
     }
 
-    private record PlanTotals(List<Flow> externalInputs, List<Flow> internalFlow, List<Flow> netOutputs) {
+    public record PlanTotals(List<Flow> externalInputs, List<Flow> internalFlow, List<Flow> netOutputs) {
     }
 }

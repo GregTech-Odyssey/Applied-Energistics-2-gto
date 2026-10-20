@@ -2,6 +2,7 @@ package dev.emi.emi.runtime;
 
 import com.google.common.collect.Lists;
 import dev.emi.emi.api.EmiApi;
+import dev.emi.emi.screen.ProductionPlannerScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -28,18 +29,18 @@ public class EmiHistory {
 
     public static void pop() {
         Minecraft client = Minecraft.getInstance();
-        if (client.screen instanceof AbstractContainerScreen) {
+        if (client.screen instanceof AbstractContainerScreen && !(client.screen instanceof ProductionPlannerScreen.Host)) {
             clear();
             return;
         }
         int i = HISTORIES.size() - 1;
-        AbstractContainerScreen<?> screen = EmiApi.getHandledScreen();
         if (i >= 0) {
             Screen popped = HISTORIES.remove(i);
             FORWARD_HISTORIES.add(client.screen);
             client.setScreen(popped);
-        } else if (screen != null) {
-            client.setScreen(screen);
+        } else {
+            AbstractContainerScreen<?> screen = EmiApi.getHandledScreen();
+            if (screen != null) client.setScreen(screen);
         }
     }
 

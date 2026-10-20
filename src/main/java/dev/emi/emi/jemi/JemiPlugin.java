@@ -135,7 +135,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
     public void register(EmiRegistry registry) {
         startDeferredJei();
         EmiLog.info("[JEMI] Waiting for JEI to finish reloading...");
-        EmiReloadManager.step(EmiPort.literal("Waiting for JEI to finish..."), 20_000);
+        EmiReloadManager.step(EmiPort.translatable("emi.reload.jei.waiting"), 20_000);
         try {
             while (true) {
                 if (runtime != null) {
@@ -152,7 +152,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
         for (var plugin : plugins)
             handledNamespaces.add(plugin.id());
 
-        EmiReloadManager.step(EmiPort.literal("Loading information from JEI..."), 5_000);
+        EmiReloadManager.step(EmiPort.translatable("emi.reload.jei.loading"), 5_000);
         registry.addGenericExclusionArea((screen, consumer) -> {
             if (runtime != null && runtime.getScreenHelper() != null) {
                 var areas = runtime.getScreenHelper().getGuiExclusionAreas(screen).iterator();
@@ -177,7 +177,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
         registry.addIngredientSerializer(JemiStack.class,
                 new JemiStackSerializer(runtime.getIngredientManager()));
 
-        EmiReloadManager.step(EmiPort.literal("Processing JEI stacks..."), 5_000);
+        EmiReloadManager.step(EmiPort.translatable("emi.reload.jei.stacks"), 5_000);
         for (IIngredientType<?> type : runtime.getIngredientManager().getRegisteredIngredientTypes()) {
             if (type == dev.emi.emi.jemi.JemiUtil.getFluidType() || type == VanillaTypes.ITEM_STACK) {
                 continue;
@@ -200,10 +200,10 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
             }
             return false;
         });
-        EmiReloadManager.step(EmiPort.literal("Processing JEI subtypes..."), 5_000);
+        EmiReloadManager.step(EmiPort.translatable("emi.reload.jei.subtypes"), 5_000);
         safely("subtype comparison", () -> parseSubtypes(registry));
 
-        EmiReloadManager.step(EmiPort.literal("Processing JEI recipes..."), 5_000);
+        EmiReloadManager.step(EmiPort.translatable("emi.reload.jei.recipes"), 5_000);
         var existingCategories = new OpenCacheHashSet<ResourceLocation>(EmiRecipes.categories.size());
         for (var category : EmiRecipes.categories)
             existingCategories.add(category.getId());
@@ -228,7 +228,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
         while (categories.hasNext()) {
             IRecipeCategory<?> c = categories.next();
             EmiLog.info("[JEMI] Collecting data for " + c.getTitle().getString());
-            EmiReloadManager.step(EmiPort.literal("Loading JEI data for ").append(c.getTitle()), 5_000);
+            EmiReloadManager.step(EmiPort.translatable("emi.reload.jei.category", c.getTitle()), 5_000);
             try {
                 RecipeType type = c.getRecipeType();
                 ResourceLocation id = type.getUid();

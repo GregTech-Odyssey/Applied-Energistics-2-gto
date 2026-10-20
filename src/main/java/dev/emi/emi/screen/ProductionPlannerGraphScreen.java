@@ -22,15 +22,33 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.material.Fluid;
 import org.lwjgl.glfw.GLFW;
+import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.*;
+import java.util.function.Function;
 
 public class ProductionPlannerGraphScreen extends Screen {
+    private static volatile Function<Screen, Screen> screenFactory = ProductionPlannerGraphScreen::new;
+
+    /** Allows integrations to host the graph in their own UI without depending on that UI library here. */
+    public static void setScreenFactory(Function<Screen, Screen> factory) {
+        screenFactory = factory;
+    }
+
+    public static Screen create(Screen parent) {
+        return screenFactory.apply(parent);
+    }
+
+    public enum Action {
+        FIT, FULL, TARGET_PATH, SELECTED_PATH, BYPRODUCTS, CONTEXT, HIDDEN, AUTO_LAYOUT
+    }
+
     private static final int HEADER_HEIGHT = 28;
     private static final int FOOTER_HEIGHT = 22;
     private static final int RECIPE_MIN_WIDTH = 220;
@@ -74,6 +92,19 @@ public class ProductionPlannerGraphScreen extends Screen {
 
     private final Screen parent;
     private final Line line;
+    private Bounds viewport = EMPTY;
+    private Bounds graphBounds = EMPTY;
+    private boolean embedded;
+    @Nullable
+    private Set<GraphNode> cachedFocus;
+    private int hiddenCount;
+    private boolean statsDirty = true;
+    private int statsZoom = -1;
+    private int visibleRecipeCount;
+    private int visibleFlowCount;
+    private final String statsFormat = PlannerText.tr("graph.stats", "%s recipes | %s flows | zoom %s%%");
+    private final String hiddenLabel = PlannerText.tr("graph.hidden", "HIDDEN");
+    private Component graphStats = Component.empty();
     private List<GraphNode> nodes = List.of();
     private List<GraphEdge> edges = List.of();
     private Bounds backButton = EMPTY;
@@ -123,6 +154,8 @@ public class ProductionPlannerGraphScreen extends Screen {
 
     @Override
     protected void init() {
+        if (embedded) return;
+        viewport = new Bounds(0, HEADER_HEIGHT, width, Math.max(1, height - HEADER_HEIGHT - FOOTER_HEIGHT));
         backButton = new Bounds(6, 4, 54, 20);
         fitButton = new Bounds(64, 4, 44, 20);
         fullButton = new Bounds(112, 4, 48, 20);
@@ -137,6 +170,8 @@ public class ProductionPlannerGraphScreen extends Screen {
     }
 
     private void rebuildGraph() {
+        cachedFocus = null;
+        statsDirty = true;
         List<GraphNode> builtNodes = new ArrayList<>();
         List<GraphEdge> builtEdges = new ArrayList<>();
         Map<Entry, GraphNode> recipeNodes = new LinkedHashMap<>();
@@ -186,8 +221,10 @@ public class ProductionPlannerGraphScreen extends Screen {
             }
         }
 
+        hiddenCount = 0;
         for (GraphNode node : builtNodes) {
             node.hidden = hiddenNodeKeys.contains(nodeStateKey(node));
+            if (node.hidden) hiddenCount++;
         }
         nodes = builtNodes;
         edges = builtEdges;
@@ -781,13 +818,7 @@ public class ProductionPlannerGraphScreen extends Screen {
     }
 
     private int activeHiddenCount() {
-        int count = 0;
-        for (GraphNode node : nodes) {
-            if (node.hidden) {
-                count++;
-            }
-        }
-        return count;
+        return hiddenCount;
     }
 
     private boolean canHide(GraphNode node) {
@@ -800,6 +831,7 @@ public class ProductionPlannerGraphScreen extends Screen {
         }
         String key = nodeStateKey(node);
         node.hidden = !node.hidden;
+        hiddenCount += node.hidden ? 1 : -1;
         if (node.hidden) {
             hiddenNodeKeys.add(key);
         } else {
@@ -816,6 +848,7 @@ public class ProductionPlannerGraphScreen extends Screen {
     }
 
     private void restoreAllHidden() {
+        hiddenCount = 0;
         hiddenNodeKeys.clear();
         for (GraphNode node : nodes) {
             node.hidden = false;
@@ -1229,6 +1262,7 @@ public class ProductionPlannerGraphScreen extends Screen {
 
     private void updateContentBounds() {
         if (nodes.isEmpty()) {
+            graphBounds = EMPTY;
             contentMinX = contentMinY = -100;
             contentMaxX = contentMaxY = 100;
             return;
@@ -1257,6 +1291,8 @@ public class ProductionPlannerGraphScreen extends Screen {
                 contentMaxY = Math.max(contentMaxY, point.y + 24);
             }
         }
+        graphBounds = new Bounds(contentMinX, contentMinY,
+            Math.max(1, contentMaxX - contentMinX), Math.max(1, contentMaxY - contentMinY));
     }
 
     private List<GraphNode> visibleRecipeNodes() {
@@ -1270,6 +1306,8 @@ public class ProductionPlannerGraphScreen extends Screen {
     }
 
     private void refreshViewLayout(boolean fit) {
+        cachedFocus = null;
+        statsDirty = true;
         layoutGraph(visibleRecipeNodes());
         if (fit) {
             fitToView();
@@ -1290,8 +1328,8 @@ public class ProductionPlannerGraphScreen extends Screen {
         }
         int bandWidth = Math.max(1, first.right - first.left);
         int bandHeight = Math.max(1, first.bottom - first.top);
-        float sx = Math.max(0.05f, (width - 70.0f) / (bandWidth + 80.0f));
-        float sy = Math.max(0.05f, (height - HEADER_HEIGHT - FOOTER_HEIGHT - 50.0f) / (bandHeight + 80.0f));
+        float sx = Math.max(0.05f, (viewport.width() - 70.0f) / (bandWidth + 80.0f));
+        float sy = Math.max(0.05f, (viewport.height() - 50.0f) / (bandHeight + 80.0f));
         viewScale = Mth.clamp(Math.min(1.0f, Math.min(sx, sy)), 0.68f, 1.0f);
         offX = -((first.left + first.right) / 2.0D);
         offY = -((first.top + first.bottom) / 2.0D);
@@ -1306,8 +1344,8 @@ public class ProductionPlannerGraphScreen extends Screen {
         }
         int contentWidth = Math.max(1, contentMaxX - contentMinX);
         int contentHeight = Math.max(1, contentMaxY - contentMinY);
-        float sx = Math.max(0.05f, (width - 32.0f) / (contentWidth + 30.0f));
-        float sy = Math.max(0.05f, (height - HEADER_HEIGHT - FOOTER_HEIGHT - 20.0f) / (contentHeight + 30.0f));
+        float sx = Math.max(0.05f, (viewport.width() - 32.0f) / (contentWidth + 30.0f));
+        float sy = Math.max(0.05f, (viewport.height() - 20.0f) / (contentHeight + 30.0f));
         viewScale = Mth.clamp(Math.min(sx, sy), 0.12f, 1.35f);
         offX = -((contentMinX + contentMaxX) / 2.0D);
         offY = -((contentMinY + contentMaxY) / 2.0D);
@@ -1315,49 +1353,181 @@ public class ProductionPlannerGraphScreen extends Screen {
 
     @Override
     public void render(GuiGraphics raw, int mouseX, int mouseY, float delta) {
+        renderGraph(raw, mouseX, mouseY, delta);
+        EmiDrawContext context = EmiDrawContext.wrap(raw);
+        renderHeader(context, mouseX, mouseY);
+        renderFooter(context);
+        renderTooltip(context, mouseX, mouseY);
+    }
+
+    private void renderGraph(GuiGraphics raw, int mouseX, int mouseY, float delta) {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         EmiDrawContext context = EmiDrawContext.wrap(raw);
-        context.fill(0, 0, width, height, BG_COLOR);
+        raw.enableScissor(viewport.x(), viewport.y(), viewport.right(), viewport.bottom());
+        context.fill(viewport.x(), viewport.y(), viewport.width(), viewport.height(), BG_COLOR);
         if (nodes.isEmpty()) {
             context.drawCenteredText(EmiPort.literal(PlannerText.tr("graph.no_recipes", "No active recipes to graph")),
-                width / 2, height / 2, 0xFFA0A0AA);
+                (int) viewCenterX(), (int) viewCenterY(), 0xFFA0A0AA);
         } else {
             int worldMouseX = toWorldX(mouseX);
             int worldMouseY = toWorldY(mouseY);
-            Set<GraphNode> focusNodes = focusNodes();
-            boolean focusActive = viewMode != ViewMode.FULL && !focusNodes.isEmpty();
             PoseStack view = RenderSystem.getModelViewStack();
             view.pushPose();
-            view.translate(width / 2.0D, viewCenterY(), 0.0D);
+            view.translate(viewCenterX(), viewCenterY(), 0.0D);
             view.scale(viewScale, viewScale, 1.0f);
             view.translate(offX, offY, 0.0D);
             EmiPort.applyModelViewMatrix();
-            cycleLabelRects.clear();
-            for (GraphEdge edge : edges) {
-                if (!edgeShown(edge)) {
-                    continue;
-                }
-                boolean focused = !focusActive || focusNodes.contains(edge.from) && focusNodes.contains(edge.to);
-                if (edge.from.hidden && edge.from.kind != NodeKind.RECIPE || edge.to.hidden && edge.to.kind != NodeKind.RECIPE) {
-                    focused = false;
-                }
-                renderEdge(context, edge, focused);
-            }
-            for (GraphNode node : nodes) {
-                if (!nodeShown(node)) {
-                    continue;
-                }
-                boolean focused = !focusActive || focusNodes.contains(node);
-                renderNode(context, node, worldMouseX, worldMouseY, delta, focused);
-            }
+            renderGraphContent(raw, worldMouseX, worldMouseY, delta);
             view.popPose();
             EmiPort.applyModelViewMatrix();
         }
 
-        renderHeader(context, mouseX, mouseY);
-        renderFooter(context);
-        renderTooltip(context, mouseX, mouseY);
+        raw.disableScissor();
+    }
+
+    /** World-space drawing for a host that owns the camera and clipping. */
+    public void renderGraphContent(GuiGraphics graphics, int worldMouseX, int worldMouseY, float delta) {
+        EmiDrawContext context = EmiDrawContext.wrap(graphics);
+        Set<GraphNode> focusedNodes = focusNodes();
+        boolean focusActive = viewMode != ViewMode.FULL && !focusedNodes.isEmpty();
+        double left = getViewLeft(), top = getViewTop();
+        double right = left + viewport.width() / viewScale, bottom = top + viewport.height() / viewScale;
+        cycleLabelRects.clear();
+        for (GraphEdge edge : edges) {
+            if (!edgeShown(edge)) continue;
+            boolean focused = !focusActive || focusedNodes.contains(edge.from) && focusedNodes.contains(edge.to);
+            if (edge.from.hidden && edge.from.kind != NodeKind.RECIPE || edge.to.hidden && edge.to.kind != NodeKind.RECIPE) focused = false;
+            renderEdge(context, edge, focused);
+        }
+        for (GraphNode node : nodes) {
+            if (!nodeShown(node)) continue;
+            // Recipe widgets may be expensive; do not render cards outside the host's visible world rectangle.
+            if (node.right() < left || node.x > right || node.y + node.height() < top || node.y > bottom) continue;
+            renderNode(context, node, worldMouseX, worldMouseY, delta, !focusActive || focusedNodes.contains(node));
+        }
+    }
+
+    public Bounds getGraphBounds() {
+        return graphBounds;
+    }
+
+    public float getViewScale() {
+        return viewScale;
+    }
+
+    public double getViewLeft() {
+        return -offX - viewport.width() / (2.0D * viewScale);
+    }
+
+    public double getViewTop() {
+        return -offY - viewport.height() / (2.0D * viewScale);
+    }
+
+    public void setGraphView(float scale, double left, double top) {
+        viewScale = scale;
+        offX = -left - viewport.width() / (2.0D * scale);
+        offY = -top - viewport.height() / (2.0D * scale);
+    }
+
+    public boolean hasNodeAt(double x, double y) {
+        return viewport.contains((int) x, (int) y) && hoveredNode(x, y) != null;
+    }
+
+    public void setEmbeddedViewport(int x, int y, int width, int height) {
+        embedded = true;
+        boolean first = viewport == EMPTY;
+        if (!first && viewport.x() == x && viewport.y() == y && viewport.width() == width && viewport.height() == height) return;
+        viewport = new Bounds(x, y, Math.max(1, width), Math.max(1, height));
+        if (first) {
+            rebuildGraph();
+            openReadableView();
+        }
+    }
+
+    public void initEmbedded(int width, int height) {
+        embedded = true;
+        init(Minecraft.getInstance(), width, height);
+    }
+
+    public void renderGraphTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+        lastMouseX = mouseX;
+        lastMouseY = mouseY;
+        renderTooltip(EmiDrawContext.wrap(graphics), mouseX, mouseY);
+    }
+
+    public boolean isActionEnabled(Action action) {
+        return switch (action) {
+            case SELECTED_PATH -> selectedNode != null;
+            case CONTEXT -> viewMode != ViewMode.FULL;
+            case HIDDEN -> activeHiddenCount() > 0;
+            default -> true;
+        };
+    }
+
+    public boolean isActionSelected(Action action) {
+        return switch (action) {
+            case FULL -> viewMode == ViewMode.FULL;
+            case TARGET_PATH -> viewMode == ViewMode.TARGET_PATH;
+            case SELECTED_PATH -> viewMode == ViewMode.SELECTED_PATH;
+            case BYPRODUCTS -> showByproducts;
+            case CONTEXT -> showContext;
+            case HIDDEN -> revealHidden;
+            default -> false;
+        };
+    }
+
+    public Component getGraphStats() {
+        int zoom = Math.round(viewScale * 100.0f);
+        if (!statsDirty && zoom == statsZoom) return graphStats;
+        if (statsDirty) {
+            visibleRecipeCount = visibleFlowCount = 0;
+            for (GraphNode node : nodes) {
+                if (node.kind == NodeKind.RECIPE && nodeShown(node)) visibleRecipeCount++;
+            }
+            for (GraphEdge edge : edges) {
+                if (edgeShown(edge)) visibleFlowCount++;
+            }
+        }
+        graphStats = Component.translatableWithFallback("emi.production_planner.graph.stats", statsFormat, visibleRecipeCount, visibleFlowCount, zoom)
+            .append(" | ").append(hiddenLabel).append(" ")
+            .append(Integer.toString(activeHiddenCount()));
+        statsZoom = zoom;
+        statsDirty = false;
+        return graphStats;
+    }
+
+    public void performAction(Action action) {
+        if (!isActionEnabled(action)) return;
+        switch (action) {
+            case FIT -> {
+                fitToView();
+                return;
+            }
+            case FULL -> viewMode = ViewMode.FULL;
+            case TARGET_PATH -> viewMode = ViewMode.TARGET_PATH;
+            case SELECTED_PATH -> viewMode = ViewMode.SELECTED_PATH;
+            case BYPRODUCTS -> {
+                showByproducts = !showByproducts;
+                if (!showByproducts && selectedNode != null && isByproductNode(selectedNode)) {
+                    selectedNode = null;
+                    if (viewMode == ViewMode.SELECTED_PATH) viewMode = ViewMode.FULL;
+                }
+            }
+            case CONTEXT -> showContext = !showContext;
+            case HIDDEN -> {
+                if (EmiInput.isShiftDown()) {
+                    restoreAllHidden();
+                    return;
+                }
+                revealHidden = !revealHidden;
+            }
+            case AUTO_LAYOUT -> {
+                manualOffsets.clear();
+                EmiProductionPlannerGraphPersistence.clear(lineLayoutKey());
+            }
+        }
+        refreshViewLayout(true);
     }
 
     private void renderHeader(EmiDrawContext context, int mouseX, int mouseY) {
@@ -1869,46 +2039,48 @@ public class ProductionPlannerGraphScreen extends Screen {
 
 
     private void renderTooltip(EmiDrawContext context, int mouseX, int mouseY) {
-        if (backButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.back_help", "Return to Production Planner"));
-            return;
+        if (!embedded) {
+            if (backButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.back_help", "Return to Production Planner"));
+                return;
+            }
+            if (fitButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.fit_help", "Fit the whole graph to the screen"), "[F]");
+                return;
+            }
+            if (fullButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.full_help", "Show the complete production graph"));
+                return;
+            }
+            if (targetPathButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.target_path_help", "Highlight only flows that lead to the selected Line target"));
+                return;
+            }
+            if (selectedPathButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY, selectedNode == null
+                    ? PlannerText.tr("graph.selected_path_empty", "Select a recipe or resource first")
+                    : PlannerText.tr("graph.selected_path_help", "Highlight inputs and target path through the selected node"));
+                return;
+            }
+            if (byproductsButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.byproducts_help", "Show or hide non-target net output cards"));
+                return;
+            }
+            if (contextButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.context_help", "Keep unrelated branches visible while focusing a path"));
+                return;
+            }
+            if (hiddenButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY,
+                    PlannerText.tr("graph.hidden_help", "Click to reveal hidden nodes; Shift+click restores all hidden nodes"));
+                return;
+            }
+            if (autoLayoutButton.contains(mouseX, mouseY)) {
+                drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.auto_layout_help", "Clear manual node positions and rebuild the automatic layout"));
+                return;
+            }
         }
-        if (fitButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.fit_help", "Fit the whole graph to the screen"), "[F]");
-            return;
-        }
-        if (fullButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.full_help", "Show the complete production graph"));
-            return;
-        }
-        if (targetPathButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.target_path_help", "Highlight only flows that lead to the selected Line target"));
-            return;
-        }
-        if (selectedPathButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, selectedNode == null
-                ? PlannerText.tr("graph.selected_path_empty", "Select a recipe or resource first")
-                : PlannerText.tr("graph.selected_path_help", "Highlight inputs and target path through the selected node"));
-            return;
-        }
-        if (byproductsButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.byproducts_help", "Show or hide non-target net output cards"));
-            return;
-        }
-        if (contextButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.context_help", "Keep unrelated branches visible while focusing a path"));
-            return;
-        }
-        if (hiddenButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY,
-                PlannerText.tr("graph.hidden_help", "Click to reveal hidden nodes; Shift+click restores all hidden nodes"));
-            return;
-        }
-        if (autoLayoutButton.contains(mouseX, mouseY)) {
-            drawTooltip(context, mouseX, mouseY, PlannerText.tr("graph.auto_layout_help", "Clear manual node positions and rebuild the automatic layout"));
-            return;
-        }
-        if (mouseY < HEADER_HEIGHT || mouseY >= height - FOOTER_HEIGHT) {
+        if (!viewport.contains(mouseX, mouseY)) {
             return;
         }
         GraphNode node = hoveredNode(mouseX, mouseY);
@@ -1929,7 +2101,8 @@ public class ProductionPlannerGraphScreen extends Screen {
             tooltip.add(ClientTooltipComponent.create(EmiPort.literal(recipeName(node.recipe)).getVisualOrderText()));
             tooltip.add(ClientTooltipComponent.create(EmiPort.literal(node.entry.getMachineProfileName()).getVisualOrderText()));
             tooltip.add(ClientTooltipComponent.create(EmiPort.literal(PlannerText.tr("graph.rate", "Rate") + ": " + formatExactRate(node.rate) + "/s").getVisualOrderText()));
-            tooltip.add(ClientTooltipComponent.create(EmiPort.literal("MACH " + node.entry.getMachines() + " | PAR " + node.entry.getParallel() + " | " + node.entry.getVoltageName()).getVisualOrderText()));
+            tooltip.add(ClientTooltipComponent.create(EmiPort.translatable("emi.production_planner.graph.machine_settings",
+                node.entry.getMachines(), node.entry.getParallel(), node.entry.getVoltageName()).getVisualOrderText()));
             if (node.entry.getGroupId() > 0) {
                 tooltip.add(ClientTooltipComponent.create(EmiPort.literal(PlannerText.tr("graph.group", "Group") + ": " + line.getEntryGroupName(node.entry)).getVisualOrderText()));
             }
@@ -2063,6 +2236,11 @@ public class ProductionPlannerGraphScreen extends Screen {
     }
 
     private Set<GraphNode> focusNodes() {
+        if (cachedFocus == null) cachedFocus = computeFocusNodes();
+        return cachedFocus;
+    }
+
+    private Set<GraphNode> computeFocusNodes() {
         if (viewMode == ViewMode.FULL) {
             return Set.of();
         }
@@ -2132,67 +2310,27 @@ public class ProductionPlannerGraphScreen extends Screen {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && backButton.contains((int) mouseX, (int) mouseY)) {
-            onClose();
-            return true;
-        }
-        if (button == 0 && fitButton.contains((int) mouseX, (int) mouseY)) {
-            fitToView();
-            return true;
-        }
-        if (button == 0 && fullButton.contains((int) mouseX, (int) mouseY)) {
-            viewMode = ViewMode.FULL;
-            refreshViewLayout(true);
-            return true;
-        }
-        if (button == 0 && targetPathButton.contains((int) mouseX, (int) mouseY)) {
-            viewMode = ViewMode.TARGET_PATH;
-            refreshViewLayout(true);
-            return true;
-        }
-        if (button == 0 && selectedPathButton.contains((int) mouseX, (int) mouseY)) {
-            if (selectedNode != null) {
-                viewMode = ViewMode.SELECTED_PATH;
-                refreshViewLayout(true);
+        if (!embedded && button == 0) {
+            if (backButton.contains((int) mouseX, (int) mouseY)) {
+                onClose();
+                return true;
             }
-            return true;
-        }
-        if (button == 0 && byproductsButton.contains((int) mouseX, (int) mouseY)) {
-            showByproducts = !showByproducts;
-            if (!showByproducts && selectedNode != null && isByproductNode(selectedNode)) {
-                selectedNode = null;
-                if (viewMode == ViewMode.SELECTED_PATH) {
-                    viewMode = ViewMode.FULL;
-                }
+            Action action;
+            if (fitButton.contains((int) mouseX, (int) mouseY)) action = Action.FIT;
+            else if (fullButton.contains((int) mouseX, (int) mouseY)) action = Action.FULL;
+            else if (targetPathButton.contains((int) mouseX, (int) mouseY)) action = Action.TARGET_PATH;
+            else if (selectedPathButton.contains((int) mouseX, (int) mouseY)) action = Action.SELECTED_PATH;
+            else if (byproductsButton.contains((int) mouseX, (int) mouseY)) action = Action.BYPRODUCTS;
+            else if (contextButton.contains((int) mouseX, (int) mouseY)) action = Action.CONTEXT;
+            else if (hiddenButton.contains((int) mouseX, (int) mouseY)) action = Action.HIDDEN;
+            else if (autoLayoutButton.contains((int) mouseX, (int) mouseY)) action = Action.AUTO_LAYOUT;
+            else action = null;
+            if (action != null) {
+                performAction(action);
+                return true;
             }
-            refreshViewLayout(true);
-            return true;
         }
-        if (button == 0 && contextButton.contains((int) mouseX, (int) mouseY)) {
-            if (viewMode != ViewMode.FULL) {
-                showContext = !showContext;
-                refreshViewLayout(true);
-            }
-            return true;
-        }
-        if (button == 0 && hiddenButton.contains((int) mouseX, (int) mouseY)) {
-            if (activeHiddenCount() > 0) {
-                if (EmiInput.isShiftDown()) {
-                    restoreAllHidden();
-                } else {
-                    revealHidden = !revealHidden;
-                    refreshViewLayout(true);
-                }
-            }
-            return true;
-        }
-        if (button == 0 && autoLayoutButton.contains((int) mouseX, (int) mouseY)) {
-            manualOffsets.clear();
-            EmiProductionPlannerGraphPersistence.clear(lineLayoutKey());
-            refreshViewLayout(true);
-            return true;
-        }
-        if (mouseY >= HEADER_HEIGHT && mouseY < height - FOOTER_HEIGHT) {
+        if (viewport.contains((int) mouseX, (int) mouseY)) {
             GraphNode node = hoveredNode(mouseX, mouseY);
             if (button == 1 && node != null) {
                 draggingNode = node;
@@ -2269,15 +2407,16 @@ public class ProductionPlannerGraphScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double amount) {
+        if (!viewport.contains((int) mouseX, (int) mouseY)) return false;
         if (amount == 0.0D) {
             return true;
         }
         float oldScale = viewScale;
         viewScale = Mth.clamp((float) (viewScale * Math.pow(1.12D, amount)), 0.10f, 3.0f);
         if (oldScale != viewScale) {
-            double worldX = (mouseX - width / 2.0D) / oldScale - offX;
+            double worldX = (mouseX - viewCenterX()) / oldScale - offX;
             double worldY = (mouseY - viewCenterY()) / oldScale - offY;
-            offX = (mouseX - width / 2.0D) / viewScale - worldX;
+            offX = (mouseX - viewCenterX()) / viewScale - worldX;
             offY = (mouseY - viewCenterY()) / viewScale - worldY;
         }
         return true;
@@ -2286,6 +2425,7 @@ public class ProductionPlannerGraphScreen extends Screen {
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         if (keyCode == GLFW.GLFW_KEY_H) {
+            if (!viewport.contains(lastMouseX, lastMouseY)) return false;
             GraphNode node = hoveredNode(lastMouseX, lastMouseY);
             if (node != null && canHide(node)) {
                 toggleHidden(node);
@@ -2318,11 +2458,15 @@ public class ProductionPlannerGraphScreen extends Screen {
     }
 
     private double viewCenterY() {
-        return (HEADER_HEIGHT + height - FOOTER_HEIGHT) / 2.0D;
+        return viewport.y() + viewport.height() / 2.0D;
+    }
+
+    private double viewCenterX() {
+        return viewport.x() + viewport.width() / 2.0D;
     }
 
     private int toWorldX(double screenX) {
-        return (int) ((screenX - width / 2.0D) / viewScale - offX);
+        return (int) ((screenX - viewCenterX()) / viewScale - offX);
     }
 
     private int toWorldY(double screenY) {

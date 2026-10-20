@@ -830,7 +830,7 @@ public final class FavoriteGroupSidebar {
             return;
         }
         ChainPlan plan = EmiFavoriteGroups.calculatePlan(group, null);
-        StringBuilder builder = new StringBuilder("Bookmark Group: ");
+        StringBuilder builder = new StringBuilder(PlannerText.tr("bookmark.share.title", "Bookmark Group: "));
         if (!plan.results.isEmpty()) {
             for (int i = 0; i < plan.results.size(); i++) {
                 if (i > 0) {
@@ -840,7 +840,7 @@ public final class FavoriteGroupSidebar {
                 builder.append(entry.amount()).append("x ").append(ingredientName(entry.ingredient()));
             }
         } else {
-            builder.append(group.members().size()).append(" bookmarks");
+            builder.append(PlannerText.tr("bookmark.share.count", "%s bookmarks", group.members().size()));
         }
         String message = builder.substring(0, Math.min(240, builder.length()));
         client.player.connection.sendChat(message);

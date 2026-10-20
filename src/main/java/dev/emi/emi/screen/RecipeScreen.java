@@ -31,6 +31,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.client.resources.language.I18n;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -88,6 +89,22 @@ public class RecipeScreen extends Screen {
     private int recipeFilterWidth;
     private int recipeFilterHelpX;
     private int recipeFilterHelpY;
+    private final String[] recipeFilterHelpLines = {
+            "",
+            I18n.get("emi.recipe_filter.syntax.text"),
+            I18n.get("emi.recipe_filter.syntax.inputs"),
+            I18n.get("emi.recipe_filter.syntax.outputs"),
+            I18n.get("emi.recipe_filter.syntax.mod"),
+            I18n.get("emi.recipe_filter.syntax.tooltip"),
+            I18n.get("emi.recipe_filter.syntax.tag"),
+            I18n.get("emi.recipe_filter.syntax.id"),
+            I18n.get("emi.recipe_filter.syntax.formula"),
+            I18n.get("emi.recipe_filter.syntax.voltage"),
+            I18n.get("emi.recipe_filter.syntax.exclude"),
+            I18n.get("emi.recipe_filter.syntax.or"),
+            I18n.get("emi.recipe_filter.syntax.phrase")
+    };
+    private final String recipeFilterSearchingText = I18n.get("emi.recipe_filter.searching");
     private int minimumWidth = 176;
     int backgroundWidth = minimumWidth;
     int backgroundHeight = 200;
@@ -707,9 +724,9 @@ public class RecipeScreen extends Screen {
         recipeFilterWidth = newWidth;
 
         EditBox field = new EditBox(minecraft.font, recipeFilterX, recipeFilterY,
-                recipeFilterWidth, 14, EmiPort.literal("Recipe filter"));
+                recipeFilterWidth, 14, EmiPort.translatable("emi.recipe_filter.title"));
         field.setMaxLength(256);
-        field.setSuggestion(recipeFilterQuery.isEmpty() ? "Filter recipes..." : "");
+        field.setSuggestion(recipeFilterQuery.isEmpty() ? I18n.get("emi.recipe_filter.hint") : "");
         field.setValue(recipeFilterQuery);
         updateRecipeFilterColor(field);
         field.setResponder(this::onRecipeFilterChanged);
@@ -772,29 +789,16 @@ public class RecipeScreen extends Screen {
         }
         raw.fill(left, top, right, bottom, 0xEE101010);
         EmiDrawContext.wrap(raw).drawCenteredTextWithShadow(
-                EmiPort.literal("No matching recipes"),
+                EmiPort.translatable("emi.recipe_filter.no_matches"),
                 (left + right) / 2,
                 top + Math.max(8, (bottom - top) / 2 - 4),
                 0xFF7777);
     }
 
     private void renderRecipeFilterHelp(GuiGraphics raw) {
-        String[] lines = {
-                recipeFilterFiltering ? "Filter Syntax  [searching...]"
-                        : "Filter Syntax  [" + recipeFilterCount + "/" + recipeFilterTotalCount + "]",
-                "text      - name / ID / mod",
-                "<text     - inputs",
-                ">text     - outputs",
-                "@text     - mod",
-                "#text     - tooltip  (RU: №)",
-                "$text     - item/fluid tag",
-                "&text     - resource ID",
-                "=text     - chemical formula",
-                "%text     - voltage / tier",
-                "-term     - exclude",
-                "a|b       - OR",
-                "\"text\"  - exact phrase"
-        };
+        String[] lines = recipeFilterHelpLines;
+        lines[0] = recipeFilterFiltering ? recipeFilterSearchingText
+                : I18n.get("emi.recipe_filter.count", recipeFilterCount, recipeFilterTotalCount);
 
         int width = 0;
         for (String line : lines) {
@@ -923,7 +927,7 @@ public class RecipeScreen extends Screen {
         recipeFilterQuery = value == null ? "" : value;
         recipeFilterSuppressNextHashCharacter = false;
         if (recipeFilterField != null) {
-            recipeFilterField.setSuggestion(recipeFilterQuery.isEmpty() ? "Filter recipes..." : "");
+            recipeFilterField.setSuggestion(recipeFilterQuery.isEmpty() ? I18n.get("emi.recipe_filter.hint") : "");
         }
         syncRecipeFilterCategory();
         if (recipeFilterQuery.isBlank()) {

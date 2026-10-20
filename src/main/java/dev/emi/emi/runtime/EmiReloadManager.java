@@ -68,7 +68,7 @@ public class EmiReloadManager {
 
     public static void reload() {
         synchronized (EmiReloadManager.class) {
-            step(EmiPort.literal("Starting Reload"));
+            step(EmiPort.translatable("emi.reload.starting"));
             status = 1;
             if (thread != null && thread.isAlive()) {
                 restart = true;
@@ -112,7 +112,7 @@ public class EmiReloadManager {
                     }
                     long reloadStart = System.currentTimeMillis();
                     restart = false;
-                    step(EmiPort.literal("Clearing data"));
+                    step(EmiPort.translatable("emi.reload.clearing"));
                     EmiRecipes.clear();
                     EmiStackList.clear();
                     EmiIngredientSerializers.clear();
@@ -145,7 +145,7 @@ public class EmiReloadManager {
                     }
                     EmiInitRegistry initRegistry = new EmiInitRegistryImpl();
                     for (EmiPluginContainer container : plugins) {
-                        step(EmiPort.literal("Initializing plugin from " + container.id()), 5_000);
+                        step(EmiPort.translatable("emi.reload.initializing_plugin", container.id()), 5_000);
                         long start = System.currentTimeMillis();
                         try {
                             container.plugin().initialize(initRegistry);
@@ -160,10 +160,10 @@ public class EmiReloadManager {
                     }
                     EmiHidden.reload();
 
-                    step(EmiPort.literal("Processing tags"));
+                    step(EmiPort.translatable("emi.reload.tags"));
                     EmiTags.reload();
 
-                    step(EmiPort.literal("Constructing index"));
+                    step(EmiPort.translatable("emi.reload.constructing_index"));
                     EmiComparisonDefaults.comparisons = new HashMap<>();
                     EmiStackList.reload();
                     if (restart) {
@@ -172,7 +172,7 @@ public class EmiReloadManager {
                     EmiRegistry registry = new EmiRegistryImpl();
 
                     for (EmiPluginContainer container : plugins) {
-                        step(EmiPort.literal("Loading plugin from " + container.id()), 10_000);
+                        step(EmiPort.translatable("emi.reload.loading_plugin", container.id()), 10_000);
                         long start = System.currentTimeMillis();
                         try {
                             container.plugin().register(registry);
@@ -191,9 +191,9 @@ public class EmiReloadManager {
                     if (restart) {
                         continue;
                     }
-                    step(EmiPort.literal("Baking index"));
+                    step(EmiPort.translatable("emi.reload.baking_index"));
                     EmiStackList.bake();
-                    step(EmiPort.literal("Registering late recipes"), 10_000);
+                    step(EmiPort.translatable("emi.reload.late_recipes"), 10_000);
                     Consumer<EmiRecipe> registerLateRecipe = registry::addRecipe;
                     for (Consumer<Consumer<EmiRecipe>> consumer : EmiRecipes.lateRecipes) {
                         try {
@@ -205,13 +205,13 @@ public class EmiReloadManager {
                             }
                         }
                     }
-                    step(EmiPort.literal("Baking recipes"), 15_000);
+                    step(EmiPort.translatable("emi.reload.baking_recipes"), 15_000);
                     EmiRecipes.bake();
                     BoM.reload();
                     EmiPersistentData.load();
-                    step(EmiPort.literal("Baking search"), 15_000);
+                    step(EmiPort.translatable("emi.reload.baking_search"), 15_000);
                     EmiSearch.bakeAsync();
-                    step(EmiPort.literal("Finishing up"));
+                    step(EmiPort.translatable("emi.reload.finishing"));
                     EmiScreenManager.search.update();
                     EmiScreenManager.forceRecalculate();
                     EmiReloadLog.bake();

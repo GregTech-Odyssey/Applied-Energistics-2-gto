@@ -35,7 +35,7 @@ public class RecipeDefaultOutputScreen extends Screen {
     private int rowsY;
 
     public RecipeDefaultOutputScreen(Screen parent, EmiRecipe recipe) {
-        super(EmiPort.literal("Choose default recipe outputs"));
+        super(EmiPort.translatable("emi.production_planner.recipe_default.choose_outputs"));
         this.parent = parent;
         this.recipe = recipe;
         this.outputs = recipe.getOutputs().stream().filter(stack -> !stack.isEmpty()).toList();
@@ -66,17 +66,17 @@ public class RecipeDefaultOutputScreen extends Screen {
         int large = 72;
         int total = small * 2 + large * 2 + gap * 3;
         int x = panelX + (panelWidth - total) / 2;
-        this.addRenderableWidget(EmiPort.newButton(x, buttonY, small, 20, EmiPort.literal("All"), b -> {
+        this.addRenderableWidget(EmiPort.newButton(x, buttonY, small, 20, EmiPort.translatable("emi.recipe_default.all"), b -> {
             Arrays.fill(selected, true);
         }));
         x += small + gap;
-        this.addRenderableWidget(EmiPort.newButton(x, buttonY, small, 20, EmiPort.literal("None"), b -> {
+        this.addRenderableWidget(EmiPort.newButton(x, buttonY, small, 20, EmiPort.translatable("emi.recipe_default.none"), b -> {
             Arrays.fill(selected, false);
         }));
         x += small + gap;
-        this.addRenderableWidget(EmiPort.newButton(x, buttonY, large, 20, EmiPort.literal("Apply"), b -> applySelection()));
+        this.addRenderableWidget(EmiPort.newButton(x, buttonY, large, 20, EmiPort.translatable("emi.recipe_default.apply"), b -> applySelection()));
         x += large + gap;
-        this.addRenderableWidget(EmiPort.newButton(x, buttonY, large, 20, EmiPort.literal("Cancel"), b -> onClose()));
+        this.addRenderableWidget(EmiPort.newButton(x, buttonY, large, 20, EmiPort.translatable("gui.cancel"), b -> onClose()));
     }
 
     @Override
