@@ -2,7 +2,6 @@ package appeng.menu.implementations;
 
 import java.util.Objects;
 
-
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.server.level.ServerPlayer;

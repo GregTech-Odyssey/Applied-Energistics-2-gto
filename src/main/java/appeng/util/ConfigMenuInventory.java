@@ -2,7 +2,6 @@ package appeng.util;
 
 import java.util.Objects;
 
-
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

@@ -48,7 +48,8 @@ public class Hotkeys {
     @Nullable
     public static Hotkey findHotkey(int keyCode, int scanCode) {
         for (var hotkey : HOTKEYS.values()) {
-            if (hotkey.mapping().matches(keyCode, scanCode)) return hotkey;
+            if (hotkey.mapping().matches(keyCode, scanCode))
+                return hotkey;
         }
         return null;
     }

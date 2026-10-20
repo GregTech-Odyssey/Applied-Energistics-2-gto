@@ -18,22 +18,16 @@
 
 package appeng.me.service;
 
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.stream.Stream;
 
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.LinkedHashMultimap;
-import com.google.common.collect.Multimap;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import it.unimi.dsi.fastutil.shorts.Short2ObjectFunction;
-import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenCustomHashMap;
-import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
+import it.unimi.dsi.fastutil.shorts.Short2ObjectOpenHashMap;
 
 import appeng.api.networking.GridFlags;
 import appeng.api.networking.GridHelper;
@@ -67,8 +61,8 @@ public class P2PService implements IGridService, IGridServiceProvider {
 
     private final IGrid myGrid;
     private final ReferenceOpenHashSet<P2PTunnelPart> all = new ReferenceOpenHashSet<>();
-    private final Short2ObjectOpenHashMap<ArrayList<P2PTunnelPart>> inputs =new  Short2ObjectOpenHashMap<>();
-    private final Short2ObjectOpenHashMap<ArrayList<P2PTunnelPart>> outputs =new  Short2ObjectOpenHashMap<>();
+    private final Short2ObjectOpenHashMap<ArrayList<P2PTunnelPart>> inputs = new Short2ObjectOpenHashMap<>();
+    private final Short2ObjectOpenHashMap<ArrayList<P2PTunnelPart>> outputs = new Short2ObjectOpenHashMap<>();
     private final Random frequencyGenerator;
 
     public P2PService(IGrid g) {
@@ -79,7 +73,7 @@ public class P2PService implements IGridService, IGridServiceProvider {
     public void wakeInputTunnels() {
         var tm = this.myGrid.getTickManager();
         for (var tunnels : this.inputs.values()) {
-            for (var tunnel :tunnels) {
+            for (var tunnel : tunnels) {
                 if (tunnel instanceof MEP2PTunnelPart) {
                     tm.wakeDevice(tunnel.getGridNode());
                 }
@@ -97,10 +91,12 @@ public class P2PService implements IGridService, IGridServiceProvider {
             all.remove(tunnel);
             if (tunnel.isOutput()) {
                 var outputs = this.outputs.get(tunnel.getFrequency());
-                if (outputs!=null) outputs.remove(tunnel);
+                if (outputs != null)
+                    outputs.remove(tunnel);
             } else {
                 var inputs = this.inputs.get(tunnel.getFrequency());
-                if (inputs!=null) inputs.remove(tunnel);
+                if (inputs != null)
+                    inputs.remove(tunnel);
             }
 
             this.updateTunnel(tunnel.getFrequency(), !tunnel.isOutput(), false);
@@ -118,9 +114,9 @@ public class P2PService implements IGridService, IGridServiceProvider {
             // AELog.info( "add-" + (t.output ? "output: " : "input: ") + t.freq );
 
             if (tunnel.isOutput()) {
-                this.outputs.computeIfAbsent(tunnel.getFrequency(), k->new ArrayList<>()).add(tunnel);
+                this.outputs.computeIfAbsent(tunnel.getFrequency(), k -> new ArrayList<>()).add(tunnel);
             } else {
-                this.inputs.computeIfAbsent(tunnel.getFrequency(), k->new ArrayList<>()).add(tunnel);
+                this.inputs.computeIfAbsent(tunnel.getFrequency(), k -> new ArrayList<>()).add(tunnel);
             }
 
             this.updateTunnel(tunnel.getFrequency(), !tunnel.isOutput(), false);
@@ -154,17 +150,19 @@ public class P2PService implements IGridService, IGridServiceProvider {
 
     public void updateFreq(P2PTunnelPart t, short newFrequency) {
         var outputs = this.outputs.get(t.getFrequency());
-        if (outputs!=null) outputs.remove(t);
+        if (outputs != null)
+            outputs.remove(t);
         var inputs = this.inputs.get(t.getFrequency());
-        if (inputs!=null) inputs.remove(t);
+        if (inputs != null)
+            inputs.remove(t);
 
         var oldFrequency = t.getFrequency();
         t.setFrequency(newFrequency);
 
         if (t.isOutput()) {
-            this.outputs.computeIfAbsent(t.getFrequency(), k->new ArrayList<>()).add(t);
+            this.outputs.computeIfAbsent(t.getFrequency(), k -> new ArrayList<>()).add(t);
         } else {
-            this.inputs.computeIfAbsent(t.getFrequency(), k->new ArrayList<>()).add(t);
+            this.inputs.computeIfAbsent(t.getFrequency(), k -> new ArrayList<>()).add(t);
         }
 
         if (oldFrequency != newFrequency) {
@@ -224,12 +222,12 @@ public class P2PService implements IGridService, IGridServiceProvider {
         }
     }
 
-    public static final  P2PTunnelPart[] EMPTY = new P2PTunnelPart[0];
+    public static final P2PTunnelPart[] EMPTY = new P2PTunnelPart[0];
 
     public <T extends P2PTunnelPart<T>> P2PTunnelPart[] getInputs(short freq, Class<T> c) {
         var inputs = this.inputs.get(freq);
         if (inputs == null) {
-            return  EMPTY;
+            return EMPTY;
         } else {
             var list = new ArrayList<>(inputs.size());
             for (var input : inputs) {

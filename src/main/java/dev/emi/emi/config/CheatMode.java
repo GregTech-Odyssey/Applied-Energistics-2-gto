@@ -1,0 +1,28 @@
+package dev.emi.emi.config;
+
+import dev.emi.emi.EmiPort;
+import dev.emi.emi.config.ConfigEnum;
+import net.minecraft.network.chat.Component;
+
+public enum CheatMode implements ConfigEnum {
+    TRUE("true"),
+    FALSE("false"),
+    CREATIVE("creative")
+    ;
+
+    private final String name;
+
+    CheatMode(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public Component getText() {
+        return EmiPort.translatable("emi.cheat_mode." + name.replace("-", "_"));
+    }
+}

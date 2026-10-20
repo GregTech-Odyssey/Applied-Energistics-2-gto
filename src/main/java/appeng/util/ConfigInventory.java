@@ -2,7 +2,6 @@ package appeng.util;
 
 import java.util.Set;
 
-import appeng.api.stacks.*;
 import com.google.common.base.Preconditions;
 
 import org.jetbrains.annotations.Nullable;
@@ -10,9 +9,8 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.material.Fluid;
 
-import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
-
 import appeng.api.config.Actionable;
+import appeng.api.stacks.*;
 import appeng.api.storage.AEKeyFilter;
 import appeng.helpers.externalstorage.GenericStackInv;
 import appeng.helpers.externalstorage.GenericStackInv.Mode;

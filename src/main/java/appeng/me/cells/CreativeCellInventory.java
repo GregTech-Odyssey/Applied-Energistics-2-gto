@@ -18,17 +18,13 @@
 
 package appeng.me.cells;
 
-import java.util.Set;
-
-import appeng.api.stacks.AEKeySet;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
-
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.cells.CellState;
 import appeng.api.storage.cells.StorageCell;

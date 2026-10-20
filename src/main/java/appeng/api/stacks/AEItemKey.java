@@ -19,7 +19,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.common.extensions.IForgeItem;
 
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;

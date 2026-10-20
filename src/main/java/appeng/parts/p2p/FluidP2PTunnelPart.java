@@ -80,7 +80,7 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
             int total = 0;
 
             var outputs = FluidP2PTunnelPart.this.getOutputs();
-            final int outputTunnels =outputs.size();
+            final int outputTunnels = outputs.size();
             final int amount = resource.getAmount();
 
             if (outputTunnels == 0 || amount == 0) {

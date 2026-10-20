@@ -1,0 +1,55 @@
+package dev.emi.emi.api.stack;
+
+import net.minecraft.core.Registry;
+import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.ApiStatus;
+
+/**
+ * Provides EMI context for a {@link Registry} to construct stacks from the objects in the registry.
+ * This allows EMI to construct tag ingredients from stacks from the given registry.
+ */
+@ApiStatus.Experimental
+public interface EmiRegistryAdapter<T> {
+
+	/**
+	 * @return The base class for objects in the registry.
+	 */
+	Class<T> getBaseClass();
+
+	/**
+	 * @return
+	 */
+	Registry<T> getRegistry();
+
+	/**
+	 * Constructs an {@link dev.emi.emi.api.stack.EmiStack} from a given object from the registry, or {@link dev.emi.emi.api.stack.EmiStack#EMPTY} if somehow invalid.
+	 */
+	dev.emi.emi.api.stack.EmiStack of(T t, CompoundTag nbt, long amount);
+
+	/**
+	 * Convenience method for creating an {@link EmiRegistryAdapter}.
+	 */
+	public static <T> EmiRegistryAdapter<T> simple(Class<T> clazz, Registry<T> registry, StackConstructor<T> constructor) {
+		return new EmiRegistryAdapter<T>() {
+
+			@Override
+			public Class<T> getBaseClass() {
+				return clazz;
+			}
+
+			@Override
+			public Registry<T> getRegistry() {
+				return registry;
+			}
+
+			@Override
+			public dev.emi.emi.api.stack.EmiStack of(T t, CompoundTag nbt, long amount) {
+				return constructor.of(t, nbt, amount);
+			}
+		};
+	}
+
+	public static interface StackConstructor<T> {
+		EmiStack of(T t, CompoundTag nbt, long amount);
+	}
+}

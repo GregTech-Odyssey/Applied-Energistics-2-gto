@@ -128,7 +128,8 @@ public interface MEStorage {
      *
      * @return a new list of this inventories content
      */
-    java.util.function.ObjLongConsumer<AEKey> IGNORE_CHANGES = (key, amount) -> {};
+    java.util.function.ObjLongConsumer<AEKey> IGNORE_CHANGES = (key, amount) -> {
+    };
 
     default long getChangeVersion() {
         return -1;
@@ -294,7 +295,8 @@ public interface MEStorage {
             }
             if (journalSize > 0) {
                 var keys = journal;
-                for (int i = 0, n = journalSize; i < n; i++) changed.accept(keys[i]);
+                for (int i = 0, n = journalSize; i < n; i++)
+                    changed.accept(keys[i]);
                 resetJournal();
             }
             return true;

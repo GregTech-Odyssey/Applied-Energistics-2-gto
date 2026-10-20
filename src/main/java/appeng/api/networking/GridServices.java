@@ -27,15 +27,15 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
 import appeng.me.helpers.GridServiceContainer;
 

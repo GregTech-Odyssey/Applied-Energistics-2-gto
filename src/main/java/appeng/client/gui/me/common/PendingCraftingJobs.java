@@ -1,15 +1,15 @@
 package appeng.client.gui.me.common;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
@@ -30,7 +30,7 @@ public final class PendingCraftingJobs {
     }
 
     public static boolean hasPendingJob(AEKey what) {
-        return jobs.values().stream().anyMatch(s -> s.what==what);
+        return jobs.values().stream().anyMatch(s -> s.what == what);
     }
 
     public static void clearPendingJobs() {

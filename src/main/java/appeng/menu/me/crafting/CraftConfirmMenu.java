@@ -248,7 +248,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu, IRepoMenu 
                 sendPacketToClient(new CraftConfirmPlanPacket(plan));
             } catch (Throwable e) {
                 this.getPlayerInventory().player.sendSystemMessage(Component.literal("Error: " + e));
-                AELog.warn("Failed to start crafting job.", e);
+                AELog.warn(e);
                 this.setValidMenu(false);
                 this.result = null;
             }

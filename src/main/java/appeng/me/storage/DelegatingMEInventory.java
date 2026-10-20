@@ -38,7 +38,8 @@ public class DelegatingMEInventory implements MEStorage {
 
     @Override
     public boolean drainChanges(Object reader, java.util.function.ObjLongConsumer<AEKey> changed) {
-        if (delegate == null) return false;
+        if (delegate == null)
+            return false;
         if (drainedStamp != delegateStamp) {
             drainedStamp = delegateStamp;
             delegate.drainChanges(reader, IGNORE_CHANGES);
@@ -49,7 +50,8 @@ public class DelegatingMEInventory implements MEStorage {
 
     @Override
     public long getChangeVersion() {
-        if (delegate == null) return delegateStamp;
+        if (delegate == null)
+            return delegateStamp;
         long v = delegate.getChangeVersion();
         return v < 0 ? -1 : v ^ (delegateStamp * 0x9E3779B97F4A7C15L);
     }

@@ -1,0 +1,73 @@
+package dev.emi.emi.recipe.special;
+
+import dev.emi.emi.EmiPort;
+import dev.emi.emi.api.recipe.EmiPatternCraftingRecipe;
+import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.GeneratedSlotWidget;
+import dev.emi.emi.api.widget.SlotWidget;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.entity.BannerPattern;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+
+import java.util.List;
+import java.util.Random;
+
+public class EmiBannerDuplicateRecipe extends EmiPatternCraftingRecipe {
+
+	public static final List<Item> BANNERS = List.of(
+			Items.WHITE_BANNER, Items.ORANGE_BANNER, Items.MAGENTA_BANNER, Items.LIGHT_BLUE_BANNER,
+			Items.YELLOW_BANNER, Items.LIME_BANNER, Items.PINK_BANNER, Items.GRAY_BANNER,
+			Items.LIGHT_GRAY_BANNER, Items.CYAN_BANNER, Items.PURPLE_BANNER, Items.BLUE_BANNER,
+			Items.BROWN_BANNER, Items.GREEN_BANNER, Items.RED_BANNER, Items.BLACK_BANNER
+	);
+
+	private final Item banner;
+
+	public EmiBannerDuplicateRecipe(Item banner, ResourceLocation id) {
+		super(List.of(
+				EmiStack.of(banner),
+				EmiStack.of(banner).setRemainder(EmiStack.of(banner))),
+				EmiStack.of(banner), id);
+		this.banner = banner;
+	}
+
+	@Override
+	public SlotWidget getInputWidget(int slot, int x, int y) {
+		if (slot == 0) {
+			return new SlotWidget(EmiStack.of(banner), x, y);
+		} else if (slot == 1) {
+			return new GeneratedSlotWidget(r -> getPattern(r, true), unique, x, y);
+		}
+		return new SlotWidget(EmiStack.EMPTY, x, y);
+	}
+
+	@Override
+	public SlotWidget getOutputWidget(int x, int y) {
+		return new GeneratedSlotWidget(r -> getPattern(r, false) , unique, x, y);
+	}
+
+	public EmiStack getPattern(Random random, boolean reminder) {
+		ItemStack stack = new ItemStack(banner);
+		int patterns = 1 + Math.max(random.nextInt(5), random.nextInt(3));
+		BannerPattern.Builder pattern = new BannerPattern.Builder();
+		for (int i = 0; i < patterns; i++) {
+			pattern = EmiPort.addRandomBanner(pattern, random);
+		}
+
+		CompoundTag tag = new CompoundTag();
+		tag.put("Patterns", pattern.toListTag());
+
+		BlockItem.setBlockEntityData(stack, BlockEntityType.BANNER, tag);
+		//stack.setNbt(tag);
+		EmiStack emiStack = EmiStack.of(stack);
+		if (reminder) {
+			emiStack.setRemainder(EmiStack.of(stack));
+		}
+		return emiStack;
+	}
+}

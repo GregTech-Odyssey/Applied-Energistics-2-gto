@@ -79,11 +79,11 @@ public abstract class P2PTunnelPart<T extends P2PTunnelPart<T>> extends AEBasePa
 
     @Nullable
     public T getInput() {
-      var inputs = this.getInputs();
-      if (inputs.length == 0) {
-          return null;
-      }
-      return  inputs[0];
+        var inputs = this.getInputs();
+        if (inputs.length == 0) {
+            return null;
+        }
+        return inputs[0];
     }
 
     public T[] getInputs() {
@@ -105,8 +105,8 @@ public abstract class P2PTunnelPart<T extends P2PTunnelPart<T>> extends AEBasePa
             var grid = getMainNode().getGrid();
             if (grid != null) {
                 var outputs = this.outputs;
-                if (outputs==null) {
-                     outputs = this.outputs = P2PService.get(grid).getOutputs(this.freq, this.getClass());
+                if (outputs == null) {
+                    outputs = this.outputs = P2PService.get(grid).getOutputs(this.freq, this.getClass());
                 }
                 return outputs;
             }

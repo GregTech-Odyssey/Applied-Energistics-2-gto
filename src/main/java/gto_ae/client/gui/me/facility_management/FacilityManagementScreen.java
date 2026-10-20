@@ -183,7 +183,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
 
         final int scrollLevel = scrollbar.getCurrentScroll();
         int i = 0;
-        for (;i<this.visibleRows;++i) {
+        for (; i < this.visibleRows; ++i) {
             if (scrollLevel + i >= this.rows.size()) {
                 continue;
             }

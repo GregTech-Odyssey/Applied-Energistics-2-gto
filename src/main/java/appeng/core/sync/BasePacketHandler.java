@@ -18,12 +18,12 @@
 
 package appeng.core.sync;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import net.minecraft.network.FriendlyByteBuf;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
 import appeng.core.sync.packets.*;
 

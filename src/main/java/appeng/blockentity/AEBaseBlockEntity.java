@@ -18,13 +18,11 @@
 
 package appeng.blockentity;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
-import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
@@ -60,6 +58,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.client.model.data.ModelData;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
 import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;

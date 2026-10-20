@@ -1,6 +1,5 @@
 package appeng.api.storage;
 
-import appeng.me.storage.NetworkStorage;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.Direction;
@@ -8,6 +7,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 import appeng.api.stacks.AEKeyType;
 import appeng.me.storage.ExternalStorageFacade;
+import appeng.me.storage.NetworkStorage;
 
 /**
  * The only implementation of the target order: MEStorage, then {@link ExternalStorageFacade.DirectKeyHandler}, then
@@ -183,7 +183,7 @@ public final class StorageTargetResolver {
                 return null;
             }
             default -> {
-                return  hit(Tier.STORAGE, storage);
+                return hit(Tier.STORAGE, storage);
             }
         }
     }

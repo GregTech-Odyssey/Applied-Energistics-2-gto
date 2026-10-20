@@ -56,6 +56,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(21)
 dependencies {
     implementation("org.lwjgl:lwjgl:3.3.2")
     implementation("org.lwjgl:lwjgl-opengl:3.3.2")
+    implementation("org.xerial:sqlite-jdbc:3.46.1.3")
 
     implementation("com.gto.fastcollection:FastCollection:26.8.7")
 
@@ -65,34 +66,33 @@ dependencies {
     guideExportOnly("org.bytedeco:ffmpeg-platform:6.0-1.5.9")
 
     // compile against provided APIs
-    modCompileOnly "mezz.jei:jei-${jei_minecraft_version}-common-api:${jei_version}"
-    modCompileOnly "mezz.jei:jei-${jei_minecraft_version}-forge-api:${jei_version}"
-    modCompileOnly "dev.emi:emi-forge:${emi_version}:api"
+    modCompileOnly "mezz.jei:jei-${jei_minecraft_version}-common:${jei_version}"
+    modCompileOnly "mezz.jei:jei-${jei_minecraft_version}-forge:${jei_version}"
 
+    modRuntimeOnly "mezz.jei:jei-${jei_minecraft_version}-forge:${jei_version}"
     // Always depend on the REI API to compile
-    if (project.runtime_itemlist_mod == "jei") {
-        modRuntimeOnly "mezz.jei:jei-${jei_minecraft_version}-forge:${jei_version}"
-
-        compileOnly "me.shedaniel.cloth:basic-math:0.6.1"
-        modCompileOnly "dev.architectury:architectury-forge:${project.architectury_version}"
-        modCompileOnly "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
-    } else if (project.runtime_itemlist_mod == "rei") {
-        implementation "me.shedaniel.cloth:basic-math:0.6.1"
-        modImplementation "me.shedaniel.cloth:cloth-config-forge:${project.cloth_config_version}"
-        modImplementation "dev.architectury:architectury-forge:${project.architectury_version}"
-        modImplementation "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
-    } else if (project.runtime_itemlist_mod == "emi") {
-        modRuntimeOnly "dev.emi:emi-forge:${emi_version}"
-        modCompileOnly "dev.emi:emi-forge:${emi_version}"
-
-        compileOnly "me.shedaniel.cloth:basic-math:0.6.1"
-        modCompileOnly "dev.architectury:architectury-forge:${project.architectury_version}"
-        modCompileOnly "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
-    } else {
-        modCompileOnly "me.shedaniel.cloth:cloth-config-forge:${project.cloth_config_version}"
-        modCompileOnly "dev.architectury:architectury-forge:${project.architectury_version}"
-        modCompileOnly "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
-    }
+//    if (project.runtime_itemlist_mod == "jei") {
+//
+//        compileOnly "me.shedaniel.cloth:basic-math:0.6.1"
+//        modCompileOnly "dev.architectury:architectury-forge:${project.architectury_version}"
+//        modCompileOnly "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
+//    } else if (project.runtime_itemlist_mod == "rei") {
+//        implementation "me.shedaniel.cloth:basic-math:0.6.1"
+//        modImplementation "me.shedaniel.cloth:cloth-config-forge:${project.cloth_config_version}"
+//        modImplementation "dev.architectury:architectury-forge:${project.architectury_version}"
+//        modImplementation "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
+//    } else if (project.runtime_itemlist_mod == "emi") {
+//        modRuntimeOnly "dev.emi:emi-forge:${emi_version}"
+//        modCompileOnly "dev.emi:emi-forge:${emi_version}"
+//
+//        compileOnly "me.shedaniel.cloth:basic-math:0.6.1"
+//        modCompileOnly "dev.architectury:architectury-forge:${project.architectury_version}"
+//        modCompileOnly "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
+//    } else {
+//        modCompileOnly "me.shedaniel.cloth:cloth-config-forge:${project.cloth_config_version}"
+//        modCompileOnly "dev.architectury:architectury-forge:${project.architectury_version}"
+//        modCompileOnly "me.shedaniel:RoughlyEnoughItems-forge:${project.rei_version}"
+//    }
 
     // Locally sourced extra mods for runtime (i.e. testing)
     for (extraModJar in fileTree(dir: extraModsDir, include: '*.jar')) {
@@ -440,7 +440,8 @@ spotless {
         indentWithSpaces()
         removeUnusedImports()
         toggleOffOn()
-        eclipse().configFile 'codeformat/codeformat.xml'
+        // Use a formatter that supports Java 21 guarded switch patterns.
+        eclipse('4.31').configFile 'codeformat/codeformat.xml'
         importOrderFile 'codeformat/ae2.importorder'
         bumpThisNumberIfACustomStepChanges(1)
     }

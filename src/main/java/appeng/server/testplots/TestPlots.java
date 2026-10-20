@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-import appeng.api.stacks.*;
 import com.google.common.collect.Sets;
 
 import org.jetbrains.annotations.Nullable;
@@ -41,8 +40,6 @@ import net.minecraft.world.level.block.state.properties.ChestType;
 import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.material.Fluids;
 
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-
 import appeng.api.config.AccessRestriction;
 import appeng.api.config.Actionable;
 import appeng.api.config.RedstoneMode;
@@ -52,6 +49,7 @@ import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.pathing.ChannelMode;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.parts.PartHelper;
+import appeng.api.stacks.*;
 import appeng.api.storage.StorageCells;
 import appeng.api.util.AEColor;
 import appeng.blockentity.crafting.MolecularAssemblerBlockEntity;

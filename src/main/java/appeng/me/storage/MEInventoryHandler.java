@@ -121,7 +121,8 @@ public class MEInventoryHandler extends DelegatingMEInventory {
             return super.drainChanges(reader, changed);
         }
         var mode = this.partitionListMode;
-        return super.drainChanges(reader, (key, amount) -> changed.accept(key, list.matchesFilter(key, mode) ? amount : 0));
+        return super.drainChanges(reader,
+                (key, amount) -> changed.accept(key, list.matchesFilter(key, mode) ? amount : 0));
     }
 
     @Override
