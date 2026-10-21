@@ -11,8 +11,8 @@ license="See GitHub repository for details"
 [[mods]]
 modId="ae2"
 version="0.0.0"
-displayName="Applied Energistics 2"
-description="A Mod about Matter, Energy and using them to conquer the world.."
+displayName="Applied Energistics 2 GTO Edition"
+description="A build of Applied Energistics 2 maintained for the GregTech Odyssey modpack, based on the original Applied Energistics 2 by AlgorithmX2, the AppliedEnergistics team and contributors."
 
 [[dependencies.ae2]]
     modId="forge"

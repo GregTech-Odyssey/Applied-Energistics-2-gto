@@ -530,12 +530,14 @@ publishing {
 gtoPublish {
     publishMaven      = true        // 默认 true
     publishGithub     = false       // 默认 false
-    publishCurseforge = false       // 默认 false
+    publishCurseforge = true
     mavenRepoName     = 'gtodysseyRepository'  // 默认值
     mavenRepoUrl      = 'releases'  // 必填，可选值: 'releases' 或 'private'
     minecraftVersion  = '1.20.1'      // 必填，Minecraft 版本号
     modLoader         = 'Forge'  // 必填，模组加载器（NeoForge, Forge, Fabric 等）
     githubRepo        = 'owner/repo-name'      // GitHub 仓库（启用 GitHub 发布时必填）
-    curseforgeProjectId   = '123456'    // CurseForge 项目 ID（启用 CurseForge 时必填）
-    curseforgeJavaVersion = 'Java 21'   // Java 版本（启用 CurseForge 时必填，如 Java 8, Java 17, Java 21, Java 25）
+    curseforgeProjectId   = '1756988'
+    curseforgeJavaVersion = 'Java 21'
+    curseforgeEnvironment = 'both'
+    curseforgeRelations   = [guideme: 'required', emi: 'incompatible']
 }
