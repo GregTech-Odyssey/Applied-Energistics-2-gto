@@ -1,6 +1,8 @@
-# Applied Energistics 2 - GregTech Odyssey
+# Applied Energistics 2 GTO Edition
 
 ## A Version of AE2 for the GregTech Odyssey modpack, unlimiting, combining, and upgrading many features required for the modpack to fully function.
+
+This is an **unofficial, modified fork** of [Applied Energistics 2](https://github.com/AppliedEnergistics/Applied-Energistics-2), maintained by the GregTech Odyssey team. It is not made, endorsed or supported by the Applied Energistics 2 team. Please report issues on the [GregTech Odyssey issue tracker](https://github.com/GregTech-Odyssey/GregTech-Odyssey/issues), not to the official project. The mod ID is still `ae2`.
 
 ## Table of Contents
 
