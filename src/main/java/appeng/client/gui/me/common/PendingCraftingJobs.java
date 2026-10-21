@@ -56,11 +56,9 @@ public final class PendingCraftingJobs {
             case CANCELLED -> jobs.remove(id);
             case FINISHED -> {
                 jobs.remove(id);
-                // Only toast if no terminal is open (i.e. REI/JEI or no screen at all)
-                // and a wireless terminal is in the player inv
+                // Only toast if a wireless terminal is in the player inv
                 var minecraft = Minecraft.getInstance();
                 if (AEConfig.instance().isNotifyForFinishedCraftingJobs()
-                        && !(minecraft.screen instanceof MEStorageScreen<?>)
                         && minecraft.player != null && hasNotificationEnablingItem(minecraft.player)) {
                     minecraft.getToasts().addToast(new FinishedJobToast(what, requestedAmount));
                 }
