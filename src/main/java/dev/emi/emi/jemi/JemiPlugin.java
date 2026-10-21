@@ -51,6 +51,8 @@ import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.level.material.Fluid;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 import java.util.function.BiPredicate;
 import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
 import com.gto.fastcollection.fastutil.OpenCacheHashSet;
@@ -62,22 +64,27 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 @JeiPlugin
 public class JemiPlugin implements IModPlugin, EmiPlugin {
-    public static volatile @Nullable Runnable deferredJeiStarter;
+    private static final JemiStartup STARTUP = new JemiStartup(Executors.newSingleThreadExecutor(task -> {
+        Thread thread = new Thread(task, "EMI JEI Loader");
+        thread.setDaemon(true);
+        return thread;
+    }));
 
-    public static void startDeferredJei() {
-        Runnable starter = deferredJeiStarter;
-        if (starter == null)
-            return;
-        try {
-            starter.run();
-        } finally {
-            deferredJeiStarter = null;
-        }
+    public static boolean deferJeiStart(Runnable starter) {
+        return STARTUP.deferStart(starter);
+    }
+
+    public static boolean deferJeiStop(Runnable stopper) {
+        return STARTUP.deferStop(stopper);
+    }
+
+    public static CompletableFuture<Void> startDeferredJeiAsync() {
+        return STARTUP.startAsync();
     }
 
     private static final Reference2ObjectOpenHashMap<EmiRecipeCategory, IRecipeCategory<?>> CATEGORY_MAP = new Reference2ObjectOpenHashMap<>();
     private static @Nullable ISubtypeManager subtypeManager;
-    public static @Nullable IJeiRuntime runtime;
+    public static volatile @Nullable IJeiRuntime runtime;
     public static BiPredicate<IIngredientTypeWithSubtypes<? extends Object, ? extends Object>, Object> hasSubtype = (a,
             b) -> true;
 
@@ -123,29 +130,23 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
     @Override
     public void onRuntimeAvailable(IJeiRuntime runtime) {
         JemiPlugin.runtime = runtime;
+        STARTUP.runtimeAvailable();
     }
 
     @Override
     public void onRuntimeUnavailable() {
         JemiPlugin.runtime = null;
+        STARTUP.runtimeUnavailable();
     }
 
     @Override
     @SuppressWarnings({ "rawtypes", "unchecked" })
     public void register(EmiRegistry registry) {
-        startDeferredJei();
         EmiLog.info("[JEMI] Waiting for JEI to finish reloading...");
         EmiReloadManager.step(EmiPort.translatable("emi.reload.jei.waiting"), 20_000);
-        try {
-            while (true) {
-                if (runtime != null) {
-                    break;
-                }
-                Thread.sleep(100);
-            }
-        } catch (Exception e) {
-            return;
-        }
+        startDeferredJeiAsync().join();
+        if (runtime == null)
+            throw new IllegalStateException("JEI startup finished without a runtime");
         EmiLog.info("[JEMI] JEI reloaded!");
         var plugins = EmiForgePlatform.getPlugins();
         var handledNamespaces = new OpenCacheHashSet<String>(plugins.size());

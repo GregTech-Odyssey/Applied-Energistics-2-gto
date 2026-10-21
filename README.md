@@ -55,4 +55,6 @@ You install this mod by putting it into the `minecraft/mods/` folder. It has no 
 
 EMI 1.1.24+1.20.1 and EMI Trades are included in this mod. Their MIT notices are retained in `LICENSE-EMI`, `LICENSE-EMITrades`, and `NOTICE` inside the distributed jars. Install the AE fork without standalone EMI or EMI Trades jars.
 
+Loot information is supplied by the separate [Advanced Loot Info](https://github.com/yanny7/AdvancedLootInfo) mod and its Advanced Core Info dependency. This fork no longer bundles EMI Loot, ALI, their resources, or a loot synchronization protocol. GTOCore manages the ALI/ACI dependencies and EMI plugin registration.
+
 Thanks to all of our [contributors](https://github.com/GregTech-Odyssey/Applied-Energistics-2-gto/graphs/contributors)!
