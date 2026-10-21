@@ -1,36 +1,46 @@
 package dev.emi.emi.jemi;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+
 import com.google.common.collect.Sets;
+
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.fluids.FluidStack;
+
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.forge.EmiForgePlatform;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.forge.ForgeTypes;
 import mezz.jei.api.ingredients.IIngredientHelper;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.runtime.IIngredientManager;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.material.Fluid;
-import net.minecraftforge.fluids.FluidStack;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class JemiUtil {
-    
+
     public static EmiIngredient getIngredient(List<ITypedIngredient<?>> ingredients) {
         if (ingredients.isEmpty()) {
             return EmiStack.EMPTY;
         }
-        return EmiIngredient.of(ingredients.stream().map(JemiUtil::getStack).filter(i -> !i.isEmpty()).toList());
+        var stacks = new ObjectArrayList<EmiStack>(ingredients.size());
+        for (var ingredient : ingredients) {
+            var stack = getStack(ingredient);
+            if (!stack.isEmpty())
+                stacks.add(stack);
+        }
+        return EmiIngredient.of(stacks);
     }
 
     public static EmiStack getStack(Object ingredient) {
-        Optional<IIngredientType> optional = (Optional<IIngredientType>) (Optional) JemiPlugin.runtime.getIngredientManager()
-            .getIngredientTypeChecked(ingredient);
+        Optional<IIngredientType> optional = (Optional<IIngredientType>) (Optional) JemiPlugin.runtime
+                .getIngredientManager()
+                .getIngredientTypeChecked(ingredient);
         if (optional.isPresent()) {
             return getStack(optional.get(), ingredient);
         }
@@ -62,13 +72,13 @@ public class JemiUtil {
         } else if (stack.getKey() instanceof Fluid f) {
             int amount = stack.getAmount() <= 0 ? 1000 : (int) Math.min(Integer.MAX_VALUE, stack.getAmount());
             return (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(ForgeTypes.FLUID_STACK,
-                new FluidStack(f, amount, stack.getNbt()));
+                    new FluidStack(f, amount, stack.getNbt()));
         } else if (stack instanceof JemiStack js) {
-            return JemiPlugin.runtime.getIngredientManager().getIngredientTypeChecked(js.ingredient)
-                .map(t -> (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(t, js.ingredient))
-                .orElse(Optional.empty());
+            return (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(js.getType(),
+                    js.ingredient);
         }
-        return (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(VanillaTypes.ITEM_STACK, stack.getItemStack());
+        return (Optional) JemiPlugin.runtime.getIngredientManager().createTypedIngredient(VanillaTypes.ITEM_STACK,
+                stack.getItemStack());
     }
 
     public static EmiStack getFluidFromJei(Object object) {
@@ -84,9 +94,7 @@ public class JemiUtil {
 
     public static Set<String> getHandledMods() {
         Set<String> set = Sets.newHashSet();
-        for (String mod : EmiForgePlatform.getModsWithPlugins()) {
-            set.add(mod);
-        }
+        set.addAll(EmiForgePlatform.getModsWithPlugins());
         return set;
     }
 }

@@ -8,6 +8,8 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.runtime.EmiLog;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.minecraft.world.item.crafting.ShapelessRecipe;
+import appeng.api.stacks.AEItemKey;
 import java.util.List;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -20,6 +22,21 @@ public class EmiShapedRecipe extends EmiCraftingRecipe {
 
     public static void setRemainders(List<EmiIngredient> input, CraftingRecipe recipe) {
         try {
+            // Exact classes only: subclasses may override getRemainingItems or depend on other slots.
+            if (recipe.getClass() == ShapedRecipe.class || recipe.getClass() == ShapelessRecipe.class) {
+                for (var ingredient : input) {
+                    if (ingredient.isEmpty())
+                        continue;
+                    for (var stack : ingredient.getEmiStacks()) {
+                        if (!hasCraftingRemainingItem(stack))
+                            continue;
+                        var remainder = stack.getItemStack().getCraftingRemainingItem();
+                        if (!remainder.isEmpty())
+                            stack.setRemainder(EmiStack.of(remainder));
+                    }
+                }
+                return;
+            }
             var inv = EmiUtil.getCraftingInventory();
             var size = input.size();
             for (int i = 0; i < size; i++) {
@@ -29,8 +46,7 @@ public class EmiShapedRecipe extends EmiCraftingRecipe {
                 var stacks = ingredient.getEmiStacks();
                 boolean hasPossibleRemainder = false;
                 for (var st : stacks) {
-                    var test = st.getItemStack();
-                    if (test.getItem().hasCraftingRemainingItem(test)) {
+                    if (hasCraftingRemainingItem(st)) {
                         hasPossibleRemainder = true;
                         break;
                     }
@@ -58,6 +74,14 @@ public class EmiShapedRecipe extends EmiCraftingRecipe {
         } catch (Exception e) {
             EmiLog.error("Exception thrown setting remainders for " + EmiPort.getId(recipe), e);
         }
+    }
+
+    private static boolean hasCraftingRemainingItem(EmiStack stack) {
+        // The shared key stack has count one; count-sensitive queries need the actual amount.
+        if (stack.getAEKey() instanceof AEItemKey key) {
+            return key.getReadOnlyStack().hasCraftingRemainingItem();
+        }
+        return false;
     }
 
     private static List<EmiIngredient> padIngredients(ShapedRecipe recipe) {

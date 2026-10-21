@@ -1,6 +1,18 @@
 package dev.emi.emi.jemi;
 
+import java.util.List;
+
 import com.google.common.collect.Lists;
+
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.TooltipFlag;
+
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.EmiUtil;
 import dev.emi.emi.api.stack.EmiStack;
@@ -12,16 +24,6 @@ import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.IIngredientTypeWithSubtypes;
 import mezz.jei.api.ingredients.subtypes.UidContext;
-import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.TooltipFlag;
-
-import java.util.List;
 
 public class JemiStack<T> extends EmiStack {
     private final IIngredientType<T> type;
@@ -30,7 +32,8 @@ public class JemiStack<T> extends EmiStack {
     public final T ingredient;
     public IIngredientRenderer<T> renderer;
 
-    public JemiStack(IIngredientType<T> type, IIngredientHelper<T> helper, IIngredientRenderer<T> renderer, T ingredient) {
+    public JemiStack(IIngredientType<T> type, IIngredientHelper<T> helper, IIngredientRenderer<T> renderer,
+            T ingredient) {
         this.type = type;
         this.helper = helper;
         this.renderer = renderer;
@@ -44,6 +47,10 @@ public class JemiStack<T> extends EmiStack {
 
     public String getJeiUid() {
         return helper.getUniqueId(ingredient, UidContext.Ingredient);
+    }
+
+    public IIngredientType<T> getType() {
+        return type;
     }
 
     @Override
@@ -92,13 +99,15 @@ public class JemiStack<T> extends EmiStack {
         List<ClientTooltipComponent> list = Lists.newArrayList();
         Minecraft client = Minecraft.getInstance();
         JemiTooltipBuilder builder = new JemiTooltipBuilder();
-        renderer.getTooltip(builder, ingredient, client.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
+        renderer.getTooltip(builder, ingredient,
+                client.options.advancedItemTooltips ? TooltipFlag.Default.ADVANCED : TooltipFlag.Default.NORMAL);
         list.addAll(builder.tooltip);
 
         ResourceLocation id = getId();
         if (EmiConfig.appendModId && id != null) {
             String mod = EmiUtil.getModName(id.getNamespace());
-            list.add(ClientTooltipComponent.create(EmiPort.ordered(EmiPort.literal(mod, ChatFormatting.BLUE, ChatFormatting.ITALIC))));
+            list.add(ClientTooltipComponent
+                    .create(EmiPort.ordered(EmiPort.literal(mod, ChatFormatting.BLUE, ChatFormatting.ITALIC))));
         }
 
         list.addAll(super.getTooltip());

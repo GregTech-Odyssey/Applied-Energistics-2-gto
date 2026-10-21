@@ -425,21 +425,18 @@ public class VanillaPlugin implements EmiPlugin {
             }
             try {
                 if (i.getMaxDamage() > 0) {
-                    if (i instanceof ArmorItem ai && ai.getMaterial() != null
-                            && ai.getMaterial().getRepairIngredient() != null
-                            && !ai.getMaterial().getRepairIngredient().isEmpty()) {
+                    Ingredient repairIngredient = null;
+                    if (i instanceof ArmorItem ai && ai.getMaterial() != null)
+                        repairIngredient = ai.getMaterial().getRepairIngredient();
+                    else if (i instanceof TieredItem ti)
+                        repairIngredient = ti.getTier().getRepairIngredient();
+                    if (repairIngredient != null && !repairIngredient.isEmpty()) {
+                        var resource = repairIngredient;
                         ResourceLocation id = synthetic("anvil/repairing/material",
                                 dev.emi.emi.EmiUtil.subId(i) + "/" + dev.emi.emi.EmiUtil
-                                        .subId(ai.getMaterial().getRepairIngredient().getItems()[0].getItem()));
+                                        .subId(resource.getItems()[0].getItem()));
                         addRecipeSafe(registry, () -> new EmiAnvilRecipe(EmiStack.of(i),
-                                EmiIngredient.of(ai.getMaterial().getRepairIngredient()), id));
-                    } else if (i instanceof TieredItem ti && ti.getTier().getRepairIngredient() != null
-                            && !ti.getTier().getRepairIngredient().isEmpty()) {
-                        ResourceLocation id = synthetic("anvil/repairing/material",
-                                dev.emi.emi.EmiUtil.subId(i) + "/" + dev.emi.emi.EmiUtil
-                                        .subId(ti.getTier().getRepairIngredient().getItems()[0].getItem()));
-                        addRecipeSafe(registry, () -> new EmiAnvilRecipe(EmiStack.of(i),
-                                EmiIngredient.of(ti.getTier().getRepairIngredient()), id));
+                                EmiIngredient.of(resource), id));
                     }
                 }
                 if (i.canBeDepleted()) {
@@ -463,12 +460,12 @@ public class VanillaPlugin implements EmiPlugin {
                                                     .subId(EmiPort.getEnchantmentRegistry().getKey(e))
                                             + "/" + max)));
                 };
-                for (Enchantment e : targetedEnchantments) {
-                    if (e.canEnchant(defaultStack) && defaultStack.isEnchantable()
-                            && defaultStack.getItem().isEnchantable(defaultStack)
-                            && EmiForgePlatform.isEnchantable(defaultStack, e)) {
-                        consumer.accept(e);
-                        acceptableEnchantments++;
+                if (defaultStack.isEnchantable() && defaultStack.getItem().isEnchantable(defaultStack)) {
+                    for (Enchantment e : targetedEnchantments) {
+                        if (e.canEnchant(defaultStack) && EmiForgePlatform.isEnchantable(defaultStack, e)) {
+                            consumer.accept(e);
+                            acceptableEnchantments++;
+                        }
                     }
                 }
                 if (acceptableEnchantments > 0) {

@@ -1,20 +1,31 @@
 package dev.emi.emi.jemi.impl;
 
+import java.util.List;
+
 import com.google.common.collect.Lists;
-import dev.emi.emi.jemi.impl.JemiIngredientAcceptor;
-import dev.emi.emi.jemi.impl.JemiRecipeSlotBuilder;
+
+import org.jetbrains.annotations.Nullable;
+
+import dev.emi.emi.jemi.JemiConversionCache;
 import mezz.jei.api.gui.builder.IIngredientAcceptor;
 import mezz.jei.api.gui.builder.IRecipeLayoutBuilder;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
 import mezz.jei.api.gui.widgets.ISlottedWidgetFactory;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 
-import java.util.List;
-
 public class JemiRecipeLayoutBuilder implements IRecipeLayoutBuilder {
     public final List<dev.emi.emi.jemi.impl.JemiIngredientAcceptor> ingredients = Lists.newArrayList();
     public final List<JemiRecipeSlotBuilder> slots = Lists.newArrayList();
     public boolean shapeless = false;
+    private final @Nullable JemiConversionCache conversions;
+
+    public JemiRecipeLayoutBuilder() {
+        this(null);
+    }
+
+    public JemiRecipeLayoutBuilder(@Nullable JemiConversionCache conversions) {
+        this.conversions = conversions;
+    }
 
     @Override
     public IRecipeSlotBuilder addSlot(RecipeIngredientRole role) {
@@ -23,7 +34,7 @@ public class JemiRecipeLayoutBuilder implements IRecipeLayoutBuilder {
 
     @Override
     public IRecipeSlotBuilder addSlot(RecipeIngredientRole recipeIngredientRole, int x, int y) {
-        JemiRecipeSlotBuilder builder = new JemiRecipeSlotBuilder(recipeIngredientRole, x, y);
+        JemiRecipeSlotBuilder builder = new JemiRecipeSlotBuilder(recipeIngredientRole, x, y, conversions);
         ingredients.add(builder.acceptor);
         slots.add(builder);
         return builder;
@@ -31,7 +42,7 @@ public class JemiRecipeLayoutBuilder implements IRecipeLayoutBuilder {
 
     @Override
     public IIngredientAcceptor<?> addInvisibleIngredients(RecipeIngredientRole recipeIngredientRole) {
-        JemiIngredientAcceptor acceptor = new JemiIngredientAcceptor(recipeIngredientRole);
+        JemiIngredientAcceptor acceptor = new JemiIngredientAcceptor(recipeIngredientRole, conversions);
         ingredients.add(acceptor);
         return acceptor;
     }

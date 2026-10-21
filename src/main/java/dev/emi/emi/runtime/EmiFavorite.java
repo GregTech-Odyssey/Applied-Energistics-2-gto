@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.ChatFormatting;
@@ -65,12 +66,12 @@ public class EmiFavorite implements EmiIngredient, Batchable {
         return this;
     }
 
-    public EmiRecipe getRecipe() {
+    public @Nullable EmiRecipe getRecipe() {
         return recipe;
     }
 
     @Override
-    public List<EmiStack> getEmiStacks() {
+    public @NotNull List<EmiStack> getEmiStacks() {
         return stack.getEmiStacks();
     }
 
@@ -158,7 +159,7 @@ public class EmiFavorite implements EmiIngredient, Batchable {
         public final long total;
 
         public Synthetic(EmiRecipe recipe, long batches, long amount, long total, int state) {
-            super(recipe.getOutputs().get(0), recipe);
+            super(recipe.getOutputs().getFirst(), recipe);
             this.batches = batches;
             this.amount = amount;
             this.total = total;
@@ -186,7 +187,7 @@ public class EmiFavorite implements EmiIngredient, Batchable {
             }
             // context.fill(x - 1, y - 1, 18, 18, 0x44000000 | color);
             stack.render(context.raw(), x, y, delta, flags & (~EmiIngredient.RENDER_AMOUNT));
-            MicroTextRenderer.render(context, amount, stack.getEmiStacks().get(0) instanceof FluidEmiStack, 18, x + 17,
+            MicroTextRenderer.render(context, amount, stack.getEmiStacks().getFirst() instanceof FluidEmiStack, 18, x + 17,
                     y + 17, color);
         }
 

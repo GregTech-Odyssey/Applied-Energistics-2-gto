@@ -155,6 +155,7 @@ public class EmiRegistryImpl implements EmiRegistry {
     @Override
     public void setDefaultComparison(Object key, Function<Comparison, Comparison> comparison) {
         EmiComparisonDefaults.comparisons.put(key, comparison.apply(EmiComparisonDefaults.get(key)));
+        EmiIngredientCache.clear();
     }
 
     @Override

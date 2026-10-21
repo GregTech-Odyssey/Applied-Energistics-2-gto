@@ -1,5 +1,25 @@
 package dev.emi.emi.jemi;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.function.BiPredicate;
+
+import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
+import com.gto.fastcollection.fastutil.OpenCacheHashSet;
+
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.level.material.Fluid;
+
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.api.EmiPlugin;
 import dev.emi.emi.api.EmiRegistry;
@@ -21,6 +41,10 @@ import dev.emi.emi.registry.EmiRecipes;
 import dev.emi.emi.runtime.EmiLog;
 import dev.emi.emi.runtime.EmiReloadLog;
 import dev.emi.emi.runtime.EmiReloadManager;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
@@ -41,26 +65,6 @@ import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IJeiRuntime;
 import mezz.jei.library.ingredients.subtypes.SubtypeInterpreters;
 import mezz.jei.library.load.registration.SubtypeRegistration;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.minecraft.world.item.crafting.CustomRecipe;
-import net.minecraft.world.level.material.Fluid;
-import java.util.List;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.function.BiPredicate;
-import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
-import com.gto.fastcollection.fastutil.OpenCacheHashSet;
-import org.jetbrains.annotations.Nullable;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ReferenceLinkedOpenHashSet;
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 @JeiPlugin
 public class JemiPlugin implements IModPlugin, EmiPlugin {
@@ -225,14 +229,17 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
         CATEGORY_MAP.clear();
         EmiRecipeFiller.extraHandlers = JemiPlugin::getRecipeHandler;
 
+        var conversions = new JemiConversionCache(runtime.getIngredientManager());
         var categories = runtime.getRecipeManager().createRecipeCategoryLookup().includeHidden().get().iterator();
         while (categories.hasNext()) {
             IRecipeCategory<?> c = categories.next();
+            RecipeType type = c.getRecipeType();
+            ResourceLocation id = type.getUid();
+            if (isTagCategory(id))
+                continue;
             EmiLog.info("[JEMI] Collecting data for " + c.getTitle().getString());
             EmiReloadManager.step(EmiPort.translatable("emi.reload.jei.category", c.getTitle()), 5_000);
             try {
-                RecipeType type = c.getRecipeType();
-                ResourceLocation id = type.getUid();
                 var catalysts = new ObjectArrayList<EmiStack>();
                 var catalystIterator = runtime.getRecipeManager().createRecipeCatalystLookup(type).includeHidden().get()
                         .iterator();
@@ -249,7 +256,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
                     if (type == RecipeTypes.INFORMATION) {
                         addInfoRecipes(registry, (IRecipeCategory<IJeiIngredientInfoRecipe>) c);
                     } else if (type == RecipeTypes.CRAFTING) {
-                        addCraftingRecipes(registry, (IRecipeCategory<CraftingRecipe>) c);
+                        addCraftingRecipes(registry, (IRecipeCategory<CraftingRecipe>) c, conversions);
                     }
                     continue;
                 }
@@ -274,7 +281,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
                 while (recipes.hasNext()) {
                     var r = recipes.next();
                     try {
-                        registry.addRecipe(new JemiRecipe(category, c, r));
+                        registry.addRecipe(new JemiRecipe(category, c, r, conversions));
                     } catch (Throwable t) {
                         EmiLog.error("Exception thrown adding adding JEI recipe", t);
                     }
@@ -283,6 +290,11 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
                 EmiLog.error("Exception thrown adding adding JEI recipes", t);
             }
         }
+    }
+
+    static boolean isTagCategory(ResourceLocation id) {
+        return id.getNamespace().equals("minecraft")
+                && (id.getPath().equals("tag_recipes/item") || id.getPath().equals("tag_recipes/block"));
     }
 
     private void addInfoRecipes(EmiRegistry registry, IRecipeCategory<IJeiIngredientInfoRecipe> category) {
@@ -322,7 +334,8 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
         identical.forEach((text, stacks) -> registry.addRecipe(new EmiInfoRecipe(stacks, List.of(text), null)));
     }
 
-    private void addCraftingRecipes(EmiRegistry registry, IRecipeCategory<CraftingRecipe> category) {
+    private void addCraftingRecipes(EmiRegistry registry, IRecipeCategory<CraftingRecipe> category,
+            JemiConversionCache conversions) {
         var replaced = new OpenCacheHashSet<ResourceLocation>();
         var replacements = new ReferenceOpenHashSet<EmiRecipe>();
         var vanillaRecipes = registry.getRecipeManager()
@@ -339,7 +352,7 @@ public class JemiPlugin implements IModPlugin, EmiPlugin {
         for (CraftingRecipe recipe : recipes) {
             try {
                 if (category.isHandled(recipe)) {
-                    JemiRecipeLayoutBuilder builder = new JemiRecipeLayoutBuilder();
+                    JemiRecipeLayoutBuilder builder = new JemiRecipeLayoutBuilder(conversions);
                     category.setRecipe(builder, recipe, runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup());
                     var inputs = new ObjectArrayList<EmiIngredient>(builder.ingredients.size());
                     boolean hasInput = false, hasOutput = false;

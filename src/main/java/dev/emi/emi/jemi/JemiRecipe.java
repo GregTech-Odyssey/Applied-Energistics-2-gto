@@ -1,7 +1,18 @@
 package dev.emi.emi.jemi;
 
+import java.util.List;
+import java.util.Optional;
+
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.InputConstants;
+
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.Recipe;
+
 import dev.emi.emi.EmiPort;
 import dev.emi.emi.EmiUtil;
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -24,13 +35,6 @@ import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.library.focus.FocusGroup;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.tooltip.ClientTooltipComponent;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Recipe;
-import org.jetbrains.annotations.Nullable;
-import java.util.List;
-import java.util.Optional;
 
 public class JemiRecipe<T> implements EmiRecipe {
     public List<EmiIngredient> inputs = Lists.newArrayList();
@@ -43,6 +47,11 @@ public class JemiRecipe<T> implements EmiRecipe {
     public boolean allowTree = true;
 
     public JemiRecipe(EmiRecipeCategory recipeCategory, IRecipeCategory<T> category, T recipe) {
+        this(recipeCategory, category, recipe, null);
+    }
+
+    public JemiRecipe(EmiRecipeCategory recipeCategory, IRecipeCategory<T> category, T recipe,
+            @Nullable JemiConversionCache conversions) {
         this.recipeCategory = recipeCategory;
         this.category = category;
         this.recipe = recipe;
@@ -50,7 +59,7 @@ public class JemiRecipe<T> implements EmiRecipe {
         if (this.originalId != null) {
             this.id = EmiPort.id("jei", "/" + EmiUtil.subId(this.originalId));
         }
-        JemiRecipeLayoutBuilder builder = new JemiRecipeLayoutBuilder();
+        JemiRecipeLayoutBuilder builder = new JemiRecipeLayoutBuilder(conversions);
         category.setRecipe(builder, recipe, JemiPlugin.runtime.getJeiHelpers().getFocusFactory().getEmptyFocusGroup());
         for (JemiRecipeSlotBuilder jrsb : builder.slots) {
             jrsb.acceptor.coerceStacks(jrsb.tooltipCallback, jrsb.renderers);

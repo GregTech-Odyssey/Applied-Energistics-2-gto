@@ -174,6 +174,7 @@ public class EmiTags {
     }
 
     public static void reload() {
+        EmiIngredientCache.clear();
         EmiTagKey.reload();
         TAGS.clear();
         SORTED_TAGS.clear();

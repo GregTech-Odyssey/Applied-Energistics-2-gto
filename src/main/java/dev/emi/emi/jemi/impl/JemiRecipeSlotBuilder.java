@@ -1,28 +1,31 @@
 package dev.emi.emi.jemi.impl;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
 import com.google.common.collect.Maps;
-import dev.emi.emi.jemi.impl.JemiIngredientAcceptor;
+
+import org.jetbrains.annotations.Nullable;
+
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.material.Fluid;
+
+import dev.emi.emi.jemi.JemiConversionCache;
 import dev.emi.emi.jemi.impl.JemiRecipeSlot.IngredientRenderer;
 import dev.emi.emi.jemi.impl.JemiRecipeSlot.OffsetDrawable;
 import dev.emi.emi.jemi.impl.JemiRecipeSlot.TankInfo;
 import mezz.jei.api.gui.builder.IRecipeSlotBuilder;
-import mezz.jei.api.gui.placement.HorizontalAlignment;
-import mezz.jei.api.gui.placement.VerticalAlignment;
 import mezz.jei.api.gui.drawable.IDrawable;
 import mezz.jei.api.gui.drawable.TilingDirection;
 import mezz.jei.api.gui.ingredient.IRecipeSlotRichTooltipCallback;
 import mezz.jei.api.gui.ingredient.IRecipeSlotTooltipCallback;
+import mezz.jei.api.gui.placement.HorizontalAlignment;
+import mezz.jei.api.gui.placement.VerticalAlignment;
 import mezz.jei.api.ingredients.IIngredientRenderer;
 import mezz.jei.api.ingredients.IIngredientType;
 import mezz.jei.api.ingredients.ITypedIngredient;
 import mezz.jei.api.recipe.RecipeIngredientRole;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.world.level.material.Fluid;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 
 public class JemiRecipeSlotBuilder implements IRecipeSlotBuilder {
     public final dev.emi.emi.jemi.impl.JemiIngredientAcceptor acceptor;
@@ -32,11 +35,15 @@ public class JemiRecipeSlotBuilder implements IRecipeSlotBuilder {
     public IRecipeSlotTooltipCallback tooltipCallback;
     public IRecipeSlotRichTooltipCallback richTooltipCallback;
     public OffsetDrawable background, overlay;
-    public Map<IIngredientType<?>, IngredientRenderer<?>> renderers; 
+    public Map<IIngredientType<?>, IngredientRenderer<?>> renderers;
     public TankInfo tankInfo;
 
     public JemiRecipeSlotBuilder(RecipeIngredientRole role, int x, int y) {
-        this.acceptor = new JemiIngredientAcceptor(role);
+        this(role, x, y, null);
+    }
+
+    public JemiRecipeSlotBuilder(RecipeIngredientRole role, int x, int y, @Nullable JemiConversionCache conversions) {
+        this.acceptor = new JemiIngredientAcceptor(role, conversions);
         this.x = x;
         this.y = y;
     }
@@ -108,7 +115,8 @@ public class JemiRecipeSlotBuilder implements IRecipeSlotBuilder {
     }
 
     @Override
-    public IRecipeSlotBuilder setFluidRenderer(long capacity, boolean showCapacity, int width, int height, TilingDirection tilingDirection) {
+    public IRecipeSlotBuilder setFluidRenderer(long capacity, boolean showCapacity, int width, int height,
+            TilingDirection tilingDirection) {
         // EMI's TankWidget owns fluid texture anchoring; retain its native rendering for JEI layouts.
         return setFluidRenderer(capacity, showCapacity, width, height);
     }
