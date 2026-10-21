@@ -34,19 +34,6 @@ public final class TradeEntitySnapshot {
                 : id.getNamespace();
     }
 
-    private TradeEntitySnapshot(EntityType<?> type, CompoundTag appearance) {
-        this.type = type;
-        id = BuiltInRegistries.ENTITY_TYPE.getKey(type);
-        tag = appearance;
-        name = type.getDescription();
-        modId = id.getNamespace();
-    }
-
-    /** Build a display snapshot without creating an entity on EMI's background loading thread. */
-    public static TradeEntitySnapshot ofType(EntityType<?> type, CompoundTag appearance) {
-        return new TradeEntitySnapshot(type, appearance);
-    }
-
     public static TradeEntitySnapshot of(Entity entity) {
         return new TradeEntitySnapshot(entity);
     }

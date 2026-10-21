@@ -88,6 +88,8 @@ class EmiRecipeIndexTest {
         var identical = new TestStack(key, firstTag.copy());
         var different = new TestStack(key, secondTag);
 
+        assertTrue(first.isEqual(identical, Comparison.compareNbt()));
+        assertFalse(first.isEqual(different, Comparison.compareNbt()));
         assertEquals(Comparison.compareNbt().getHash(first), Comparison.compareNbt().getHash(identical));
         assertTrue(first.isEqual(different, Comparison.DEFAULT_COMPARISON));
     }

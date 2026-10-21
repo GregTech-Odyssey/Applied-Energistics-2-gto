@@ -7,12 +7,11 @@ import java.util.Objects;
 import java.util.function.Function;
 
 public class Comparison {
-    private static int stackHash;
     private static final Comparison COMPARE_NBT = Comparison.of((a, b) -> {
         var ak = a.getAEKey();
         var bk = b.getAEKey();
-        return bk != null && ak == bk;
-    }, stack -> stack.getAEKey() != null ? stack.getAEKey().hashCode() : stackHash++);
+        return ak != null && bk != null ? ak == bk : Objects.equals(a.getNbt(), b.getNbt());
+    }, stack -> Objects.hashCode(stack.getNbt()));
     public static final Comparison DEFAULT_COMPARISON = Comparison.of((a, b) -> true);
     private Predicate predicate;
     private HashFunction hash;
