@@ -23,6 +23,7 @@ import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingRequester;
 import appeng.me.service.CraftingService;
 
@@ -50,7 +51,9 @@ public class CraftingLinkNexus {
             this.tickOfDeath++;
         } else {
             final boolean hasCpu = craftingService.hasCpu(this.cpu.getCpu());
-            final boolean hasMachine = this.getRequest().getRequester().getActionableNode().getGrid() == g;
+            // The requester's node is gone once its machine is removed or its chunk unloads.
+            final IGridNode requesterNode = this.getRequest().getRequester().getActionableNode();
+            final boolean hasMachine = requesterNode != null && requesterNode.getGrid() == g;
 
             if (hasCpu && hasMachine) {
                 this.tickOfDeath = 0;
