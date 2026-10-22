@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.Container;
@@ -20,9 +22,12 @@ import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.Bounds;
 
 import appeng.api.config.CondenserOutput;
 import appeng.api.features.P2PTunnelAttunementInternal;
+import appeng.client.gui.me.crafting.CraftConfirmScreen;
+import appeng.client.gui.me.crafting.CraftingCPUScreen;
 import appeng.core.AEConfig;
 import appeng.core.AppEng;
 import appeng.core.FacadeCreativeTab;
@@ -55,6 +60,7 @@ public class AppEngEmiPlugin implements EmiPlugin {
         registry.addGenericExclusionArea(new EmiAeBaseScreenExclusionZones());
         registry.addGenericStackProvider(new EmiAeBaseScreenStackProvider());
         registry.addGenericDragDropHandler(new EmiAeBaseScreenDragDropHandler());
+        registry.addGenericScreenBoundsProvider(AppEngEmiPlugin::getCraftingScreenBounds);
 
         // Additional Workstations
         registerWorkstations(registry);
@@ -109,6 +115,15 @@ public class AppEngEmiPlugin implements EmiPlugin {
             var stack = emiStack.getItemStack();
             return !stack.isEmpty() && ItemPredicates.shouldBeHidden(stack);
         });
+    }
+
+    private static Bounds getCraftingScreenBounds(Screen screen) {
+        if (screen instanceof CraftingCPUScreen<?> || screen instanceof CraftConfirmScreen) {
+            var containerScreen = (AbstractContainerScreen<?>) screen;
+            return new Bounds(containerScreen.getGuiLeft(), containerScreen.getGuiTop(), containerScreen.getXSize(),
+                    containerScreen.getYSize());
+        }
+        return Bounds.EMPTY;
     }
 
     private void registerWorkstations(EmiRegistry registry) {

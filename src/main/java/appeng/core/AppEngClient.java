@@ -96,6 +96,7 @@ import appeng.init.client.InitParticleFactories;
 import appeng.init.client.InitRenderTypes;
 import appeng.init.client.InitScreens;
 import appeng.init.client.InitStackRenderHandlers;
+import appeng.integration.modules.emi.AppEngEmiHooks;
 import appeng.items.storage.StorageCellTooltipComponent;
 import appeng.siteexport.AESiteExporter;
 import appeng.spatial.SpatialStorageDimensionIds;
@@ -125,6 +126,7 @@ public class AppEngClient extends AppEngBase {
 
     public AppEngClient() {
         InitBuiltInModels.init();
+        AppEngEmiHooks.register();
 
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         this.registerClientCommands();
