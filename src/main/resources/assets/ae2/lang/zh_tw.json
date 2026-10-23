@@ -156,7 +156,7 @@
   "gui.ae2.CopyMode": "複製模式",
   "gui.ae2.CopyModeDesc": "控制當你移除儲存元件時，是否清除設定格。",
   "gui.ae2.Crafting": "正在合成: %s",
-  "gui.ae2.CraftingPlan": "合成計畫 - %s",
+  "gui.ae2.CraftingPlan": "合成計畫- %s",
   "gui.ae2.CraftingStatus": "合成狀態",
   "gui.ae2.CraftingTerminal": "合成終端",
   "gui.ae2.Crafts": "合成",

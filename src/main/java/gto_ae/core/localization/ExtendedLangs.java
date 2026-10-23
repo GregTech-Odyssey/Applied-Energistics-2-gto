@@ -64,7 +64,7 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
     ShiftEncodingClearDesc("特殊情况：当编码的样板没有有效输出时，清空背包所有已经编码的样板",
             "Special Case: When the encoded pattern has no valid output, clear all encoded patterns in inventory"),
 
-    FilterByCpuNameOrProductName("按CPU名称或主产物名称过滤", "Filter by CPU name or main product name"),
+    SearchCraftingMaterials("搜索本次合成中的物品或流体", "Search items or fluids in this crafting job"),
     CpuStateLastUpdated("CPU状态最后更新：%s前", "CPU status last updated: %s ago"),
 
     EmitCrafting("发信合成：%s", "To emit: %s"),

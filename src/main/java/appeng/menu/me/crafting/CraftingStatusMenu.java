@@ -79,7 +79,6 @@ public class CraftingStatusMenu extends CraftingCPUMenu implements ISubMenu {
     // filter works in client
     public CraftingCpuList filteredCpuList = EMPTY_CPU_LIST;
     public WorkingStatus filter = WorkingStatus.NONE;
-    public String searchTerm = "";
 
     private final ITerminalHost host;
 
@@ -196,33 +195,11 @@ public class CraftingStatusMenu extends CraftingCPUMenu implements ISubMenu {
     }
 
     private boolean filterEntry(CraftingCpuListEntry entry) {
-        switch (filter) {
-            case WORKING -> {
-                if (entry.currentJob() == null)
-                    return false;
-            }
-            case IDLE -> {
-                if (entry.currentJob() != null)
-                    return false;
-            }
-            case null, default -> {
-            }
-        }
-        if (!searchTerm.isEmpty()) {
-            var searchFlag = entry.name() != null &&
-                    entry.name().getString().toLowerCase().contains(searchTerm.toLowerCase());
-            searchFlag |= entry.currentJob() != null &&
-                    entry.currentJob().what() != null &&
-                    entry.currentJob().what().getDisplayName().getString().toLowerCase()
-                            .contains(searchTerm.toLowerCase());
-            return searchFlag;
-        }
-        return true;
-    }
-
-    public void updateSearchTerm(String searchTerm) {
-        this.searchTerm = searchTerm;
-        refresh();
+        return switch (filter) {
+            case WORKING -> entry.currentJob() != null;
+            case IDLE -> entry.currentJob() == null;
+            case null, default -> true;
+        };
     }
 
     public void updateFilter(WorkingStatus filter) {

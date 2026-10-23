@@ -18,11 +18,17 @@
 
 package appeng.client.gui.me.crafting;
 
+import java.math.RoundingMode;
 import java.text.NumberFormat;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.function.Consumer;
 
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -38,7 +44,9 @@ import dev.emi.emi.screen.EmiScreenManager;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.StackWithBounds;
+import appeng.client.gui.style.PaletteColor;
 import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.widgets.AETextField;
 import appeng.client.gui.widgets.Scrollbar;
 import appeng.core.AEConfig;
 import appeng.core.localization.GuiText;
@@ -46,6 +54,7 @@ import appeng.integration.modules.emi.EmiStackHelper;
 import appeng.integration.modules.emi.IStackInteractionScreen;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummary;
+import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 
 import gto_ae.core.localization.ExtendedLangs;
 
@@ -61,13 +70,39 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
     private final Button selectCPU;
     private final Button gto$addMissing;
     private final Scrollbar scrollbar;
+    private final AETextField searchField;
+    private final CraftingScreenTitle dialogTitle;
+    private final NumberFormat byteFormat = NumberFormat.getCompactNumberInstance(Locale.US, NumberFormat.Style.SHORT);
+    private long displayedCpuBytes = -1;
+    private String formattedCpuBytes = "";
+    @Nullable
+    private CraftingPlanSummary displayedPlan;
+    private final CraftingMaterialSearch<CraftingPlanSummaryEntry> materialSearch = new CraftingMaterialSearch<>(
+            CraftingPlanSummaryEntry::getWhat);
 
     public CraftConfirmScreen(CraftConfirmMenu menu, Inventory playerInventory, Component title,
             ScreenStyle style) {
         super(menu, playerInventory, title, style);
         this.table = new CraftConfirmTableRenderer(this, 9, 19);
+        byteFormat.setMaximumFractionDigits(1);
+        byteFormat.setRoundingMode(RoundingMode.DOWN);
 
         this.scrollbar = widgets.addScrollBar("scrollbar");
+
+        this.dialogTitle = new CraftingScreenTitle(Minecraft.getInstance().font,
+                style.getColor(PaletteColor.DEFAULT_TEXT_COLOR).toARGB());
+        dialogTitle.setMessage(GuiText.CraftingPlan.text(GuiText.CalculatingWait.text()));
+        widgets.add("dialogTitle", dialogTitle);
+        setTextHidden(TEXT_ID_DIALOG_TITLE, true);
+
+        this.searchField = widgets.addTextField("materialSearch", true);
+        this.searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
+        this.searchField.setTooltipMessage(Collections.singletonList(ExtendedLangs.SearchCraftingMaterials.text()));
+        this.searchField.setMaxLength(100);
+        this.searchField.setResponder(term -> {
+            materialSearch.setSearchTerm(term);
+            scrollbar.setCurrentScroll(0);
+        });
 
         this.start = widgets.addButton("start", GuiText.Start.text(), this::start);
         this.start.active = false;
@@ -116,27 +151,35 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
         this.gto$addMissing.visible = plan != null && plan.isSimulation();
 
         // Show additional status about the selected CPU and plan when the planning is done
-        Component planDetails = GuiText.CalculatingWait.text();
+        if (plan != displayedPlan) {
+            displayedPlan = plan;
+            Component planDetails = GuiText.CalculatingWait.text();
+            if (plan != null) {
+                planDetails = GuiText.BytesUsed.text(byteFormat.format(plan.getUsedBytes()));
+            }
+            dialogTitle.setMessage(GuiText.CraftingPlan.text(planDetails));
+        }
         Component cpuDetails = Component.empty();
         if (plan != null) {
-            String byteUsed = NumberFormat.getInstance().format(plan.getUsedBytes());
-            planDetails = GuiText.BytesUsed.text(byteUsed);
-
             if (plan.isSimulation()) {
                 cpuDetails = GuiText.PartialPlan.text();
             } else if (this.menu.getCpuAvailableBytes() > 0) {
+                long cpuBytes = this.menu.getCpuAvailableBytes();
+                if (cpuBytes != displayedCpuBytes) {
+                    displayedCpuBytes = cpuBytes;
+                    formattedCpuBytes = byteFormat.format(cpuBytes);
+                }
                 cpuDetails = GuiText.ConfirmCraftCpuStatus.text(
-                        this.menu.getCpuAvailableBytes(),
+                        formattedCpuBytes,
                         this.menu.getCpuCoProcessors());
             } else {
                 cpuDetails = GuiText.ConfirmCraftNoCpu.text();
             }
         }
 
-        setTextContent(TEXT_ID_DIALOG_TITLE, GuiText.CraftingPlan.text(planDetails));
         setTextContent("cpu_status", cpuDetails);
 
-        final int size = plan != null ? plan.getEntries().size() : 0;
+        final int size = plan != null ? materialSearch.filter(plan.getEntries()).size() : 0;
         scrollbar.setRange(0, this.table.getScrollableRows(size), 1);
     }
 
@@ -161,7 +204,8 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
 
         CraftingPlanSummary plan = menu.getPlan();
         if (plan != null) {
-            this.table.render(guiGraphics, mouseX, mouseY, plan.getEntries(), scrollbar.getCurrentScroll());
+            this.table.render(guiGraphics, mouseX, mouseY, materialSearch.filter(plan.getEntries()),
+                    scrollbar.getCurrentScroll());
         }
 
     }
@@ -176,11 +220,20 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
         return super.getStackUnderMouse(mouseX, mouseY);
     }
 
+    @Override
+    public List<Rect2i> getExclusionZones() {
+        var zones = super.getExclusionZones();
+        zones.add(searchField.getTooltipArea());
+        return zones;
+    }
+
     // Allow players to confirm a craft via the enter key
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int p_keyPressed_3_) {
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-            this.start();
+        if (!searchField.isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)) {
+            if (this.start.active) {
+                this.start();
+            }
             return true;
         }
         return super.keyPressed(keyCode, scanCode, p_keyPressed_3_);

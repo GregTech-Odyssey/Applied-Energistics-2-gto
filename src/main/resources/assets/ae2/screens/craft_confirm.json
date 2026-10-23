@@ -21,6 +21,18 @@
     }
   },
   "widgets": {
+    "dialogTitle": {
+      "left": 8,
+      "top": 7,
+      "width": 110,
+      "height": 9
+    },
+    "materialSearch": {
+      "left": 122,
+      "top": 5,
+      "width": 90,
+      "height": 12
+    },
     "scrollbar": {
       "left": 218,
       "top": 19,
