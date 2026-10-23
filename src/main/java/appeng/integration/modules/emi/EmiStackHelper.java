@@ -10,11 +10,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.material.Fluid;
 
 import dev.emi.emi.api.recipe.EmiRecipe;
-import dev.emi.emi.api.stack.EmiFluidKey;
 import dev.emi.emi.api.stack.EmiIngredient;
-import dev.emi.emi.api.stack.EmiItemKey;
 import dev.emi.emi.api.stack.EmiStack;
-import dev.emi.emi.api.stack.EmiStackKey;
 import dev.emi.emi.api.stack.FluidEmiStack;
 import dev.emi.emi.api.stack.ItemEmiStack;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -32,23 +29,13 @@ public final class EmiStackHelper {
     public static AEKey toAEKey(@NotNull EmiStack stack) {
         if (stack.isEmpty())
             return null;
-        var stackKey = stack.getStackKey();
-        if (stackKey != null)
-            return toAEKey(stackKey);
+        if (stack.getStackKey() instanceof AEKey key)
+            return key;
         if (stack.getKey() instanceof Item item)
             return AEItemKey.of(item, stack.getNbt());
         if (stack.getKey() instanceof Fluid fluid)
             return AEFluidKey.of(fluid, stack.getNbt());
         return null;
-    }
-
-    public static AEKey toAEKey(@NotNull EmiStackKey stackKey) {
-        if (stackKey.getAttachment() instanceof AEKey key)
-            return key;
-        AEKey key = stackKey instanceof EmiItemKey item ? AEItemKey.of(item.getItem(), item.getTag())
-                : AEFluidKey.of(((EmiFluidKey) stackKey).getFluid(), stackKey.getTag());
-        stackKey.setAttachment(key);
-        return key;
     }
 
     @Nullable
@@ -74,19 +61,12 @@ public final class EmiStackHelper {
     @Nullable
     public static EmiStack toEmiStack(@NotNull GenericStack stack) {
         AEKey key = stack.what();
-        if (key instanceof AEItemKey itemKey) {
-            return new ItemEmiStack(attach(EmiItemKey.of(itemKey.getItem(), itemKey.getTag()), key), stack.amount());
-        } else if (key instanceof AEFluidKey fluidKey) {
-            return new FluidEmiStack(attach(EmiFluidKey.of(fluidKey.getFluid(), fluidKey.getTag()), key),
-                    stack.amount());
+        if (key instanceof AEItemKey) {
+            return ItemEmiStack.ofKey(key, stack.amount());
+        } else if (key instanceof AEFluidKey) {
+            return FluidEmiStack.ofKey(key, stack.amount());
         }
         return null;
-    }
-
-    private static <K extends EmiStackKey> K attach(K stackKey, AEKey key) {
-        if (stackKey.getAttachment() == null)
-            stackKey.setAttachment(key);
-        return stackKey;
     }
 
     public static List<List<GenericStack>> ofInputs(EmiRecipe recipe) {

@@ -13,7 +13,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.item.Items;
 
-import dev.emi.emi.api.stack.EmiItemKey;
 import dev.emi.emi.api.stack.EmiStack;
 
 import appeng.api.stacks.AEItemKey;
@@ -37,14 +36,12 @@ class EmiStackHelperTest {
         when(key.getItem()).thenReturn(Items.STICK);
         when(key.getTag()).thenReturn(tag);
         var original = new GenericStack(key, 1234);
-        try (var keys = mockStatic(EmiItemKey.class)) {
-            keys.when(() -> EmiItemKey.of(Items.STICK, tag)).thenReturn(new EmiItemKey(Items.STICK, tag));
-            var emi = EmiStackHelper.toEmiStack(original);
-            assertSame(key, EmiStackHelper.toAEKey(emi));
-            assertEquals(original, EmiStackHelper.toGenericStack(emi));
-            assertSame(Items.STICK, emi.getKey());
-            assertEquals(tag, emi.getNbt());
-        }
+        var emi = EmiStackHelper.toEmiStack(original);
+        assertSame(key, emi.getStackKey());
+        assertSame(key, EmiStackHelper.toAEKey(emi));
+        assertEquals(original, EmiStackHelper.toGenericStack(emi));
+        assertSame(Items.STICK, emi.getKey());
+        assertEquals(tag, emi.getNbt());
         assertNull(EmiStackHelper.toAEKey(EmiStack.EMPTY));
     }
 
