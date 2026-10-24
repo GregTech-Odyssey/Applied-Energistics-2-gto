@@ -16,7 +16,7 @@
       "left": -94,
       "top": 4,
       "width": 94,
-      "height": 188
+      "height": 164
     },
     "selectCpuScrollbar": {
       "left": -16,
@@ -24,19 +24,14 @@
       "width": 12,
       "height": 137
     },
-    "search": {
-      "left": -83,
-      "top": 172,
-      "width": 57,
-      "height": 12
-    },
     "filter": {
-      "left": -24,
-      "top": 170
+      "left": -18,
+      "top": 6
     }
   },
   "text": {
     "cpuListTitle": {
+      "scale": 0.8,
       "position": {
         "top": 12,
         "left": -86
@@ -51,7 +46,7 @@
       "texture": "guis/cpu_selector.png",
       "textureWidth": 256,
       "textureHeight": 256,
-      "srcRect": [0, 0, 94, 188]
+      "srcRect": [0, 0, 94, 164]
     },
     "cpuListButton": {
       "texture": "guis/cpu_selector.png",

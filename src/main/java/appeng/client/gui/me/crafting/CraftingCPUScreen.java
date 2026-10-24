@@ -28,8 +28,10 @@ import java.util.concurrent.TimeUnit;
 import org.apache.commons.lang3.time.DurationFormatUtils;
 
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -37,7 +39,9 @@ import appeng.api.config.CpuSelectionMode;
 import appeng.api.config.Settings;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.StackWithBounds;
+import appeng.client.gui.style.PaletteColor;
 import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.widgets.AETextField;
 import appeng.client.gui.widgets.Scrollbar;
 import appeng.client.gui.widgets.ServerSettingToggleButton;
 import appeng.client.gui.widgets.SettingToggleButton;
@@ -46,6 +50,8 @@ import appeng.integration.modules.emi.IStackInteractionScreen;
 import appeng.menu.me.crafting.CraftingCPUMenu;
 import appeng.menu.me.crafting.CraftingStatus;
 import appeng.menu.me.crafting.CraftingStatusEntry;
+
+import gto_ae.core.localization.ExtendedLangs;
 
 /**
  * This screen shows the current crafting job that a crafting CPU is working on (if any).
@@ -57,10 +63,14 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
     private final Button cancel;
 
     private final Scrollbar scrollbar;
+    private final AETextField searchField;
+    private final CraftingScreenTitle dialogTitle;
 
     private final SettingToggleButton<CpuSelectionMode> schedulingModeButton;
 
     private CraftingStatus status;
+    private final CraftingMaterialSearch<CraftingStatusEntry> materialSearch = new CraftingMaterialSearch<>(
+            CraftingStatusEntry::getWhat);
 
     public CraftingCPUScreen(T menu, Inventory playerInventory, Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
@@ -68,6 +78,20 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
         this.table = new CraftingStatusTableRenderer(this, 9, 19);
 
         this.scrollbar = widgets.addScrollBar("scrollbar");
+
+        this.dialogTitle = new CraftingScreenTitle(Minecraft.getInstance().font,
+                style.getColor(PaletteColor.DEFAULT_TEXT_COLOR).toARGB());
+        widgets.add("dialogTitle", dialogTitle);
+        setTextHidden(TEXT_ID_DIALOG_TITLE, true);
+
+        this.searchField = widgets.addTextField("materialSearch", true);
+        searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
+        searchField.setTooltipMessage(Collections.singletonList(ExtendedLangs.SearchCraftingMaterials.text()));
+        searchField.setMaxLength(100);
+        searchField.setResponder(term -> {
+            materialSearch.setSearchTerm(term);
+            scrollbar.setCurrentScroll(0);
+        });
 
         this.cancel = this.widgets.addButton("cancel", GuiText.Cancel.text(), menu::cancelCrafting);
 
@@ -104,9 +128,9 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
         if (menu.isCantStoreItems()) {
             title = title.copy().append(" - ").append(GuiText.CantStoreItems.text().withStyle(ChatFormatting.RED));
         }
-        setTextContent(TEXT_ID_DIALOG_TITLE, title);
+        dialogTitle.setMessage(title);
 
-        final int size = this.status != null ? this.status.getEntries().size() : 0;
+        final int size = materialSearch.filter(getVisualEntries()).size();
         scrollbar.setRange(0, this.table.getScrollableRows(size), 1);
 
         this.schedulingModeButton.set(this.menu.getSchedulingMode());
@@ -128,7 +152,8 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
         super.drawFG(guiGraphics, offsetX, offsetY, mouseX, mouseY);
 
         if (status != null) {
-            this.table.render(guiGraphics, mouseX, mouseY, status.getEntries(), scrollbar.getCurrentScroll());
+            this.table.render(guiGraphics, mouseX, mouseY, materialSearch.filter(status.getEntries()),
+                    scrollbar.getCurrentScroll());
         }
     }
 
@@ -140,6 +165,13 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
             return hovered;
         }
         return super.getStackUnderMouse(mouseX, mouseY);
+    }
+
+    @Override
+    public List<Rect2i> getExclusionZones() {
+        var zones = super.getExclusionZones();
+        zones.add(searchField.getTooltipArea());
+        return zones;
     }
 
     public void postUpdate(CraftingStatus status) {

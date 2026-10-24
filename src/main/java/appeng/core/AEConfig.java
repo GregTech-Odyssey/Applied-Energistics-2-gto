@@ -617,8 +617,8 @@ public final class AEConfig {
             this.debugGuiOverlays = client.addBoolean("showDebugGuiOverlays", false, "Show debugging GUI overlays");
             this.showPlacementPreview = client.addBoolean("showPlacementPreview", true,
                     "Show a preview of part and facade placement");
-            this.notifyForFinishedCraftingJobs = client.addBoolean("notifyForFinishedCraftingJobs", true,
-                    "Show toast when long-running crafting jobs finish.");
+            this.notifyForFinishedCraftingJobs = client.addBoolean("notifyForFinishedCraftingJobs", false,
+                    "Show a chat message with the quantity and elapsed time when crafting jobs finish. The toast notification is always shown.");
 
             var terminals = root.subsection("terminals");
             this.terminalStyle = terminals.addEnum("terminalStyle", TerminalStyle.SMALL);

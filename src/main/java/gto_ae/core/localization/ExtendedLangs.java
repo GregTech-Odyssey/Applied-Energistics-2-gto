@@ -64,7 +64,7 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
     ShiftEncodingClearDesc("特殊情况：当编码的样板没有有效输出时，清空背包所有已经编码的样板",
             "Special Case: When the encoded pattern has no valid output, clear all encoded patterns in inventory"),
 
-    FilterByCpuNameOrProductName("按CPU名称或主产物名称过滤", "Filter by CPU name or main product name"),
+    SearchCraftingMaterials("搜索本次合成中的物品或流体", "Search items or fluids in this crafting job"),
     CpuStateLastUpdated("CPU状态最后更新：%s前", "CPU status last updated: %s ago"),
 
     EmitCrafting("发信合成：%s", "To emit: %s"),
@@ -141,6 +141,10 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
     Me2In1ConfigMapping("配置配方搜索映射", "Configure Recipe Search Mapping"),
     CraftAddMissingToEmi("收藏缺失", "Bookmark Missing"),
     CraftAddMissingToEmiDesc("将缺失的物品添加到EMI书签页", "Add missing items to EMI bookmark page"),
+    CraftStartWithFollow("开始并跟踪", "Start with Follow"),
+    CraftStartWithFollowDesc("开始合成，并在完成时接收聊天通知，即使已关闭全局完成通知",
+            "Start crafting and receive a chat notification on completion, even when global completion notifications are off"),
+    CraftFinishedChat("%s × %s 合成完成，耗时 %s。", "Crafting of %s × %s finished in %s."),
     CraftMissingStart("缺失合成", "Missing Crafting"),
     CraftMissingStartDesc("在材料不足的情况下仍然开始合成，缺失的原料将被等待",
             "Start crafting even when materials are insufficient, missing ingredients will be waited for"),

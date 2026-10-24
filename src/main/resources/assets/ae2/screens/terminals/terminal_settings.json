@@ -25,6 +25,19 @@
       }
     }
   },
+  "tooltips": {
+    "notifyForFinishedCraftingJobs": {
+      "left": 10,
+      "top": 50,
+      "width": 180,
+      "height": 14,
+      "tooltip": [
+        {
+          "translate": "gui.ae2.TerminalSettingsNotifyForFinishedJobsDesc"
+        }
+      ]
+    }
+  },
   "widgets": {
     "back": {
       "right": 22,
