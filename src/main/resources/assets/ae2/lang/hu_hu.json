@@ -484,7 +484,7 @@
   "gui.ae2.TankCapacity": "Kapacitás: %d",
   "gui.ae2.Terminal": "Terminál",
   "gui.ae2.TerminalSettingsClearGridOnClose": "Terminál rács automatikus törlése bezáráskor (ha lehetséges)",
-  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Értesítés elkészült barkácsolt tárgyakról (vezeték nélküli terminál szükséges)",
+  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Értesítés a chatben elkészült barkácsolt tárgyakról",
   "gui.ae2.TerminalSettingsPinAutoCraftedItems": "Autó-barkácsolható tárgyak rögzítése az első sorban",
   "gui.ae2.TerminalSettingsTitle": "Terminál beállítások",
   "gui.ae2.TerminalViewCellsTooltip": "Nézetcellák",

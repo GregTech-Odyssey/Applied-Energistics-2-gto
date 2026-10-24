@@ -491,7 +491,7 @@
   "gui.ae2.TankCapacity": "Вместительность: %d",
   "gui.ae2.Terminal": "Терминал",
   "gui.ae2.TerminalSettingsClearGridOnClose": "Автоматически очищать сетку терминала при закрытии (если применимо)",
-  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Уведомлять о завершенных работах по созданию (требуется беспроводной терминал)",
+  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Уведомлять в чате о завершении работ по созданию",
   "gui.ae2.TerminalSettingsPinAutoCraftedItems": "Закреплять автоматически созданные предметы в первую строку",
   "gui.ae2.TerminalSettingsTitle": "Настройки терминала",
   "gui.ae2.TerminalViewCellsTooltip": "Просмотр камер",

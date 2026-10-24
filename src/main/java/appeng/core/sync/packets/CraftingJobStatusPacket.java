@@ -14,7 +14,7 @@ import appeng.core.AEConfig;
 import appeng.core.sync.BasePacket;
 
 /**
- * Confirms to the player that a crafting job has started.
+ * Notifies the requesting player about the lifecycle of a crafting job.
  */
 public class CraftingJobStatusPacket extends BasePacket {
     /**
@@ -25,6 +25,8 @@ public class CraftingJobStatusPacket extends BasePacket {
     private long requestedAmount;
     private long remainingAmount;
     private Status status;
+    private long elapsedTimeNanos;
+    private boolean followJob;
 
     public CraftingJobStatusPacket(FriendlyByteBuf stream) {
         this.jobId = stream.readUUID();
@@ -32,10 +34,17 @@ public class CraftingJobStatusPacket extends BasePacket {
         this.what = AEKey.readKey(stream);
         this.requestedAmount = stream.readLong();
         this.remainingAmount = stream.readLong();
+        this.elapsedTimeNanos = stream.readLong();
+        this.followJob = stream.readBoolean();
     }
 
     public CraftingJobStatusPacket(UUID jobId, AEKey what, long requestedAmount, long remainingAmount,
             Status status) {
+        this(jobId, what, requestedAmount, remainingAmount, status, 0, false);
+    }
+
+    public CraftingJobStatusPacket(UUID jobId, AEKey what, long requestedAmount, long remainingAmount,
+            Status status, long elapsedTimeNanos, boolean followJob) {
         var data = new FriendlyByteBuf(Unpooled.buffer());
         data.writeInt(getPacketID());
         data.writeUUID(jobId);
@@ -43,6 +52,8 @@ public class CraftingJobStatusPacket extends BasePacket {
         AEKey.writeKey(data, what);
         data.writeLong(requestedAmount);
         data.writeLong(remainingAmount);
+        data.writeLong(elapsedTimeNanos);
+        data.writeBoolean(followJob);
         this.configureWrite(data);
     }
 
@@ -54,7 +65,8 @@ public class CraftingJobStatusPacket extends BasePacket {
             }
         }
 
-        PendingCraftingJobs.jobStatus(jobId, what, requestedAmount, remainingAmount, status);
+        PendingCraftingJobs.jobStatus(jobId, what, requestedAmount, remainingAmount, status, elapsedTimeNanos,
+                followJob);
     }
 
     public enum Status {

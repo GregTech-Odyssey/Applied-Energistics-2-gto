@@ -489,7 +489,7 @@
   "gui.ae2.TankCapacity": "Capacidade: %d",
   "gui.ae2.Terminal": "Terminal",
   "gui.ae2.TerminalSettingsClearGridOnClose": "Limpar a grade do terminal ao fechar (se aplicável)",
-  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Notificar ao concluir fabricação (requer Terminal Sem Fio)",
+  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Notificar no chat ao concluir a fabricação",
   "gui.ae2.TerminalSettingsPinAutoCraftedItems": "Fixar itens fabricados por requisição no topo",
   "gui.ae2.TerminalSettingsTitle": "Configurações do Terminal",
   "gui.ae2.TerminalViewCellsTooltip": "Células de Visualização",

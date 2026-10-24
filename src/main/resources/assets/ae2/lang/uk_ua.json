@@ -491,7 +491,7 @@
   "gui.ae2.TankCapacity": "Ємність: %d",
   "gui.ae2.Terminal": "Термінал",
   "gui.ae2.TerminalSettingsClearGridOnClose": "Автоматично очищати сітку термінала після закриття (якщо є)",
-  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Повідомляти про закінчення завдань створення (потрібен бездротовий термінал)",
+  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Повідомляти в чаті про завершення завдань створення",
   "gui.ae2.TerminalSettingsPinAutoCraftedItems": "Закріпити автоматично створені предмети до першого рядка",
   "gui.ae2.TerminalSettingsTitle": "Налаштування терміналу",
   "gui.ae2.TerminalViewCellsTooltip": "Перегляд комірок",

@@ -54,7 +54,7 @@ import appeng.core.AELog;
 import appeng.core.sync.packets.CraftConfirmPlanPacket;
 import appeng.core.sync.packets.MEInventoryUpdatePacket;
 import appeng.crafting.execution.CraftingSubmitResult;
-import appeng.me.helpers.PlayerSource;
+import appeng.me.helpers.CraftingJobSource;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.ISubMenu;
 import appeng.menu.MenuOpener;
@@ -88,6 +88,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu, IRepoMenu 
 
     private AEKey whatToCraft;
     private long amount;
+    private boolean followJob;
     private Future<ICraftingPlan> job;
     private ICraftingPlan result;
 
@@ -135,7 +136,8 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu, IRepoMenu 
 
         registerClientAction(ACTION_BACK, this::goBack);
         registerClientAction(ACTION_CYCLE_CPU, Boolean.class, this::cycleSelectedCPU);
-        registerClientAction(ACTION_START_JOB, this::startJob);
+        registerClientAction(ACTION_START_JOB, Boolean.class,
+                follow -> this.startJob(Boolean.TRUE.equals(follow)));
         registerClientAction(ACTION_REPLAN, this::replan);
         this.gto$repo = new Repo(() -> 0, ISortSource.DEFAULT);
     }
@@ -271,10 +273,15 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu, IRepoMenu 
     }
 
     public void startJob() {
+        startJob(followJob);
+    }
+
+    public void startJob(boolean followJob) {
+        this.followJob = followJob;
         clearError();
 
         if (isClientSide()) {
-            sendClientAction(ACTION_START_JOB);
+            sendClientAction(ACTION_START_JOB, followJob);
             return;
         }
 
@@ -302,7 +309,7 @@ public class CraftConfirmMenu extends AEBaseMenu implements ISubMenu, IRepoMenu 
     }
 
     private IActionSource getActionSrc() {
-        return new PlayerSource(this.getPlayerInventory().player, (IActionHost) this.getTarget());
+        return new CraftingJobSource(this.getPlayerInventory().player, (IActionHost) this.getTarget(), followJob);
     }
 
     @Override

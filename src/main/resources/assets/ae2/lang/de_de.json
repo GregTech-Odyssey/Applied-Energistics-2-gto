@@ -436,7 +436,7 @@
   "gui.ae2.Substitute": "Nutze Substitution:",
   "gui.ae2.TankCapacity": "Kapazität: %d",
   "gui.ae2.Terminal": "Konsole",
-  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Benachrichtigung über fertige Fertigungsaufträge (erfordert kabelloses Terminal)",
+  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "Chat-Benachrichtigung über fertige Fertigungsaufträge",
   "gui.ae2.TerminalSettingsPinAutoCraftedItems": "Automatisch hergestellte Items an die erste Zeile anheften",
   "gui.ae2.TerminalSettingsTitle": "Konsolen-Einstellungen",
   "gui.ae2.ToCraft": "Zu fertigen: %s",

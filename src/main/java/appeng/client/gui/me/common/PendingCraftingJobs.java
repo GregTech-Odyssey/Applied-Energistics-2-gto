@@ -4,20 +4,15 @@ import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
 import appeng.core.AEConfig;
 import appeng.core.AELog;
 import appeng.core.sync.packets.CraftingJobStatusPacket;
-import appeng.items.tools.powered.WirelessTerminalItem;
-import appeng.util.SearchInventoryEvent;
 
 /**
  * Tracks pending crafting jobs started by this player.
@@ -42,9 +37,24 @@ public final class PendingCraftingJobs {
             long requestedAmount,
             long remainingAmount,
             CraftingJobStatusPacket.Status status) {
+        jobStatus(id, what, requestedAmount, remainingAmount, status, 0, false);
+    }
+
+    public static void jobStatus(UUID id,
+            AEKey what,
+            long requestedAmount,
+            long remainingAmount,
+            CraftingJobStatusPacket.Status status,
+            long elapsedTimeNanos,
+            boolean followJob) {
+
+        if (what == null) {
+            AELog.warn("Received crafting job status for job %s with an unknown key", id);
+            return;
+        }
 
         AELog.debug("Crafting job " + id + " for " + requestedAmount
-                + "x" + AEKeyRendering.getDisplayName(what).getString() + ". State=" + status);
+                + "x" + what.getDisplayName().getString() + ". State=" + status);
 
         var existing = jobs.get(id);
         switch (status) {
@@ -56,28 +66,16 @@ public final class PendingCraftingJobs {
             case CANCELLED -> jobs.remove(id);
             case FINISHED -> {
                 jobs.remove(id);
-                // Only toast if a wireless terminal is in the player inv
                 var minecraft = Minecraft.getInstance();
-                if (AEConfig.instance().isNotifyForFinishedCraftingJobs()
-                        && minecraft.player != null && hasNotificationEnablingItem(minecraft.player)) {
+                if (minecraft.player != null) {
                     minecraft.getToasts().addToast(new FinishedJobToast(what, requestedAmount));
+                    if (AEConfig.instance().isNotifyForFinishedCraftingJobs() || followJob) {
+                        minecraft.player.displayClientMessage(
+                                FinishedJobNotification.create(what, requestedAmount, elapsedTimeNanos), false);
+                    }
                 }
             }
         }
-    }
-
-    private static boolean hasNotificationEnablingItem(LocalPlayer player) {
-        for (ItemStack stack : SearchInventoryEvent.getItems(player)) {
-            if (!stack.isEmpty()
-                    && stack.getItem() instanceof WirelessTerminalItem wirelessTerminal
-                    // Should have some power
-                    && wirelessTerminal.getAECurrentPower(stack) > 0
-                    // Should be linked (we don't know if it's linked to the grid for which we get notifications)
-                    && wirelessTerminal.getLinkedPosition(stack) != null) {
-                return true;
-            }
-        }
-        return false;
     }
 
     record PendingJob(UUID jobId, AEKey what, long requestedAmount, long remainingAmount) {
