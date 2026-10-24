@@ -23,14 +23,12 @@ import java.text.NumberFormat;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
 
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.renderer.Rect2i;
@@ -47,6 +45,7 @@ import appeng.client.gui.StackWithBounds;
 import appeng.client.gui.style.PaletteColor;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.AETextField;
+import appeng.client.gui.widgets.IconButton;
 import appeng.client.gui.widgets.Scrollbar;
 import appeng.core.AEConfig;
 import appeng.core.localization.GuiText;
@@ -56,6 +55,7 @@ import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummary;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 
+import gto_ae.client.gui.IconsExtended;
 import gto_ae.core.localization.ExtendedLangs;
 
 /**
@@ -117,14 +117,10 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
 
         widgets.addButton("cancel", GuiText.Cancel.text(), menu::goBack);
 
-        gto$addMissing = Button.builder(ExtendedLangs.CraftAddMissingToEmi.text(), this::gto$addMissing)
-                .bounds(82, 181, 50, 20)
-                .tooltip(Tooltip.create(ExtendedLangs.CraftAddMissingToEmiDesc.text()))
-                .build();
-        widgets.add("gto$addMissing", (Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) -> {
-            gto$addMissing.setPosition(82 + bounds.getX(), 181 + bounds.getY());
-            addWidget.accept(gto$addMissing);
-        });
+        gto$addMissing = addToLeftToolbar(IconButton.simple(IconsExtended.MANUAL_PIN, this::gto$addMissing));
+        gto$addMissing.setMessage(ExtendedLangs.CraftAddMissingToEmi.text().append("\n")
+                .append(ExtendedLangs.CraftAddMissingToEmiDesc.text()));
+        gto$addMissing.visible = false;
     }
 
     @Override
