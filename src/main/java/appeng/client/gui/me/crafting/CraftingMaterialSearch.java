@@ -43,6 +43,9 @@ final class CraftingMaterialSearch<T> {
             for (int i = 0; i < entries.size(); i++) {
                 var entry = entries.get(i);
                 var key = keyExtractor.apply(entry);
+                if (key == null) {
+                    continue;
+                }
                 var name = names.get(key);
                 if (name == null) {
                     name = key.getDisplayName().getString().toLowerCase(Locale.ROOT);

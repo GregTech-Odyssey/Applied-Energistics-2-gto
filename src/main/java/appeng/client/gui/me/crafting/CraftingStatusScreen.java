@@ -50,7 +50,7 @@ public class CraftingStatusScreen extends CraftingCPUScreen<CraftingStatusMenu> 
                 ExtendedSettings.CPU_WORKING_STATUS_SETTING,
                 WorkingStatus.NONE,
                 (b, e) -> menu.updateFilter(e),
-                ExpandableToggleButton.LayoutDirection.UP));
+                ExpandableToggleButton.LayoutDirection.DOWN));
 
     }
 

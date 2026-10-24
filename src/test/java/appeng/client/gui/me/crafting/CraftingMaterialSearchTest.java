@@ -75,6 +75,19 @@ class CraftingMaterialSearchTest {
     }
 
     @Test
+    void skipsEntriesWithUnknownKeys() {
+        var bedrock = key(AEItemKey.class, "Bedrock Dust");
+        var known = new CraftingPlanSummaryEntry(bedrock, 1, 2, 3, 0);
+        var unknown = new CraftingPlanSummaryEntry(null, 4, 5, 6, 0);
+        var entries = List.of(unknown, known);
+        var search = new CraftingMaterialSearch<CraftingPlanSummaryEntry>(CraftingPlanSummaryEntry::getWhat);
+
+        search.setSearchTerm("bedrock");
+
+        assertEquals(List.of(known), search.filter(entries));
+    }
+
+    @Test
     void reusesVisibleListAndNamesUntilTheSourceOrQueryChanges() {
         var material = key(AEItemKey.class, "Bedrock Dust");
         var entries = List.<AEKey>of(material);
