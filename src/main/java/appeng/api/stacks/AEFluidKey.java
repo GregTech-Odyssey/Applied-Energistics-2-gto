@@ -20,6 +20,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraftforge.fluids.FluidStack;
 
+import appeng.api.identity.IdentityTag;
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
 import appeng.hooks.IAEFluid;

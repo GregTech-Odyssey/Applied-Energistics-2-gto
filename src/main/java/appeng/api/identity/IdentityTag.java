@@ -1,4 +1,4 @@
-package appeng.api.stacks;
+package appeng.api.identity;
 
 import java.util.function.Function;
 import java.util.function.UnaryOperator;

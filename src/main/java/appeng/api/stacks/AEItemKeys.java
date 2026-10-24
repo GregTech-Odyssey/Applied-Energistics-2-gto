@@ -30,7 +30,7 @@ import net.minecraft.tags.TagKey;
 import appeng.core.AppEng;
 import appeng.core.localization.GuiText;
 
-final class AEItemKeys extends AEKeyType {
+final class AEItemKeys extends AEKeyType<AEItemKey> {
     private static final ResourceLocation ID = AppEng.makeId("i");
 
     static final AEItemKeys INSTANCE = new AEItemKeys();

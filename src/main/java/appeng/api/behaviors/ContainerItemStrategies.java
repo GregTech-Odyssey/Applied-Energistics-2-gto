@@ -1,6 +1,5 @@
 package appeng.api.behaviors;
 
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,6 +13,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceLinkedOpenHashMap;
+
 import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
@@ -25,7 +26,7 @@ import appeng.util.CowMap;
  * Manages {@link ContainerItemStrategy} registrations for {@linkplain AEKeyType key types}.
  */
 public class ContainerItemStrategies {
-    private static final CowMap<AEKeyType, ContainerItemStrategy<?, ?>> strategies = CowMap.identityHashMap();
+    private static final CowMap<AEKeyType, ContainerItemStrategy<?, ?>> strategies = CowMap.identityKeyHashMap();
 
     static {
         register(AEKeyTypes.FLUIDS, AEFluidKey.class, new FluidContainerItemStrategy());
@@ -102,7 +103,7 @@ public class ContainerItemStrategies {
     private static ContainerItemContext findContext(@Nullable AEKeyType keyType,
             Function<ContainerItemStrategy<?, ?>, @Nullable Object> contextFinder) {
         var candidates = keyType == null ? AEKeyTypes.getAll() : List.of(keyType);
-        Map<AEKeyType, ContainerItemContext.Entry<?>> entries = new LinkedHashMap<>();
+        Map<AEKeyType, ContainerItemContext.Entry<?>> entries = new Reference2ReferenceLinkedOpenHashMap<>();
         for (var type : candidates) {
             var strategy = strategies.getMap().get(type);
             if (strategy != null) {

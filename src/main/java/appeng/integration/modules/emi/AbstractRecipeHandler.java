@@ -4,6 +4,7 @@ import static appeng.integration.modules.jeirei.TransferHelper.BLUE_SLOT_HIGHLIG
 import static appeng.integration.modules.jeirei.TransferHelper.RED_SLOT_HIGHLIGHT_COLOR;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -93,7 +94,7 @@ public abstract class AbstractRecipeHandler<T extends AEBaseMenu> implements Sta
             List<EmiStack> preCollected = new ObjectArrayList<>();
             preCollected.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_HOTBAR));
             preCollected.addAll(InventoryUtils.getStacks(screen, SlotSemantics.PLAYER_INVENTORY));
-            Set<GridInventoryEntry> allStacksFromScreen = Set.of();
+            Collection<GridInventoryEntry> allStacksFromScreen = Set.of();
             if (screen.getMenu() instanceof MEStorageMenu menu) {
                 allStacksFromScreen = menu.getClientRepo().getAllEntries();
             }

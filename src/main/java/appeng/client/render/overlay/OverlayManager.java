@@ -22,7 +22,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 
@@ -64,7 +63,7 @@ public class OverlayManager {
 
         for (OverlayRenderer handler : overlayHandlers.entrySet().stream()
                 .filter(e -> e.getKey().getLevel() == minecraft.level).map(Entry::getValue)
-                .collect(Collectors.toList())) {
+                .toList()) {
             handler.render(poseStack, buffer);
         }
 

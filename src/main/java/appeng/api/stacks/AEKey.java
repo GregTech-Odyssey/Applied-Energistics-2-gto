@@ -15,9 +15,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
-import it.unimi.dsi.fastutil.HashCommon;
-
 import appeng.api.config.FuzzyMode;
+import appeng.api.identity.IdentityKey;
 import appeng.core.AELog;
 
 /**
@@ -33,11 +32,9 @@ import appeng.core.AELog;
  * between memory usage and lookup speed.</li>
  * </ul>
  */
-public abstract class AEKey {
+public abstract class AEKey extends IdentityKey {
 
     private Component cachedDisplayName;
-    private final int hashCode = System.identityHashCode(this);
-    public final int mix = HashCommon.mix(hashCode);
 
     @Nullable
     public static AEKey fromTagGeneric(CompoundTag tag) {
@@ -284,10 +281,5 @@ public abstract class AEKey {
      */
     public boolean isTagged(TagKey<?> tag) {
         return false;
-    }
-
-    @Override
-    public int hashCode() {
-        return hashCode;
     }
 }

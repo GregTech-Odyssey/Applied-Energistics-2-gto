@@ -37,8 +37,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 
-import it.unimi.dsi.fastutil.HashCommon;
-
+import appeng.api.identity.IdentityKey;
 import appeng.api.storage.AEKeyFilter;
 import appeng.util.ReadableNumberConverter;
 
@@ -46,15 +45,14 @@ import appeng.util.ReadableNumberConverter;
  * Defines the properties of a specific subclass of {@link AEKey}. I.e. for {@link AEItemKey}, there is
  * {@link AEItemKeys}.
  */
-public abstract class AEKeyType {
+public abstract class AEKeyType<T extends AEKey> extends IdentityKey {
 
     private final ResourceLocation id;
-    private final Class<? extends AEKey> keyClass;
+    private final Class<T> keyClass;
     private final AEKeyFilter filter;
     private final Component description;
-    public final int mix = HashCommon.mix(System.identityHashCode(this));
 
-    public AEKeyType(ResourceLocation id, Class<? extends AEKey> keyClass, Component description) {
+    public AEKeyType(ResourceLocation id, Class<T> keyClass, Component description) {
         Preconditions.checkArgument(!keyClass.equals(AEKey.class), "Can't register a key type for AEKey itself");
         this.id = id;
         this.keyClass = keyClass;
@@ -66,7 +64,7 @@ public abstract class AEKeyType {
      * @return AE2's key space for {@link AEItemKey}.
      */
 
-    public static AEKeyType items() {
+    public static AEKeyType<AEItemKey> items() {
         return AEItemKeys.INSTANCE;
     }
 
@@ -83,7 +81,7 @@ public abstract class AEKeyType {
      * @return AE2's key space for {@link AEFluidKey}.
      */
 
-    public static AEKeyType fluids() {
+    public static AEKeyType<AEFluidKey> fluids() {
         return AEFluidKeys.INSTANCE;
     }
 
@@ -94,7 +92,7 @@ public abstract class AEKeyType {
         return id;
     }
 
-    public final Class<? extends AEKey> getKeyClass() {
+    public final Class<T> getKeyClass() {
         return keyClass;
     }
 
@@ -129,20 +127,20 @@ public abstract class AEKeyType {
      * Attempts to load a key of this type from the given packet buffer.
      */
     @Nullable
-    public abstract AEKey readFromPacket(FriendlyByteBuf input);
+    public abstract T readFromPacket(FriendlyByteBuf input);
 
     /**
      * Attempts to load a key of this type from the given tag.
      */
     @Nullable
-    public abstract AEKey loadKeyFromTag(CompoundTag tag);
+    public abstract T loadKeyFromTag(CompoundTag tag);
 
     /**
      * Does this key belong to this storage channel.
      */
     @Nullable
-    public final AEKey tryCast(AEKey key) {
-        return keyClass.isInstance(key) ? keyClass.cast(key) : null;
+    public final T tryCast(AEKey key) {
+        return keyClass.isInstance(key) ? (T) key : null;
     }
 
     /**

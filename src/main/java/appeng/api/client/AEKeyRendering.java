@@ -24,7 +24,6 @@
 package appeng.api.client;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -42,6 +41,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
+import appeng.api.identity.IdentityKeyObjectMap;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 
@@ -51,7 +51,7 @@ import appeng.api.stacks.AEKeyType;
  */
 @OnlyIn(Dist.CLIENT)
 public class AEKeyRendering {
-    private static volatile Map<AEKeyType, AEKeyRenderHandler<?>> renderers = new IdentityHashMap<>();
+    private static volatile Map<AEKeyType, AEKeyRenderHandler<?>> renderers = new IdentityKeyObjectMap<>();
 
     public static synchronized <T extends AEKey> void register(AEKeyType channel,
             Class<T> keyClass,
@@ -62,7 +62,7 @@ public class AEKeyRendering {
         Preconditions.checkArgument(channel.getKeyClass() == keyClass, "%s != %s",
                 channel.getKeyClass(), keyClass);
 
-        var renderersCopy = new IdentityHashMap<>(renderers);
+        var renderersCopy = new IdentityKeyObjectMap<>(renderers);
         if (renderersCopy.put(channel, handler) != null) {
             throw new IllegalArgumentException("Duplicate registration of render handler for channel " + channel);
         }

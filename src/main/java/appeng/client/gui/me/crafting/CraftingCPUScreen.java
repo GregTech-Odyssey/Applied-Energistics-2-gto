@@ -20,9 +20,7 @@ package appeng.client.gui.me.crafting;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.lang3.time.DurationFormatUtils;
@@ -34,6 +32,9 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+
+import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 
 import appeng.api.config.CpuSelectionMode;
 import appeng.api.config.Settings;
@@ -175,14 +176,14 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
     }
 
     public void postUpdate(CraftingStatus status) {
-        Map<Long, CraftingStatusEntry> entries;
+        Long2ObjectMap<CraftingStatusEntry> entries;
         if (this.status == null || status.isFullStatus()) {
             // Start from scratch.
             // We can't just reuse the status because we have to filter out deleted entries.
-            entries = new LinkedHashMap<>();
+            entries = new Long2ObjectLinkedOpenHashMap<>();
         } else {
             // Merge the status entries.
-            entries = new LinkedHashMap<>(this.status.getEntries().size());
+            entries = new Long2ObjectLinkedOpenHashMap<>(this.status.getEntries().size());
             for (CraftingStatusEntry entry : this.status.getEntries()) {
                 entries.put(entry.getSerial(), entry);
             }

@@ -30,7 +30,7 @@ import net.minecraft.tags.TagKey;
 import appeng.core.AppEng;
 import appeng.core.localization.GuiText;
 
-final class AEFluidKeys extends AEKeyType {
+final class AEFluidKeys extends AEKeyType<AEFluidKey> {
     private static final ResourceLocation ID = AppEng.makeId("f");
 
     static final AEFluidKeys INSTANCE = new AEFluidKeys();

@@ -1,7 +1,6 @@
 package appeng.parts.automation;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -19,18 +18,19 @@ import appeng.api.behaviors.PickupStrategy;
 import appeng.api.behaviors.PlacementStrategy;
 import appeng.api.behaviors.StackExportStrategy;
 import appeng.api.behaviors.StackImportStrategy;
+import appeng.api.identity.IdentityKeyObjectMap;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.AEKeyFilter;
 import appeng.util.CowMap;
 
 public final class StackWorldBehaviors {
-    private static final CowMap<AEKeyType, StackImportStrategy.Factory> importStrategies = CowMap.identityHashMap();
-    private static final CowMap<AEKeyType, StackExportStrategy.Factory> exportStrategies = CowMap.identityHashMap();
+    private static final CowMap<AEKeyType, StackImportStrategy.Factory> importStrategies = CowMap.identityKeyHashMap();
+    private static final CowMap<AEKeyType, StackExportStrategy.Factory> exportStrategies = CowMap.identityKeyHashMap();
     private static final CowMap<AEKeyType, ExternalStorageStrategy.Factory> externalStorageStrategies = CowMap
-            .identityHashMap();
-    private static final CowMap<AEKeyType, PlacementStrategy.Factory> placementStrategies = CowMap.identityHashMap();
-    private static final CowMap<AEKeyType, PickupStrategy.Factory> pickupStrategies = CowMap.identityHashMap();
+            .identityKeyHashMap();
+    private static final CowMap<AEKeyType, PlacementStrategy.Factory> placementStrategies = CowMap.identityKeyHashMap();
+    private static final CowMap<AEKeyType, PickupStrategy.Factory> pickupStrategies = CowMap.identityKeyHashMap();
 
     static {
         registerImportStrategy(AEKeyTypes.ITEMS, StorageImportStrategy::createItem);
@@ -107,7 +107,7 @@ public final class StackWorldBehaviors {
 
     public static Map<AEKeyType, ExternalStorageStrategy> createExternalStorageStrategies(ServerLevel level,
             BlockPos fromPos, Direction fromSide) {
-        var strategies = new IdentityHashMap<AEKeyType, ExternalStorageStrategy>(
+        var strategies = new IdentityKeyObjectMap<AEKeyType, ExternalStorageStrategy>(
                 externalStorageStrategies.getMap().size());
         for (var entry : externalStorageStrategies.getMap().entrySet()) {
             strategies.put(entry.getKey(), entry.getValue().create(level, fromPos, fromSide));
@@ -117,7 +117,7 @@ public final class StackWorldBehaviors {
 
     public static Map<AEKeyType, ExternalStorageStrategy> createExtraExternalStorageStrategies(ServerLevel level,
             BlockPos fromPos, Direction fromSide) {
-        var strategies = new IdentityHashMap<AEKeyType, ExternalStorageStrategy>();
+        var strategies = new IdentityKeyObjectMap<AEKeyType, ExternalStorageStrategy>();
         for (var entry : externalStorageStrategies.getMap().entrySet()) {
             var type = entry.getKey();
             if (type != AEKeyTypes.ITEMS && type != AEKeyTypes.FLUIDS) {
@@ -129,7 +129,7 @@ public final class StackWorldBehaviors {
 
     public static PlacementStrategy createPlacementStrategies(ServerLevel level, BlockPos fromPos, Direction fromSide,
             BlockEntity host, @Nullable UUID owningPlayerId) {
-        var strategies = new IdentityHashMap<AEKeyType, PlacementStrategy>(placementStrategies.getMap().size());
+        var strategies = new IdentityKeyObjectMap<AEKeyType, PlacementStrategy>(placementStrategies.getMap().size());
         for (var entry : placementStrategies.getMap().entrySet()) {
             strategies.put(entry.getKey(), entry.getValue().create(level, fromPos, fromSide, host, owningPlayerId));
         }

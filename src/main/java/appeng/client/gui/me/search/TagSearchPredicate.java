@@ -1,6 +1,5 @@
 package appeng.client.gui.me.search;
 
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -9,6 +8,7 @@ import java.util.function.Predicate;
 
 import net.minecraft.tags.TagKey;
 
+import appeng.api.identity.IdentityKeyObjectMap;
 import appeng.api.stacks.AEKeyType;
 import appeng.menu.me.common.GridInventoryEntry;
 
@@ -17,7 +17,7 @@ final class TagSearchPredicate implements Predicate<GridInventoryEntry> {
     /**
      * Stores the tag keys we found for each AE key type we encountered.
      */
-    private final Map<AEKeyType, List<TagKey<?>>> tagCache = new IdentityHashMap<>();
+    private final Map<AEKeyType, List<TagKey<?>>> tagCache = new IdentityKeyObjectMap<>();
 
     public TagSearchPredicate(String term) {
         this.term = term.toLowerCase(Locale.ROOT);
@@ -26,7 +26,7 @@ final class TagSearchPredicate implements Predicate<GridInventoryEntry> {
     /**
      * Finds all tags for all AE key types that match the given search pattern.
      */
-    private List<TagKey<?>> getTagsMatchingTerm(AEKeyType keyType) {
+    private List<TagKey<?>> getTagsMatchingTerm(AEKeyType<?> keyType) {
         return keyType.getTagNames()
                 .filter(tagKey -> {
                     // ResourceLocations require namespace and path to already be lowercase

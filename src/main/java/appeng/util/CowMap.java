@@ -1,10 +1,14 @@
 package appeng.util;
 
 import java.util.Collections;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.IntFunction;
+
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
+import appeng.api.identity.IdentityKey;
+import appeng.api.identity.IdentityKeyObjectMap;
 
 /**
  * Thread-safe copy-on-write map wrapper. Does not accept null keys or values.
@@ -19,7 +23,11 @@ public class CowMap<K, V> {
     }
 
     public static <K, V> CowMap<K, V> identityHashMap() {
-        return new CowMap<>(IdentityHashMap::new);
+        return new CowMap<>(Reference2ReferenceOpenHashMap::new);
+    }
+
+    public static <K extends IdentityKey, V> CowMap<K, V> identityKeyHashMap() {
+        return new CowMap<>(IdentityKeyObjectMap::new);
     }
 
     /**

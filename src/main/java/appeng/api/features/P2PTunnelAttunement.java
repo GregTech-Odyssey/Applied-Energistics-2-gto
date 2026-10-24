@@ -24,7 +24,6 @@
 package appeng.api.features;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,6 +38,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
 import net.minecraftforge.common.capabilities.Capability;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceLinkedOpenHashMap;
+
 import appeng.core.definitions.AEParts;
 import appeng.items.parts.PartItem;
 import appeng.parts.p2p.P2PTunnelPart;
@@ -49,7 +50,7 @@ import appeng.parts.p2p.P2PTunnelPart;
 public final class P2PTunnelAttunement {
     private static final int INITIAL_CAPACITY = 40;
 
-    static final Map<TagKey<Item>, Item> tagTunnels = new IdentityHashMap<>(INITIAL_CAPACITY);
+    static final Map<TagKey<Item>, Item> tagTunnels = new Reference2ReferenceLinkedOpenHashMap<>(INITIAL_CAPACITY);
     static final List<ApiAttunement> apiAttunements = new ArrayList<>(INITIAL_CAPACITY);
 
     /**

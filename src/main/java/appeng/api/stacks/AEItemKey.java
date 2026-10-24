@@ -20,6 +20,7 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 
+import appeng.api.identity.IdentityTag;
 import appeng.api.storage.AEKeyFilter;
 import appeng.core.AELog;
 import appeng.hooks.IAEItem;

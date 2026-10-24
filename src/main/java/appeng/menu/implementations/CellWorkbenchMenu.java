@@ -20,10 +20,7 @@ package appeng.menu.implementations;
 
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Objects;
-
-import com.google.common.collect.Iterators;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -210,7 +207,7 @@ public class CellWorkbenchMenu extends UpgradeableMenu<CellWorkbenchBlockEntity>
         var cellInv = StorageCells.getCellInventory(is, null);
         Iterator<? extends AEKey> i;
         if (cellInv != null) {
-            i = Iterators.transform(cellInv.getAvailableStacks().iterator(), Map.Entry::getKey);
+            i = cellInv.getAvailableStacks().keySet().iterator();
         } else {
             i = Collections.emptyIterator();
         }

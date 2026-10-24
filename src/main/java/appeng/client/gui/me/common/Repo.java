@@ -21,9 +21,6 @@ package appeng.client.gui.me.common;
 import java.time.Instant;
 import java.util.*;
 
-import com.google.common.collect.BiMap;
-import com.google.common.collect.HashBiMap;
-
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -32,6 +29,8 @@ import net.minecraft.world.item.crafting.Ingredient;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.longs.LongSet;
 
@@ -71,7 +70,7 @@ public class Repo implements IClientRepo {
 
     private boolean hasPower;
 
-    private final BiMap<Long, GridInventoryEntry> entries = HashBiMap.create();
+    private final Long2ObjectMap<GridInventoryEntry> entries = new Long2ObjectOpenHashMap<>();
     private final AEKeyObjectMap<AEKey, GridInventoryEntry> byKey = new AEKeyObjectMap<>();
     private final AEKeySet<AEKey> craftableKeys = new AEKeySet<>();
     private final ArrayList<GridInventoryEntry> view = new ArrayList<>();
@@ -514,7 +513,7 @@ public class Repo implements IClientRepo {
     }
 
     @Override
-    public Set<GridInventoryEntry> getAllEntries() {
+    public Collection<GridInventoryEntry> getAllEntries() {
         return entries.values();
     }
 

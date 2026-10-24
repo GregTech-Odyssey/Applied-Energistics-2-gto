@@ -18,7 +18,7 @@ import appeng.util.CowMap;
  */
 @ApiStatus.Experimental
 public class GenericSlotCapacities {
-    private static final CowMap<AEKeyType, Long> map = CowMap.identityHashMap();
+    private static final CowMap<AEKeyType, Long> map = CowMap.identityKeyHashMap();
 
     static {
         register(AEKeyTypes.ITEMS, (long) Container.LARGE_MAX_STACK_SIZE);

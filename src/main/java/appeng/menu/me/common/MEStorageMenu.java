@@ -22,7 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
@@ -104,6 +103,14 @@ public class MEStorageMenu extends AEBaseMenu
             .<MEStorageMenu, IPortableTerminal>create(MEStorageMenu::new, IPortableTerminal.class)
             .build("wirelessterm");
 
+    private static final String ACTION_SET_VIEW_FROZEN = "set_view_frozen";
+
+    /**
+     * The number of ticks between two inventory synchronizations. Changes caused by the player are always synchronized
+     * immediately, everything else at most once per second.
+     */
+    private static final int INVENTORY_UPDATE_INTERVAL = 20;
+
     private final List<RestrictedInputSlot> viewCellSlots;
     private IConfigManager clientCM;
     private final ToolboxMenu toolboxMenu;
@@ -115,6 +122,15 @@ public class MEStorageMenu extends AEBaseMenu
      */
     @GuiSync(100)
     public int activeCraftingJobs = -1;
+    /**
+     * While the contents are frozen, the server neither scans the network storage nor sends inventory updates, so the
+     * client keeps showing the contents it last received. While they are not frozen, the contents are synchronized at
+     * most once per second, or immediately if the player inserted or removed something.
+     *
+     * @see #setViewFrozen(boolean)
+     */
+    @GuiSync(101)
+    public boolean viewFrozen = false;
 
     private IConfigManagerListener gui;
     private IConfigManager serverCM;
@@ -127,6 +143,18 @@ public class MEStorageMenu extends AEBaseMenu
     protected final IEnergySource powerSource;
 
     private final IncrementalUpdateHelper updateHelper = new IncrementalUpdateHelper();
+
+    /**
+     * Set when the contents of this terminal have to be synchronized with the client right away, without waiting for
+     * {@link #INVENTORY_UPDATE_INTERVAL}, and even while they are frozen. This is the case right after (un-)freezing
+     * and whenever the player inserted or removed something.
+     */
+    private boolean pendingInventoryUpdate;
+
+    /**
+     * The game time of the last inventory synchronization, used to throttle the updates of unfrozen contents.
+     */
+    private long lastInventoryUpdateTime = -INVENTORY_UPDATE_INTERVAL;
 
     /**
      * A grid connection is optional for a screen showing the content of a {@link MEStorage}, because inventories like
@@ -157,6 +185,8 @@ public class MEStorageMenu extends AEBaseMenu
     @SuppressWarnings({ "unchecked", "rawtypes" })
     protected MEStorageMenu(MenuType<?> menuType, int id, Inventory ip, ITerminalHost host, boolean bindInventory) {
         super(menuType, id, ip, host);
+
+        registerClientAction(ACTION_SET_VIEW_FROZEN, Boolean.class, this::setViewFrozen);
 
         this.host = host;
         this.clientCM = new ConfigManager(this);
@@ -265,42 +295,14 @@ public class MEStorageMenu extends AEBaseMenu
                 }
                 firstOpen = false;
 
-                var craftables = getCraftablesFromGrid();
-                var availableStacks = new KeyCounter();
-                if (storage != null) {
-                    storage.getAvailableStacks(availableStacks);
+                // Changes caused by the player are synchronized right away, everything else at most once per second,
+                // and not at all while the contents are frozen
+                if (this.pendingInventoryUpdate
+                        || (!this.viewFrozen && time - this.lastInventoryUpdateTime >= INVENTORY_UPDATE_INTERVAL)) {
+                    this.pendingInventoryUpdate = false;
+                    this.lastInventoryUpdateTime = time;
+                    this.sendInventoryUpdate();
                 }
-
-                // This is currently not supported/backed by any network service
-                var requestables = new KeyCounter();
-
-                try {
-                    // Craftables
-                    // Newly craftable
-                    Sets.difference(previousCraftables, craftables).forEach(updateHelper::addChange);
-                    // No longer craftable
-                    Sets.difference(craftables, previousCraftables).forEach(updateHelper::addChange);
-
-                    // Available changes
-                    previousAvailableStacks.removeAll(availableStacks);
-                    previousAvailableStacks.removeZeros();
-                    previousAvailableStacks.keySet().forEach(updateHelper::addChange);
-
-                    if (updateHelper.hasChanges()) {
-                        var builder = MEInventoryUpdatePacket
-                                .builder(containerId, updateHelper.isFullUpdate());
-                        builder.setFilter(this::isKeyVisible);
-                        builder.addChanges(updateHelper, availableStacks, craftables, requestables);
-                        builder.buildAndSend(this::sendPacketToClient);
-                        updateHelper.commitChanges();
-                    }
-
-                } catch (Exception e) {
-                    AELog.warn(e, "Failed to send incremental inventory update to client");
-                }
-
-                previousCraftables = craftables;
-                previousAvailableStacks = availableStacks;
 
                 this.updatePowerStatus();
             }
@@ -311,6 +313,86 @@ public class MEStorageMenu extends AEBaseMenu
 
     protected boolean showsCraftables() {
         return true;
+    }
+
+    /**
+     * Compares the current contents of the network storage with the contents last sent to the client, and sends the
+     * differences as an incremental update.
+     */
+    private void sendInventoryUpdate() {
+        var craftables = getCraftablesFromGrid();
+        var availableStacks = new KeyCounter();
+        if (storage != null) {
+            storage.getAvailableStacks(availableStacks);
+        }
+
+        // This is currently not supported/backed by any network service
+        var requestables = new KeyCounter();
+
+        try {
+            // Craftables
+            // Newly craftable
+            Sets.difference(previousCraftables, craftables).forEach(updateHelper::addChange);
+            // No longer craftable
+            Sets.difference(craftables, previousCraftables).forEach(updateHelper::addChange);
+
+            // Available changes
+            previousAvailableStacks.removeAll(availableStacks);
+            previousAvailableStacks.removeZeros();
+            previousAvailableStacks.keySet().forEach(updateHelper::addChange);
+
+            if (updateHelper.hasChanges()) {
+                var builder = MEInventoryUpdatePacket
+                        .builder(containerId, updateHelper.isFullUpdate());
+                builder.setFilter(this::isKeyVisible);
+                builder.addChanges(updateHelper, availableStacks, craftables, requestables);
+                builder.buildAndSend(this::sendPacketToClient);
+                updateHelper.commitChanges();
+            }
+
+        } catch (Exception e) {
+            AELog.warn(e, "Failed to send incremental inventory update to client");
+        }
+
+        previousCraftables = craftables;
+        previousAvailableStacks = availableStacks;
+    }
+
+    /**
+     * @return True if the contents shown by this terminal are frozen, i.e. neither the network storage is scanned nor
+     *         updates are sent to the client.
+     */
+    public boolean isViewFrozen() {
+        return viewFrozen;
+    }
+
+    /**
+     * Enables or disables freezing the contents of this terminal. While frozen, the server does not scan the network
+     * storage and sends no inventory updates, so the client keeps showing the contents it last received. The client is
+     * updated once when the player inserts or removes something, and again when the freeze is disabled.
+     */
+    public void setViewFrozen(boolean viewFrozen) {
+        if (isClientSide()) {
+            sendClientAction(ACTION_SET_VIEW_FROZEN, viewFrozen);
+            return;
+        }
+
+        if (this.viewFrozen == viewFrozen) {
+            return;
+        }
+
+        this.viewFrozen = viewFrozen;
+        // Sync once right away, so that what the client shows is up-to-date when the freeze starts or ends
+        this.pendingInventoryUpdate = true;
+    }
+
+    /**
+     * Notifies this menu that the contents of the network storage may have changed, e.g. because the player inserted or
+     * removed items. The player expects to see their own change right away, so this bypasses the update interval and is
+     * the only kind of update that is still sent while the contents are frozen.
+     */
+    public final void notifyStorageChanged() {
+        this.pendingInventoryUpdate = true;
     }
 
     private Set<AEKey> getCraftablesFromGrid() {
@@ -386,7 +468,7 @@ public class MEStorageMenu extends AEBaseMenu
     public List<ItemStack> getViewCells() {
         return this.viewCellSlots.stream()
                 .map(AppEngSlot::getItem)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     /**
@@ -433,6 +515,9 @@ public class MEStorageMenu extends AEBaseMenu
         if (this.storage == null) {
             return;
         }
+
+        // The player may have inserted or removed something, so the frozen contents have to be synchronized once
+        notifyStorageChanged();
 
         if (action == InventoryAction.PICKUP_OR_SET_DOWN && ContainerItemStrategies.isKeySupported(clickedKey)) {
             action = InventoryAction.FILL_ITEM;
@@ -717,6 +802,9 @@ public class MEStorageMenu extends AEBaseMenu
         var inserted = StorageHelper.poweredInsert(powerSource, storage,
                 key, input.getCount(),
                 this.getActionSource());
+        // Shift-clicking items into the terminal may change the contents, so the frozen contents have to be
+        // synchronized once
+        notifyStorageChanged();
         return Platform.getInsertionRemainder(input, inserted);
     }
 

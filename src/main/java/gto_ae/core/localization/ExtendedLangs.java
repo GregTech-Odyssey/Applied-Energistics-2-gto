@@ -168,7 +168,12 @@ public enum ExtendedLangs implements IExtendedLocalizationEnum {
     TerminalManualPinnedRow("手动置顶项", "Manually pinned row"),
     TerminalManualPinnedRowShown("显示手动置顶项(使用Alt + 左键点击项目以置顶/取消置顶某物品)",
             "Show manually pinned row (Use Alt + Left Click on an item to pin/unpin it)"),
-    TerminalManualPinnedRowHidden("隐藏手动置顶项", "Hidden manually pinned row"),;
+    TerminalManualPinnedRowHidden("隐藏手动置顶项", "Hidden manually pinned row"),
+    TerminalFreezeUpdates("冻结更新", "Freeze Updates"),
+    TerminalFreezeUpdatesOn("终端内容已冻结，仅在放入或取出物品时更新（点击以取消冻结）",
+            "Terminal content is frozen and only updates when items are inserted or extracted (click to unfreeze)"),
+    TerminalFreezeUpdatesOff("冻结终端内容，使其不随ME网络的变化而更新",
+            "Freeze the terminal content so that it no longer updates with changes in the ME network"),;
 
     private final String enText;
     private final String cnText;

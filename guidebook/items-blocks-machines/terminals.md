@@ -71,6 +71,13 @@ mouse/key shortcuts:
     whatever you have bound to "pick block" (usually middle-click) brings up a UI to specify the amount to be crafted. You can also input formulas like `3*64/2`,
     or type `=32` to only craft the number of items needed to reach 32 in your storage.
 *   Holding shift will freeze the displayed items in-place, stopping them from re-organizing themselves when quantities change or new items enter the system.
+*   The contents of an open terminal refresh about once per second; anything you put in or take out is shown immediately.
+    This keeps large networks from flooding the client with updates every tick.
+*   The lock button in the left section freezes the terminal's contents until you press it again: the items keep showing
+    what the terminal showed when you froze it, and only refresh when you put something in or take something out. While
+    frozen the server also stops scanning the network for this terminal and sends no updates, which helps on large
+    networks. It does not affect what the network actually stores, and is useful when you are picking items out of a
+    terminal that is constantly gaining or losing items.
 *   Right-clicking with a bucket or other fluid container will deposit the fluid, left-clicking a fluid in the terminal with
     an empty fluid container will withdraw the fluid.
 

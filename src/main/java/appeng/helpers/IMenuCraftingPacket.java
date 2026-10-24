@@ -76,4 +76,11 @@ public interface IMenuCraftingPacket {
      */
     boolean isPlayerInventorySlotLocked(int invSlot);
 
+    /**
+     * Notifies the menu that the contents of the network storage may have changed, e.g. because items were crafted and
+     * taken out of the network.
+     */
+    default void notifyStorageChanged() {
+    }
+
 }

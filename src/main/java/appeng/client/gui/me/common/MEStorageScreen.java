@@ -101,6 +101,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
     private SettingToggleButton<SortOrder> sortByToggle;
     private final SettingToggleButton<SortDir> sortDirToggle;
     private final ToggleButton manualPinnedRowToggle;
+    private final ToggleButton freezeUpdatesToggle;
     private int currentMouseX = 0;
     private int currentMouseY = 0;
     private final Scrollbar scrollbar;
@@ -157,6 +158,19 @@ public class MEStorageScreen<C extends MEStorageMenu>
         this.manualPinnedRowToggle.setTooltipOff(List.of(
                 ExtendedLangs.TerminalManualPinnedRow.text(),
                 ExtendedLangs.TerminalManualPinnedRowHidden.text()));
+
+        // Same icon convention as the facility management terminal: the icon shows what pressing the button does, so
+        // an open lock while frozen means "press to unfreeze" and a closed lock while live means "press to freeze".
+        this.freezeUpdatesToggle = this.addToLeftToolbar(new ToggleButton(
+                IconsExtended.VIEW_UNLOCKED,
+                IconsExtended.VIEW_LOCKED,
+                this::toggleFreezeUpdates));
+        this.freezeUpdatesToggle.setTooltipOn(List.of(
+                ExtendedLangs.TerminalFreezeUpdates.text(),
+                ExtendedLangs.TerminalFreezeUpdatesOn.text()));
+        this.freezeUpdatesToggle.setTooltipOff(List.of(
+                ExtendedLangs.TerminalFreezeUpdates.text(),
+                ExtendedLangs.TerminalFreezeUpdatesOff.text()));
 
         if (this.style.isSortable()) {
             this.sortByToggle = this.addToLeftToolbar(new SettingToggleButton<>(Settings.SORT_BY,
@@ -273,6 +287,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
         repo.setPaused(hasShiftDown());
         manualPinnedRowToggle.setState(repo.isShowManualPinnedRow());
+        freezeUpdatesToggle.setState(menu.isViewFrozen());
         updateSearch();
 
         // Override the dialog title found in the screen JSON with the user-supplied name
@@ -639,6 +654,12 @@ public class MEStorageScreen<C extends MEStorageMenu>
         repo.setShowManualPinnedRow(state);
         repo.rebuildView();
         updateScrollbar();
+    }
+
+    private void toggleFreezeUpdates(boolean state) {
+        // Update the local state right away, the server confirms it with the next sync
+        this.menu.viewFrozen = state;
+        this.menu.setViewFrozen(state);
     }
 
     private void reinitalize() {

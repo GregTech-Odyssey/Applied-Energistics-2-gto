@@ -91,6 +91,9 @@ public class CraftingTermSlot extends AppEngCraftingSlot {
             return;
         }
 
+        // Crafting takes ingredients out of the network, so a frozen terminal has to be synchronized once
+        this.menu.notifyStorageChanged();
+
         final var howManyPerCraft = this.getItem().getCount();
 
         int maxTimesToCraft;

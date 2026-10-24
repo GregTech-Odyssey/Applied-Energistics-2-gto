@@ -45,7 +45,7 @@ public interface IClientRepo {
     /**
      * @return All entries in this repository, regardless of any filter.
      */
-    Set<GridInventoryEntry> getAllEntries();
+    Collection<GridInventoryEntry> getAllEntries();
 
     /**
      * Find all entries that match the given ingredient.
