@@ -263,6 +263,8 @@
   "gui.ae2.Stores": "儲存",
   "gui.ae2.Substitute": "啟用替代功能：",
   "gui.ae2.Terminal": "終端",
+  "gui.ae2.TerminalSettingsNotifyForFinishedJobs": "製作完成聊天提示",
+  "gui.ae2.TerminalSettingsNotifyForFinishedJobsDesc": "合成完成時在聊天欄提示產物數量與耗時。僅控制聊天提示，右上角完成通知始終顯示。",
   "gui.ae2.TerminalViewCellsTooltip": "檢視元件",
   "gui.ae2.ToCraft": "需要合成的數量: %s",
   "gui.ae2.TransparentFacades": "透明的遮擋板",

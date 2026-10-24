@@ -67,6 +67,7 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
     private final CraftConfirmTableRenderer table;
 
     private final Button start;
+    private final Button startWithFollow;
     private final Button selectCPU;
     private final Button gto$addMissing;
     private final Scrollbar scrollbar;
@@ -106,6 +107,10 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
 
         this.start = widgets.addButton("start", GuiText.Start.text(), this::start);
         this.start.active = false;
+        this.startWithFollow = widgets.addButton("startWithFollow", ExtendedLangs.CraftStartWithFollow.text(),
+                () -> menu.startJob(true));
+        this.startWithFollow.setTooltip(Tooltip.create(ExtendedLangs.CraftStartWithFollowDesc.text()));
+        this.startWithFollow.active = false;
 
         this.selectCPU = widgets.addButton("selectCpu", getNextCpuButtonLabel(), this::selectNextCpu);
         this.selectCPU.active = false;
@@ -147,6 +152,7 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
             planIsStartable = !plan.isSimulation() || simulationButAllowMissing;
         }
         this.start.active = !this.menu.hasNoCPU() && planIsStartable;
+        this.startWithFollow.active = this.start.active;
         this.selectCPU.active = planIsStartable;
         this.gto$addMissing.visible = plan != null && plan.isSimulation();
 
@@ -232,7 +238,7 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
     public boolean keyPressed(int keyCode, int scanCode, int p_keyPressed_3_) {
         if (!searchField.isFocused() && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)) {
             if (this.start.active) {
-                this.start();
+                getMenu().startJob(startWithFollow.isFocused());
             }
             return true;
         }
@@ -244,7 +250,7 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
     }
 
     private void start() {
-        getMenu().startJob();
+        getMenu().startJob(false);
     }
 
     private void gto$addMissing(Button button) {

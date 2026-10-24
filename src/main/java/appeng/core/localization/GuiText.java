@@ -242,7 +242,9 @@ public enum GuiText implements LocalizationEnum {
     Terminal("Terminal"),
     TerminalSettingsTitle("Terminal Settings"),
     TerminalSettingsPinAutoCraftedItems("Pin auto-crafted items to first row"),
-    TerminalSettingsNotifyForFinishedJobs("Notify about finished crafting jobs (requires wireless terminal)"),
+    TerminalSettingsNotifyForFinishedJobs("Crafting completion chat notifications"),
+    TerminalSettingsNotifyForFinishedJobsDesc(
+            "Shows the output quantity and elapsed time in chat when a crafting job finishes. Only affects chat; the top-right toast is always shown."),
     TerminalSettingsClearGridOnClose("Automatically clear terminal grid on close (if applicable)"),
     TerminalViewCellsTooltip("View Cells"),
     ToastCraftingJobFinishedTitle("Auto-Crafting Complete"),
