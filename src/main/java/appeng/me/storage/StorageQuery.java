@@ -171,7 +171,7 @@ final class StorageQuery {
         if (type != MEInventoryHandler.class && type != StorageBusPart.StorageBusInventory.class)
             return false;
         var handler = (MEInventoryHandler) storage;
-        return handler.partitionList.isEmpty() && !(handler.filterOnExtraction && !handler.allowExtraction);
+        return handler.allowExtraction && (!handler.filterOnExtraction || handler.partitionList.isEmpty());
     }
 
     static boolean isTransparent(MEStorage storage) {

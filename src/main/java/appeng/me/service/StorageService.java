@@ -18,6 +18,7 @@
 
 package appeng.me.service;
 
+import java.math.BigInteger;
 import java.util.*;
 
 import com.google.common.base.Preconditions;
@@ -82,6 +83,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     private final Reference2ObjectOpenHashMap<MEStorage, MountContent> mountContents = new Reference2ObjectOpenHashMap<>();
     private final ObjectOpenHashSet<AEKey> pendingWatcherKeys = new ObjectOpenHashSet<>();
     private KeyCounter mountScratch = new KeyCounter();
+    private final Reference2ObjectOpenHashMap<AEKey, BigInteger> oversizedTotals = new Reference2ObjectOpenHashMap<>();
     private boolean mountsSynced;
     private boolean fullWatcherUpdate = true;
     private boolean trackKeys;
@@ -159,6 +161,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
         pendingWatcherKeys.clear();
         fullWatcherUpdate = true;
         cachedAvailableStacks.clear();
+        oversizedTotals.clear();
         if (storage.usesTrackedQuery()) {
             mountsSynced = false;
             storage.getAvailableStacks(cachedAvailableStacks);
@@ -175,6 +178,17 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
                 cachedAvailableStacks.addAll(mount.content);
             });
             mountsSynced = true;
+            for (var entry : cachedAvailableStacks) {
+                if (entry.getLongValue() == Long.MAX_VALUE) {
+                    var total = BigInteger.ZERO;
+                    for (var mount : mountContents.values()) {
+                        total = total.add(BigInteger.valueOf(mount.content.get(entry.getKey())));
+                    }
+                    if (total.bitLength() >= 64) {
+                        oversizedTotals.put(entry.getKey(), total);
+                    }
+                }
+            }
         }
         cachedAvailableStacks.removeZeros();
         cachedAvailableStacks.removeEmptySubmaps();
@@ -242,7 +256,17 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
         if (delta == 0) {
             return;
         }
-        long amount = cachedAvailableStacks.get(key) + delta;
+        long amount;
+        var oversized = oversizedTotals.isEmpty() ? null : oversizedTotals.get(key);
+        if (oversized == null) {
+            long old = cachedAvailableStacks.get(key);
+            amount = old + delta;
+            if (((old ^ amount) & (delta ^ amount)) < 0) {
+                amount = clampTotal(key, BigInteger.valueOf(old).add(BigInteger.valueOf(delta)));
+            }
+        } else {
+            amount = clampTotal(key, oversized.add(BigInteger.valueOf(delta)));
+        }
         if (amount == 0) {
             cachedAvailableStacks.remove(key);
         } else {
@@ -251,6 +275,15 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
         if (trackKeys) {
             pendingWatcherKeys.add(key);
         }
+    }
+
+    private long clampTotal(AEKey key, BigInteger total) {
+        if (total.bitLength() < 64) {
+            oversizedTotals.remove(key);
+            return total.longValue();
+        }
+        oversizedTotals.put(key, total);
+        return total.signum() > 0 ? Long.MAX_VALUE : 0;
     }
 
     private void watcherUpdate() {

@@ -99,7 +99,7 @@ public class MEInventoryHandler extends DelegatingMEInventory {
 
     @Override
     public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-        if (this.filterOnExtraction && !allowExtraction || !passesBlackOrWhitelist(what)) {
+        if (!this.allowExtraction || this.filterOnExtraction && !passesBlackOrWhitelist(what)) {
             return 0;
         }
 
