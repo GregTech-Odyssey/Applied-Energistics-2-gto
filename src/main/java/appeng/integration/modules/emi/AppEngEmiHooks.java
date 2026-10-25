@@ -6,10 +6,8 @@ import net.minecraft.world.item.ItemStack;
 
 import dev.emi.emi.api.EmiHooks;
 import dev.emi.emi.api.stack.EmiStack;
-import dev.emi.emi.api.stack.FluidEmiStack;
 
 import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.me.common.StackSizeRenderer;
@@ -25,18 +23,22 @@ public final class AppEngEmiHooks {
     }
 
     private static boolean renderAmount(GuiGraphics draw, int x, int y, EmiStack stack, long amount) {
-        if (amount <= 99 || !(stack.getStackKey() instanceof AEKey key)) {
+        if (stack.getAmount() <= 99) {
             return false;
         }
-        var text = key.formatAmount(amount, AmountFormat.SLOT);
-        StackSizeRenderer.renderSizeLabel(draw, Minecraft.getInstance().font, x + 1, y + 1, text, false);
-        return true;
+        var s = EmiStackHelper.toAEKey(stack);
+        if (s != null) {
+            StackSizeRenderer.renderSizeLabel(draw, Minecraft.getInstance().font, x + 1, y + 1,
+                    s.formatAmount(amount, AmountFormat.SLOT), false);
+            return true;
+        }
+        return false;
     }
 
     private static EmiStack resolveFluid(ItemStack stack) {
         var wrapped = GenericStack.fromItemStack(stack);
         if (wrapped != null && wrapped.what() instanceof AEFluidKey fluid) {
-            return FluidEmiStack.ofKey(fluid, wrapped.amount());
+            return EmiStack.of(fluid.fluid, wrapped.amount());
         }
         return null;
     }

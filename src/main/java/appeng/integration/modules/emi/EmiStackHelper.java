@@ -10,10 +10,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.material.Fluid;
 
 import dev.emi.emi.api.recipe.EmiRecipe;
-import dev.emi.emi.api.stack.EmiIngredient;
-import dev.emi.emi.api.stack.EmiStack;
-import dev.emi.emi.api.stack.FluidEmiStack;
-import dev.emi.emi.api.stack.ItemEmiStack;
+import dev.emi.emi.api.stack.*;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import appeng.api.stacks.AEFluidKey;
@@ -29,8 +26,6 @@ public final class EmiStackHelper {
     public static AEKey toAEKey(@NotNull EmiStack stack) {
         if (stack.isEmpty())
             return null;
-        if (stack.getStackKey() instanceof AEKey key)
-            return key;
         if (stack.getKey() instanceof Item item)
             return AEItemKey.of(item, stack.getNbt());
         if (stack.getKey() instanceof Fluid fluid)
@@ -61,10 +56,10 @@ public final class EmiStackHelper {
     @Nullable
     public static EmiStack toEmiStack(@NotNull GenericStack stack) {
         AEKey key = stack.what();
-        if (key instanceof AEItemKey) {
-            return ItemEmiStack.ofKey(key, stack.amount());
-        } else if (key instanceof AEFluidKey) {
-            return FluidEmiStack.ofKey(key, stack.amount());
+        if (key instanceof AEItemKey i) {
+            return EmiStack.of(i.item, stack.amount());
+        } else if (key instanceof AEFluidKey f) {
+            return EmiStack.of(f.fluid, stack.amount());
         }
         return null;
     }
