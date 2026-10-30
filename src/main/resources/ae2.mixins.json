@@ -16,10 +16,6 @@
     "StructureTemplateMixin",
     "UnbreakingMixin",
     "chunkloading.ChunkMapMixin",
-    "gto.extendedae.ModStackTransferContextMixin",
-    "gto.extendedae.PartModExportBusMixin",
-    "gto.extendedae.PartTagExportBusMixin",
-    "gto.extendedae.TagStackTransferContextMixin",
     "spatial.MinecraftServerMixin",
     "tests.StructureUtilsMixin"
   ],

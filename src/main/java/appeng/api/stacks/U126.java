@@ -3,11 +3,11 @@ package appeng.api.stacks;
 /**
  * 126 位非负整数：{@code 值 = hi·2^63 + lo}，{@code hi}、{@code lo} 都在 {@code [0, 2^63)}。
  * <p>
- * 可变、运算只用 long，供 {@link AEKeyBigMap} 这类高频累加的数量表就地读写：插入/取出不产生任何对象。
- * 越界一律饱和到 {@code 2^126-1}（对游戏内数量等价于无限），读出时超出 {@code long} 按 {@link Long#MAX_VALUE} 计。
+ * 可变、运算只用 long，供 {@link AEKeyBigMap} 这类高频累加的数量表就地读写：插入/取出不产生任何对象。 越界一律饱和到 {@code 2^126-1}（对游戏内数量等价于无限），读出时超出
+ * {@code long} 按 {@link Long#MAX_VALUE} 计。
  * <p>
- * {@link #toByteArray()} / {@link #fromByteArray(byte[])} 按 {@code BigInteger.toByteArray()} 的补码大端表示
- * （至少 1 字节，最高位为 1 时前置一个 {@code 0x00}），与之前用 BigInteger 写出的存档逐字节一致，旧档免迁移。
+ * {@link #toByteArray()} / {@link #fromByteArray(byte[])} 按 {@code BigInteger.toByteArray()} 的补码大端表示 （至少 1 字节，最高位为 1
+ * 时前置一个 {@code 0x00}），与之前用 BigInteger 写出的存档逐字节一致，旧档免迁移。
  */
 public final class U126 {
 
@@ -17,7 +17,8 @@ public final class U126 {
     private long hi;
     private long lo;
 
-    public U126() {}
+    public U126() {
+    }
 
     public U126(long amount) {
         this.lo = amount;

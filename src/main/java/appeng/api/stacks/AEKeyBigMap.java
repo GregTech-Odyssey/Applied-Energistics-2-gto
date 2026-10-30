@@ -10,11 +10,12 @@ import appeng.api.identity.IdentityKeyObjectMap;
 /**
  * 126 位非负整数表（值见 {@link U126}）。
  * <p>
- * 每个键的数量是一个就地修改的 {@link U126}，插入/取出只做 long 运算，不像 {@code BigInteger} 那样每次写入
- * 都要新分配对象。上限 {@code 2^126-1} 对游戏内数量等价于无限，越界按饱和处理；读出时超出 {@code long}
- * 一律按 {@link Long#MAX_VALUE} 计，与旧的 {@code BigInteger} 实现口径一致。
+ * 每个键的数量是一个就地修改的 {@link U126}，插入/取出只做 long 运算，不像 {@code BigInteger} 那样每次写入 都要新分配对象。上限 {@code 2^126-1}
+ * 对游戏内数量等价于无限，越界按饱和处理；读出时超出 {@code long} 一律按 {@link Long#MAX_VALUE} 计，与旧的 {@code BigInteger} 实现口径一致。
  */
 public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, U126> {
+
+    // fastutil allocates Object[], so access the array as Object[] before casting its elements.
 
     @UnmodifiableView
     public static final AEKeyBigMap<AEKey> EMPTY = new AEKeyBigMap<>(0);
@@ -53,7 +54,7 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
         }
         final int pos = IdentityKey.find(key, mask, k);
         if (pos >= 0) {
-            ((U126) value[pos]).setValue(amount);
+            ((U126) ((Object[]) value)[pos]).setValue(amount);
         } else {
             insertAt(-pos - 1, k, new U126(amount));
         }
@@ -65,7 +66,7 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
             return null;
         }
         final int pos = IdentityKey.find(key, mask, k);
-        return pos >= 0 ? (U126) value[pos] : null;
+        return pos >= 0 ? (U126) ((Object[]) value)[pos] : null;
     }
 
     /** 饱和到 long 的数量，没有该键时为 0。 */
@@ -74,7 +75,7 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
             return 0;
         }
         final int pos = IdentityKey.find(key, mask, k);
-        return pos >= 0 ? ((U126) value[pos]).toLong() : 0;
+        return pos >= 0 ? ((U126) ((Object[]) value)[pos]).toLong() : 0;
     }
 
     /** 加；返回实际加入量（到 2^126-1 饱和，正常情况等于 {@code amount}）。 */
@@ -84,7 +85,7 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
         }
         final int pos = IdentityKey.find(key, mask, k);
         if (pos >= 0) {
-            return ((U126) value[pos]).add(amount);
+            return ((U126) ((Object[]) value)[pos]).add(amount);
         }
         insertAt(-pos - 1, k, new U126(amount));
         return amount;
@@ -101,7 +102,7 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
         }
         final int pos = IdentityKey.find(key, mask, k);
         if (pos >= 0) {
-            final U126 old = (U126) value[pos];
+            final U126 old = (U126) ((Object[]) value)[pos];
             if (old.isAboveLong()) {
                 // 已超过 long，必然已达上限
                 return 0;
@@ -131,7 +132,7 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
         if (pos < 0) {
             return 0;
         }
-        final U126 old = (U126) value[pos];
+        final U126 old = (U126) ((Object[]) value)[pos];
         if (old.isAbove(amount)) {
             old.subtract(amount);
             return amount;
@@ -174,7 +175,7 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
         }
         final int pos = IdentityKey.find(key, mask, k);
         if (pos >= 0) {
-            ((U126) value[pos]).add(amount);
+            ((U126) ((Object[]) value)[pos]).add(amount);
         } else {
             insertAt(-pos - 1, k, amount.copyOf());
         }
