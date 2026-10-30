@@ -144,7 +144,7 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     modImplementation("curse.maven:glodium-957920:5006780")
-    modImplementation("curse.maven:ex-pattern-provider-892005:7624084")
+    modImplementation("com.glodblock.github.extendedae:extendedae-forge-1.20.1:${extendedae_version}")
     modImplementation("curse.maven:applied-energistics-2-wireless-terminals-459929:7251206")
     modImplementation("curse.maven:merequester-688367:5689932")
 
