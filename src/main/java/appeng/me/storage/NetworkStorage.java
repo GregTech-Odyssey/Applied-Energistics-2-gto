@@ -85,7 +85,8 @@ public final class NetworkStorage implements MEStorage {
             if (storages.containsKey(inventory)) {
                 return;
             }
-            var identity = inventory.getResourceIdentity();
+            var link = StorageQuery.isNetworkLink(inventory);
+            var identity = link ? null : inventory.getResourceIdentity();
             if (identity != null) {
                 if (identity instanceof Set<?> set) {
                     for (var i : set) {
@@ -102,7 +103,7 @@ public final class NetworkStorage implements MEStorage {
                 }
             }
             storages.put(inventory, identity);
-            if (StorageQuery.isNetworkLink(inventory))
+            if (link)
                 networkLinks.add(inventory);
             StorageQuery.topologyChanged();
             priorityInventory.add(operation);
