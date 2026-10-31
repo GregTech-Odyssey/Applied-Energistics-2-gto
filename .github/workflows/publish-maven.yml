@@ -1,0 +1,18 @@
+name: Publish Maven
+
+on:
+  push:
+    branches: [gto]
+  workflow_dispatch:
+
+concurrency:
+  group: publish-maven
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    uses: GregTech-Odyssey/GradlePublishPlugin/.github/workflows/maven-publish.yml@main
+    secrets: inherit
