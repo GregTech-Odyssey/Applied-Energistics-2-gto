@@ -42,7 +42,7 @@ import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.LocalizationEnum;
 import appeng.util.EnumCycler;
 
-import gto_ae.hooks.gui.IIcon;
+import com.gto.ae.hooks.gui.IIcon;
 
 public class SettingToggleButton<T extends Enum<T>> extends IconButton {
 

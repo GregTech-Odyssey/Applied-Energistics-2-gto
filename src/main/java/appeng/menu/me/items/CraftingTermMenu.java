@@ -22,7 +22,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.google.common.base.Preconditions;
-import com.gto.fastcollection.fastutil.O2IOpenCacheHashMap;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -60,6 +59,8 @@ import appeng.menu.slot.CraftingMatrixSlot;
 import appeng.menu.slot.CraftingTermSlot;
 import appeng.parts.reporting.CraftingTerminalPart;
 import appeng.util.inv.PlayerInternalInventory;
+
+import com.gto.fastcollection.fastutil.O2IOpenCacheHashMap;
 
 /**
  * Can only be used with a host that implements {@link ISegmentedInventory} and exposes an inventory named "crafting" to

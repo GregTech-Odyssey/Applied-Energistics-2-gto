@@ -1,7 +1,5 @@
 package appeng.mixins;
 
-import com.gto.fastcollection.cache.WeakValueHashCache;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,6 +13,8 @@ import net.minecraft.world.item.ItemStack;
 import appeng.api.stacks.AEItemKey;
 import appeng.hooks.IAEItem;
 import appeng.hooks.IUnique;
+
+import com.gto.fastcollection.cache.WeakValueHashCache;
 
 @Mixin(Item.class)
 public class ItemMixin implements IAEItem {

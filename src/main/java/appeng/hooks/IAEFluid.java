@@ -1,10 +1,10 @@
 package appeng.hooks;
 
-import com.gto.fastcollection.cache.WeakValueHashCache;
-
 import net.minecraft.nbt.CompoundTag;
 
 import appeng.api.stacks.AEFluidKey;
+
+import com.gto.fastcollection.cache.WeakValueHashCache;
 
 public interface IAEFluid extends IUnique {
 

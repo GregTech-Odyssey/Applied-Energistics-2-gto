@@ -35,12 +35,12 @@ import appeng.menu.locator.MenuLocators;
 import appeng.parts.PartModel;
 import appeng.util.ConfigManager;
 
-import gto_ae.api.config.ExtendedSettings;
-import gto_ae.helpers.facility_management.FacilityManagement;
-import gto_ae.helpers.facility_management.IFacilityManagementHost;
-import gto_ae.helpers.facility_management.IO;
-import gto_ae.helpers.facility_management.WorkingStatus;
-import gto_ae.menu.implementations.FacilityManagementMenu;
+import com.gto.ae.api.config.ExtendedSettings;
+import com.gto.ae.helpers.facility_management.FacilityManagement;
+import com.gto.ae.helpers.facility_management.IFacilityManagementHost;
+import com.gto.ae.helpers.facility_management.IO;
+import com.gto.ae.helpers.facility_management.WorkingStatus;
+import com.gto.ae.menu.implementations.FacilityManagementMenu;
 
 public class FacilityManagementPart extends AbstractDisplayPart
         implements IFacilityManagementHost {

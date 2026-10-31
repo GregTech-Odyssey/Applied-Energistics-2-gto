@@ -84,8 +84,8 @@ import appeng.menu.me.items.WirelessCraftingTermMenu;
 import appeng.menu.me.networktool.NetworkStatusMenu;
 import appeng.menu.me.networktool.NetworkToolMenu;
 
-import gto_ae.client.gui.me.facility_management.FacilityManagementScreen;
-import gto_ae.menu.implementations.FacilityManagementMenu;
+import com.gto.ae.client.gui.me.facility_management.FacilityManagementScreen;
+import com.gto.ae.menu.implementations.FacilityManagementMenu;
 
 /**
  * The server sends the client a menu identifier, which the client then maps onto a screen using {@link MenuScreens}.

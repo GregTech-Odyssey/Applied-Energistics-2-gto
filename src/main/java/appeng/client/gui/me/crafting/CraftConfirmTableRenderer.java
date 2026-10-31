@@ -36,8 +36,8 @@ import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import appeng.util.ReadableNumberConverter;
 
-import gto_ae.core.localization.ExtendedLangs;
-import gto_ae.hooks.gui.menu.IRepoMenu;
+import com.gto.ae.core.localization.ExtendedLangs;
+import com.gto.ae.hooks.gui.menu.IRepoMenu;
 
 public class CraftConfirmTableRenderer extends AbstractTableRenderer<CraftingPlanSummaryEntry> {
     @Nullable

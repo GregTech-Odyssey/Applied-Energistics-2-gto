@@ -40,6 +40,7 @@ import appeng.core.AppEng;
 import appeng.core.definitions.AEDamageTypes;
 import appeng.datagen.providers.WorldGenProvider;
 import appeng.datagen.providers.advancements.AdvancementGenerator;
+import appeng.datagen.providers.localization.ChineseLocalizationProvider;
 import appeng.datagen.providers.localization.LocalizationProvider;
 import appeng.datagen.providers.loot.BlockDropProvider;
 import appeng.datagen.providers.models.BlockModelProvider;
@@ -126,6 +127,7 @@ public class AE2DataGenerators {
 
         // Must run last
         pack.addProvider(packOutput -> localization);
+        pack.addProvider(packOutput -> new ChineseLocalizationProvider(generator));
     }
 
     private static <T extends DataProvider> DataProvider.Factory<T> bindRegistries(

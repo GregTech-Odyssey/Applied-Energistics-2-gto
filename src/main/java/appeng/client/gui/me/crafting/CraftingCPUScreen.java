@@ -52,7 +52,7 @@ import appeng.menu.me.crafting.CraftingCPUMenu;
 import appeng.menu.me.crafting.CraftingStatus;
 import appeng.menu.me.crafting.CraftingStatusEntry;
 
-import gto_ae.core.localization.ExtendedLangs;
+import com.gto.ae.core.localization.ExtendedLangs;
 
 /**
  * This screen shows the current crafting job that a crafting CPU is working on (if any).

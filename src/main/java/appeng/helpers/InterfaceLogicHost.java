@@ -42,9 +42,9 @@ import appeng.menu.locator.MenuLocator;
 import appeng.menu.locator.MenuLocators;
 import appeng.parts.AEBasePart;
 
-import gto_ae.helpers.facility_management.IStatusTracked;
-import gto_ae.helpers.facility_management.ThroughputCounter;
-import gto_ae.helpers.facility_management.WorkingStatus;
+import com.gto.ae.helpers.facility_management.IStatusTracked;
+import com.gto.ae.helpers.facility_management.ThroughputCounter;
+import com.gto.ae.helpers.facility_management.WorkingStatus;
 
 /**
  * Interface that must be implemented by machines hosting {@link InterfaceLogic}.

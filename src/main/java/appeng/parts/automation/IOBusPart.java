@@ -61,9 +61,9 @@ import appeng.util.ConfigInventory;
 import appeng.util.Platform;
 import appeng.util.prioritylist.IPartitionList;
 
-import gto_ae.helpers.facility_management.IStatusTracked;
-import gto_ae.helpers.facility_management.ThroughputCounter;
-import gto_ae.helpers.facility_management.WorkingStatus;
+import com.gto.ae.helpers.facility_management.IStatusTracked;
+import com.gto.ae.helpers.facility_management.ThroughputCounter;
+import com.gto.ae.helpers.facility_management.WorkingStatus;
 
 public abstract class IOBusPart extends UpgradeablePart implements IGridTickable, IConfigInvHost, IStatusTracked {
 

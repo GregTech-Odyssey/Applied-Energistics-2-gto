@@ -29,7 +29,7 @@ import appeng.helpers.InventoryAction;
 import appeng.util.ConfigInventory;
 import appeng.util.ConfigMenuInventory;
 
-import gto_ae.hooks.gui.menu.IDraggableSlot;
+import com.gto.ae.hooks.gui.menu.IDraggableSlot;
 
 public class FakeSlot extends AppEngSlot implements IDraggableSlot {
     public FakeSlot(InternalInventory inv, int invSlot) {

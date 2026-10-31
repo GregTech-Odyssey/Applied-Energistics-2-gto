@@ -1,7 +1,5 @@
 package appeng.mixins;
 
-import com.gto.fastcollection.cache.WeakValueHashCache;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,6 +13,8 @@ import net.minecraft.world.level.material.Fluid;
 import appeng.api.stacks.AEFluidKey;
 import appeng.hooks.IAEFluid;
 import appeng.hooks.IUnique;
+
+import com.gto.fastcollection.cache.WeakValueHashCache;
 
 @Mixin(Fluid.class)
 public class FluidMixin implements IAEFluid {

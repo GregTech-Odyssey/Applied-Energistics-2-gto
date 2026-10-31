@@ -65,7 +65,7 @@ import appeng.menu.locator.MenuLocator;
 import appeng.menu.me.common.IClientRepo;
 import appeng.menu.me.common.IncrementalUpdateHelper;
 
-import gto_ae.hooks.gui.menu.IRepoMenu;
+import com.gto.ae.hooks.gui.menu.IRepoMenu;
 
 /**
  * @see appeng.client.gui.me.crafting.CraftConfirmScreen

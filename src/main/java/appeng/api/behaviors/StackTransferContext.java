@@ -10,7 +10,7 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.util.prioritylist.IPartitionList;
 
-import gto_ae.helpers.facility_management.ThroughputCounter;
+import com.gto.ae.helpers.facility_management.ThroughputCounter;
 
 /**
  * Context for import and export bus transfer operations.

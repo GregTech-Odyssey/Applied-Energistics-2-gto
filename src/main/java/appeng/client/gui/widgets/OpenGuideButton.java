@@ -9,7 +9,7 @@ import net.minecraft.network.chat.Component;
 import appeng.client.gui.Icon;
 import appeng.core.localization.ButtonToolTips;
 
-import gto_ae.hooks.gui.IIcon;
+import com.gto.ae.hooks.gui.IIcon;
 
 public class OpenGuideButton extends IconButton {
     public OpenGuideButton(OnPress onPress) {

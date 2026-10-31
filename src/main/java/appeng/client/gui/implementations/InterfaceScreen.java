@@ -39,7 +39,7 @@ import appeng.core.localization.ButtonToolTips;
 import appeng.menu.SlotSemantics;
 import appeng.menu.implementations.InterfaceMenu;
 
-import gto_ae.hooks.gui.IIcon;
+import com.gto.ae.hooks.gui.IIcon;
 
 public class InterfaceScreen<C extends InterfaceMenu> extends UpgradeableScreen<C> {
 

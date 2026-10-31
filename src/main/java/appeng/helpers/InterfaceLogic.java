@@ -66,9 +66,9 @@ import appeng.util.ConfigInventory;
 import appeng.util.ConfigManager;
 import appeng.util.Platform;
 
-import gto_ae.helpers.facility_management.IStatusTracked;
-import gto_ae.helpers.facility_management.ThroughputCounter;
-import gto_ae.helpers.facility_management.WorkingStatus;
+import com.gto.ae.helpers.facility_management.IStatusTracked;
+import com.gto.ae.helpers.facility_management.ThroughputCounter;
+import com.gto.ae.helpers.facility_management.WorkingStatus;
 
 /**
  * Contains behavior for interface blocks and parts, which is independent of the storage channel.

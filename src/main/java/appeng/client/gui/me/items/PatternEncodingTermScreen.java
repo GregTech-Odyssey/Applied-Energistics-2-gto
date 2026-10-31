@@ -55,8 +55,8 @@ import appeng.menu.SlotSemantics;
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.parts.encoding.EncodingMode;
 
-import gto_ae.client.gui.slot.FixedRepoSlot;
-import gto_ae.core.localization.ExtendedLangs;
+import com.gto.ae.client.gui.slot.FixedRepoSlot;
+import com.gto.ae.core.localization.ExtendedLangs;
 
 public class PatternEncodingTermScreen<C extends PatternEncodingTermMenu> extends MEStorageScreen<C> {
     private final Map<EncodingMode, EncodingModePanel> modePanels = new EnumMap<>(EncodingMode.class);

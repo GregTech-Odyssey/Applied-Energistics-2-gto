@@ -12,7 +12,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import com.google.common.collect.Iterators;
-import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +28,8 @@ import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.AEKeyFilter;
 import appeng.hooks.ticking.TickHandler;
+
+import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
 
 /**
  * Keeps track of the crafting patterns in the network, and related information.

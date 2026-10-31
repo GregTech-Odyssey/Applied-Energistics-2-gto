@@ -27,7 +27,6 @@ import java.util.UUID;
 import java.util.concurrent.*;
 
 import com.google.common.collect.*;
-import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
 
 import org.apache.commons.lang3.mutable.MutableObject;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +79,8 @@ import appeng.me.helpers.InterestManager;
 import appeng.me.helpers.StackWatcher;
 import appeng.me.service.helpers.CraftingServiceStorage;
 import appeng.me.service.helpers.NetworkCraftingProviders;
+
+import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
 
 public class CraftingService implements ICraftingService, IGridServiceProvider {
 

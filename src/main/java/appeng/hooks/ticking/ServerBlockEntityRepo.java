@@ -23,8 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
-
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -34,6 +32,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+
+import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
 
 /**
  * A class to hold data related to ticking block entities.

@@ -32,7 +32,7 @@ import appeng.client.guidebook.color.LightDarkMode;
 import appeng.client.guidebook.document.LytRect;
 import appeng.client.guidebook.style.ResolvedTextStyle;
 
-import gto_ae.hooks.gui.IIcon;
+import com.gto.ae.hooks.gui.IIcon;
 
 public interface RenderContext {
 

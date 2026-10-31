@@ -22,7 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import appeng.core.AppEng;
 
-import gto_ae.hooks.gui.IIcon;
+import com.gto.ae.hooks.gui.IIcon;
 
 /**
  * Edit in {@code assets/ae2/textures/guis/states.png}.

@@ -104,7 +104,7 @@ import appeng.spatial.SpatialStorageSkyProperties;
 import appeng.util.InteractionUtil;
 import appeng.util.Platform;
 
-import gto_ae.api.config.ButtonAppearance;
+import com.gto.ae.api.config.ButtonAppearance;
 
 /**
  * Client-specific functionality.

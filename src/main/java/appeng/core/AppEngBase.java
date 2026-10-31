@@ -92,7 +92,7 @@ import appeng.sounds.AppEngSounds;
 import appeng.spatial.SpatialStorageChunkGenerator;
 import appeng.spatial.SpatialStorageDimensionIds;
 
-import gto_ae.helpers.facility_management.FacilityUidManager;
+import com.gto.ae.helpers.facility_management.FacilityUidManager;
 
 /**
  * Mod functionality that is common to both dedicated server and client.

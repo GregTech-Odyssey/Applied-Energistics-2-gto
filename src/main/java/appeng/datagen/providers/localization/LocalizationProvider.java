@@ -28,7 +28,7 @@ import appeng.datagen.providers.IAE2DataProvider;
 import appeng.integration.modules.emi.EmiText;
 import appeng.integration.modules.igtooltip.TooltipIds;
 
-import gto_ae.core.localization.ExtendedLangs;
+import com.gto.ae.core.localization.ExtendedLangs;
 
 public class LocalizationProvider implements IAE2DataProvider {
     private final Map<String, String> localizations = new HashMap<>();

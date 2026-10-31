@@ -36,7 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import appeng.client.gui.Icon;
 import appeng.client.gui.style.Blitter;
 
-import gto_ae.hooks.gui.IIcon;
+import com.gto.ae.hooks.gui.IIcon;
 
 public abstract class IconButton extends Button implements ITooltip {
 

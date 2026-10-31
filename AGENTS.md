@@ -25,11 +25,11 @@
 
 ## 本仓特有约定
 
-- **包边界**：`appeng.*` 是 AE2 上游 fork 的代码，保持上游结构与风格，除功能/性能需要外不做无谓重排；`gto_ae.*` 是本团队的扩展（设施管理、2 合 1 终端、扩展图标与文案），必须完全按上述规范编写。
+- **包边界**：`appeng.*` 是 AE2 上游 fork 的代码，保持上游结构与风格，除功能/性能需要外不做无谓重排；`com.gto.ae.*` 是本团队的扩展（设施管理、2 合 1 终端、扩展图标与文案），必须完全按上述规范编写。
 - **行尾与格式**：`.java` 一律 LF（CRLF 会被 Spotless 判为违规）。提交前依次运行 `.\gradlew.bat spotlessApply`、`.\gradlew.bat spotlessCheck`。
-- **文案**：界面文本加到 `gto_ae.core.localization.ExtendedLangs`（中英双语，`name()` 自动转成 `ae2.gto_extension.xxx` 键）。`en_us` 由 datagen 生成；`zh_cn` 等翻译由 Crowdin 同步到 `src/main/resources/assets/ae2/lang/`，不要手工往生成文件里塞文案。
+- **文案**：界面文本加到 `com.gto.ae.core.localization.ExtendedLangs`（中英双语，`name()` 自动转成 `ae2.gto_extension.xxx` 键）。`en_us` 由 datagen 生成；`zh_cn` 以 Crowdin 的 `src/main/resources/assets/ae2/lang/zh_cn.json` 为底合并 `ExtendedLangs`，同名键以扩展文案为准，打包使用生成的完整文件。其他翻译由 Crowdin 同步；不要手工编辑生成文件。
 - **生成资源**：`src/generated/resources` 是 datagen 输出。改语言/模型/标签等内容时改真实生成源（如 `ExtendedLangs`、`LocalizationProvider`）后跑 `.\gradlew.bat runData`；手工编辑生成文件只能用于诊断，不作为最终结果。
-- **图标**：扩展图标加在 `gto_ae.client.gui.IconsExtended`（`textures/guis/states_iicon.png` 的图集坐标）；终端工具栏按钮用 `addToLeftToolbar(new ToggleButton(...))` 挂载，并在 `updateBeforeRender()` 里同步状态。
+- **图标**：扩展图标加在 `com.gto.ae.client.gui.IconsExtended`（`textures/guis/states_iicon.png` 的图集坐标）；终端工具栏按钮用 `addToLeftToolbar(new ToggleButton(...))` 挂载，并在 `updateBeforeRender()` 里同步状态。
 
 ## 构建与验证
 

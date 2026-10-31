@@ -75,9 +75,9 @@ import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.helpers.InventoryAction;
 import appeng.menu.implementations.PatternAccessTermMenu;
 
-import gto_ae.api.config.ExtendedSettings;
-import gto_ae.client.gui.widgets.ExpandableToggleButton;
-import gto_ae.menu.ShowMolecularAssembler;
+import com.gto.ae.api.config.ExtendedSettings;
+import com.gto.ae.client.gui.widgets.ExpandableToggleButton;
+import com.gto.ae.menu.ShowMolecularAssembler;
 
 public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AEBaseScreen<C> {
     private static final Logger LOGGER = LoggerFactory.getLogger(PatternAccessTermScreen.class);

@@ -20,7 +20,7 @@ import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.helpers.InventoryAction;
 
-import gto_ae.hooks.gui.menu.IDraggableSlot;
+import com.gto.ae.hooks.gui.menu.IDraggableSlot;
 
 public final class DropTargets {
     private DropTargets() {

@@ -1,10 +1,10 @@
 package appeng.hooks;
 
-import com.gto.fastcollection.cache.WeakValueHashCache;
-
 import net.minecraft.nbt.CompoundTag;
 
 import appeng.api.stacks.AEItemKey;
+
+import com.gto.fastcollection.cache.WeakValueHashCache;
 
 public interface IAEItem extends IUnique {
 

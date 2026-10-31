@@ -31,7 +31,7 @@ import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.ICompositeWidget;
 import appeng.client.gui.Rects;
 
-import gto_ae.client.gui.widgets.expandable.IExpandable;
+import com.gto.ae.client.gui.widgets.expandable.IExpandable;
 
 /**
  * A stacked button panel on the left or right side of our UIs.

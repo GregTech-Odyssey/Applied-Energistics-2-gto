@@ -27,9 +27,9 @@ import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.CPUSelectionList;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 
-import gto_ae.api.config.ExtendedSettings;
-import gto_ae.client.gui.widgets.ExpandableToggleButton;
-import gto_ae.helpers.facility_management.WorkingStatus;
+import com.gto.ae.api.config.ExtendedSettings;
+import com.gto.ae.client.gui.widgets.ExpandableToggleButton;
+import com.gto.ae.helpers.facility_management.WorkingStatus;
 
 /**
  * This specialized version of the {@link CraftingCPUScreen} allows a player to cycle through the CPUs that are

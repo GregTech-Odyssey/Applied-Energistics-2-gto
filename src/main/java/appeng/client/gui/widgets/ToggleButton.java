@@ -27,7 +27,7 @@ import net.minecraft.network.chat.Component;
 
 import appeng.client.gui.Icon;
 
-import gto_ae.hooks.gui.IIcon;
+import com.gto.ae.hooks.gui.IIcon;
 
 public class ToggleButton extends IconButton implements ITooltip {
 

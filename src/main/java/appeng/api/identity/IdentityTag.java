@@ -3,11 +3,11 @@ package appeng.api.identity;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
-import com.gto.fastcollection.cache.WeakValueHashCache;
-
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.nbt.CompoundTag;
+
+import com.gto.fastcollection.cache.WeakValueHashCache;
 
 public final class IdentityTag {
 

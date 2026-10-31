@@ -45,7 +45,7 @@ import appeng.menu.guisync.GuiSync;
 import appeng.menu.guisync.PacketWritable;
 import appeng.menu.implementations.MenuTypeBuilder;
 
-import gto_ae.helpers.facility_management.WorkingStatus;
+import com.gto.ae.helpers.facility_management.WorkingStatus;
 
 /**
  * @see appeng.client.gui.me.crafting.CraftingStatusScreen

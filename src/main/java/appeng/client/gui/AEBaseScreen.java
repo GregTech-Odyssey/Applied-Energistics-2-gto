@@ -105,8 +105,8 @@ import appeng.menu.slot.IOptionalSlot;
 import appeng.menu.slot.ResizableSlot;
 import appeng.util.ConfigMenuInventory;
 
-import gto_ae.hooks.gui.INoMouseRedirectionWidget;
-import gto_ae.hooks.gui.IPopulateScreenWidget;
+import com.gto.ae.hooks.gui.INoMouseRedirectionWidget;
+import com.gto.ae.hooks.gui.IPopulateScreenWidget;
 
 public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContainerScreen<T> {
     private static final Logger LOG = LoggerFactory.getLogger(AEBaseScreen.class);

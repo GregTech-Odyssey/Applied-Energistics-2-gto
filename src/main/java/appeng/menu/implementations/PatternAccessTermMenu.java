@@ -21,16 +21,15 @@ package appeng.menu.implementations;
 import java.util.Map;
 import java.util.Set;
 
-import com.glodblock.github.extendedae.common.EPPItemAndBlock;
-
 import org.jetbrains.annotations.Nullable;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.TickTask;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.MenuType;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -63,13 +62,16 @@ import appeng.util.inv.AppEngInternalInventory;
 import appeng.util.inv.FilteredInternalInventory;
 import appeng.util.inv.filter.IAEItemFilter;
 
-import gto_ae.api.config.ExtendedSettings;
-import gto_ae.menu.ShowMolecularAssembler;
+import com.gto.ae.api.config.ExtendedSettings;
+import com.gto.ae.menu.ShowMolecularAssembler;
 
 /**
  * @see PatternAccessTermScreen
  */
 public class PatternAccessTermMenu extends AEBaseMenu {
+
+    private static final ResourceLocation EX_ASSEMBLER_ID = new ResourceLocation("expatternprovider",
+            "ex_molecular_assembler");
 
     private final IConfigurableObject host;
     @GuiSync(1)
@@ -489,9 +491,6 @@ public class PatternAccessTermMenu extends AEBaseMenu {
     }
 
     private static boolean gtolib$isCraftingContainer(PatternContainer container) {
-        Set<Item> MolecularAssemblerItem = Set.of(
-                AEBlocks.MOLECULAR_ASSEMBLER.asItem().asItem(),
-                EPPItemAndBlock.EX_ASSEMBLER.asItem());
         InternalInventory inventory = container.getTerminalPatternInventory();
         if (!inventory.isEmpty()) {
             for (int j = 0; j < inventory.size(); j++) {
@@ -502,7 +501,9 @@ public class PatternAccessTermMenu extends AEBaseMenu {
             }
         }
         if (container.getTerminalGroup().icon() != null) {
-            return MolecularAssemblerItem.contains(container.getTerminalGroup().icon().getItem());
+            var item = container.getTerminalGroup().icon().getItem();
+            return item == AEBlocks.MOLECULAR_ASSEMBLER.asItem().asItem() ||
+                    EX_ASSEMBLER_ID.equals(ForgeRegistries.ITEMS.getKey(item));
         }
         return false;
     }

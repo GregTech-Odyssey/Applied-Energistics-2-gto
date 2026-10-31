@@ -29,7 +29,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.Weigher;
-import com.gto.fastcollection.map.enums.Enum2ObjectMap;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,6 +60,8 @@ import appeng.api.util.AEColor;
 import appeng.block.networking.CableBusBlock;
 import appeng.client.render.model.AEModelData;
 import appeng.thirdparty.fabric.MeshBuilderImpl;
+
+import com.gto.fastcollection.map.enums.Enum2ObjectMap;
 
 public class CableBusBakedModel implements IDynamicBakedModel {
 

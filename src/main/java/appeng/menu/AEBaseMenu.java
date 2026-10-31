@@ -29,7 +29,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.gto.fastcollection.fastutil.OpenCacheHashSet;
 
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
@@ -76,6 +75,8 @@ import appeng.menu.slot.InaccessibleSlot;
 import appeng.menu.slot.RestrictedInputSlot;
 import appeng.parts.AEBasePart;
 import appeng.util.ConfigMenuInventory;
+
+import com.gto.fastcollection.fastutil.OpenCacheHashSet;
 
 /// @see appeng.client.gui.AEBaseScreen
 public abstract class AEBaseMenu extends AbstractContainerMenu {

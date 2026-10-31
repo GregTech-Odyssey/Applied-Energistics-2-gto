@@ -37,7 +37,7 @@ import appeng.menu.me.items.WirelessCraftingTermMenu;
 import appeng.menu.me.networktool.NetworkStatusMenu;
 import appeng.menu.me.networktool.NetworkToolMenu;
 
-import gto_ae.menu.implementations.FacilityManagementMenu;
+import com.gto.ae.menu.implementations.FacilityManagementMenu;
 
 public final class InitMenuTypes {
     private static final Map<ResourceLocation, MenuType<?>> REGISTRATION_QUEUE = new HashMap<>();

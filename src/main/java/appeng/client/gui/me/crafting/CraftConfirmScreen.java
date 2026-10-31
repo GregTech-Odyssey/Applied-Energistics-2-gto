@@ -55,8 +55,8 @@ import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummary;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 
-import gto_ae.client.gui.IconsExtended;
-import gto_ae.core.localization.ExtendedLangs;
+import com.gto.ae.client.gui.IconsExtended;
+import com.gto.ae.core.localization.ExtendedLangs;
 
 /**
  * This screen shows the computed crafting plan and allows the player to select a CPU on which it should be scheduled

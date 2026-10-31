@@ -76,9 +76,9 @@ import appeng.util.IConfigManagerListener;
 import appeng.util.Platform;
 import appeng.util.prioritylist.IPartitionList;
 
-import gto_ae.client.gui.IconsExtended;
-import gto_ae.core.localization.ExtendedLangs;
-import gto_ae.hooks.gui.menu.IRepoSlot;
+import com.gto.ae.client.gui.IconsExtended;
+import com.gto.ae.core.localization.ExtendedLangs;
+import com.gto.ae.hooks.gui.menu.IRepoSlot;
 
 public class MEStorageScreen<C extends MEStorageMenu>
         extends AEBaseScreen<C> implements ISortSource, IConfigManagerListener {

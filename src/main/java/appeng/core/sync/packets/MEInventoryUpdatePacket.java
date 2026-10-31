@@ -42,7 +42,7 @@ import appeng.core.sync.BasePacketHandler;
 import appeng.menu.me.common.GridInventoryEntry;
 import appeng.menu.me.common.IncrementalUpdateHelper;
 
-import gto_ae.hooks.gui.menu.IRepoMenu;
+import com.gto.ae.hooks.gui.menu.IRepoMenu;
 
 public class MEInventoryUpdatePacket extends BasePacket {
 

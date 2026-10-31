@@ -21,11 +21,11 @@ package appeng.client.gui.me.common;
 import java.util.Comparator;
 import java.util.WeakHashMap;
 
-import com.gto.fastcollection.fastutil.O2IOpenCacheHashMap;
-
 import appeng.api.config.SortDir;
 import appeng.api.config.SortOrder;
 import appeng.api.stacks.AEKey;
+
+import com.gto.fastcollection.fastutil.O2IOpenCacheHashMap;
 
 final class KeySorters {
 

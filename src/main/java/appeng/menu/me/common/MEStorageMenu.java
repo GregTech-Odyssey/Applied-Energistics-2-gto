@@ -79,7 +79,7 @@ import appeng.util.ConfigManager;
 import appeng.util.IConfigManagerListener;
 import appeng.util.Platform;
 
-import gto_ae.hooks.gui.menu.IRepoMenu;
+import com.gto.ae.hooks.gui.menu.IRepoMenu;
 
 /**
  * @see MEStorageScreen

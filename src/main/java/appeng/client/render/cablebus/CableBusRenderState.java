@@ -23,9 +23,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
-import com.gto.fastcollection.map.enums.Enum2IntMap;
-import com.gto.fastcollection.map.enums.Enum2ObjectMap;
-
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.phys.AABB;
@@ -35,6 +32,9 @@ import net.minecraftforge.client.model.data.ModelProperty;
 import appeng.api.parts.IPartModel;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
+
+import com.gto.fastcollection.map.enums.Enum2IntMap;
+import com.gto.fastcollection.map.enums.Enum2ObjectMap;
 
 /**
  * This class captures the entire rendering state needed for a cable bus and transports it to the rendering thread for

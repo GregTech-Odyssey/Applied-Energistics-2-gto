@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 
 import appeng.api.stacks.AEKey;
 
-import gto_ae.core.localization.ExtendedLangs;
+import com.gto.ae.core.localization.ExtendedLangs;
 
 /**
  * Chat text for a completed crafting job.

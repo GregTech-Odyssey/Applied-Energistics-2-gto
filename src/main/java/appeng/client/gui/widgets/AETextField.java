@@ -42,7 +42,7 @@ import appeng.client.gui.style.Blitter;
 import appeng.client.gui.style.PaletteColor;
 import appeng.client.gui.style.ScreenStyle;
 
-import gto_ae.hooks.gui.INoMouseRedirectionWidget;
+import com.gto.ae.hooks.gui.INoMouseRedirectionWidget;
 
 /**
  * A modified version of the Minecraft text field. You can initialize it over the full element span. The mouse click

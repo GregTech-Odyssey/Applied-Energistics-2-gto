@@ -51,7 +51,7 @@ import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.SwitchGuisPacket;
 import appeng.menu.implementations.PriorityMenu;
 
-import gto_ae.hooks.gui.IPopulateScreenWidget;
+import com.gto.ae.hooks.gui.IPopulateScreenWidget;
 
 /**
  * This utility class helps with positioning commonly used Minecraft {@link AbstractWidget} instances on a screen

@@ -27,9 +27,9 @@ import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 
 import appeng.core.sync.packets.*;
 
-import gto_ae.core.sync.packets.ConfigButtonDirectPacket;
-import gto_ae.core.sync.packets.FacilityClearPacket;
-import gto_ae.core.sync.packets.FacilityManagementPacket;
+import com.gto.ae.core.sync.packets.ConfigButtonDirectPacket;
+import com.gto.ae.core.sync.packets.FacilityClearPacket;
+import com.gto.ae.core.sync.packets.FacilityManagementPacket;
 
 public class BasePacketHandler {
     private static final Map<Class<? extends BasePacket>, PacketTypes> REVERSE_LOOKUP = new Reference2ReferenceOpenHashMap<>();

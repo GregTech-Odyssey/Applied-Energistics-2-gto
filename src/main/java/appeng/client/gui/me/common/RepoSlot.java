@@ -26,7 +26,7 @@ import net.minecraft.world.item.ItemStack;
 
 import appeng.menu.me.common.GridInventoryEntry;
 
-import gto_ae.hooks.gui.menu.IRepoSlot;
+import com.gto.ae.hooks.gui.menu.IRepoSlot;
 
 /**
  * This is a virtual slot that has no corresponding slot on the server-side. It displays an item stack from the
