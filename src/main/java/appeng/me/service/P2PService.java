@@ -222,6 +222,12 @@ public class P2PService implements IGridService, IGridServiceProvider {
         }
     }
 
+    @Nullable
+    public P2PTunnelPart getInput(short freq) {
+        var inputs = this.inputs.get(freq);
+        return inputs == null || inputs.isEmpty() ? null : inputs.get(0);
+    }
+
     public static final P2PTunnelPart[] EMPTY = new P2PTunnelPart[0];
 
     public <T extends P2PTunnelPart<T>> P2PTunnelPart[] getInputs(short freq, Class<T> c) {
