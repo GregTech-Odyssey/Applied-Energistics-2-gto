@@ -22,7 +22,8 @@ import appeng.me.storage.ExternalStorageFacade;
 
 /**
  * Capability lookups of one block entity, shared by every {@link StorageTargetResolver} that targets it. A result is
- * trusted once the provider returns the same {@link LazyOptional} twice, until it is invalidated or rechecked.
+ * trusted once the provider returns the same {@link LazyOptional} twice, until it is invalidated, rechecked, or the
+ * storage epoch of a {@link MEStorageHost} changes.
  */
 public final class BlockEntityTargets {
 
@@ -131,6 +132,7 @@ public final class BlockEntityTargets {
         private Object value;
         private boolean trusted;
         private int hits;
+        private int epoch = -1;
         @Nullable
         private ExternalStorageFacade facade;
         @Nullable
@@ -150,6 +152,14 @@ public final class BlockEntityTargets {
 
         @Nullable
         Object get() {
+            if (owner instanceof MEStorageHost host) {
+                var epoch = host.storageEpoch();
+                if (epoch >= 0 && epoch != this.epoch) {
+                    this.epoch = epoch;
+                    hits = 0;
+                    trusted = false;
+                }
+            }
             if (--hits > 0 && (trusted || value == null)) {
                 return value;
             }
