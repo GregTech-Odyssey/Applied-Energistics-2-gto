@@ -62,7 +62,9 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.storage.MEStorage;
 import appeng.api.util.IConfigManager;
+import appeng.capabilities.Capabilities;
 import appeng.core.AELog;
 import appeng.core.definitions.AEItems;
 import appeng.core.localization.GuiText;
@@ -109,6 +111,9 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
     private Direction sendDirection;
     // Stack returning logic
     private final PatternProviderReturnInventory returnInv;
+    @Nullable
+    private MEStorage networkStorage;
+    private int storageEpoch;
 
     private final PatternProviderTargetCache[] targetCaches = new PatternProviderTargetCache[6];
 
@@ -582,6 +587,31 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
         return this.returnInv;
     }
 
+    /**
+     * The ME network storage exposed to adjacent machines, similar to how an interface exposes its network inventory.
+     */
+    @Nullable
+    public MEStorage getNetworkStorage() {
+        return this.networkStorage;
+    }
+
+    public int storageEpoch() {
+        return this.storageEpoch;
+    }
+
+    public void gridChanged() {
+        var networkStorage = mainNode.getGrid().getStorageService().getInventory();
+        if (this.networkStorage != networkStorage) {
+            this.networkStorage = networkStorage;
+            exposedStorageChanged();
+        }
+    }
+
+    private void exposedStorageChanged() {
+        storageEpoch++;
+        host.exposedStorageChanged();
+    }
+
     public void exportSettings(CompoundTag output) {
         patternInventory.writeToNBT(output, NBT_MEMORY_CARD_PATTERNS);
     }
@@ -763,6 +793,10 @@ public class PatternProviderLogic implements InternalInventoryHost, ICraftingPro
     }
 
     public <T> LazyOptional<T> getCapability(Capability<T> capability) {
+        if (capability == Capabilities.STORAGE) {
+            var storage = getNetworkStorage();
+            return storage == null ? LazyOptional.empty() : LazyOptional.of(() -> storage).cast();
+        }
         return this.returnInv.getCapability(capability);
     }
 

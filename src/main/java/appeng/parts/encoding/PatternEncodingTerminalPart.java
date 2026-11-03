@@ -31,10 +31,12 @@ import net.minecraftforge.common.util.LazyOptional;
 
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
+import appeng.capabilities.Capabilities;
 import appeng.core.AppEng;
 import appeng.helpers.IPatternTerminalLogicHost;
 import appeng.helpers.IPatternTerminalMenuHost;
 import appeng.items.parts.PartModels;
+import appeng.me.storage.ExternalStorageFacade;
 import appeng.menu.me.items.PatternEncodingTermMenu;
 import appeng.parts.PartModel;
 import appeng.parts.reporting.AbstractTerminalPart;
@@ -114,6 +116,10 @@ public class PatternEncodingTerminalPart extends AbstractTerminalPart
     public <T> LazyOptional<T> getCapability(Capability<T> cap) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
             return LazyOptional.of(() -> logic.getBlankPatternInv().toItemHandler()).cast();
+        }
+        if (cap == Capabilities.STORAGE) {
+            return LazyOptional.of(() -> ExternalStorageFacade.of(logic.getBlankPatternInv().toItemHandler()))
+                    .cast();
         }
         return super.getCapability(cap);
     }

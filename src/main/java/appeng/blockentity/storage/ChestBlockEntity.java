@@ -760,11 +760,14 @@ public class ChestBlockEntity extends AENetworkPowerBlockEntity
                 && facing != getFront()) {
             return (LazyOptional<T>) LazyOptional.of(() -> this.fluidHandler);
         }
-        if (capability == Capabilities.STORAGE && facing != getFront()) {
-            var storage = getInventory();
-            if (storage != null) {
-                return (LazyOptional<T>) LazyOptional.of(() -> storage);
+        if (capability == Capabilities.STORAGE) {
+            if (facing != getFront()) {
+                var storage = getInventory();
+                if (storage != null) {
+                    return (LazyOptional<T>) LazyOptional.of(() -> storage);
+                }
             }
+            return LazyOptional.empty();
         }
         return super.getCapability(capability, facing);
     }

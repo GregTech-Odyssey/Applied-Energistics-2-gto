@@ -21,6 +21,8 @@ import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
 
 import appeng.blockentity.AEBaseBlockEntity;
+import appeng.capabilities.Capabilities;
+import appeng.me.storage.ExternalStorageFacade;
 
 public class SkyStoneTankBlockEntity extends AEBaseBlockEntity {
 
@@ -35,6 +37,8 @@ public class SkyStoneTankBlockEntity extends AEBaseBlockEntity {
     };
 
     private final LazyOptional<IFluidHandler> holder = LazyOptional.of(() -> tank);
+    private final ExternalStorageFacade storage = ExternalStorageFacade.of(tank);
+    private final LazyOptional<ExternalStorageFacade> storageHolder = LazyOptional.of(() -> storage);
 
     public SkyStoneTankBlockEntity(BlockEntityType<?> blockEntityType, BlockPos pos, BlockState blockState) {
         super(blockEntityType, pos, blockState);
@@ -67,6 +71,9 @@ public class SkyStoneTankBlockEntity extends AEBaseBlockEntity {
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> capability, @Nullable Direction facing) {
         if (capability == ForgeCapabilities.FLUID_HANDLER) {
             return holder.cast();
+        }
+        if (capability == Capabilities.STORAGE) {
+            return storageHolder.cast();
         }
         return super.getCapability(capability, facing);
     }

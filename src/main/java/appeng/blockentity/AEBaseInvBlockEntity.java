@@ -33,6 +33,8 @@ import net.minecraftforge.common.util.LazyOptional;
 
 import appeng.api.inventories.InternalInventory;
 import appeng.api.stacks.GenericStack;
+import appeng.capabilities.Capabilities;
+import appeng.me.storage.ExternalStorageFacade;
 import appeng.util.inv.InternalInventoryHost;
 
 public abstract class AEBaseInvBlockEntity extends AEBaseBlockEntity implements InternalInventoryHost {
@@ -113,6 +115,14 @@ public abstract class AEBaseInvBlockEntity extends AEBaseBlockEntity implements 
             } else {
                 return (LazyOptional<T>) LazyOptional.of(() -> getExposedInventoryForSide(facing).toItemHandler());
             }
+        }
+        if (capability == Capabilities.STORAGE) {
+            var inventory = facing == null ? getInternalInventory() : getExposedInventoryForSide(facing);
+            if (inventory.size() > 0) {
+                return (LazyOptional<T>) LazyOptional
+                        .of(() -> ExternalStorageFacade.of(inventory.toItemHandler()));
+            }
+            return LazyOptional.empty();
         }
         return super.getCapability(capability, facing);
     }
