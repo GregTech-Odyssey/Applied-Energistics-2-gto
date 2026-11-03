@@ -380,8 +380,6 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
 
     @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
-        Objects.requireNonNull(what, "what");
-        Preconditions.checkArgument(amount >= 0, "amount >= 0");
         if (!isAllowed(what)) {
             return 0;
         }
@@ -413,9 +411,6 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
 
     @Override
     public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-        Objects.requireNonNull(what, "what");
-        Preconditions.checkArgument(amount >= 0, "amount >= 0");
-
         var extracted = 0L;
         for (int i = 0, len = stacks.length; i < len && extracted < amount; i++) {
             extracted += extract(i, what, amount - extracted, mode);

@@ -18,12 +18,21 @@
 
 package appeng.parts.p2p;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
+import appeng.api.config.Actionable;
+import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartItem;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.KeyCounter;
+import appeng.api.storage.MEStorage;
+import appeng.capabilities.Capabilities;
 import appeng.hooks.ticking.TickHandler;
 
 /**
@@ -41,6 +50,8 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
     protected A inputHandler;
     protected A outputHandler;
     protected A emptyHandler;
+    protected MEStorage inputStorage = new InputMEStorage();
+    protected MEStorage outputStorage = new OutputMEStorage();
 
     public CapabilityP2PTunnelPart(IPartItem<?> partItem, Capability<A> capability) {
         super(partItem);
@@ -58,6 +69,12 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                 return LazyOptional.of(() -> outputHandler).cast();
             } else {
                 return LazyOptional.of(() -> inputHandler).cast();
+            }
+        }
+        if (capabilityClass == Capabilities.STORAGE) {
+            var storage = isOutput() ? outputStorage : inputStorage;
+            if (storage != null) {
+                return LazyOptional.of(() -> storage).cast();
             }
         }
         return LazyOptional.empty();
@@ -106,6 +123,29 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                 // This capability is already in use (as the nesting is > 1), so we return an empty handler to prevent
                 // infinite recursion.
                 return emptyHandler;
+            }
+        }
+
+        @Nullable
+        public MEStorage getStorage() {
+            if (accessDepth == 0) {
+                throw new IllegalStateException("get was called after closing the wrapper");
+            } else if (accessDepth == 1) {
+                if (isActive()) {
+                    var self = getBlockEntity();
+                    var te = self.getLevel().getBlockEntity(getFacingPos());
+
+                    if (te != null) {
+                        return te.getCapability(Capabilities.STORAGE, getSide().getOpposite())
+                                .orElse(null);
+                    }
+                }
+
+                return null;
+            } else {
+                // This capability is already in use (as the nesting is > 1), so we return an empty handler to prevent
+                // infinite recursion.
+                return null;
             }
         }
 
@@ -195,6 +235,99 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
             } finally {
                 inBlockUpdate = false;
             }
+        }
+    }
+
+    private class InputMEStorage implements MEStorage {
+
+        @Override
+        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+            long total = 0;
+            var outputs = CapabilityP2PTunnelPart.this.getOutputs();
+            final int outputTunnels = outputs.size();
+            if (outputTunnels == 0 || amount == 0) {
+                return 0;
+            }
+            final long amountPerOutput = amount / outputTunnels;
+            long overflow = amountPerOutput == 0 ? amount : amount % amountPerOutput;
+            for (var target : outputs) {
+                try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
+                    final var output = capabilityGuard.getStorage();
+                    if (output == null)
+                        continue;
+                    final long toSend = amountPerOutput + overflow;
+                    final long received = output.insert(what, toSend, mode, source);
+                    overflow = toSend - received;
+                    total += received;
+                }
+            }
+            return total;
+        }
+
+        @Override
+        public Component getDescription() {
+            return Component.empty();
+        }
+    }
+
+    private class OutputMEStorage implements MEStorage {
+
+        @org.jetbrains.annotations.Nullable
+        private AvailableStacksCache cache;
+
+        @Override
+        public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+            long total = 0;
+            var inputs = CapabilityP2PTunnelPart.this.getInputs();
+            final int inputTunnels = inputs.length;
+            if (inputTunnels == 0 || amount == 0) {
+                return 0;
+            }
+            final long amountPerOutput = amount / inputTunnels;
+            long overflow = amountPerOutput == 0 ? amount : amount % amountPerOutput;
+            for (var target : inputs) {
+                try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
+                    final var input = capabilityGuard.getStorage();
+                    if (input == null)
+                        continue;
+                    final long toSend = amountPerOutput + overflow;
+                    final long received = input.extract(what, toSend, mode, source);
+                    overflow = toSend - received;
+                    total += received;
+                }
+            }
+            return total;
+        }
+
+        @Override
+        public void getAvailableStacks(KeyCounter out) {
+            var inputs = CapabilityP2PTunnelPart.this.getInputs();
+            final int outputTunnels = inputs.length;
+            if (outputTunnels == 0) {
+                return;
+            }
+            for (var target : inputs) {
+                try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
+                    final var input = capabilityGuard.getStorage();
+                    if (input == null)
+                        continue;
+                    input.getAvailableStacks(out);
+                }
+            }
+        }
+
+        @Override
+        public KeyCounter getAvailableStacks() {
+            var cache = this.cache;
+            if (cache == null) {
+                this.cache = cache = new AvailableStacksCache(this::getAvailableStacks);
+            }
+            return cache.getAvailableStacksCache();
+        }
+
+        @Override
+        public Component getDescription() {
+            return null;
         }
     }
 }

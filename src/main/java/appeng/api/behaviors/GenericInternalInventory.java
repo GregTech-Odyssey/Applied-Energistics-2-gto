@@ -4,6 +4,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 import appeng.api.config.Actionable;
+import appeng.api.inventories.IKeyInventory;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
@@ -13,7 +14,7 @@ import appeng.api.stacks.GenericStack;
  * AE2 devices. This is exposed to allow addons to adapt them for foreign capabilities/API lookups.
  */
 @ApiStatus.Experimental
-public interface GenericInternalInventory {
+public interface GenericInternalInventory extends IKeyInventory {
     /**
      * @return The number of slots in this inventory. Never changes.
      */
@@ -77,4 +78,32 @@ public interface GenericInternalInventory {
      * Send a change notification manually, for example because the automatic notification was suppressed.
      */
     void onChange();
+
+    @Override
+    default @Nullable AEKey rawKeyAt(int slot) {
+        var stack = getStack(slot);
+        if (stack == null) {
+            return null;
+        }
+        return stack.what();
+    }
+
+    @Override
+    default long amountAt(int slot) {
+        var stack = getStack(slot);
+        if (stack == null) {
+            return 0;
+        }
+        return stack.amount();
+    }
+
+    @Override
+    default long insertRawKey(int slot, AEKey key, long amount, boolean simulate) {
+        return insert(slot, key, amount, simulate ? Actionable.SIMULATE : Actionable.MODULATE);
+    }
+
+    @Override
+    default long extractRawKey(int slot, AEKey key, long amount, boolean simulate) {
+        return extract(slot, key, amount, simulate ? Actionable.SIMULATE : Actionable.MODULATE);
+    }
 }

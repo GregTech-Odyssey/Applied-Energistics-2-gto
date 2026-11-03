@@ -18,7 +18,6 @@
 
 package appeng.me.service;
 
-import java.math.BigInteger;
 import java.util.*;
 
 import com.google.common.base.Preconditions;
@@ -36,10 +35,7 @@ import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridServiceProvider;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.networking.storage.IStorageWatcherNode;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyLongMap;
-import appeng.api.stacks.AEKeyObjectMap;
-import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.*;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
 import appeng.api.storage.MEStorage;
@@ -81,9 +77,9 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
      */
     private final Map<IGridNode, StackWatcher<IStorageWatcherNode>> watchers = new IdentityHashMap<>();
     private final Reference2ObjectOpenHashMap<MEStorage, MountContent> mountContents = new Reference2ObjectOpenHashMap<>();
-    private final ObjectOpenHashSet<AEKey> pendingWatcherKeys = new ObjectOpenHashSet<>();
+    private final AEKeySet<AEKey> pendingWatcherKeys = new AEKeySet<>();
     private KeyCounter mountScratch = new KeyCounter();
-    private final Reference2ObjectOpenHashMap<AEKey, BigInteger> oversizedTotals = new Reference2ObjectOpenHashMap<>();
+    private final AEKeyBigMap<AEKey> oversizedTotals = new AEKeyBigMap<>();
     private boolean mountsSynced;
     private boolean fullWatcherUpdate = true;
     private boolean trackKeys;
@@ -180,11 +176,11 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
             mountsSynced = true;
             for (var entry : cachedAvailableStacks) {
                 if (entry.getLongValue() == Long.MAX_VALUE) {
-                    var total = BigInteger.ZERO;
+                    var total = new U126();
                     for (var mount : mountContents.values()) {
-                        total = total.add(BigInteger.valueOf(mount.content.get(entry.getKey())));
+                        total.add(mount.content.get(entry.getKey()));
                     }
-                    if (total.bitLength() >= 64) {
+                    if (total.isAboveLong()) {
                         oversizedTotals.put(entry.getKey(), total);
                     }
                 }
@@ -262,10 +258,14 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
             long old = cachedAvailableStacks.get(key);
             amount = old + delta;
             if (((old ^ amount) & (delta ^ amount)) < 0) {
-                amount = clampTotal(key, BigInteger.valueOf(old).add(BigInteger.valueOf(delta)));
+                var u126 = new U126(old);
+                u126.add(delta);
+                amount = clampTotal(key, u126);
             }
         } else {
-            amount = clampTotal(key, oversized.add(BigInteger.valueOf(delta)));
+            var copy = oversized.copyOf();
+            copy.add(delta);
+            amount = clampTotal(key, copy);
         }
         if (amount == 0) {
             cachedAvailableStacks.remove(key);
@@ -277,13 +277,13 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
         }
     }
 
-    private long clampTotal(AEKey key, BigInteger total) {
-        if (total.bitLength() < 64) {
+    private long clampTotal(AEKey key, U126 total) {
+        if (!total.isAboveLong()) {
             oversizedTotals.remove(key);
-            return total.longValue();
+            return total.toLong();
         }
         oversizedTotals.put(key, total);
-        return total.signum() > 0 ? Long.MAX_VALUE : 0;
+        return total.lo() > 0 ? Long.MAX_VALUE : 0;
     }
 
     private void watcherUpdate() {

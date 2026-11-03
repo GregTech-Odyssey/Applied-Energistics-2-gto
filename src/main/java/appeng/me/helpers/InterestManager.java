@@ -22,14 +22,15 @@ import java.util.Collection;
 import java.util.Set;
 
 import com.google.common.collect.Multimap;
-import com.google.common.collect.Sets;
+
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.stacks.AEKey;
 
 public class InterestManager<T> {
 
     private final Multimap<AEKey, T> container;
-    private final Set<T> allStacksWatchers = Sets.newIdentityHashSet();
+    private final Set<T> allStacksWatchers = new ReferenceOpenHashSet<>();
 
     public InterestManager(Multimap<AEKey, T> interests) {
         this.container = interests;
