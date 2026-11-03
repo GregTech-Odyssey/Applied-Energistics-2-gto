@@ -30,6 +30,7 @@ import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEKeyTypes;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
+import appeng.me.storage.ExternalStorageFacade;
 
 public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPart, IFluidHandler> {
 
@@ -46,6 +47,8 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
         inputHandler = new InputFluidHandler();
         outputHandler = new OutputFluidHandler();
         emptyHandler = NULL_FLUID_HANDLER;
+        inputStorage = ExternalStorageFacade.of(inputHandler);
+        outputStorage = ExternalStorageFacade.of(outputHandler);
     }
 
     @Override

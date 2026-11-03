@@ -24,7 +24,9 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
 import appeng.api.parts.IPartItem;
+import appeng.capabilities.Capabilities;
 import appeng.hooks.ticking.TickHandler;
+import appeng.me.storage.ExternalStorageFacade;
 
 /**
  * Base class for simple capability-based p2p tunnels. Don't forget to set the 3 handlers in the constructor of the
@@ -41,6 +43,9 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
     protected A inputHandler;
     protected A outputHandler;
     protected A emptyHandler;
+    // Null unless the subclass also exposes its capability as an MEStorage.
+    protected ExternalStorageFacade inputStorage;
+    protected ExternalStorageFacade outputStorage;
 
     public CapabilityP2PTunnelPart(IPartItem<?> partItem, Capability<A> capability) {
         super(partItem);
@@ -58,6 +63,12 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                 return LazyOptional.of(() -> outputHandler).cast();
             } else {
                 return LazyOptional.of(() -> inputHandler).cast();
+            }
+        }
+        if (capabilityClass == Capabilities.STORAGE) {
+            var storage = isOutput() ? outputStorage : inputStorage;
+            if (storage != null) {
+                return LazyOptional.of(() -> storage).cast();
             }
         }
         return LazyOptional.empty();
