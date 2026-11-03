@@ -87,7 +87,6 @@ public final class TestPlots {
                 InscriberTestPlots.class,
                 P2PTestPlots.class,
                 ItemP2PTestPlots.class,
-                MEStorageP2PTestPlots.class,
                 MemoryCardTestPlots.class,
                 PatternProviderLockModePlots.class,
                 PatternProviderPlots.class,

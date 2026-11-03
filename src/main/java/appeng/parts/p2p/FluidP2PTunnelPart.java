@@ -20,21 +20,14 @@ package appeng.parts.p2p;
 
 import java.util.List;
 
-import com.google.common.primitives.Ints;
-
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 
-import appeng.api.config.Actionable;
-import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
-import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyTypes;
-import appeng.api.stacks.KeyCounter;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
 
@@ -53,59 +46,11 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
         inputHandler = new InputFluidHandler();
         outputHandler = new OutputFluidHandler();
         emptyHandler = NULL_FLUID_HANDLER;
-        inputStorage = new InputStorage();
-        outputStorage = new OutputStorage();
     }
 
     @Override
     public IPartModel getStaticModels() {
         return MODELS.getModel(this.isPowered(), this.isActive());
-    }
-
-    private class InputStorage extends P2PStorage {
-        InputStorage() {
-            super(AEKeyTypes.FLUIDS);
-        }
-
-        @Override
-        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
-            if (isOutput() || !(what instanceof AEFluidKey fluidKey) || amount <= 0) {
-                return 0;
-            }
-
-            return inputHandler.fill(fluidKey.toStack(Ints.saturatedCast(amount)), mode.getFluidAction());
-        }
-    }
-
-    private class OutputStorage extends P2PStorage {
-        OutputStorage() {
-            super(AEKeyTypes.FLUIDS);
-        }
-
-        @Override
-        public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-            if (!isOutput() || !(what instanceof AEFluidKey fluidKey) || amount <= 0) {
-                return 0;
-            }
-
-            var drained = outputHandler.drain(fluidKey.toStack(Ints.saturatedCast(amount)), mode.getFluidAction());
-            return drained.getAmount();
-        }
-
-        @Override
-        public void getAvailableStacks(KeyCounter out) {
-            if (!isOutput()) {
-                return;
-            }
-
-            int tanks = outputHandler.getTanks();
-            for (int tank = 0; tank < tanks; tank++) {
-                var stack = outputHandler.getFluidInTank(tank);
-                if (!stack.isEmpty()) {
-                    out.add(AEFluidKey.of(stack), stack.getAmount());
-                }
-            }
-        }
     }
 
     private class InputFluidHandler implements IFluidHandler {

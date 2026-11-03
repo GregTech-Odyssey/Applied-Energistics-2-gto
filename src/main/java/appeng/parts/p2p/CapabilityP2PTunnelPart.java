@@ -18,29 +18,19 @@
 
 package appeng.parts.p2p;
 
-import org.jetbrains.annotations.Nullable;
-
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
 import appeng.api.parts.IPartItem;
-import appeng.api.stacks.AEKeyType;
-import appeng.api.storage.KeyTypedStorage;
-import appeng.api.storage.MEStorage;
-import appeng.api.storage.MEStorageHost;
-import appeng.capabilities.Capabilities;
 import appeng.hooks.ticking.TickHandler;
 
 /**
  * Base class for simple capability-based p2p tunnels. Don't forget to set the 3 handlers in the constructor of the
  * child class!
  */
-public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<P, A>, A> extends P2PTunnelPart<P>
-        implements MEStorageHost {
+public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<P, A>, A> extends P2PTunnelPart<P> {
     private final Capability<A> capability;
     // Prevents recursive block updates.
     private boolean inBlockUpdate = false;
@@ -51,9 +41,6 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
     protected A inputHandler;
     protected A outputHandler;
     protected A emptyHandler;
-    // Null unless the subclass also exposes its capability as a direct MEStorage.
-    protected KeyTypedStorage inputStorage;
-    protected KeyTypedStorage outputStorage;
 
     public CapabilityP2PTunnelPart(IPartItem<?> partItem, Capability<A> capability) {
         super(partItem);
@@ -73,56 +60,7 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                 return LazyOptional.of(() -> inputHandler).cast();
             }
         }
-        if (capabilityClass == Capabilities.STORAGE) {
-            var storage = isOutput() ? outputStorage : inputStorage;
-            if (storage != null) {
-                return LazyOptional.of(() -> storage).cast();
-            }
-        }
         return LazyOptional.empty();
-    }
-
-    @Nullable
-    @Override
-    public MEStorage getMEStorage(@Nullable Direction side) {
-        return isOutput() ? outputStorage : inputStorage;
-    }
-
-    @Override
-    void setOutput(boolean output) {
-        var changed = isOutput() != output;
-        super.setOutput(output);
-        if (changed) {
-            getHost().partStorageChanged();
-        }
-    }
-
-    /**
-     * Base class for the direct MEStorage exposed by tunnels that support it. Subclasses implement the actual
-     * insertion/extraction in terms of the side they are facing.
-     */
-    protected abstract class P2PStorage implements KeyTypedStorage {
-        private final AEKeyType keyType;
-
-        protected P2PStorage(AEKeyType keyType) {
-            this.keyType = keyType;
-        }
-
-        @Override
-        public final boolean supportsKeyType(AEKeyType type) {
-            return type == keyType;
-        }
-
-        @Nullable
-        @Override
-        public final MEStorage forKeyType(AEKeyType type) {
-            return type == keyType ? this : null;
-        }
-
-        @Override
-        public final Component getDescription() {
-            return getPartItem().asItem().getDescription();
-        }
     }
 
     /**

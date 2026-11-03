@@ -20,21 +20,14 @@ package appeng.parts.p2p;
 
 import java.util.List;
 
-import com.google.common.primitives.Ints;
-
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 
-import appeng.api.config.Actionable;
-import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyTypes;
-import appeng.api.stacks.KeyCounter;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
 
@@ -53,86 +46,11 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
         inputHandler = new InputItemHandler();
         outputHandler = new OutputItemHandler();
         emptyHandler = NULL_ITEM_HANDLER;
-        inputStorage = new InputStorage();
-        outputStorage = new OutputStorage();
     }
 
     @Override
     public IPartModel getStaticModels() {
         return MODELS.getModel(this.isPowered(), this.isActive());
-    }
-
-    private class InputStorage extends P2PStorage {
-        InputStorage() {
-            super(AEKeyTypes.ITEMS);
-        }
-
-        @Override
-        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
-            if (isOutput() || !(what instanceof AEItemKey itemKey) || amount <= 0) {
-                return 0;
-            }
-
-            int intAmount = Ints.saturatedCast(amount);
-            var remaining = inputHandler.insertItem(0, itemKey.toStack(intAmount), mode == Actionable.SIMULATE);
-            return intAmount - remaining.getCount();
-        }
-    }
-
-    private class OutputStorage extends P2PStorage {
-        OutputStorage() {
-            super(AEKeyTypes.ITEMS);
-        }
-
-        @Override
-        public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-            if (!isOutput() || !(what instanceof AEItemKey itemKey) || amount <= 0) {
-                return 0;
-            }
-
-            long extracted = 0;
-            int slots = outputHandler.getSlots();
-            for (int slot = 0; slot < slots && extracted < amount; slot++) {
-                if (!itemKey.matches(outputHandler.getStackInSlot(slot))) {
-                    continue;
-                }
-
-                extracted += extractFromSlot(itemKey, slot, amount - extracted, mode);
-            }
-            return extracted;
-        }
-
-        private long extractFromSlot(AEItemKey itemKey, int slot, long maxAmount, Actionable mode) {
-            long extracted = 0;
-            while (extracted < maxAmount) {
-                int request = (int) Math.min(maxAmount - extracted, Integer.MAX_VALUE);
-                int count = outputHandler.extractItem(slot, request, mode == Actionable.SIMULATE).getCount();
-                if (count <= 0) {
-                    break;
-                }
-
-                extracted += count;
-                if (mode == Actionable.SIMULATE) {
-                    break;
-                }
-            }
-            return extracted;
-        }
-
-        @Override
-        public void getAvailableStacks(KeyCounter out) {
-            if (!isOutput()) {
-                return;
-            }
-
-            int slots = outputHandler.getSlots();
-            for (int slot = 0; slot < slots; slot++) {
-                var stack = outputHandler.getStackInSlot(slot);
-                if (!stack.isEmpty()) {
-                    out.add(AEItemKey.of(stack), stack.getCount());
-                }
-            }
-        }
     }
 
     private class InputItemHandler implements IItemHandler {
