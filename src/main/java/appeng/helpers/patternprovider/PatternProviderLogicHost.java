@@ -32,6 +32,8 @@ import appeng.api.implementations.blockentities.PatternContainerGroup;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.IGrid;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.storage.MEStorage;
+import appeng.api.storage.MEStorageHost;
 import appeng.api.util.IConfigManager;
 import appeng.api.util.IConfigurableObject;
 import appeng.helpers.IPriorityHost;
@@ -43,8 +45,22 @@ import appeng.menu.locator.MenuLocator;
 /**
  * Interface to be implemented by blocks or parts wanting to host a pattern provider.
  */
-public interface PatternProviderLogicHost extends IConfigurableObject, IPriorityHost, PatternContainer {
+public interface PatternProviderLogicHost extends IConfigurableObject, IPriorityHost, PatternContainer, MEStorageHost {
     PatternProviderLogic getLogic();
+
+    @Nullable
+    @Override
+    default MEStorage getMEStorage(@Nullable Direction side) {
+        return getLogic().getNetworkStorage();
+    }
+
+    @Override
+    default int storageEpoch() {
+        return getLogic().storageEpoch();
+    }
+
+    default void exposedStorageChanged() {
+    }
 
     /**
      * @return The block entity that is in-world and hosts the interface.
