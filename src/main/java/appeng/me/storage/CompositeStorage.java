@@ -12,12 +12,7 @@ import net.minecraft.network.chat.MutableComponent;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.ticking.TickRateModulation;
-import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyType;
-import appeng.api.stacks.AEKeyTypes;
-import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.*;
 import appeng.api.storage.KeyTypedStorage;
 import appeng.api.storage.MEStorage;
 import appeng.core.localization.GuiText;
@@ -209,12 +204,7 @@ public class CompositeStorage implements KeyTypedStorage, ITickingMonitor {
         if (storage instanceof KeyTypedStorage typed) {
             return typed.containsAny(primaryKeys);
         }
-        for (var entry : storage.getAvailableStacks()) {
-            if (entry.getLongValue() > 0 && primaryKeys.contains(entry.getKey().dropSecondary())) {
-                return true;
-            }
-        }
-        return false;
+        return storage.forEachKey((k, v) -> v > 0 && primaryKeys.contains(k.dropSecondary()));
     }
 
     @Override
@@ -237,12 +227,7 @@ public class CompositeStorage implements KeyTypedStorage, ITickingMonitor {
         if (storage instanceof KeyTypedStorage typed) {
             return typed.isEmpty();
         }
-        for (var entry : storage.getAvailableStacks()) {
-            if (entry.getLongValue() > 0) {
-                return false;
-            }
-        }
-        return true;
+        return storage.forEachKey((k, v) -> v > 0);
     }
 
     @Override
@@ -318,6 +303,49 @@ public class CompositeStorage implements KeyTypedStorage, ITickingMonitor {
     }
 
     @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        var items = this.items;
+        if (items != null) {
+            if (items.forEachKey(visitor)) {
+                return true;
+            }
+        }
+        var fluids = this.fluids;
+        if (fluids != null) {
+            if (fluids.forEachKey(visitor)) {
+                return true;
+            }
+        }
+        for (var other : others) {
+            if (other != null) {
+                if (other.forEachKey(visitor)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean forEachKey(KeyVisitor visitor, boolean extractableOnly) {
+        if (!extractableOnly) {
+            return forEachKey(visitor);
+        }
+        if (forEachKeyExtractable(items, visitor)) {
+            return true;
+        }
+        if (forEachKeyExtractable(fluids, visitor)) {
+            return true;
+        }
+        for (var other : others) {
+            if (forEachKeyExtractable(other, visitor)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
     public void getAvailableStacks(KeyCounter out, boolean extractableOnly) {
         if (!extractableOnly) {
             getAvailableStacks(out);
@@ -336,5 +364,14 @@ public class CompositeStorage implements KeyTypedStorage, ITickingMonitor {
         } else if (storage != null) {
             storage.getAvailableStacks(out);
         }
+    }
+
+    private static boolean forEachKeyExtractable(@Nullable MEStorage storage, KeyVisitor visitor) {
+        if (storage instanceof KeyTypedStorage typed) {
+            return typed.forEachKey(visitor, true);
+        } else if (storage != null) {
+            return storage.forEachKey(visitor);
+        }
+        return false;
     }
 }

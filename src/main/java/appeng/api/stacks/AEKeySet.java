@@ -2,6 +2,7 @@ package appeng.api.stacks;
 
 import java.util.Collection;
 
+import appeng.api.identity.IdentityKey;
 import appeng.api.identity.IdentityKeySet;
 
 public final class AEKeySet<K extends AEKey> extends IdentityKeySet<K> {
@@ -17,4 +18,9 @@ public final class AEKeySet<K extends AEKey> extends IdentityKeySet<K> {
     public AEKeySet(Collection<? extends K> c) {
         super(c);
     }
+
+    public boolean containKey(final AEKey k) {
+        return IdentityKey.find(key, mask, k) >= 0;
+    }
+
 }

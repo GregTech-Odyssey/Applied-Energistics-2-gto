@@ -25,6 +25,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.MEStorage;
 
 class CondenserMEStorage implements MEStorage {
@@ -63,6 +64,11 @@ class CondenserMEStorage implements MEStorage {
         }
 
         return 0;
+    }
+
+    @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        return cache.getAvailableStacksCache().forEachKey(visitor);
     }
 
     @Override

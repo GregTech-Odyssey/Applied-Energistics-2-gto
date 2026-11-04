@@ -46,7 +46,7 @@ import appeng.util.ConfigInventory;
 import appeng.util.prioritylist.FuzzyPriorityList;
 import appeng.util.prioritylist.IPartitionList;
 
-public class BasicCellInventory implements StorageCell {
+public final class BasicCellInventory implements StorageCell {
     private static final int MAX_ITEM_TYPES = 63;
     private static final String ITEM_COUNT_TAG = "ic";
     private static final String STACK_KEYS = "keys";
@@ -128,6 +128,12 @@ public class BasicCellInventory implements StorageCell {
         out.addAll(items);
     }
 
+    @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        var items = getCellItems();
+        return items.forEachKey(visitor);
+    }
+
     public IncludeExclude getPartitionListMode() {
         return partitionListMode;
     }
@@ -180,7 +186,7 @@ public class BasicCellInventory implements StorageCell {
         return cellType.storableInStorageCell() || getAvailableStacks().isEmpty();
     }
 
-    protected AEKeyLongMap<AEKey> getCellItems() {
+    private AEKeyLongMap<AEKey> getCellItems() {
         if (this.storedAmounts == null) {
             this.storedAmounts = new AEKeyLongMap<>();
             this.loadCellItems();
@@ -240,7 +246,7 @@ public class BasicCellInventory implements StorageCell {
         return changeVersion;
     }
 
-    protected void saveChanges() {
+    private void saveChanges() {
         this.changeVersionStale = true;
         // recalculate values
         this.storedItems = (short) this.storedAmounts.size();
@@ -430,7 +436,7 @@ public class BasicCellInventory implements StorageCell {
         }
 
         // Apply max items per type
-        remainingItemCount = Math.max(0, Math.min(this.maxItemsPerType - currentAmount, remainingItemCount));
+        remainingItemCount = Math.clamp(remainingItemCount, 0, this.maxItemsPerType - currentAmount);
 
         if (amount > remainingItemCount) {
             amount = remainingItemCount;

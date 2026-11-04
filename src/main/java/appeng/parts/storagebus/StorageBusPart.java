@@ -51,6 +51,7 @@ import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.ExternalStorageLookup;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
@@ -547,6 +548,12 @@ public class StorageBusPart extends UpgradeablePart
         public void getAvailableStacks(KeyCounter out) {
             checkTarget();
             super.getAvailableStacks(out);
+        }
+
+        @Override
+        public boolean forEachKey(KeyVisitor visitor) {
+            checkTarget();
+            return super.forEachKey(visitor);
         }
 
         @Override

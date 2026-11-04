@@ -17,13 +17,7 @@ import net.minecraftforge.items.IItemHandler;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEFluidKey;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyType;
-import appeng.api.stacks.AEKeyTypes;
-import appeng.api.stacks.GenericStack;
-import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.*;
 import appeng.api.storage.KeyTypedStorage;
 import appeng.api.storage.MEStorage;
 import appeng.core.AELog;
@@ -239,6 +233,31 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
         }
 
         @Override
+        public boolean forEachKey(KeyVisitor visitor) {
+            return forEachKey(visitor, extractableOnly);
+        }
+
+        @Override
+        public boolean forEachKey(KeyVisitor visitor, boolean extractableOnly) {
+            var handler = this.handler;
+            var slots = handler.getKeySlots();
+            for (int i = 0; i < slots; i++) {
+                var amount = handler.getAmountInSlot(i);
+                if (amount <= 0) {
+                    continue;
+                }
+                var key = handler.getKeyInSlot(i);
+                if (extractableOnly && handler.extractKey(key, 1, Actionable.SIMULATE) <= 0) {
+                    continue;
+                }
+                if (visitor.visit(key, amount)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        @Override
         public void getAvailableStacks(KeyCounter out, boolean extractableOnly) {
             var handler = this.handler;
             var slots = handler.getKeySlots();
@@ -328,6 +347,7 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
             ItemStack orgInput = itemKey.toStack(amount);
             ItemStack remaining = orgInput;
 
+            var handler = this.handler;
             int slotCount = handler.getSlots();
             boolean simulate = mode == Actionable.SIMULATE;
 
@@ -353,6 +373,7 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
             int totalExtracted = 0;
 
+            var handler = this.handler;
             for (int i = 0; i < handler.getSlots(); i++) {
                 int extracted = extractFromHandler(handler, i, itemKey, amount - totalExtracted, mode);
                 totalExtracted += extracted;
@@ -443,6 +464,7 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
         @Override
         public final boolean containsAnyFuzzy(Set<AEKey> keys) {
+            var handler = this.handler;
             var slots = handler.getSlots();
             for (int i = 0; i < slots; i++) {
                 var stack = handler.getStackInSlot(i);
@@ -457,6 +479,7 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
         @Override
         public final void getAvailableStacks(KeyCounter out) {
+            var handler = this.handler;
             var slots = handler.getSlots();
             for (int i = 0; i < slots; i++) {
                 var stack = handler.getStackInSlot(i);
@@ -465,6 +488,22 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
                     continue;
                 out.add(AEItemKey.of(stack), count);
             }
+        }
+
+        @Override
+        public boolean forEachKey(KeyVisitor visitor) {
+            var handler = this.handler;
+            var slots = handler.getSlots();
+            for (int i = 0; i < slots; i++) {
+                var stack = handler.getStackInSlot(i);
+                var count = stack.getCount();
+                if (count < 1)
+                    continue;
+                if (visitor.visit(AEItemKey.of(stack), count)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 
@@ -580,6 +619,22 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
                     continue;
                 out.add(AEFluidKey.of(stack), amount);
             }
+        }
+
+        @Override
+        public boolean forEachKey(KeyVisitor visitor) {
+            var handler = this.handler;
+            var slots = handler.getTanks();
+            for (int i = 0; i < slots; i++) {
+                var stack = handler.getFluidInTank(i);
+                var count = stack.getAmount();
+                if (count < 1)
+                    continue;
+                if (visitor.visit(AEFluidKey.of(stack), count)) {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

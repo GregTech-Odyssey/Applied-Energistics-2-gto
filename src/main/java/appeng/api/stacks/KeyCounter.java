@@ -41,7 +41,7 @@ import appeng.api.config.FuzzyMode;
 /**
  * Associates a generic value of type T with AE keys and makes key/value pairs searchable with fuzzy mode semantics.
  */
-public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>> {
+public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>>, KeyVisitor {
 
     public static final KeyCounter EMPTY = new KeyCounter();
 
@@ -77,6 +77,13 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
             return AEKeyLongMap.EMPTY;
         }
         return map;
+    }
+
+    public boolean forEachKey(KeyVisitor visitor) {
+        if (map == null) {
+            return false;
+        }
+        return map.forEachKey(visitor);
     }
 
     @Override
@@ -423,5 +430,16 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         var map = sized(size);
         consumer.accept(map);
         fuzzyUpdate = true;
+    }
+
+    @Override
+    public boolean visit(AEKey key, long amount) {
+        var map = this.map;
+        if (map == null) {
+            this.map = map = new AEKeyLongMap<>();
+        }
+        map.addTo(key, amount);
+        fuzzyUpdate = true;
+        return false;
     }
 }

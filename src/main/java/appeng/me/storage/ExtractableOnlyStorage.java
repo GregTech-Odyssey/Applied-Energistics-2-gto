@@ -8,6 +8,7 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.KeyTypedStorage;
 import appeng.api.storage.MEStorage;
 
@@ -41,6 +42,11 @@ public final class ExtractableOnlyStorage implements MEStorage {
     @Override
     public void getAvailableStacks(KeyCounter out) {
         storage.getAvailableStacks(out, true);
+    }
+
+    @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        return storage.forEachKey(visitor);
     }
 
     @Override

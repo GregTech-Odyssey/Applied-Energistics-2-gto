@@ -36,11 +36,7 @@ import appeng.api.behaviors.GenericInternalInventory;
 import appeng.api.behaviors.GenericSlotCapacities;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyType;
-import appeng.api.stacks.GenericStack;
-import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.*;
 import appeng.api.storage.AEKeyFilter;
 import appeng.api.storage.MEStorage;
 import appeng.core.AELog;
@@ -421,6 +417,11 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
     @Override
     public void getAvailableStacks(KeyCounter out) {
         out.addAll(cache.getAvailableStacksCache());
+    }
+
+    @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        return cache.getAvailableStacksCache().forEachKey(visitor);
     }
 
     @Override

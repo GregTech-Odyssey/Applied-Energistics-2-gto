@@ -10,6 +10,7 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.me.storage.NullInventory;
 
 /**
@@ -52,6 +53,11 @@ public final class SupplierStorage implements MEStorage {
     @Override
     public void getAvailableStacks(KeyCounter out) {
         getDelegate().getAvailableStacks(out);
+    }
+
+    @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        return getDelegate().forEachKey(visitor);
     }
 
     @Override

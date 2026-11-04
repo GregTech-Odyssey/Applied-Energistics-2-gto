@@ -7,6 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 
 public interface KeyTypedStorage extends MEStorage {
 
@@ -16,20 +17,15 @@ public interface KeyTypedStorage extends MEStorage {
     MEStorage forKeyType(AEKeyType type);
 
     default boolean containsAny(Set<AEKey> primaryKeys) {
-        var counter = new KeyCounter();
-        getAvailableStacks(counter);
-        for (var entry : counter) {
-            if (primaryKeys.contains(entry.getKey().dropSecondary())) {
-                return true;
-            }
-        }
-        return false;
+        return forEachKey((k, v) -> primaryKeys.contains(k.dropSecondary()));
     }
 
     default boolean isEmpty() {
-        var counter = new KeyCounter();
-        getAvailableStacks(counter);
-        return counter.isEmpty();
+        return forEachKey((k, v) -> v > 0);
+    }
+
+    default boolean forEachKey(KeyVisitor visitor, boolean extractableOnly) {
+        return forEachKey(visitor);
     }
 
     default void getAvailableStacks(KeyCounter out, boolean extractableOnly) {

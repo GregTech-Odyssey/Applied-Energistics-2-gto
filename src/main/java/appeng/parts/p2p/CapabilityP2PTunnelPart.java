@@ -31,6 +31,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartItem;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.MEStorage;
 import appeng.capabilities.Capabilities;
 import appeng.hooks.ticking.TickHandler;
@@ -314,6 +315,26 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                     input.getAvailableStacks(out);
                 }
             }
+        }
+
+        @Override
+        public boolean forEachKey(KeyVisitor visitor) {
+            var inputs = CapabilityP2PTunnelPart.this.getInputs();
+            final int outputTunnels = inputs.length;
+            if (outputTunnels == 0) {
+                return false;
+            }
+            for (var target : inputs) {
+                try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
+                    final var input = capabilityGuard.getStorage();
+                    if (input == null)
+                        continue;
+                    if (input.forEachKey(visitor)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
         }
 
         @Override

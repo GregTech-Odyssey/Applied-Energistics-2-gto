@@ -21,8 +21,6 @@ package appeng.me.storage;
 import java.util.*;
 import java.util.function.Consumer;
 
-import com.google.common.base.Preconditions;
-
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
@@ -33,8 +31,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.*;
 import appeng.api.storage.MEStorage;
 import appeng.core.localization.GuiText;
 
@@ -58,6 +55,7 @@ public final class NetworkStorage implements MEStorage {
     private ArrayList<QueuedOperation> queuedOperations;
     public final KeyCounter cache;
     private final KeyCounter queryContent = new KeyCounter();
+    public final AEKeyBigMap<AEKey> cacheInserted = new AEKeyBigMap<>();
     private boolean queryContentReady;
     private final ReferenceOpenHashSet<MEStorage> networkLinks = new ReferenceOpenHashSet<>();
     private long topologyVersion = -1;
@@ -138,6 +136,15 @@ public final class NetworkStorage implements MEStorage {
 
     @Override
     public long insert(AEKey what, long amount, Actionable type, IActionSource src) {
+        if (type == Actionable.SIMULATE) {
+            return insertDirect(what, amount, type, src);
+        } else {
+            cacheInserted.insert(what, amount);
+            return amount;
+        }
+    }
+
+    public long insertDirect(AEKey what, long amount, Actionable type, IActionSource src) {
         if (mountsInUse) {
             return 0;
         }
@@ -159,7 +166,6 @@ public final class NetworkStorage implements MEStorage {
     }
 
     private void flushQueuedOperations() {
-        Preconditions.checkState(!this.mountsInUse);
         var queuedOperations = this.queuedOperations;
         if (queuedOperations != null) {
             this.queuedOperations = null;

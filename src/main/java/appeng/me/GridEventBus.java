@@ -31,7 +31,7 @@ import appeng.api.networking.events.GridEvent;
 public final class GridEventBus {
     private static final Map<Class<? extends GridEvent>, Subscriptions<?>> EVENTS = new Reference2ReferenceOpenHashMap<>();
 
-    private static class Subscriptions<T extends GridEvent> {
+    public static class Subscriptions<T extends GridEvent> {
         private final Class<T> eventClass;
         private final List<BiConsumer<IGrid, T>> handlers = new ArrayList<>();
 

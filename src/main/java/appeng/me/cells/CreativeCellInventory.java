@@ -26,6 +26,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeySet;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.cells.CellState;
 import appeng.api.storage.cells.StorageCell;
 import appeng.items.contents.CellConfig;
@@ -67,6 +68,11 @@ class CreativeCellInventory implements StorageCell {
     @Override
     public void getAvailableStacks(KeyCounter out) {
         out.addAll(cache.getAvailableStacksCache());
+    }
+
+    @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        return cache.getAvailableStacksCache().forEachKey(visitor);
     }
 
     @Override

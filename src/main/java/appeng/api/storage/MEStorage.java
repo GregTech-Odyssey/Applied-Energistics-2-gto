@@ -41,6 +41,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyLongMap;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.storage.NetworkStorage;
 
@@ -121,6 +122,10 @@ public interface MEStorage {
      * @param out The amounts for all available keys will be added to this tally.
      */
     default void getAvailableStacks(KeyCounter out) {
+    }
+
+    default boolean forEachKey(KeyVisitor visitor) {
+        return getAvailableStacks().forEachKey(visitor);
     }
 
     /**

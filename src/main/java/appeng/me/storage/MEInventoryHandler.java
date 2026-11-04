@@ -23,6 +23,7 @@ import appeng.api.config.IncludeExclude;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.MEStorage;
 import appeng.util.prioritylist.DefaultPriorityList;
 import appeng.util.prioritylist.IPartitionList;
@@ -167,6 +168,31 @@ public class MEInventoryHandler extends DelegatingMEInventory {
                         }
                     }
                 }
+            }
+        } finally {
+            this.gettingAvailableContent = false;
+        }
+    }
+
+    @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        if (!this.allowExtraction || this.gettingAvailableContent) {
+            return false;
+        }
+
+        this.gettingAvailableContent = true;
+        try {
+            var list = this.partitionList;
+            if (!this.filterAvailableContents || list.isEmpty()) {
+                return super.forEachKey(visitor);
+            } else {
+                var mode = this.partitionListMode;
+                return super.forEachKey((k, a) -> {
+                    if (list.matchesFilter(k, mode)) {
+                        return visitor.visit(k, a);
+                    }
+                    return false;
+                });
             }
         } finally {
             this.gettingAvailableContent = false;

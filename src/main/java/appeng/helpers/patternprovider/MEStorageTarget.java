@@ -39,12 +39,6 @@ public final class MEStorageTarget implements PatternProviderTarget {
         if (storage instanceof KeyTypedStorage typed) {
             return primaryKeys == null ? !typed.isEmpty() : typed.containsAny(primaryKeys);
         }
-        for (var entry : storage.getAvailableStacks()) {
-            if (entry.getLongValue() > 0 && (primaryKeys == null
-                    || primaryKeys.contains(entry.getKey().dropSecondary()))) {
-                return true;
-            }
-        }
-        return false;
+        return storage.forEachKey((k, v) -> v > 0 && (primaryKeys == null || primaryKeys.contains(k.dropSecondary())));
     }
 }

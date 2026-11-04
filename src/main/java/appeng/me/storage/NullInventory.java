@@ -21,6 +21,7 @@ package appeng.me.storage;
 import net.minecraft.network.chat.Component;
 
 import appeng.api.stacks.KeyCounter;
+import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.MEStorage;
 
 /**
@@ -36,6 +37,11 @@ public class NullInventory implements MEStorage {
     @Override
     public KeyCounter getAvailableStacks() {
         return KeyCounter.empty();
+    }
+
+    @Override
+    public boolean forEachKey(KeyVisitor visitor) {
+        return false;
     }
 
     @Override

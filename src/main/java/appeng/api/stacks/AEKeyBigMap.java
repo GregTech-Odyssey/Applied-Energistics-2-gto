@@ -47,6 +47,26 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
         return copy;
     }
 
+    public boolean forEachKey(KeyVisitor visitor) {
+        int remaining = this.size;
+        if (remaining == 0) {
+            return false;
+        }
+        final Object[] key = this.key;
+        final Object[] value = this.value;
+        int pos = this.n;
+        Object k;
+        while (remaining > 0 && pos-- != 0) {
+            if ((k = key[pos]) != null) {
+                if (visitor.visit((AEKey) k, ((U126) value[pos]).toLong())) {
+                    return true;
+                }
+                remaining--;
+            }
+        }
+        return false;
+    }
+
     /** 覆盖写入一个键的数量；负数忽略。 */
     public void set(final AEKey k, final long amount) {
         if (k == null || amount < 0) {
@@ -92,7 +112,14 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
     }
 
     public void insert(final AEKey k, final long amount) {
-        addTo(k, amount);
+        if (k == null || amount < 1) {
+            return;
+        }
+        final int pos = IdentityKey.find(key, mask, k);
+        if (pos >= 0) {
+            ((U126) ((Object[]) value)[pos]).add(amount);
+        }
+        insertAt(-pos - 1, k, new U126(amount));
     }
 
     /** 加到 {@code limit} 为止；返回实际加入量。 */

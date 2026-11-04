@@ -42,6 +42,26 @@ public final class AEKeyLongMap<K extends AEKey> extends IdentityKeyLongMap<K>
         map.object2LongEntrySet().fastForEach(e -> set(e.getKey(), e.getLongValue()));
     }
 
+    public boolean forEachKey(KeyVisitor visitor) {
+        int remaining = this.size;
+        if (remaining == 0) {
+            return false;
+        }
+        final Object[] key = this.key;
+        final long[] value = this.value;
+        int pos = this.n;
+        Object k;
+        while (remaining > 0 && pos-- != 0) {
+            if ((k = key[pos]) != null) {
+                if (visitor.visit((AEKey) k, value[pos])) {
+                    return true;
+                }
+                remaining--;
+            }
+        }
+        return false;
+    }
+
     @SuppressWarnings("all")
     @UnmodifiableView
     public static <T extends AEKey> AEKeyLongMap<T> empty() {

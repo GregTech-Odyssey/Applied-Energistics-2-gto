@@ -80,7 +80,12 @@ public interface GenericInternalInventory extends IKeyInventory {
     void onChange();
 
     @Override
-    default @Nullable AEKey rawKeyAt(int slot) {
+    default int getKeySlots() {
+        return size();
+    }
+
+    @Override
+    default AEKey getKeyInSlot(int slot) {
         var stack = getStack(slot);
         if (stack == null) {
             return null;
@@ -89,21 +94,11 @@ public interface GenericInternalInventory extends IKeyInventory {
     }
 
     @Override
-    default long amountAt(int slot) {
+    default long getAmountInSlot(int slot) {
         var stack = getStack(slot);
         if (stack == null) {
             return 0;
         }
         return stack.amount();
-    }
-
-    @Override
-    default long insertRawKey(int slot, AEKey key, long amount, boolean simulate) {
-        return insert(slot, key, amount, simulate ? Actionable.SIMULATE : Actionable.MODULATE);
-    }
-
-    @Override
-    default long extractRawKey(int slot, AEKey key, long amount, boolean simulate) {
-        return extract(slot, key, amount, simulate ? Actionable.SIMULATE : Actionable.MODULATE);
     }
 }

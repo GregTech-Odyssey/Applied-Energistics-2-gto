@@ -1,5 +1,7 @@
 package appeng.parts.automation;
 
+import java.util.concurrent.atomic.AtomicLong;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -7,14 +9,14 @@ import net.minecraft.server.level.ServerLevel;
 import appeng.api.behaviors.StackImportStrategy;
 import appeng.api.behaviors.StackTransferContext;
 import appeng.api.config.Actionable;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
-import appeng.api.stacks.KeyCounter;
-import appeng.api.storage.ExternalStorageLookup;
-import appeng.api.storage.KeyTypedStorage;
-import appeng.api.storage.StorageAccess;
-import appeng.api.storage.StorageTargetResolver;
+import appeng.api.storage.*;
 import appeng.core.AELog;
+
+import com.gto.ae.helpers.facility_management.ThroughputCounter;
 
 /**
  * Strategy for efficiently importing stacks from external storage into an internal
@@ -23,7 +25,6 @@ import appeng.core.AELog;
 public class StorageImportStrategy implements StackImportStrategy {
     private final ExternalStorageLookup lookup;
     private final AEKeyType keyType;
-    private final KeyCounter available = new KeyCounter();
 
     public StorageImportStrategy(AEKeyType keyType, ServerLevel level, BlockPos fromPos, Direction fromSide) {
         this.lookup = ExternalStorageLookup.create(level, fromPos, fromSide);
@@ -43,58 +44,56 @@ public class StorageImportStrategy implements StackImportStrategy {
             return false;
         }
 
-        var available = this.available;
-        available.clear();
-        if (lookup.tier() == StorageTargetResolver.Tier.STORAGE && adjacentStorage instanceof KeyTypedStorage typed) {
-            typed.getAvailableStacks(available, true);
-        } else {
-            adjacentStorage.getAvailableStacks(available);
-        }
-        if (available.isEmpty()) {
-            return false;
-        }
-
         var inv = context.getInternalStorage().getInventory();
         var source = context.getActionSource();
         var inverted = context.isInverted();
         var stats = context.getStats();
         var amountPerOperation = keyType.getAmountPerOperation();
         long remaining = (long) context.getOperationsRemaining() * amountPerOperation;
-        for (var entry : available) {
-            if (remaining <= 0) {
-                break;
+        if (lookup.tier() == StorageTargetResolver.Tier.STORAGE && adjacentStorage instanceof KeyTypedStorage typed) {
+            typed.forEachKey((k, v) -> transfer(inv, source, inverted, stats, k, v, context, adjacentStorage,
+                    new AtomicLong(remaining), amountPerOperation), true);
+        } else {
+            adjacentStorage.forEachKey((k, v) -> transfer(inv, source, inverted, stats, k, v, context, adjacentStorage,
+                    new AtomicLong(remaining), amountPerOperation));
+        }
+        return false;
+    }
+
+    private boolean transfer(MEStorage inv, IActionSource source, boolean inverted, ThroughputCounter stats, AEKey what,
+            long amount, StackTransferContext context, MEStorage adjacentStorage, AtomicLong remaining,
+            int amountPerOperation) {
+        var r = remaining.get();
+        if (r <= 0) {
+            return true;
+        }
+        if (context.isInFilter(what) == inverted) {
+            return false;
+        }
+        amount = inv.insert(what, amount, Actionable.SIMULATE, source);
+        if (amount <= 0) {
+            return false;
+        }
+        var extracted = adjacentStorage.extract(what, amount, Actionable.MODULATE, source);
+        if (extracted <= 0) {
+            return false;
+        }
+        var inserted = inv.insert(what, extracted, Actionable.MODULATE, source);
+        if (inserted < extracted) {
+            var leftover = extracted - inserted;
+            leftover -= adjacentStorage.insert(what, leftover, Actionable.MODULATE, source);
+            if (leftover > 0) {
+                AELog.warn("Extracted %dx%s from adjacent storage and voided it because network refused insert",
+                        leftover, what);
             }
-            var what = entry.getKey();
-            if (context.isInFilter(what) == inverted) {
-                continue;
-            }
-            var amount = adjacentStorage.extract(what, Math.min(entry.getLongValue(), remaining), Actionable.SIMULATE,
-                    source);
-            if (amount <= 0) {
-                continue;
-            }
-            amount = inv.insert(what, amount, Actionable.SIMULATE, source);
-            if (amount <= 0) {
-                continue;
-            }
-            var extracted = adjacentStorage.extract(what, amount, Actionable.MODULATE, source);
-            if (extracted <= 0) {
-                continue;
-            }
-            var inserted = inv.insert(what, extracted, Actionable.MODULATE, source);
-            if (inserted < extracted) {
-                var leftover = extracted - inserted;
-                leftover -= adjacentStorage.insert(what, leftover, Actionable.MODULATE, source);
-                if (leftover > 0) {
-                    AELog.warn("Extracted %dx%s from adjacent storage and voided it because network refused insert",
-                            leftover, what);
-                }
-            }
-            if (inserted > 0) {
-                stats.add(what, inserted);
-                context.reduceOperationsRemaining(Math.max(1, inserted / amountPerOperation));
-                remaining -= inserted;
-            }
+        }
+        if (inserted > 0) {
+            stats.add(what, inserted);
+            context.reduceOperationsRemaining(Math.max(1, inserted / amountPerOperation));
+            r -= inserted;
+            if (r <= 0)
+                return true;
+            remaining.set(r);
         }
         return false;
     }

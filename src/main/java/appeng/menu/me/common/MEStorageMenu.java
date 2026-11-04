@@ -66,6 +66,7 @@ import appeng.core.sync.packets.ConfigValuePacket;
 import appeng.core.sync.packets.MEInteractionPacket;
 import appeng.core.sync.packets.MEInventoryUpdatePacket;
 import appeng.helpers.InventoryAction;
+import appeng.hooks.ticking.TickHandler;
 import appeng.me.helpers.ChannelPowerSrc;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantics;
@@ -149,7 +150,7 @@ public class MEStorageMenu extends AEBaseMenu
      * {@link #INVENTORY_UPDATE_INTERVAL}, and even while they are frozen. This is the case right after (un-)freezing
      * and whenever the player inserted or removed something.
      */
-    private boolean pendingInventoryUpdate;
+    private byte pendingInventoryUpdate;
 
     /**
      * The game time of the last inventory synchronization, used to throttle the updates of unfrozen contents.
@@ -279,7 +280,7 @@ public class MEStorageMenu extends AEBaseMenu
                 this.setValidMenu(false);
                 return;
             }
-            var time = getGameTime();
+            var time = TickHandler.INSTANCE.tickCounter;
             if (lastUpdateTime != time) {
                 lastUpdateTime = time;
                 this.updateActiveCraftingJobs();
@@ -297,13 +298,15 @@ public class MEStorageMenu extends AEBaseMenu
 
                 // Changes caused by the player are synchronized right away, everything else at most once per second,
                 // and not at all while the contents are frozen
-                if (this.pendingInventoryUpdate
+                if (this.pendingInventoryUpdate == 1
                         || (!this.viewFrozen && time - this.lastInventoryUpdateTime >= INVENTORY_UPDATE_INTERVAL)) {
-                    this.pendingInventoryUpdate = false;
+                    this.pendingInventoryUpdate = 0;
                     this.lastInventoryUpdateTime = time;
                     this.sendInventoryUpdate();
                 }
 
+                if (pendingInventoryUpdate > 1)
+                    pendingInventoryUpdate--;
                 this.updatePowerStatus();
             }
             super.broadcastChanges();
@@ -383,7 +386,7 @@ public class MEStorageMenu extends AEBaseMenu
 
         this.viewFrozen = viewFrozen;
         // Sync once right away, so that what the client shows is up-to-date when the freeze starts or ends
-        this.pendingInventoryUpdate = true;
+        this.pendingInventoryUpdate = 1;
     }
 
     /**
@@ -392,7 +395,7 @@ public class MEStorageMenu extends AEBaseMenu
      * the only kind of update that is still sent while the contents are frozen.
      */
     public final void notifyStorageChanged() {
-        this.pendingInventoryUpdate = true;
+        this.pendingInventoryUpdate = 1;
     }
 
     private Set<AEKey> getCraftablesFromGrid() {
@@ -517,7 +520,7 @@ public class MEStorageMenu extends AEBaseMenu
         }
 
         // The player may have inserted or removed something, so the frozen contents have to be synchronized once
-        notifyStorageChanged();
+        this.pendingInventoryUpdate = 2;
 
         if (action == InventoryAction.PICKUP_OR_SET_DOWN && ContainerItemStrategies.isKeySupported(clickedKey)) {
             action = InventoryAction.FILL_ITEM;
@@ -804,7 +807,7 @@ public class MEStorageMenu extends AEBaseMenu
                 this.getActionSource());
         // Shift-clicking items into the terminal may change the contents, so the frozen contents have to be
         // synchronized once
-        notifyStorageChanged();
+        this.pendingInventoryUpdate = 2;
         return Platform.getInsertionRemainder(input, inserted);
     }
 
