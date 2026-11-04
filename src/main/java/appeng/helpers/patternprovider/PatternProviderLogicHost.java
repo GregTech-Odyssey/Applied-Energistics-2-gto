@@ -48,18 +48,9 @@ import appeng.menu.locator.MenuLocator;
 public interface PatternProviderLogicHost extends IConfigurableObject, IPriorityHost, PatternContainer, MEStorageHost {
     PatternProviderLogic getLogic();
 
-    @Nullable
     @Override
     default MEStorage getMEStorage(@Nullable Direction side) {
-        return getLogic().getNetworkStorage();
-    }
-
-    @Override
-    default int storageEpoch() {
-        return getLogic().storageEpoch();
-    }
-
-    default void exposedStorageChanged() {
+        return getLogic().getReturnInv();
     }
 
     /**

@@ -35,10 +35,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
-import appeng.api.networking.GridHelper;
-import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
-import appeng.api.networking.IManagedGridNode;
 import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
@@ -58,14 +55,6 @@ public class PatternProviderPart extends AEBasePart implements PatternProviderLo
 
     public static final ResourceLocation MODEL_BASE = new ResourceLocation(AppEng.MOD_ID,
             "part/pattern_provider_base");
-
-    private static final IGridNodeListener<PatternProviderPart> NODE_LISTENER = new AEBasePart.NodeListener<>() {
-        @Override
-        public void onGridChanged(PatternProviderPart nodeOwner, IGridNode node) {
-            super.onGridChanged(nodeOwner, node);
-            nodeOwner.getLogic().gridChanged();
-        }
-    };
 
     // TODO: unify the following between the 3 interface parts?
     @PartModels
@@ -91,21 +80,8 @@ public class PatternProviderPart extends AEBasePart implements PatternProviderLo
     }
 
     @Override
-    protected IManagedGridNode createMainNode() {
-        return GridHelper.createManagedNode(this, NODE_LISTENER);
-    }
-
-    @Override
     public void saveChanges() {
         getHost().markForSave();
-    }
-
-    @Override
-    public void exposedStorageChanged() {
-        var host = getHost();
-        if (host != null) {
-            host.partStorageChanged();
-        }
     }
 
     @Override

@@ -37,10 +37,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 
-import appeng.api.networking.GridHelper;
-import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
-import appeng.api.networking.IManagedGridNode;
 import appeng.api.orientation.BlockOrientation;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.util.AECableType;
@@ -50,17 +47,9 @@ import appeng.blockentity.grid.AENetworkBlockEntity;
 import appeng.core.definitions.AEBlocks;
 import appeng.helpers.patternprovider.PatternProviderLogic;
 import appeng.helpers.patternprovider.PatternProviderLogicHost;
-import appeng.me.helpers.BlockEntityNodeListener;
 import appeng.util.SettingsFrom;
 
 public class PatternProviderBlockEntity extends AENetworkBlockEntity implements PatternProviderLogicHost {
-    private static final IGridNodeListener<PatternProviderBlockEntity> NODE_LISTENER = new BlockEntityNodeListener<>() {
-        @Override
-        public void onGridChanged(PatternProviderBlockEntity nodeOwner, IGridNode node) {
-            nodeOwner.logic.gridChanged();
-        }
-    };
-
     protected final PatternProviderLogic logic = createLogic();
 
     @Nullable
@@ -72,11 +61,6 @@ public class PatternProviderBlockEntity extends AENetworkBlockEntity implements 
 
     protected PatternProviderLogic createLogic() {
         return new PatternProviderLogic(this.getMainNode(), this);
-    }
-
-    @Override
-    protected IManagedGridNode createMainNode() {
-        return GridHelper.createManagedNode(this, NODE_LISTENER);
     }
 
     @Override
