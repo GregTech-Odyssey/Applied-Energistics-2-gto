@@ -118,6 +118,7 @@ public final class AEKeyBigMap<K extends AEKey> extends IdentityKeyObjectMap<K, 
         final int pos = IdentityKey.find(key, mask, k);
         if (pos >= 0) {
             ((U126) ((Object[]) value)[pos]).add(amount);
+            return;
         }
         insertAt(-pos - 1, k, new U126(amount));
     }
