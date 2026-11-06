@@ -5,6 +5,8 @@ import com.google.common.base.Strings;
 import org.jetbrains.annotations.Nullable;
 
 import dev.emi.emi.api.EmiApi;
+import dev.emi.emi.api.stack.FluidEmiStack;
+import dev.emi.emi.api.stack.ItemEmiStack;
 
 import appeng.integration.abstraction.ItemListModAdapter;
 
@@ -42,11 +44,13 @@ class EmiItemListModAdapter implements ItemListModAdapter {
             return null;
         }
 
-        // getName() works for every stack type: ItemEmiStack delegates to ItemStack#getHoverName, FluidEmiStack to the
-        // fluid name. Going through getItemStack() instead would skip fluids, whose FluidEmiStack inherits the base
-        // implementation that always returns an empty stack.
+        // EmiStack is extensible, and stacks like GTOCore's research tech nodes or ions also report a name without
+        // being
+        // something AE can search for. Only items and fluids are accepted, so hovering those keeps the T key's original
+        // behaviour. getName() is used rather than getItemStack() because FluidEmiStack inherits a base implementation
+        // that always returns an empty stack, which would skip fluids entirely.
         for (var stack : hovered.getStack().getEmiStacks()) {
-            if (!stack.isEmpty()) {
+            if ((stack instanceof ItemEmiStack || stack instanceof FluidEmiStack) && !stack.isEmpty()) {
                 return stack.getName().getString();
             }
         }
