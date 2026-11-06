@@ -42,10 +42,12 @@ class EmiItemListModAdapter implements ItemListModAdapter {
             return null;
         }
 
+        // getName() works for every stack type: ItemEmiStack delegates to ItemStack#getHoverName, FluidEmiStack to the
+        // fluid name. Going through getItemStack() instead would skip fluids, whose FluidEmiStack inherits the base
+        // implementation that always returns an empty stack.
         for (var stack : hovered.getStack().getEmiStacks()) {
-            var itemStack = stack.getItemStack();
-            if (!itemStack.isEmpty()) {
-                return itemStack.getHoverName().getString();
+            if (!stack.isEmpty()) {
+                return stack.getName().getString();
             }
         }
 

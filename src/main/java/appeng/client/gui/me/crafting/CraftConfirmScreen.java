@@ -20,7 +20,6 @@ package appeng.client.gui.me.crafting;
 
 import java.math.RoundingMode;
 import java.text.NumberFormat;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -98,7 +97,9 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
 
         this.searchField = widgets.addTextField("materialSearch", true);
         this.searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
-        this.searchField.setTooltipMessage(Collections.singletonList(ExtendedLangs.SearchCraftingMaterials.text()));
+        this.searchField.setTooltipMessage(List.of(
+                ExtendedLangs.SearchCraftingMaterials.text(),
+                ExtendedLangs.SearchHoveredEmiItem.text()));
         this.searchField.setMaxLength(100);
         this.searchField.setResponder(term -> {
             materialSearch.setSearchTerm(term);
@@ -243,7 +244,7 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
 
     @Override
     protected boolean searchForEmiItem(String itemName) {
-        focusSearchField(searchField, itemName);
+        fillSearchField(searchField, itemName);
         return true;
     }
 

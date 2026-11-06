@@ -325,7 +325,8 @@ public class MEStorageScreen<C extends MEStorageMenu>
                     GuiText.SearchTooltipModId.text(),
                     GuiText.SearchTooltipTag.text(),
                     GuiText.SearchTooltipToolTips.text(),
-                    GuiText.SearchTooltipItemId.text()));
+                    GuiText.SearchTooltipItemId.text(),
+                    ExtendedLangs.SearchHoveredEmiItem.text()));
 
             // Sync the search text both ways but make the direction depend on which search has the focus
             if (config.isSyncWithExternalSearch()) {
@@ -575,7 +576,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
             ItemListMod.setSearchText(itemName);
             setSearchText(itemName);
         } else {
-            focusSearchField(searchField, itemName);
+            fillSearchField(searchField, itemName);
         }
         return true;
     }

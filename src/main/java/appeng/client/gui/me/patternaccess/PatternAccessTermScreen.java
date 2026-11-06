@@ -77,6 +77,7 @@ import appeng.menu.implementations.PatternAccessTermMenu;
 
 import com.gto.ae.api.config.ExtendedSettings;
 import com.gto.ae.client.gui.widgets.ExpandableToggleButton;
+import com.gto.ae.core.localization.ExtendedLangs;
 import com.gto.ae.menu.ShowMolecularAssembler;
 
 public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AEBaseScreen<C> {
@@ -171,6 +172,8 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
         this.searchField = widgets.addTextField("search");
         this.searchField.setResponder(str -> this.refreshList());
         this.searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
+        this.searchField.setTooltipMessage(
+                Collections.singletonList(ExtendedLangs.SearchHoveredEmiItem.text()));
         gtolib$showMolecularAssembler = new ExpandableToggleButton<>(
                 ExtendedSettings.TERMINAL_SHOW_MOLECULAR_ASSEMBLERS,
                 ShowMolecularAssembler.ALL,
@@ -187,8 +190,11 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
 
         super.init();
 
-        // Auto focus search field
-        this.setInitialFocus(this.searchField);
+        // Focusing the search field here would swallow every subsequent T keystroke instead of searching for the
+        // item hovered in EMI, so it is left to the player to click the field.
+        if (config.isAutoFocusSearch()) {
+            this.setInitialFocus(this.searchField);
+        }
 
         // numLines may have changed, recalculate scroll bar.
         this.resetScrollbar();
@@ -447,7 +453,7 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
 
     @Override
     protected boolean searchForEmiItem(String itemName) {
-        focusSearchField(searchField, itemName);
+        fillSearchField(searchField, itemName);
         return true;
     }
 

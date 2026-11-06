@@ -140,6 +140,13 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
     private boolean lastShiftState = false;
 
     /**
+     * Set when the EMI hover-search hotkey consumed a keystroke, so the char callback GLFW sends right after it is not
+     * typed into the search field. Consuming the key event alone is not enough: GLFW reports the key and the character
+     * separately, and an already focused text field will happily insert the latter.
+     */
+    private boolean swallowNextChar;
+
+    /**
      * The positions of all slots when a subscreen is opened.
      */
     private final List<SavedSlotInfo> savedSlotInfos = new ArrayList<>();
@@ -546,9 +553,15 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // Only the char callback that directly follows a consumed hotkey is dropped. Clearing here keeps a keystroke
+        // that produces no char event (a modifier combination for example) from eating the next character the player
+        // actually types.
+        this.swallowNextChar = false;
+
         if (keyCode == GLFW.GLFW_KEY_T && ItemListMod.isEnabled()) {
             var hoveredItemName = ItemListMod.getHoveredItemName();
             if (hoveredItemName != null && searchForEmiItem(hoveredItemName)) {
+                this.swallowNextChar = true;
                 return true;
             }
         }
@@ -571,11 +584,23 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         return false;
     }
 
-    protected final void focusSearchField(AETextField searchField, String searchText) {
+    /**
+     * Fills a search field with the name of the item hovered in EMI without taking the focus. Focusing it would make
+     * the next T keystroke type into the field instead of searching for the next hovered item, so the hotkey stays
+     * repeatable and the player clicks the field (or Tab-navigates) when they want to edit the query by hand.
+     */
+    protected final void fillSearchField(AETextField searchField, String searchText) {
         searchField.setMaxLength(Math.max(searchField.getMaxLength(), searchText.length()));
         searchField.setValue(searchText);
-        searchField.setFocused(true);
-        setFocused(searchField);
+    }
+
+    @Override
+    public boolean charTyped(char character, int modifiers) {
+        if (this.swallowNextChar) {
+            this.swallowNextChar = false;
+            return true;
+        }
+        return super.charTyped(character, modifiers);
     }
 
     @Override
