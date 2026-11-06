@@ -160,6 +160,7 @@
   "ae2.gto_extension.pick_craft_error3": "创建的任务数已达上限。",
   "ae2.gto_extension.recent_throughput": "近期统计（最近%d秒）",
   "ae2.gto_extension.search_crafting_materials": "搜索本次合成中的物品或流体",
+  "ae2.gto_extension.search_hovered_emi_item": "悬停EMI中的物品或流体时按[T]将其名称填入搜索栏",
   "ae2.gto_extension.shift_encoding_clear_desc": "特殊情况：当编码的样板没有有效输出时，清空背包所有已经编码的样板",
   "ae2.gto_extension.shift_encoding_desc": "[Shift + 左击] 将样板编码后存入背包",
   "ae2.gto_extension.tasks_num_in_c_p_u": "CPU中的任务数量：%d",

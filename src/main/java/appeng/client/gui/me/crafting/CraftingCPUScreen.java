@@ -87,7 +87,9 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
 
         this.searchField = widgets.addTextField("materialSearch", true);
         searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
-        searchField.setTooltipMessage(Collections.singletonList(ExtendedLangs.SearchCraftingMaterials.text()));
+        searchField.setTooltipMessage(List.of(
+                ExtendedLangs.SearchCraftingMaterials.text(),
+                ExtendedLangs.SearchHoveredEmiItem.text()));
         searchField.setMaxLength(100);
         searchField.setResponder(term -> {
             materialSearch.setSearchTerm(term);
@@ -173,6 +175,12 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
         var zones = super.getExclusionZones();
         zones.add(searchField.getTooltipArea());
         return zones;
+    }
+
+    @Override
+    protected boolean searchForEmiItem(String itemName) {
+        fillSearchField(searchField, itemName);
+        return true;
     }
 
     public void postUpdate(CraftingStatus status) {

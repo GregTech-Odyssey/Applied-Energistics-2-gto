@@ -160,6 +160,7 @@
   "ae2.gto_extension.pick_craft_error3": "The number of created tasks has reached the limit.",
   "ae2.gto_extension.recent_throughput": "Recent Throughput (last %d seconds)",
   "ae2.gto_extension.search_crafting_materials": "Search items or fluids in this crafting job",
+  "ae2.gto_extension.search_hovered_emi_item": "Hover an item or fluid in EMI and press [T] to search for its name",
   "ae2.gto_extension.shift_encoding_clear_desc": "Special Case: When the encoded pattern has no valid output, clear all encoded patterns in inventory",
   "ae2.gto_extension.shift_encoding_desc": "[Shift + Click] Encode pattern and put it into inventory",
   "ae2.gto_extension.tasks_num_in_c_p_u": "Tasks in CPU: %d",

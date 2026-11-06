@@ -2,6 +2,8 @@ package appeng.integration.abstraction;
 
 import com.google.common.base.Strings;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Abstraction for accessing functionality of mods like JEI/REI/EMI.
  */
@@ -36,6 +38,11 @@ public class ItemListMod {
 
     public static boolean hasSearchFocus() {
         return adapter.hasSearchFocus();
+    }
+
+    @Nullable
+    public static String getHoveredItemName() {
+        return adapter.getHoveredItemName();
     }
 
     public static void setAdapter(ItemListModAdapter adapter) {
