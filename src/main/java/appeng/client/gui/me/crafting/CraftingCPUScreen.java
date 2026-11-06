@@ -175,6 +175,12 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
         return zones;
     }
 
+    @Override
+    protected boolean searchForEmiItem(String itemName) {
+        focusSearchField(searchField, itemName);
+        return true;
+    }
+
     public void postUpdate(CraftingStatus status) {
         Long2ObjectMap<CraftingStatusEntry> entries;
         if (this.status == null || status.isFullStatus()) {

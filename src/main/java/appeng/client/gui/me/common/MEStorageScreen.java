@@ -569,6 +569,17 @@ public class MEStorageScreen<C extends MEStorageMenu>
         return super.keyPressed(keyCode, scanCode, p_keyPressed_3_);
     }
 
+    @Override
+    protected boolean searchForEmiItem(String itemName) {
+        if (config.isUseExternalSearch()) {
+            ItemListMod.setSearchText(itemName);
+            setSearchText(itemName);
+        } else {
+            focusSearchField(searchField, itemName);
+        }
+        return true;
+    }
+
     private boolean isHovered() {
         return isHovering(0, 0, this.imageWidth, this.imageHeight, currentMouseX, currentMouseY);
     }

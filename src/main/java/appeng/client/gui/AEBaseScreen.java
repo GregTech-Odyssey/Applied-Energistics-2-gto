@@ -78,6 +78,7 @@ import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.style.SlotPosition;
 import appeng.client.gui.style.Text;
 import appeng.client.gui.style.TextAlignment;
+import appeng.client.gui.widgets.AETextField;
 import appeng.client.gui.widgets.ITickingWidget;
 import appeng.client.gui.widgets.ITooltip;
 import appeng.client.gui.widgets.OpenGuideButton;
@@ -94,6 +95,7 @@ import appeng.core.sync.packets.HotkeyPacket;
 import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.core.sync.packets.SwapSlotsPacket;
 import appeng.helpers.InventoryAction;
+import appeng.integration.abstraction.ItemListMod;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantic;
 import appeng.menu.SlotSemantics;
@@ -544,6 +546,13 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (keyCode == GLFW.GLFW_KEY_T && ItemListMod.isEnabled()) {
+            var hoveredItemName = ItemListMod.getHoveredItemName();
+            if (hoveredItemName != null && searchForEmiItem(hoveredItemName)) {
+                return true;
+            }
+        }
+
         if (menu.getTarget() instanceof ITerminalHost host && !(getFocused() instanceof EditBox)) {
             var hotkey = Hotkeys.findHotkey(keyCode, scanCode);
             if (hotkey != null) {
@@ -556,6 +565,17 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
             }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    protected boolean searchForEmiItem(String itemName) {
+        return false;
+    }
+
+    protected final void focusSearchField(AETextField searchField, String searchText) {
+        searchField.setMaxLength(Math.max(searchField.getMaxLength(), searchText.length()));
+        searchField.setValue(searchText);
+        searchField.setFocused(true);
+        setFocused(searchField);
     }
 
     @Override

@@ -545,6 +545,12 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
         return super.charTyped(character, key);
     }
 
+    @Override
+    protected boolean searchForEmiItem(String itemName) {
+        focusSearchField(searchField, itemName);
+        return true;
+    }
+
     public void clear() {
         this.byFacilityUniqueId.clear();
         // invalid caches on refresh

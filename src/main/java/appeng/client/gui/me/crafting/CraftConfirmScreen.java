@@ -241,6 +241,12 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
         return super.keyPressed(keyCode, scanCode, p_keyPressed_3_);
     }
 
+    @Override
+    protected boolean searchForEmiItem(String itemName) {
+        focusSearchField(searchField, itemName);
+        return true;
+    }
+
     private void selectNextCpu() {
         getMenu().cycleSelectedCPU(!isHandlingRightClick());
     }

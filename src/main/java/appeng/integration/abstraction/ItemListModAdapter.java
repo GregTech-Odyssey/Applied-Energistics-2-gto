@@ -1,5 +1,7 @@
 package appeng.integration.abstraction;
 
+import org.jetbrains.annotations.Nullable;
+
 public interface ItemListModAdapter {
 
     boolean isEnabled();
@@ -15,6 +17,11 @@ public interface ItemListModAdapter {
 
     default boolean hasSearchFocus() {
         return false;
+    }
+
+    @Nullable
+    default String getHoveredItemName() {
+        return null;
     }
 
     static ItemListModAdapter none() {

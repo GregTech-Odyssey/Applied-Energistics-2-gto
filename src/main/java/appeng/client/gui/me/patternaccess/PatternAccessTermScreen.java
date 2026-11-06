@@ -445,6 +445,12 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
         return super.charTyped(character, key);
     }
 
+    @Override
+    protected boolean searchForEmiItem(String itemName) {
+        focusSearchField(searchField, itemName);
+        return true;
+    }
+
     public void clear() {
         this.byId.clear();
         // invalid caches on refresh
