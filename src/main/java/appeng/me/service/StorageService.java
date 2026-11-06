@@ -19,7 +19,6 @@
 package appeng.me.service;
 
 import java.util.*;
-import java.util.function.BiConsumer;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Multimaps;
@@ -32,25 +31,20 @@ import net.minecraft.server.MinecraftServer;
 
 import it.unimi.dsi.fastutil.objects.*;
 
-import appeng.api.config.Actionable;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridServiceProvider;
-import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.storage.IStorageService;
 import appeng.api.networking.storage.IStorageWatcherNode;
 import appeng.api.stacks.*;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
 import appeng.api.storage.MEStorage;
+import appeng.hooks.ticking.TickHandler;
 import appeng.me.helpers.InterestManager;
 import appeng.me.helpers.StackWatcher;
 import appeng.me.storage.NetworkStorage;
 
 public class StorageService implements Runnable, IStorageService, IGridServiceProvider {
-
-    private static final String TAG_STORED_UUID = "s";
-    public static BiConsumer<UUID, NetworkStorage> LOAD_STORAGE_CONSUMER;
-    public static BiConsumer<UUID, NetworkStorage> SAVE_STORAGE_CONSUMER;
 
     /**
      * Tracks the storage service's state for each grid node that provides storage to the network.
@@ -66,7 +60,6 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     private final InterestManager<StackWatcher<IStorageWatcherNode>> interestManager = new InterestManager<>(
             this.interests);
     private final NetworkStorage storage;
-    private UUID storageUUID = null;
     /**
      * Publicly exposed cached available stacks.
      */
@@ -92,6 +85,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
     private boolean fullWatcherUpdate = true;
     private boolean trackKeys;
     private int mountEpoch;
+    private final int tickOffset = hashCode() % 10;
 
     private static final int JOURNAL_MIN_KEYS = 1024;
 
@@ -124,17 +118,7 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
 
     @Override
     public void onServerEndTick(MinecraftServer server) {
-        if (!storage.cacheInserted.isEmpty()) {
-            for (var it = storage.cacheInserted.reference2ObjectEntrySet().fastIterator(); it.hasNext();) {
-                var e = it.next();
-                var value = e.getValue();
-                var i = storage.insertDirect(e.getKey(), value.toLong(), Actionable.MODULATE, IActionSource.empty());
-                value.subtract(i);
-                if (value.toLong() <= 0)
-                    it.remove();
-            }
-        }
-        if (watcherUpdate && server.getTickCount() % 10 == 0) {
+        if (watcherUpdate && (TickHandler.INSTANCE.tickCounter + tickOffset) % 10 == 0) {
             updateCachedStacks();
             if (!interestManager.isEmpty()) {
                 watcherUpdate();
@@ -379,10 +363,6 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
             this.requesters.add(requester);
             requester.getListener().add(this);
         }
-        if (savedData != null && savedData.hasUUID(TAG_STORED_UUID)) {
-            var storageUUID = savedData.getUUID(TAG_STORED_UUID);
-            LOAD_STORAGE_CONSUMER.accept(storageUUID, storage);
-        }
         run();
     }
 
@@ -407,17 +387,6 @@ public class StorageService implements Runnable, IStorageService, IGridServicePr
             requester.getListener().remove(this);
         }
         run();
-    }
-
-    @Override
-    public void saveNodeData(IGridNode gridNode, CompoundTag savedData) {
-        if (!storage.cacheInserted.isEmpty()) {
-            if (storageUUID == null) {
-                storageUUID = UUID.randomUUID();
-                SAVE_STORAGE_CONSUMER.accept(storageUUID, storage);
-            }
-            savedData.putUUID(TAG_STORED_UUID, storageUUID);
-        }
     }
 
     @Override

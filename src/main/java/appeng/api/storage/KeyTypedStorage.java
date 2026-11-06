@@ -11,10 +11,11 @@ import appeng.api.stacks.KeyVisitor;
 
 public interface KeyTypedStorage extends MEStorage {
 
-    boolean supportsKeyType(AEKeyType type);
+    @Override
+    boolean supportsKeyType(AEKeyType<?> type);
 
     @Nullable
-    MEStorage forKeyType(AEKeyType type);
+    MEStorage forKeyType(AEKeyType<?> type);
 
     default boolean containsAny(Set<AEKey> primaryKeys) {
         return forEachKey((k, v) -> primaryKeys.contains(k.dropSecondary()));

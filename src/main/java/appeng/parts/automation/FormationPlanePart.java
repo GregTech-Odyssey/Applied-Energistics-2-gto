@@ -48,6 +48,8 @@ import appeng.api.parts.IPartCollisionHelper;
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
+import appeng.api.stacks.AEKeyTypes;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
 import appeng.api.storage.MEStorage;
@@ -269,6 +271,11 @@ public class FormationPlanePart extends UpgradeablePart implements IStorageProvi
      * Models the block adjacent to this formation plane as storage.
      */
     class InWorldStorage implements MEStorage {
+        @Override
+        public boolean supportsKeyType(AEKeyType<?> type) {
+            return AEKeyTypes.ITEMS == type;
+        }
+
         @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             if (filter != null && !filter.matchesFilter(what, filterMode)) {

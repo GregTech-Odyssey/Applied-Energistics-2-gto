@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.KeyTypedStorage;
@@ -25,8 +26,8 @@ public final class ExtractableOnlyStorage implements MEStorage {
     }
 
     @Override
-    public boolean isPreferredStorageFor(AEKey what, IActionSource source) {
-        return storage.isPreferredStorageFor(what, source);
+    public boolean supportsKeyType(AEKeyType<?> type) {
+        return storage.supportsKeyType(type);
     }
 
     @Override

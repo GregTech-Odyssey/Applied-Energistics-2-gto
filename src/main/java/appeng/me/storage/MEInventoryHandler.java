@@ -207,23 +207,6 @@ public class MEInventoryHandler extends DelegatingMEInventory {
         return cache;
     }
 
-    @Override
-    public boolean isPreferredStorageFor(AEKey input, IActionSource source) {
-        if (this.partitionListMode == IncludeExclude.WHITELIST) {
-            if (this.partitionList.isListed(input)) {
-                return true;
-            }
-        }
-
-        // Inventories that already contain some equal stack are also preferred
-        // we use a copy of size 1 here to prevent inventories from attempting to query multiple sub-inventories
-        if (super.extract(input, 1, Actionable.SIMULATE, source) > 0) {
-            return true;
-        }
-
-        return super.isPreferredStorageFor(input, source);
-    }
-
     protected boolean canExtract(AEKey request) {
         return allowExtraction && passesBlackOrWhitelist(request);
     }

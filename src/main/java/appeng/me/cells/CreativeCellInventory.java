@@ -23,10 +23,7 @@ import net.minecraft.world.item.ItemStack;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeySet;
-import appeng.api.stacks.KeyCounter;
-import appeng.api.stacks.KeyVisitor;
+import appeng.api.stacks.*;
 import appeng.api.storage.cells.CellState;
 import appeng.api.storage.cells.StorageCell;
 import appeng.items.contents.CellConfig;
@@ -48,6 +45,11 @@ class CreativeCellInventory implements StorageCell {
             }
         });
         this.cache.setTickUpdate(false);
+    }
+
+    @Override
+    public boolean supportsKeyType(AEKeyType<?> type) {
+        return true;
     }
 
     @Override
@@ -78,11 +80,6 @@ class CreativeCellInventory implements StorageCell {
     @Override
     public KeyCounter getAvailableStacks() {
         return cache.getAvailableStacksCache();
-    }
-
-    @Override
-    public boolean isPreferredStorageFor(AEKey input, IActionSource source) {
-        return this.configured.contains(input);
     }
 
     @Override

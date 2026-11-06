@@ -2,8 +2,6 @@ package appeng.me.storage;
 
 import java.util.ArrayList;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -18,15 +16,13 @@ import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.MEStorage;
 import appeng.parts.storagebus.StorageBusPart;
 
-/**
- * 单次存储查询（列举库存 / 提取）的状态，同一时刻只由一个线程持有：同一份存储经多条路径到达时只计一次。
- */
+// 单次存储查询（列举库存 / 提取）的状态：同一份存储经多条路径到达时只计一次。
+// 网络存储的所有操作都在同一条逻辑线程上串行执行，因此查询状态直接用静态共享实例，不做任何同步。
 final class StorageQuery {
 
-    private static final AtomicReference<Thread> OWNER = new AtomicReference<>();
     private static final StorageQuery INSTANCE = new StorageQuery();
-    private static int ownerDepth;
-    private static final AtomicLong TOPOLOGY = new AtomicLong();
+    private static int queryDepth;
+    private static long topology;
 
     int readDepth;
     int extractDepth;
@@ -47,9 +43,9 @@ final class StorageQuery {
     private final ArrayList<NetworkStorage> filledNetworks = new ArrayList<>();
     private final ReferenceOpenHashSet<Object> drained = new ReferenceOpenHashSet<>();
 
+    // 当前是否有一次查询正在进行中，即后面的存储调用属于它的子查询。
     static boolean owned() {
-        var owner = OWNER.get();
-        return owner != null && owner == Thread.currentThread();
+        return queryDepth > 0;
     }
 
     @Nullable
@@ -57,26 +53,22 @@ final class StorageQuery {
         return owned() ? INSTANCE : null;
     }
 
-    @Nullable
+    // 开启一次查询，结束后必须 release()。
     static StorageQuery acquire() {
-        var thread = Thread.currentThread();
-        if (OWNER.get() != thread && !OWNER.compareAndSet(null, thread))
-            return null;
-        ownerDepth++;
+        queryDepth++;
         return INSTANCE;
     }
 
     static void release() {
-        if (--ownerDepth == 0)
-            OWNER.set(null);
+        queryDepth--;
     }
 
     static long topologyVersion() {
-        return TOPOLOGY.get();
+        return topology;
     }
 
     static void topologyChanged() {
-        TOPOLOGY.incrementAndGet();
+        topology++;
     }
 
     static Reference2IntOpenHashMap<Object> reachCounts(NetworkStorage root) {

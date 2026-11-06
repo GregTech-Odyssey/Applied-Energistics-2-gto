@@ -20,6 +20,8 @@ public final class AEKeySet<K extends AEKey> extends IdentityKeySet<K> {
     }
 
     public boolean containKey(final AEKey k) {
+        if (size == 0)
+            return false;
         return IdentityKey.find(key, mask, k) >= 0;
     }
 

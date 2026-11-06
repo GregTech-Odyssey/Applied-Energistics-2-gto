@@ -23,6 +23,7 @@ import net.minecraft.network.chat.Component;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.storage.IStorageMounts;
 import appeng.api.storage.IStorageProvider;
 import appeng.api.storage.MEStorage;
@@ -39,8 +40,9 @@ import appeng.me.service.CraftingService;
 public class CraftingServiceStorage implements IStorageProvider {
     private final CraftingService craftingService;
     private final MEStorage inventory = new MEStorage() {
+
         @Override
-        public boolean isPreferredStorageFor(AEKey key, IActionSource source) {
+        public boolean supportsKeyType(AEKeyType<?> type) {
             return true;
         }
 

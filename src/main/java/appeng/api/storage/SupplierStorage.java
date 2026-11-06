@@ -9,9 +9,9 @@ import net.minecraft.network.chat.Component;
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.stacks.KeyVisitor;
-import appeng.me.storage.NullInventory;
 
 /**
  * Delegates all calls to a {@link MEStorage} returned by a supplier such that the underlying storage can change
@@ -24,11 +24,6 @@ public final class SupplierStorage implements MEStorage {
         this.supplier = supplier;
     }
 
-    private MEStorage getDelegate() {
-        var delegate = supplier.get();
-        return delegate == null ? NullInventory.INSTANCE : delegate;
-    }
-
     @Nullable
     public Object getResourceIdentity() {
         var delegate = supplier.get();
@@ -36,37 +31,55 @@ public final class SupplierStorage implements MEStorage {
     }
 
     @Override
-    public boolean isPreferredStorageFor(AEKey what, IActionSource source) {
-        return getDelegate().isPreferredStorageFor(what, source);
+    public boolean supportsKeyType(AEKeyType<?> type) {
+        var delegate = supplier.get();
+        return delegate != null && delegate.supportsKeyType(type);
     }
 
     @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
-        return getDelegate().insert(what, amount, mode, source);
+        var delegate = supplier.get();
+        return delegate == null ? 0 : delegate.insert(what, amount, mode, source);
     }
 
     @Override
     public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-        return getDelegate().extract(what, amount, mode, source);
+        var delegate = supplier.get();
+        return delegate == null ? 0 : delegate.extract(what, amount, mode, source);
     }
 
     @Override
     public void getAvailableStacks(KeyCounter out) {
-        getDelegate().getAvailableStacks(out);
+        var delegate = supplier.get();
+        if (delegate != null) {
+            delegate.getAvailableStacks(out);
+        }
     }
 
     @Override
     public boolean forEachKey(KeyVisitor visitor) {
-        return getDelegate().forEachKey(visitor);
+        var delegate = supplier.get();
+        if (delegate != null) {
+            return delegate.forEachKey(visitor);
+        }
+        return false;
     }
 
     @Override
     public Component getDescription() {
-        return getDelegate().getDescription();
+        var delegate = supplier.get();
+        if (delegate != null) {
+            return delegate.getDescription();
+        }
+        return Component.empty();
     }
 
     @Override
     public KeyCounter getAvailableStacks() {
-        return getDelegate().getAvailableStacks();
+        var delegate = supplier.get();
+        if (delegate != null) {
+            return delegate.getAvailableStacks();
+        }
+        return KeyCounter.empty();
     }
 }

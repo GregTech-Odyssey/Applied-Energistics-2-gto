@@ -375,6 +375,11 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
     }
 
     @Override
+    public boolean supportsKeyType(AEKeyType<?> type) {
+        return true;
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         if (!isAllowed(what)) {
             return 0;

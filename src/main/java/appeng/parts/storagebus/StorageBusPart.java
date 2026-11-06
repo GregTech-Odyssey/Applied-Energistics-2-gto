@@ -557,12 +557,6 @@ public class StorageBusPart extends UpgradeablePart
         }
 
         @Override
-        public boolean isPreferredStorageFor(AEKey input, IActionSource source) {
-            checkTarget();
-            return super.isPreferredStorageFor(input, source);
-        }
-
-        @Override
         public Object getResourceIdentity() {
             var identity = super.getResourceIdentity();
             return identity != null ? identity : this.identity;

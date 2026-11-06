@@ -30,6 +30,7 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartItem;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.stacks.KeyVisitor;
 import appeng.api.storage.MEStorage;
@@ -242,6 +243,11 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
     private class InputMEStorage implements MEStorage {
 
         @Override
+        public boolean supportsKeyType(AEKeyType<?> type) {
+            return true;
+        }
+
+        @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             long total = 0;
             var outputs = CapabilityP2PTunnelPart.this.getOutputs();
@@ -275,6 +281,11 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
 
         @org.jetbrains.annotations.Nullable
         private AvailableStacksCache cache;
+
+        @Override
+        public boolean supportsKeyType(AEKeyType<?> type) {
+            return true;
+        }
 
         @Override
         public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {

@@ -150,6 +150,20 @@ public class IdentityKeyObjectMap<K extends IdentityKey, V> extends Reference2Ob
         return (IdentityKeyObjectMap<K, V>) super.clone();
     }
 
+    public final V get(final IdentityKey k) {
+        final int pos = IdentityKey.find(key, mask, k);
+        return pos >= 0 ? value[pos] : defRetValue;
+    }
+
+    public final V getOrDefault(final IdentityKey k, final V defaultValue) {
+        final int pos = IdentityKey.find(key, mask, k);
+        return pos >= 0 ? value[pos] : defaultValue;
+    }
+
+    public final boolean containsKey(final IdentityKey k) {
+        return IdentityKey.find(key, mask, k) >= 0;
+    }
+
     public final boolean contains(final IdentityKey k) {
         return k != null && IdentityKey.find(key, mask, k) >= 0;
     }

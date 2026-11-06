@@ -30,6 +30,7 @@ import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
+import appeng.api.identity.IdentityKeyObjectMap;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.*;
 import appeng.api.storage.MEStorage;
@@ -45,6 +46,36 @@ public final class NetworkStorage implements MEStorage {
     private boolean mountsInUse;
     private boolean getInUse;
 
+    /**
+     * 某个类型的挂载列表，以及与 {@link #storages} 下标对齐的查询去重令牌（{@link StorageQuery#tokenOf}）。
+     * 令牌只在走共享拓扑的追踪提取时才会用到，因此按需计算并缓存，普通插入/提取不承担这份开销。
+     */
+    private static final class TypeMounts {
+        static final TypeMounts EMPTY = new TypeMounts(new MEStorage[0]);
+
+        final MEStorage[] storages;
+        @Nullable
+        private Object[] tokens;
+
+        private TypeMounts(MEStorage[] storages) {
+            this.storages = storages;
+        }
+
+        Object[] tokens() {
+            var tokens = this.tokens;
+            if (tokens == null) {
+                var storages = this.storages;
+                var size = storages.length;
+                tokens = new Object[size];
+                for (var i = 0; i < size; i++) {
+                    tokens[i] = StorageQuery.tokenOf(storages[i]);
+                }
+                this.tokens = tokens;
+            }
+            return tokens;
+        }
+    }
+
     private final ObjectArrayList<MountOperation> priorityInventory;
     private final Reference2ReferenceOpenHashMap<MEStorage, Object> storages;
     private final ReferenceOpenHashSet<Object> identities;
@@ -55,14 +86,19 @@ public final class NetworkStorage implements MEStorage {
     private ArrayList<QueuedOperation> queuedOperations;
     public final KeyCounter cache;
     private final KeyCounter queryContent = new KeyCounter();
-    public final AEKeyBigMap<AEKey> cacheInserted = new AEKeyBigMap<>();
     private boolean queryContentReady;
     private final ReferenceOpenHashSet<MEStorage> networkLinks = new ReferenceOpenHashSet<>();
     private long topologyVersion = -1;
     private boolean topologyShared;
     private boolean firstMountExclusive;
     long enteredEpoch = -1;
-    private Object[] mountTokens = new Object[0];
+
+    // 按类型过滤后的挂载列表（优先级从高到低，附带与之下标对齐的去重令牌），按 StorageQuery 的拓扑版本缓存，
+    // 避免每次 IO 都重扫挂载、重算令牌。挂载变化、子网挂载变化，以及存储自身支持类型变化（如储物总线换目标，
+    // 见 StorageBusPart#updateTarget）都会推进拓扑版本；任何会让 supportsKeyType 或 getResourceIdentity 结果
+    // 改变的实现都必须调用 markTopologyChanged()，否则这里会继续用旧列表。
+    private final IdentityKeyObjectMap<AEKeyType<?>, TypeMounts> storageByType = new IdentityKeyObjectMap<>();
+    private long storageByTypeVersion = -1;
 
     public NetworkStorage() {
         this.priorityInventory = new ObjectArrayList<>();
@@ -135,27 +171,58 @@ public final class NetworkStorage implements MEStorage {
     }
 
     @Override
-    public long insert(AEKey what, long amount, Actionable type, IActionSource src) {
-        if (type == Actionable.SIMULATE) {
-            return insertDirect(what, amount, type, src);
-        } else {
-            cacheInserted.insert(what, amount);
-            return amount;
-        }
+    public boolean supportsKeyType(AEKeyType<?> type) {
+        return getTypeMounts(type).storages.length > 0;
     }
 
-    public long insertDirect(AEKey what, long amount, Actionable type, IActionSource src) {
+    /**
+     * 取该类型的挂载列表（优先级从高到低），结果按拓扑版本缓存，避免每次 IO 都重扫全部挂载。
+     */
+    private TypeMounts getTypeMounts(AEKeyType<?> type) {
+        var version = StorageQuery.topologyVersion();
+        if (storageByTypeVersion != version) {
+            storageByTypeVersion = version;
+            storageByType.clear();
+        }
+        var mounts = storageByType.get(type);
+        if (mounts == null) {
+            mounts = scanTypeMounts(type);
+            storageByType.put(type, mounts);
+        }
+        return mounts;
+    }
+
+    private TypeMounts scanTypeMounts(AEKeyType<?> type) {
+        var mounts = priorityInventory;
+        var size = mounts.size();
+        if (size == 0) {
+            return TypeMounts.EMPTY;
+        }
+        var storages = new ObjectArrayList<MEStorage>(size);
+        for (var i = 0; i < size; i++) {
+            var storage = mounts.get(i).storage;
+            if (storage.supportsKeyType(type)) {
+                storages.add(storage);
+            }
+        }
+        return storages.isEmpty() ? TypeMounts.EMPTY : new TypeMounts(storages.toArray(MEStorage[]::new));
+    }
+
+    @Override
+    public long insert(AEKey what, long amount, Actionable type, IActionSource src) {
         if (mountsInUse) {
             return 0;
         }
+        var storages = getTypeMounts(what.getType()).storages;
+        var size = storages.length;
         var remaining = amount;
         this.mountsInUse = true;
         try {
-            var ii = priorityInventory.listIterator(0);
-            while (ii.hasNext() && remaining > 0) {
-                var inv = ii.next().storage;
-                if (isQueuedForRemoval(inv))
+            for (var i = 0; i < size && remaining > 0; i++) {
+                var inv = storages[i];
+                if (isQueuedForRemoval(inv)) {
                     continue;
+                }
                 remaining -= inv.insert(what, remaining, type, src);
             }
         } finally {
@@ -200,11 +267,13 @@ public final class NetworkStorage implements MEStorage {
         if (StorageQuery.owned() || (!networkLinks.isEmpty() && sharedTopology())) {
             return extractTracked(what, amount, mode, source);
         }
+        var storages = getTypeMounts(what.getType()).storages;
+        var size = storages.length;
         var extracted = 0L;
         this.mountsInUse = true;
         try {
-            for (int i = priorityInventory.size() - 1; i >= 0 && extracted < amount; i--) {
-                var inv = priorityInventory.get(i).storage;
+            for (var i = size - 1; i >= 0 && extracted < amount; i--) {
+                var inv = storages[i];
                 if (isQueuedForRemoval(inv)) {
                     continue;
                 }
@@ -219,29 +288,36 @@ public final class NetworkStorage implements MEStorage {
 
     private long extractTracked(AEKey what, long amount, Actionable mode, IActionSource source) {
         var query = StorageQuery.current();
-        var last = priorityInventory.size() - 1;
+        var mounts = getTypeMounts(what.getType());
+        var storages = mounts.storages;
+        var last = storages.length - 1;
         if (query != null && query.extractDepth > 0) {
             if (!query.sameExtract(what, mode)) {
-                return extractFrom(what, amount, mode, source, null, last);
+                return extractFrom(what, amount, mode, source, null, storages, null, last);
             }
             if (!query.enter(this)) {
                 return 0;
             }
             query.extractDepth++;
             try {
-                return extractFrom(what, amount, mode, source, query, last);
+                return extractFrom(what, amount, mode, source, query, storages, mounts.tokens(), last);
             } finally {
                 query.extractDepth--;
             }
         }
         if (networkLinks.isEmpty() || !sharedTopology()) {
-            return extractFrom(what, amount, mode, source, null, last);
+            return extractFrom(what, amount, mode, source, null, storages, null, last);
         }
+        var tokens = mounts.tokens();
         var extracted = 0L;
         var start = last;
         Object firstToken = null;
-        var first = last >= 0 ? priorityInventory.get(last).storage : null;
-        if (firstMountExclusive && first != null && !isQueuedForRemoval(first)) {
+        var first = last >= 0 ? storages[last] : null;
+        // firstMountExclusive 是按优先级最低的那个挂载算出来的，只有过滤后剩下的最低优先级挂载就是它时才成立。
+        var firstExclusive = firstMountExclusive
+                && first != null
+                && first == priorityInventory.getLast().storage;
+        if (firstExclusive && !isQueuedForRemoval(first)) {
             this.mountsInUse = true;
             try {
                 extracted = first.extract(what, amount, mode, source);
@@ -253,13 +329,11 @@ public final class NetworkStorage implements MEStorage {
                 return extracted;
             }
             if (extracted > 0 || StorageQuery.extractsUnfiltered(first)) {
-                firstToken = mountToken(last);
+                firstToken = tokens[last];
             }
             start = last - 1;
         }
-        if ((query = StorageQuery.acquire()) == null) {
-            return extracted + extractFrom(what, amount - extracted, mode, source, null, start);
-        }
+        query = StorageQuery.acquire();
         query.beginExtract(what, mode);
         try {
             if (firstToken instanceof NetworkStorage network) {
@@ -267,7 +341,7 @@ public final class NetworkStorage implements MEStorage {
             } else if (firstToken != null && extracted > 0 && mode == Actionable.SIMULATE) {
                 query.markDrained(firstToken);
             }
-            return extracted + extractFrom(what, amount - extracted, mode, source, query, start);
+            return extracted + extractFrom(what, amount - extracted, mode, source, query, storages, tokens, start);
         } finally {
             query.endExtract();
             StorageQuery.release();
@@ -275,13 +349,13 @@ public final class NetworkStorage implements MEStorage {
     }
 
     private long extractFrom(AEKey what, long amount, Actionable mode, IActionSource source,
-            @Nullable StorageQuery query, int start) {
+            @Nullable StorageQuery query, MEStorage[] storages, @Nullable Object[] tokens, int start) {
         var extracted = 0L;
         var tracked = query != null && mode == Actionable.SIMULATE;
         this.mountsInUse = true;
         try {
             for (int i = start; i >= 0 && extracted < amount; i--) {
-                var inv = priorityInventory.get(i).storage;
+                var inv = storages[i];
                 if (isQueuedForRemoval(inv)) {
                     continue;
                 }
@@ -289,7 +363,7 @@ public final class NetworkStorage implements MEStorage {
                     extracted += inv.extract(what, amount - extracted, mode, source);
                     continue;
                 }
-                var token = query.hasDrained() ? mountToken(i) : null;
+                var token = query.hasDrained() ? tokens[i] : null;
                 if (token != null && query.isDrained(token)) {
                     continue;
                 }
@@ -297,7 +371,7 @@ public final class NetworkStorage implements MEStorage {
                 if (got > 0) {
                     extracted += got;
                     if (token == null)
-                        token = mountToken(i);
+                        token = tokens[i];
                     if (token != null)
                         query.markDrained(token);
                 }
@@ -307,15 +381,6 @@ public final class NetworkStorage implements MEStorage {
         }
         flushQueuedOperations();
         return extracted;
-    }
-
-    @Nullable
-    private Object mountToken(int index) {
-        if (topologyVersion != StorageQuery.topologyVersion() || mountTokens.length != priorityInventory.size()) {
-            sharedTopology();
-        }
-        var tokens = mountTokens;
-        return index < tokens.length ? tokens[index] : null;
     }
 
     public boolean usesTrackedQuery() {
@@ -369,7 +434,7 @@ public final class NetworkStorage implements MEStorage {
             }
             return;
         }
-        if (networkLinks.isEmpty() || !sharedTopology() || (query = StorageQuery.acquire()) == null) {
+        if (networkLinks.isEmpty() || !sharedTopology()) {
             getInUse = true;
             try {
                 priorityInventory.forEach(entry -> entry.storage.getAvailableStacks(out));
@@ -378,6 +443,7 @@ public final class NetworkStorage implements MEStorage {
             }
             return;
         }
+        query = StorageQuery.acquire();
         query.readDepth = 1;
         try {
             scanMounts(query);
@@ -395,16 +461,13 @@ public final class NetworkStorage implements MEStorage {
 
     private boolean sharedTopology() {
         var version = StorageQuery.topologyVersion();
-        if (topologyVersion != version || mountTokens.length != priorityInventory.size()) {
-            var tokens = new Object[priorityInventory.size()];
-            for (int i = 0; i < tokens.length; i++) {
-                tokens[i] = StorageQuery.tokenOf(priorityInventory.get(i).storage);
-            }
+        if (topologyVersion != version) {
+            var mounts = priorityInventory;
+            var size = mounts.size();
             var reached = StorageQuery.reachCounts(this);
             topologyShared = StorageQuery.anyShared(reached);
-            firstMountExclusive = tokens.length > 0
-                    && StorageQuery.exclusiveSubtree(tokens[tokens.length - 1], reached);
-            mountTokens = tokens;
+            firstMountExclusive = size > 0
+                    && StorageQuery.exclusiveSubtree(StorageQuery.tokenOf(mounts.get(size - 1).storage), reached);
             topologyVersion = version;
         }
         return topologyShared;

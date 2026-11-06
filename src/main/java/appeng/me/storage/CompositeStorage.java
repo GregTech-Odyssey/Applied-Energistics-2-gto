@@ -136,12 +136,6 @@ public class CompositeStorage implements KeyTypedStorage, ITickingMonitor {
     }
 
     @Override
-    public boolean isPreferredStorageFor(AEKey what, IActionSource source) {
-        var storage = storageFor(what);
-        return storage != null && storage.isPreferredStorageFor(what, source);
-    }
-
-    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         var storage = storageFor(what);
         if (storage == null) {

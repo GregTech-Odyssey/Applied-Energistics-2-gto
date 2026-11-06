@@ -59,6 +59,11 @@ public final class U126 {
         return hi != other.hi ? Long.compare(hi, other.hi) : Long.compare(lo, other.lo);
     }
 
+    public void setZero() {
+        hi = 0;
+        lo = 0;
+    }
+
     /** 设为 {@code long} 范围里的值。 */
     public void setValue(long amount) {
         hi = 0;

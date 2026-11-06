@@ -4,6 +4,8 @@ import java.util.function.ObjLongConsumer;
 
 import org.jetbrains.annotations.UnmodifiableView;
 
+import it.unimi.dsi.fastutil.objects.*;
+
 import appeng.api.identity.IdentityKey;
 import appeng.api.identity.IdentityKeyObjectMap;
 

@@ -22,10 +22,7 @@ import net.minecraft.network.chat.Component;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEItemKey;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.KeyCounter;
-import appeng.api.stacks.KeyVisitor;
+import appeng.api.stacks.*;
 import appeng.api.storage.MEStorage;
 
 class CondenserMEStorage implements MEStorage {
@@ -41,6 +38,11 @@ class CondenserMEStorage implements MEStorage {
             }
         });
         this.cache.setTickUpdate(false);
+    }
+
+    @Override
+    public boolean supportsKeyType(AEKeyType<?> type) {
+        return true;
     }
 
     @Override

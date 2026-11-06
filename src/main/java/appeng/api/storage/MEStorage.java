@@ -38,10 +38,7 @@ import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.security.IActionSource;
-import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyLongMap;
-import appeng.api.stacks.KeyCounter;
-import appeng.api.stacks.KeyVisitor;
+import appeng.api.stacks.*;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.storage.NetworkStorage;
 
@@ -64,7 +61,7 @@ public interface MEStorage {
     MEStorage TRASH = new MEStorage() {
 
         @Override
-        public boolean isPreferredStorageFor(AEKey what, IActionSource source) {
+        public boolean supportsKeyType(AEKeyType<?> type) {
             return true;
         }
 
@@ -79,18 +76,7 @@ public interface MEStorage {
         }
     };
 
-    /**
-     * Returns whether this inventory is the preferred storage location for the given stack when being compared to other
-     * inventories of the same overall priority.
-     * <p/>
-     * If for example an inventory already contains some amount of an item, it should be preferred over other
-     * inventories that don't when trying to store more of the item.
-     *
-     * @param source The source trying to find storage for stacks.
-     */
-    default boolean isPreferredStorageFor(AEKey what, IActionSource source) {
-        return false;
-    }
+    boolean supportsKeyType(AEKeyType<?> type);
 
     /**
      * Store new items, or simulate the addition of new items into the ME Inventory.
