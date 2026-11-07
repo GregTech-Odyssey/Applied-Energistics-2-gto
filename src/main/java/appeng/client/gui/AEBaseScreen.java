@@ -140,13 +140,6 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
     private boolean lastShiftState = false;
 
     /**
-     * Set when the EMI hover-search hotkey consumed a keystroke, so the char callback GLFW sends right after it is not
-     * typed into the search field. Consuming the key event alone is not enough: GLFW reports the key and the character
-     * separately, and an already focused text field will happily insert the latter.
-     */
-    private boolean swallowNextChar;
-
-    /**
      * The positions of all slots when a subscreen is opened.
      */
     private final List<SavedSlotInfo> savedSlotInfos = new ArrayList<>();
@@ -553,15 +546,14 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        // Only the char callback that directly follows a consumed hotkey is dropped. Clearing here keeps a keystroke
-        // that produces no char event (a modifier combination for example) from eating the next character the player
-        // actually types.
-        this.swallowNextChar = false;
-
-        if (keyCode == GLFW.GLFW_KEY_T && ItemListMod.isEnabled()) {
+        // Skip while something is being typed into: the T key has to reach the focused field like any other letter.
+        // Screen#keyPressed is what forwards the event to the focused widget, so this check has to come first;
+        // keyPressed goes to getFocused() and charTyped to nothing but getFocused(), meaning a keystroke this method
+        // swallows never reaches a field, nor leaves a stray character behind, when no field has the focus.
+        if (keyCode == GLFW.GLFW_KEY_T && ItemListMod.isEnabled()
+                && !(getFocused() instanceof EditBox) && !ItemListMod.hasSearchFocus()) {
             var hoveredItemName = ItemListMod.getHoveredItemName();
             if (hoveredItemName != null && searchForEmiItem(hoveredItemName)) {
-                this.swallowNextChar = true;
                 return true;
             }
         }
@@ -592,15 +584,6 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
     protected final void fillSearchField(AETextField searchField, String searchText) {
         searchField.setMaxLength(Math.max(searchField.getMaxLength(), searchText.length()));
         searchField.setValue(searchText);
-    }
-
-    @Override
-    public boolean charTyped(char character, int modifiers) {
-        if (this.swallowNextChar) {
-            this.swallowNextChar = false;
-            return true;
-        }
-        return super.charTyped(character, modifiers);
     }
 
     @Override

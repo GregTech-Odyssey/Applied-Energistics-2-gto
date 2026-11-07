@@ -190,11 +190,8 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
 
         super.init();
 
-        // Focusing the search field here would swallow every subsequent T keystroke instead of searching for the
-        // item hovered in EMI, so it is left to the player to click the field.
-        if (config.isAutoFocusSearch()) {
-            this.setInitialFocus(this.searchField);
-        }
+        // Auto focus search field
+        this.setInitialFocus(this.searchField);
 
         // numLines may have changed, recalculate scroll bar.
         this.resetScrollbar();
