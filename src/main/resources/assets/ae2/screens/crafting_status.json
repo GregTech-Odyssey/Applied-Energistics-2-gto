@@ -3,8 +3,8 @@
   "includes": ["crafting_cpu.json"],
   "widgets": {
     "verticalToolbar": {
-      "right": -20,
-      "top": 6
+      "left": -94,
+      "top": 4
     },
     "back": {
       "left": 213,

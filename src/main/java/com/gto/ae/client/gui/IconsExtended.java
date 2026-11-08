@@ -39,6 +39,10 @@ public enum IconsExtended implements IIcon {
 
     MANUAL_PIN(128, 16, 16, 16),
     MANUAL_PIN_OFF(144, 16, 16, 16),
+
+    CRAFTING_CPU_HEIGHT_SHORT(208, 0, 16, 16),
+    CRAFTING_CPU_HEIGHT_TALL(224, 0, 16, 16),
+    CRAFTING_CPU_HEIGHT_FULL(160, 16, 16, 16),
     ;
 
     private final int x, y, width, height;

@@ -95,15 +95,13 @@ public final class ButtonAppearance {
                 ButtonToolTips.TerminalStyle,
                 ButtonToolTips.TerminalStyle_Full);
 
-        // Reuses the terminal size icons on purpose: this is the same "how tall is this list" notion, and it keeps the
-        // toolbar readable without adding three near-identical sprites.
-        registerApp(Icon.TERMINAL_STYLE_SMALL, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.SHORT,
+        registerApp(IconsExtended.CRAFTING_CPU_HEIGHT_SHORT, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.SHORT,
                 ExtendedLangs.CraftingCpuHeight,
                 ExtendedLangs.CraftingCpuHeightShort);
-        registerApp(Icon.TERMINAL_STYLE_TALL, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.TALL,
+        registerApp(IconsExtended.CRAFTING_CPU_HEIGHT_TALL, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.TALL,
                 ExtendedLangs.CraftingCpuHeight,
                 ExtendedLangs.CraftingCpuHeightTall);
-        registerApp(Icon.TERMINAL_STYLE_FULL, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.FULL,
+        registerApp(IconsExtended.CRAFTING_CPU_HEIGHT_FULL, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.FULL,
                 ExtendedLangs.CraftingCpuHeight,
                 ExtendedLangs.CraftingCpuHeightFull);
 
