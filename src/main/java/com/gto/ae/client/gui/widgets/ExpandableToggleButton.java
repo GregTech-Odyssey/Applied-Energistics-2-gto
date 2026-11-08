@@ -107,6 +107,18 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
                 x = this.getX() + this.getWidth() / 2 - (totalWidth + totalSpacing) / 2;
                 y = this.getY() + (this.layoutDirection == LayoutDirection.UP ? -LAYOUT_SPACING - maxHeight : 0);
             }
+            case DOWN_LEFT -> {
+                int totalWidth = LAYOUT_SPACING * (this.expandedButtons.size() - 1);
+                int maxHeight = 0;
+                for (var button : this.expandedButtons) {
+                    totalWidth += button.getWidth();
+                    maxHeight = Math.max(maxHeight, button.getHeight());
+                }
+                w = this.getWidth() + totalWidth;
+                h = this.getHeight() + LAYOUT_SPACING + maxHeight;
+                x = this.getX() - totalWidth;
+                y = this.getY();
+            }
         }
         return new Rect2i(x, y, w, h);
     }
@@ -188,6 +200,18 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
         if (this.collapsed) {
             for (var b : this.expandedButtons) {
                 b.visible = false;
+            }
+            return;
+        }
+        if (this.layoutDirection == LayoutDirection.DOWN_LEFT) {
+            int x = this.getX();
+            for (int i = this.expandedButtons.size() - 1; i >= 0; i--) {
+                var button = this.expandedButtons.get(i);
+                x -= button.getWidth();
+                button.setX(x);
+                button.setY(this.getY() + this.getHeight() + LAYOUT_SPACING);
+                button.visible = true;
+                x -= LAYOUT_SPACING;
             }
             return;
         }
@@ -306,7 +330,9 @@ public class ExpandableToggleButton<T extends Enum<T>> extends IconButton
     }
 
     public enum LayoutDirection {
-        UP, DOWN, LEFT, RIGHT
+        UP, DOWN, LEFT, RIGHT,
+        /** Places the options below and left of the trigger, ending at its left edge. */
+        DOWN_LEFT
     }
 
 }

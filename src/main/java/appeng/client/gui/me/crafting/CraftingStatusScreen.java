@@ -58,7 +58,7 @@ public class CraftingStatusScreen extends CraftingCPUScreen<CraftingStatusMenu> 
                 ExtendedSettings.CPU_WORKING_STATUS_SETTING,
                 WorkingStatus.NONE,
                 (b, e) -> menu.updateFilter(e),
-                ExpandableToggleButton.LayoutDirection.DOWN));
+                ExpandableToggleButton.LayoutDirection.DOWN_LEFT));
 
         // The list and its scrollbar both grow with the dialog, so their base sizes are captured once from the sizes
         // WidgetContainer has already applied from the style, rather than duplicated as literals that could drift
