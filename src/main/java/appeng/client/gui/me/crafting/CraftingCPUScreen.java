@@ -178,10 +178,11 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
      */
     private int getVisibleRows() {
         var maxRows = Math.max(MIN_ROWS,
-                (height - 2 * config.getTerminalMargin() - this.getBaseImageHeight()) / ROW_HEIGHT + BASE_ROWS);
+                Math.floorDiv(height - 2 * config.getTerminalMargin() - this.getBaseImageHeight(), ROW_HEIGHT)
+                        + BASE_ROWS);
         return switch (config.getCraftingCpuHeight()) {
             case SHORT -> Math.min(BASE_ROWS, maxRows);
-            case TALL -> Math.max(Math.min(BASE_ROWS, maxRows), (BASE_ROWS + maxRows + 1) / 2);
+            case TALL -> Math.min(maxRows, (BASE_ROWS + maxRows + 1) / 2);
             case FULL -> maxRows;
         };
     }
