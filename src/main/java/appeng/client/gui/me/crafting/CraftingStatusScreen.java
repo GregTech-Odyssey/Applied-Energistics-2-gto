@@ -25,6 +25,7 @@ import net.minecraft.world.entity.player.Inventory;
 import appeng.client.gui.implementations.AESubScreen;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.CPUSelectionList;
+import appeng.client.gui.widgets.Scrollbar;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 
 import com.gto.ae.api.config.ExtendedSettings;
@@ -37,6 +38,12 @@ import com.gto.ae.helpers.facility_management.WorkingStatus;
  */
 public class CraftingStatusScreen extends CraftingCPUScreen<CraftingStatusMenu> {
 
+    private final Scrollbar selectCpuScrollbar;
+    private final CPUSelectionList selectCpuList;
+
+    private final int baseListHeight;
+    private final int baseListScrollbarHeight;
+
     public CraftingStatusScreen(CraftingStatusMenu menu,
             Inventory playerInventory,
             Component title, ScreenStyle style) {
@@ -44,14 +51,28 @@ public class CraftingStatusScreen extends CraftingCPUScreen<CraftingStatusMenu> 
 
         AESubScreen.addBackButton(menu, "back", widgets);
 
-        var scrollbar = widgets.addScrollBar("selectCpuScrollbar");
-        widgets.add("selectCpuList", new CPUSelectionList(menu, scrollbar, style));
+        this.selectCpuScrollbar = widgets.addScrollBar("selectCpuScrollbar");
+        this.selectCpuList = new CPUSelectionList(menu, selectCpuScrollbar, style);
+        widgets.add("selectCpuList", selectCpuList);
         widgets.add("filter", (AbstractWidget) new ExpandableToggleButton<>(
                 ExtendedSettings.CPU_WORKING_STATUS_SETTING,
                 WorkingStatus.NONE,
                 (b, e) -> menu.updateFilter(e),
                 ExpandableToggleButton.LayoutDirection.DOWN));
 
+        // The list and its scrollbar both grow with the dialog, so their base sizes are captured once from the sizes
+        // WidgetContainer has already applied from the style, rather than duplicated as literals that could drift
+        // away from the JSON.
+        this.baseListHeight = this.selectCpuList.getBounds().getHeight();
+        this.baseListScrollbarHeight = this.selectCpuScrollbar.getBounds().getHeight();
+    }
+
+    @Override
+    protected void init() {
+        super.init();
+        var extraHeight = imageHeight - this.getBaseImageHeight();
+        this.selectCpuList.setSize(this.selectCpuList.getBounds().getWidth(), this.baseListHeight + extraHeight);
+        this.selectCpuScrollbar.setHeight(this.baseListScrollbarHeight + extraHeight);
     }
 
     @Override

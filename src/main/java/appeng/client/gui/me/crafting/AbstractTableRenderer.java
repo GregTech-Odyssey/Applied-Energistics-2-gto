@@ -56,7 +56,7 @@ public abstract class AbstractTableRenderer<T> {
     private final float lineHeight;
     private final int x;
     private final int y;
-    private final int rows;
+    private int rows;
     private StackWithBounds hoveredStack;
 
     public AbstractTableRenderer(AEBaseScreen<?> screen, int x, int y, int rows) {
@@ -145,6 +145,10 @@ public abstract class AbstractTableRenderer<T> {
             screen.drawTooltipWithHeader(guiGraphics, mouseX, mouseY, tooltipLines);
         }
         this.afterTableRender();
+    }
+
+    void setRows(int rows) {
+        this.rows = rows;
     }
 
     public StackWithBounds getHoveredStack() {

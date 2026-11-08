@@ -37,11 +37,13 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 
 import appeng.api.config.CpuSelectionMode;
+import appeng.api.config.CraftingCpuHeight;
 import appeng.api.config.Settings;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.StackWithBounds;
 import appeng.client.gui.style.PaletteColor;
 import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.style.TiledBackground;
 import appeng.client.gui.widgets.AETextField;
 import appeng.client.gui.widgets.Scrollbar;
 import appeng.client.gui.widgets.ServerSettingToggleButton;
@@ -59,6 +61,11 @@ import com.gto.ae.core.localization.ExtendedLangs;
  */
 public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T> implements IStackInteractionScreen {
 
+    private static final int ROW_HEIGHT = 23;
+    private static final int BASE_ROWS = 6;
+    private static final int HEADER_HEIGHT = 19;
+    private static final int MIN_ROWS = 2;
+
     private final CraftingStatusTableRenderer table;
 
     private final Button cancel;
@@ -69,12 +76,23 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
 
     private final SettingToggleButton<CpuSelectionMode> schedulingModeButton;
 
+    private final TiledBackground background;
+
+    private int visibleRows;
+    private boolean layoutApplied;
+
     private CraftingStatus status;
     private final CraftingMaterialSearch<CraftingStatusEntry> materialSearch = new CraftingMaterialSearch<>(
             CraftingStatusEntry::getWhat);
 
     public CraftingCPUScreen(T menu, Inventory playerInventory, Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
+
+        var background = style.getBackground();
+        if (background == null) {
+            throw new IllegalStateException("Screen " + getClass() + " requires a background image to be resizable");
+        }
+        this.background = new TiledBackground(background, HEADER_HEIGHT, ROW_HEIGHT, BASE_ROWS);
 
         this.table = new CraftingStatusTableRenderer(this, 9, 19);
 
@@ -101,15 +119,92 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
         this.schedulingModeButton = new ServerSettingToggleButton<>(Settings.CPU_SELECTION_MODE,
                 CpuSelectionMode.ANY);
 
-        // This screen is reused for the crafting status in Terminals, where it should not show the config buttons
+        // Purely a client-side layout preference, so it is offered on the crafting status screen as well.
+        this.addToLeftToolbar(new SettingToggleButton<>(Settings.CRAFTING_CPU_HEIGHT,
+                config.getCraftingCpuHeight(), this::toggleHeight));
+
+        // This screen is reused for the crafting status in Terminals, where it should not show the CPU config button
         if (menu.allowConfiguration()) {
             this.addToLeftToolbar(this.schedulingModeButton);
         }
     }
 
     @Override
+    protected void init() {
+        this.applySize();
+        super.init();
+    }
+
+    /**
+     * Computes the dialog size for the configured row count and hands it to the widgets that depend on it.
+     * <p>
+     * Must not be called only from {@link #init()}: GTOCore replaces that method with a mixin whose
+     * {@code super.init()} goes straight to {@code AEBaseScreen}, so the body above never runs on the real screen. It
+     * is therefore also called from {@link #updateBeforeRender()} via {@link #relayoutIfResized()}.
+     */
+    private void applySize() {
+        this.visibleRows = this.getVisibleRows();
+        this.imageHeight = this.background.getHeight(this.visibleRows);
+        this.table.setRows(this.visibleRows);
+        this.scrollbar.setHeight(this.visibleRows * ROW_HEIGHT - 1);
+    }
+
+    /**
+     * Rebuilds the widget layout when the configured size no longer matches what is on screen, which happens on first
+     * display, when the button is pressed and when the window is resized.
+     */
+    private void relayoutIfResized() {
+        if (this.layoutApplied && this.getVisibleRows() == this.visibleRows) {
+            return;
+        }
+        // Size first: init() lays the widgets out from imageHeight, and that value has to be final by then.
+        this.applySize();
+        this.clearWidgets();
+        this.init();
+        this.layoutApplied = true;
+    }
+
+    /**
+     * The dialog height the style was authored for, i.e. with {@link #BASE_ROWS} rows.
+     */
+    protected final int getBaseImageHeight() {
+        return this.background.getHeight(BASE_ROWS);
+    }
+
+    /**
+     * SHORT keeps the historic 6 rows, FULL uses whatever fits the window, and TALL sits in between. TALL has to beat
+     * SHORT even on small windows, where {@code maxRows} barely exceeds the base rows and a plain 2/3 fraction would
+     * round back down to 6 and make the button look broken.
+     */
+    private int getVisibleRows() {
+        var maxRows = Math.max(MIN_ROWS,
+                (height - 2 * config.getTerminalMargin() - this.getBaseImageHeight()) / ROW_HEIGHT + BASE_ROWS);
+        return switch (config.getCraftingCpuHeight()) {
+            case SHORT -> Math.min(BASE_ROWS, maxRows);
+            case TALL -> Math.max(Math.min(BASE_ROWS, maxRows), (BASE_ROWS + maxRows + 1) / 2);
+            case FULL -> maxRows;
+        };
+    }
+
+    private void toggleHeight(SettingToggleButton<CraftingCpuHeight> button, boolean backwards) {
+        var next = button.getNextValue(backwards);
+        config.setCraftingCpuHeight(next);
+        button.set(next);
+        // The next frame picks the new size up through relayoutIfResized() and re-runs the layout.
+    }
+
+    @Override
+    public void drawBG(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
+            float partialTicks) {
+        this.background.draw(guiGraphics, offsetX, offsetY, this.visibleRows);
+    }
+
+    @Override
     protected void updateBeforeRender() {
         super.updateBeforeRender();
+
+        // init() is wrapped by other mods (see relayoutIfResized), so the size is re-checked here every frame.
+        this.relayoutIfResized();
 
         // Update the dialog title with an ETA if possible
         Component title = this.getGuiDisplayName(GuiText.CraftingStatus.text());

@@ -22,6 +22,7 @@ import appeng.client.gui.style.Blitter;
 import appeng.client.gui.style.Color;
 import appeng.client.gui.style.PaletteColor;
 import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.style.TiledBackground;
 import appeng.core.definitions.AEParts;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.GuiText;
@@ -30,9 +31,12 @@ import appeng.menu.me.crafting.CraftingStatusMenu;
 
 public class CPUSelectionList implements ICompositeWidget {
 
-    private static final int ROWS = 6;
+    private static final int BASE_ROWS = 6;
+    private static final int ROW_HEIGHT = 23;
+    private static final int HEADER_HEIGHT = 19;
+    private static final int MIN_ROWS = 1;
 
-    private final Blitter background;
+    private final TiledBackground background;
     private final Blitter buttonBg;
     private final CraftingStatusMenu menu;
     private final Color textColor;
@@ -41,11 +45,12 @@ public class CPUSelectionList implements ICompositeWidget {
 
     // Relative to the origin of the current screen (not window)
     private Rect2i bounds = Rects.ZERO;
+    private int rows = BASE_ROWS;
 
     public CPUSelectionList(CraftingStatusMenu menu, Scrollbar scrollbar, ScreenStyle style) {
         this.menu = menu;
         this.scrollbar = scrollbar;
-        this.background = style.getImage("cpuList");
+        this.background = new TiledBackground(style.getImage("cpuList"), HEADER_HEIGHT, ROW_HEIGHT, BASE_ROWS);
         this.buttonBg = style.getImage("cpuListButton");
         this.textColor = style.getColor(PaletteColor.DEFAULT_TEXT_COLOR);
         this.selectedColor = style.getColor(PaletteColor.SELECTION_COLOR).toARGB();
@@ -60,6 +65,8 @@ public class CPUSelectionList implements ICompositeWidget {
     @Override
     public void setSize(int width, int height) {
         this.bounds = new Rect2i(bounds.getX(), bounds.getY(), width, height);
+        this.rows = Math.max(MIN_ROWS,
+                Math.floorDiv(height - HEADER_HEIGHT - this.background.getFooterHeight(), ROW_HEIGHT));
     }
 
     @Override
@@ -142,9 +149,9 @@ public class CPUSelectionList implements ICompositeWidget {
             return null;
         }
 
-        relY -= 19;
+        relY -= HEADER_HEIGHT;
         var relIdx = relY / (buttonBg.getSrcHeight() + 1);
-        if (relIdx < 0 || relIdx >= ROWS) {
+        if (relIdx < 0 || relIdx >= rows) {
             // Clicked above first or below last button
             return null;
         }
@@ -168,30 +175,27 @@ public class CPUSelectionList implements ICompositeWidget {
 
     @Override
     public void updateBeforeRender() {
-        var hiddenRows = Math.max(0, menu.cpuList.cpus().size() - ROWS);
-        scrollbar.setRange(0, hiddenRows, ROWS / 3);
+        // The list is drawn from the filtered set, so the range has to follow it as well.
+        var hiddenRows = Math.max(0, menu.filteredCpuList.cpus().size() - rows);
+        scrollbar.setRange(0, hiddenRows, Math.max(1, rows / 3));
     }
 
     @Override
     public void drawBackgroundLayer(GuiGraphics guiGraphics, Rect2i bounds, Point mouse) {
         var x = bounds.getX() + this.bounds.getX();
         var y = bounds.getY() + this.bounds.getY();
-        background.dest(
-                x,
-                y,
-                this.bounds.getWidth(),
-                this.bounds.getHeight()).blit(guiGraphics);
+        this.background.draw(guiGraphics, x, y, this.rows);
 
         // Move to first button
         x += 9;
-        y += 19;
+        y += HEADER_HEIGHT;
 
         var pose = guiGraphics.pose();
 
         var font = Minecraft.getInstance().font;
         var cpus = menu.filteredCpuList.cpus().subList(
                 Mth.clamp(scrollbar.getCurrentScroll(), 0, menu.filteredCpuList.cpus().size()),
-                Mth.clamp(scrollbar.getCurrentScroll() + ROWS, 0, menu.filteredCpuList.cpus().size()));
+                Mth.clamp(scrollbar.getCurrentScroll() + rows, 0, menu.filteredCpuList.cpus().size()));
         for (var cpu : cpus) {
             int color = -1;
             if (cpu.serial() == menu.getSelectedCpuSerial()) {
