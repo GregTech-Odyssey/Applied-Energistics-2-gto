@@ -263,13 +263,13 @@ public final class ButtonAppearance {
                 ExtendedLangs.WorkingStatusFilterModeTooltip,
                 ExtendedLangs.WorkingStatusFilterModeNoneTooltip);
 
-        registerApp(IconsExtended.WORLING_STATUS_IDLE, CPU_WORKING_STATUS_SETTING, WorkingStatus.IDLE,
+        registerApp(IconsExtended.CPU_STATUS_IDLE, CPU_WORKING_STATUS_SETTING, WorkingStatus.IDLE,
                 ExtendedLangs.WorkingStatusFilterModeTooltip,
                 ExtendedLangs.WorkingStatusFilterModeOnlyIdleTooltip);
-        registerApp(IconsExtended.WORLING_STATUS_WORKING, CPU_WORKING_STATUS_SETTING, WorkingStatus.WORKING,
+        registerApp(IconsExtended.CPU_STATUS_WORKING, CPU_WORKING_STATUS_SETTING, WorkingStatus.WORKING,
                 ExtendedLangs.WorkingStatusFilterModeTooltip,
                 ExtendedLangs.WorkingStatusFilterModeOnlyWorkingTooltip);
-        registerApp(IconsExtended.WORLING_STATUS_NONE, CPU_WORKING_STATUS_SETTING, WorkingStatus.NONE,
+        registerApp(IconsExtended.CPU_STATUS_ALL, CPU_WORKING_STATUS_SETTING, WorkingStatus.NONE,
                 ExtendedLangs.WorkingStatusFilterModeTooltip,
                 ExtendedLangs.WorkingStatusFilterModeNoneTooltip);
 

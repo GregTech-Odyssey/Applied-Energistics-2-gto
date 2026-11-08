@@ -18,7 +18,6 @@
 
 package appeng.client.gui.me.crafting;
 
-import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -26,10 +25,10 @@ import appeng.client.gui.implementations.AESubScreen;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.CPUSelectionList;
 import appeng.client.gui.widgets.Scrollbar;
+import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 
 import com.gto.ae.api.config.ExtendedSettings;
-import com.gto.ae.client.gui.widgets.ExpandableToggleButton;
 import com.gto.ae.helpers.facility_management.WorkingStatus;
 
 /**
@@ -54,11 +53,14 @@ public class CraftingStatusScreen extends CraftingCPUScreen<CraftingStatusMenu> 
         this.selectCpuScrollbar = widgets.addScrollBar("selectCpuScrollbar");
         this.selectCpuList = new CPUSelectionList(menu, selectCpuScrollbar, style);
         widgets.add("selectCpuList", selectCpuList);
-        widgets.add("filter", (AbstractWidget) new ExpandableToggleButton<>(
+        this.addToLeftToolbar(new SettingToggleButton<>(
                 ExtendedSettings.CPU_WORKING_STATUS_SETTING,
                 WorkingStatus.NONE,
-                (b, e) -> menu.updateFilter(e),
-                ExpandableToggleButton.LayoutDirection.DOWN_LEFT));
+                (button, backwards) -> {
+                    var next = button.getNextValue(backwards);
+                    button.set(next);
+                    menu.updateFilter(next);
+                }));
 
         // The list and its scrollbar both grow with the dialog, so their base sizes are captured once from the sizes
         // WidgetContainer has already applied from the style, rather than duplicated as literals that could drift

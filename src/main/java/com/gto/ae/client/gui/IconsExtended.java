@@ -43,6 +43,10 @@ public enum IconsExtended implements IIcon {
     CRAFTING_CPU_HEIGHT_SHORT(208, 0, 16, 16),
     CRAFTING_CPU_HEIGHT_TALL(224, 0, 16, 16),
     CRAFTING_CPU_HEIGHT_FULL(160, 16, 16, 16),
+
+    CPU_STATUS_ALL(176, 16, 16, 16),
+    CPU_STATUS_IDLE(192, 16, 16, 16),
+    CPU_STATUS_WORKING(208, 16, 16, 16),
     ;
 
     private final int x, y, width, height;
