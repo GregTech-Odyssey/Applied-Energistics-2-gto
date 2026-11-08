@@ -77,6 +77,7 @@ import appeng.menu.implementations.PatternAccessTermMenu;
 
 import com.gto.ae.api.config.ExtendedSettings;
 import com.gto.ae.client.gui.widgets.ExpandableToggleButton;
+import com.gto.ae.core.localization.ExtendedLangs;
 import com.gto.ae.menu.ShowMolecularAssembler;
 
 public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AEBaseScreen<C> {
@@ -171,6 +172,8 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
         this.searchField = widgets.addTextField("search");
         this.searchField.setResponder(str -> this.refreshList());
         this.searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
+        this.searchField.setTooltipMessage(
+                Collections.singletonList(ExtendedLangs.SearchHoveredEmiItem.text()));
         gtolib$showMolecularAssembler = new ExpandableToggleButton<>(
                 ExtendedSettings.TERMINAL_SHOW_MOLECULAR_ASSEMBLERS,
                 ShowMolecularAssembler.ALL,
@@ -443,6 +446,12 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
             return true;
         }
         return super.charTyped(character, key);
+    }
+
+    @Override
+    protected boolean searchForEmiItem(String itemName) {
+        fillSearchField(searchField, itemName);
+        return true;
     }
 
     public void clear() {

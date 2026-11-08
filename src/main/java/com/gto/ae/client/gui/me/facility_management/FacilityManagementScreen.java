@@ -132,7 +132,9 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
         this.searchField = widgets.addTextField("search");
         this.searchField.setResponder(str -> this.refreshList());
         this.searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
-        this.searchField.setTooltip(Tooltip.create(ExtendedLangs.ThroughputSearchingTooltip.text()));
+        this.searchField.setTooltipMessage(List.of(
+                ExtendedLangs.ThroughputSearchingTooltip.text(),
+                ExtendedLangs.SearchHoveredEmiItem.text()));
 
         AESlotWidget slotWidget;
         widgets.add("filter1", slotWidget = new AESlotWidget(menu.ioFilterSlot, this));
@@ -543,6 +545,12 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
             return true;
         }
         return super.charTyped(character, key);
+    }
+
+    @Override
+    protected boolean searchForEmiItem(String itemName) {
+        fillSearchField(searchField, itemName);
+        return true;
     }
 
     public void clear() {

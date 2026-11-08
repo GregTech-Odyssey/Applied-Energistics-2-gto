@@ -78,6 +78,7 @@ import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.style.SlotPosition;
 import appeng.client.gui.style.Text;
 import appeng.client.gui.style.TextAlignment;
+import appeng.client.gui.widgets.AETextField;
 import appeng.client.gui.widgets.ITickingWidget;
 import appeng.client.gui.widgets.ITooltip;
 import appeng.client.gui.widgets.OpenGuideButton;
@@ -94,6 +95,7 @@ import appeng.core.sync.packets.HotkeyPacket;
 import appeng.core.sync.packets.InventoryActionPacket;
 import appeng.core.sync.packets.SwapSlotsPacket;
 import appeng.helpers.InventoryAction;
+import appeng.integration.abstraction.ItemListMod;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.SlotSemantic;
 import appeng.menu.SlotSemantics;
@@ -544,6 +546,18 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
 
     @Override
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        // Skip while something is being typed into: the T key has to reach the focused field like any other letter.
+        // Screen#keyPressed is what forwards the event to the focused widget, so this check has to come first;
+        // keyPressed goes to getFocused() and charTyped to nothing but getFocused(), meaning a keystroke this method
+        // swallows never reaches a field, nor leaves a stray character behind, when no field has the focus.
+        if (keyCode == GLFW.GLFW_KEY_T && ItemListMod.isEnabled()
+                && !(getFocused() instanceof EditBox) && !ItemListMod.hasSearchFocus()) {
+            var hoveredItemName = ItemListMod.getHoveredItemName();
+            if (hoveredItemName != null && searchForEmiItem(hoveredItemName)) {
+                return true;
+            }
+        }
+
         if (menu.getTarget() instanceof ITerminalHost host && !(getFocused() instanceof EditBox)) {
             var hotkey = Hotkeys.findHotkey(keyCode, scanCode);
             if (hotkey != null) {
@@ -556,6 +570,20 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
             }
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    protected boolean searchForEmiItem(String itemName) {
+        return false;
+    }
+
+    /**
+     * Fills a search field with the name of the item hovered in EMI without taking the focus. Focusing it would make
+     * the next T keystroke type into the field instead of searching for the next hovered item, so the hotkey stays
+     * repeatable and the player clicks the field (or Tab-navigates) when they want to edit the query by hand.
+     */
+    protected final void fillSearchField(AETextField searchField, String searchText) {
+        searchField.setMaxLength(Math.max(searchField.getMaxLength(), searchText.length()));
+        searchField.setValue(searchText);
     }
 
     @Override
