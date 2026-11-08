@@ -53,12 +53,15 @@ import appeng.api.inventories.ISegmentedInventory;
 import appeng.api.inventories.InternalInventory;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IGridNodeListener;
+import appeng.api.networking.security.IActionSource;
 import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.api.storage.ExternalStorageLookup;
+import appeng.api.storage.StorageAccess;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.upgrades.UpgradeInventories;
@@ -610,6 +613,22 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
         if (lookup == null) {
             outputs[d.get3DDataValue()] = lookup = ExternalStorageLookup.create(level,
                     this.worldPosition.relative(d), d.getOpposite());
+        }
+
+        // Aborted plans can return substituted fluids, whose amount is stored inside the wrapper.
+        var stack = GenericStack.unwrapItemStack(output);
+        if (stack != null) {
+            var storage = lookup.find(stack.what().getType(), StorageAccess.INSERT);
+            if (storage == null) {
+                return output;
+            }
+            long inserted = storage.insert(stack.what(), stack.amount(), Actionable.MODULATE, IActionSource.empty());
+            if (inserted <= 0) {
+                return output;
+            }
+            this.saveChanges();
+            return inserted >= stack.amount() ? ItemStack.EMPTY
+                    : GenericStack.wrapInItemStack(stack.what(), stack.amount() - inserted);
         }
 
         final int size = output.getCount();
