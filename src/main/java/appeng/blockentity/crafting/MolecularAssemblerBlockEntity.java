@@ -182,15 +182,30 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
             if (isEmpty && patternDetails instanceof IMolecularAssemblerSupportedPattern pattern) {
                 // We only support fluid and item stacks
 
+                // Snapshot the pushed ingredients so a rejected push can hand them back untouched.
+                var backup = copyTable(table);
+
                 this.forcePlan = true;
                 this.myPlan = pattern;
                 this.pushDirection = where;
 
                 this.fillGrid(table, pattern);
 
-                this.updateSleepiness();
-                this.saveChanges();
-                return true;
+                // A push the grid cannot assemble must be refused here. Accepting it leaves the grid full while
+                // hasMats() stays false, so the node sleeps with a stored plan and no later push can get in.
+                if (this.hasMats()) {
+                    this.updateSleepiness();
+                    this.saveChanges();
+                    return true;
+                }
+
+                this.clearGrid();
+                restoreTable(table, backup);
+
+                this.forcePlan = false;
+                this.myPlan = null;
+                this.pushDirection = null;
+                return false;
             }
         }
         return false;
@@ -205,6 +220,42 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
             if (!list.isEmpty()) {
                 throw new RuntimeException("Could not fill grid with some items, including " + list.iterator().next());
             }
+        }
+    }
+
+    /**
+     * Drops a plan that can no longer be assembled. The grid keeps its items: with the plan gone they all count as
+     * invalid, so ejectHeldItems() hands one back per tick and none are lost.
+     */
+    private void abortPlan() {
+        this.progress = 0;
+        this.forcePlan = false;
+        this.myPlan = null;
+        this.pushDirection = null;
+        this.ejectHeldItems();
+        this.updateSleepiness();
+        this.saveChanges();
+    }
+
+    private void clearGrid() {
+        for (int i = 0; i < 9; i++) {
+            this.gridInv.setItemDirect(i, ItemStack.EMPTY);
+        }
+    }
+
+    private static KeyCounter[] copyTable(KeyCounter[] table) {
+        var backup = new KeyCounter[table.length];
+        for (int i = 0; i < table.length; i++) {
+            backup[i] = table[i].copy();
+        }
+        return backup;
+    }
+
+    private static void restoreTable(KeyCounter[] table, KeyCounter[] backup) {
+        for (int i = 0; i < table.length; i++) {
+            table[i].clear();
+            table[i].addAll(backup[i]);
+            backup[i].clear();
         }
     }
 
@@ -406,6 +457,13 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
     @Override
     public TickingRequest getTickingRequest(IGridNode node) {
         this.recalculatePlan();
+
+        // Loading a save can bring back a plan whose grid no longer assembles. Nothing would ever wake the node
+        // again and pushPattern() refuses new work while the grid is occupied, so drop the plan here instead.
+        if (this.forcePlan && this.myPlan != null && !this.gridInv.isEmpty() && !this.hasMats()) {
+            this.abortPlan();
+        }
+
         this.updateSleepiness();
         return new TickingRequest(1, 1, !this.isAwake, false);
     }
@@ -451,40 +509,47 @@ public class MolecularAssemblerBlockEntity extends AENetworkInvBlockEntity
 
             this.progress = 0;
             final ItemStack output = this.myPlan.assemble(this.craftingInv, this.getLevel());
-            if (!output.isEmpty()) {
-                CraftingEvent.fireAutoCraftingEvent(getLevel(), this.myPlan, output, this.craftingInv);
-
-                // pushOut might reset the plan back to null, so get the remaining items before
-                var craftingRemainders = this.myPlan.getRemainingItems(this.craftingInv);
-
-                this.pushOut(output.copy());
-
-                for (int x = 0; x < this.craftingInv.getContainerSize(); x++) {
-                    this.gridInv.setItemDirect(x, craftingRemainders.get(x));
-                }
-
-                if (this.patternInv.isEmpty()) {
-                    this.forcePlan = false;
-                    this.myPlan = null;
-                    this.pushDirection = null;
-                }
-
-                this.ejectHeldItems();
-
-                var item = AEItemKey.of(output);
-                if (item != null) {
-                    final TargetPoint where = new TargetPoint(this.worldPosition.getX(), this.worldPosition.getY(),
-                            this.worldPosition.getZ(), 32,
-                            this.level);
-                    NetworkHandler.instance()
-                            .sendToAllAround(new AssemblerAnimationPacket(this.worldPosition, (byte) speed, item),
-                                    where);
-                }
-
-                this.saveChanges();
-                this.updateSleepiness();
+            if (output.isEmpty()) {
+                // The plan can no longer be assembled from what sits in the grid. Returning FASTER would spin
+                // forever with the grid occupied and no log line, which is the silent deadlock players report.
+                AELog.warn("Molecular assembler at %s could not assemble %s from its grid; dropping the plan",
+                        this.worldPosition, this.myPlan.getDefinition());
+                this.abortPlan();
                 return this.isAwake ? TickRateModulation.IDLE : TickRateModulation.SLEEP;
             }
+
+            CraftingEvent.fireAutoCraftingEvent(getLevel(), this.myPlan, output, this.craftingInv);
+
+            // pushOut might reset the plan back to null, so get the remaining items before
+            var craftingRemainders = this.myPlan.getRemainingItems(this.craftingInv);
+
+            this.pushOut(output.copy());
+
+            for (int x = 0; x < this.craftingInv.getContainerSize(); x++) {
+                this.gridInv.setItemDirect(x, craftingRemainders.get(x));
+            }
+
+            if (this.patternInv.isEmpty()) {
+                this.forcePlan = false;
+                this.myPlan = null;
+                this.pushDirection = null;
+            }
+
+            this.ejectHeldItems();
+
+            var item = AEItemKey.of(output);
+            if (item != null) {
+                final TargetPoint where = new TargetPoint(this.worldPosition.getX(), this.worldPosition.getY(),
+                        this.worldPosition.getZ(), 32,
+                        this.level);
+                NetworkHandler.instance()
+                        .sendToAllAround(new AssemblerAnimationPacket(this.worldPosition, (byte) speed, item),
+                                where);
+            }
+
+            this.saveChanges();
+            this.updateSleepiness();
+            return this.isAwake ? TickRateModulation.IDLE : TickRateModulation.SLEEP;
         }
 
         return TickRateModulation.FASTER;
