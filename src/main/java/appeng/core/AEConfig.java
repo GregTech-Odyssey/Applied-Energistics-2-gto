@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.function.DoubleSupplier;
 
 import appeng.api.config.CondenserOutput;
+import appeng.api.config.CraftingCpuHeight;
 import appeng.api.config.PowerMultiplier;
 import appeng.api.config.PowerUnits;
 import appeng.api.config.Settings;
@@ -297,6 +298,14 @@ public final class AEConfig {
 
     public void setTerminalStyle(TerminalStyle setting) {
         CLIENT.terminalStyle.set(setting);
+    }
+
+    public CraftingCpuHeight getCraftingCpuHeight() {
+        return CLIENT.craftingCpuHeight.get();
+    }
+
+    public void setCraftingCpuHeight(CraftingCpuHeight setting) {
+        CLIENT.craftingCpuHeight.set(setting);
     }
 
     public boolean isGuideHotkeyEnabled() {
@@ -582,6 +591,7 @@ public final class AEConfig {
 
         // Terminal Settings
         public final EnumOption<TerminalStyle> terminalStyle;
+        public final EnumOption<CraftingCpuHeight> craftingCpuHeight;
         public final BooleanOption pinAutoCraftedItems;
         public final BooleanOption showManualPinnedRow;
         public final BooleanOption clearGridOnClose;
@@ -622,6 +632,8 @@ public final class AEConfig {
 
             var terminals = root.subsection("terminals");
             this.terminalStyle = terminals.addEnum("terminalStyle", TerminalStyle.SMALL);
+            this.craftingCpuHeight = terminals.addEnum("craftingCpuHeight", CraftingCpuHeight.SHORT,
+                    "The height of the crafting CPU and crafting status screens");
             this.pinAutoCraftedItems = terminals.addBoolean("pinAutoCraftedItems", true,
                     "Pin items that the player auto-crafts to the top of the terminal");
             this.showManualPinnedRow = terminals.addBoolean("showManualPinnedRow", true,

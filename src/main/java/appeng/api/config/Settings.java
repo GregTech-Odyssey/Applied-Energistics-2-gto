@@ -75,6 +75,8 @@ public final class Settings {
     public static final Setting<FuzzyMode> FUZZY_MODE = register("fuzzy_mode", FuzzyMode.class);
     public static final Setting<TerminalStyle> TERMINAL_STYLE = register("terminal_style", TerminalStyle.SMALL,
             TerminalStyle.MEDIUM, TerminalStyle.TALL, TerminalStyle.FULL);
+    public static final Setting<CraftingCpuHeight> CRAFTING_CPU_HEIGHT = register("crafting_cpu_height",
+            CraftingCpuHeight.SHORT, CraftingCpuHeight.TALL, CraftingCpuHeight.FULL);
     public static final Setting<ShowPatternProviders> TERMINAL_SHOW_PATTERN_PROVIDERS = register(
             "show_pattern_providers", ShowPatternProviders.class);
 

@@ -95,6 +95,16 @@ public final class ButtonAppearance {
                 ButtonToolTips.TerminalStyle,
                 ButtonToolTips.TerminalStyle_Full);
 
+        registerApp(IconsExtended.CRAFTING_CPU_HEIGHT_SHORT, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.SHORT,
+                ExtendedLangs.CraftingCpuHeight,
+                ExtendedLangs.CraftingCpuHeightShort);
+        registerApp(IconsExtended.CRAFTING_CPU_HEIGHT_TALL, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.TALL,
+                ExtendedLangs.CraftingCpuHeight,
+                ExtendedLangs.CraftingCpuHeightTall);
+        registerApp(IconsExtended.CRAFTING_CPU_HEIGHT_FULL, Settings.CRAFTING_CPU_HEIGHT, CraftingCpuHeight.FULL,
+                ExtendedLangs.CraftingCpuHeight,
+                ExtendedLangs.CraftingCpuHeightFull);
+
         registerApp(Icon.SORT_BY_NAME, Settings.SORT_BY, SortOrder.NAME, ButtonToolTips.SortBy,
                 ButtonToolTips.ItemName);
         registerApp(Icon.SORT_BY_AMOUNT, Settings.SORT_BY, SortOrder.AMOUNT, ButtonToolTips.SortBy,
@@ -253,13 +263,13 @@ public final class ButtonAppearance {
                 ExtendedLangs.WorkingStatusFilterModeTooltip,
                 ExtendedLangs.WorkingStatusFilterModeNoneTooltip);
 
-        registerApp(IconsExtended.WORLING_STATUS_IDLE, CPU_WORKING_STATUS_SETTING, WorkingStatus.IDLE,
+        registerApp(IconsExtended.CPU_STATUS_IDLE, CPU_WORKING_STATUS_SETTING, WorkingStatus.IDLE,
                 ExtendedLangs.WorkingStatusFilterModeTooltip,
                 ExtendedLangs.WorkingStatusFilterModeOnlyIdleTooltip);
-        registerApp(IconsExtended.WORLING_STATUS_WORKING, CPU_WORKING_STATUS_SETTING, WorkingStatus.WORKING,
+        registerApp(IconsExtended.CPU_STATUS_WORKING, CPU_WORKING_STATUS_SETTING, WorkingStatus.WORKING,
                 ExtendedLangs.WorkingStatusFilterModeTooltip,
                 ExtendedLangs.WorkingStatusFilterModeOnlyWorkingTooltip);
-        registerApp(IconsExtended.WORLING_STATUS_NONE, CPU_WORKING_STATUS_SETTING, WorkingStatus.NONE,
+        registerApp(IconsExtended.CPU_STATUS_ALL, CPU_WORKING_STATUS_SETTING, WorkingStatus.NONE,
                 ExtendedLangs.WorkingStatusFilterModeTooltip,
                 ExtendedLangs.WorkingStatusFilterModeNoneTooltip);
 

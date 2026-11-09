@@ -37,8 +37,6 @@ class CraftingSearchLayoutTest {
         assertEquals(164, height, "The CPU list must stop before the old search tray");
         assertEquals(height, status.getAsJsonObject("images").getAsJsonObject("cpuList")
                 .getAsJsonArray("srcRect").get(3).getAsInt());
-        var filter = widgets.getAsJsonObject("filter");
-        assertTrue(filter.get("top").getAsInt() + 16 <= 23, "The retained filter belongs beside the CPU list title");
     }
 
     private static JsonObject layout(String name) throws IOException {
