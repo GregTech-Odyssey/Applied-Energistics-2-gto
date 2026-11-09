@@ -79,6 +79,7 @@ public class TerminalSettingsScreen<C extends MEStorageMenu> extends AESubScreen
 
         // The screen JSON includes the toolbox, but we don't actually have a need for it here
         setSlotsHidden(SlotSemantics.TOOLBOX, true);
+        updateSearchLayout();
     }
 
     private void switchToAeSearch() {
@@ -119,6 +120,13 @@ public class TerminalSettingsScreen<C extends MEStorageMenu> extends AESubScreen
         syncWithExternalCheckbox.visible = useInternalSearchRadio.isSelected();
 
         clearExternalCheckbox.visible = useExternalSearchRadio.isSelected();
+        updateSearchLayout();
+    }
+
+    private void updateSearchLayout() {
+        var previousCheckbox = useInternalSearchRadio.isSelected() ? syncWithExternalCheckbox : clearExternalCheckbox;
+        int rowSpacing = syncWithExternalCheckbox.getY() - autoFocusCheckbox.getY();
+        exposeInventoryExternalCheckbox.setY(previousCheckbox.getY() + rowSpacing);
     }
 
     private void save() {
