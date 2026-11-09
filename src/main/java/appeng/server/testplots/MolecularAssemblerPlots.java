@@ -8,12 +8,19 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.ChestBlockEntity;
+import net.minecraft.world.level.material.Fluids;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.crafting.PatternDetailsHelper;
+import appeng.api.stacks.AEFluidKey;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKeyTypes;
+import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
 import appeng.blockentity.crafting.MolecularAssemblerBlockEntity;
+import appeng.blockentity.crafting.PatternProviderBlockEntity;
 import appeng.core.definitions.AEBlocks;
 import appeng.menu.AutoCraftingMenu;
 import appeng.server.testworld.PlotBuilder;
@@ -97,6 +104,83 @@ public final class MolecularAssemblerPlots {
                         helper.check(assembler.getInternalInventory().getStackInSlot(slot).isEmpty(),
                                 "slot " + slot + " still occupied after stale plan recovery");
                     }
+                })
+                .thenSucceed());
+    }
+
+    @TestPlot("molecular_assembler_recovers_fluid_from_stale_plan")
+    public static void recoversFluidFromStalePlan(PlotBuilder plot) {
+        var providerPos = ASSEMBLER_POS.above();
+        var chestPos = ASSEMBLER_POS.north();
+        plot.creativeEnergyCell("0 0 0");
+        plot.block(ASSEMBLER_POS, AEBlocks.MOLECULAR_ASSEMBLER);
+        plot.block(providerPos, AEBlocks.PATTERN_PROVIDER);
+        plot.block(chestPos, Blocks.CHEST);
+        plot.test(helper -> helper.startSequence()
+                .thenIdle(20)
+                .thenExecute(() -> {
+                    var provider = (PatternProviderBlockEntity) helper.getBlockEntity(providerPos);
+                    var returnInv = provider.getLogic().getReturnInv();
+                    // Leave one return slot so its fluid capacity also limits the total accepted amount.
+                    for (int slot = 0; slot < returnInv.size() - 1; slot++) {
+                        returnInv.setStack(slot, new GenericStack(AEItemKey.of(Items.STONE), 1));
+                    }
+                    returnInv.setCapacity(AEKeyTypes.FLUIDS, 0);
+
+                    var assembler = (MolecularAssemblerBlockEntity) helper.getBlockEntity(ASSEMBLER_POS);
+                    var pattern = encodeLogToPlanks(assembler.getLevel());
+                    var tag = new CompoundTag();
+                    tag.put("myPlan", pattern.getDefinition().toStack().save(new CompoundTag()));
+                    tag.putInt("pushDirection", Direction.UP.ordinal());
+                    assembler.loadTag(tag);
+                    assembler.getInternalInventory().setItemDirect(0,
+                            GenericStack.wrapInItemStack(AEFluidKey.of(Fluids.WATER), 1000));
+                    assembler.getTickingRequest(helper.getGridNode(ASSEMBLER_POS));
+                })
+                .thenIdle(10)
+                .thenExecute(() -> {
+                    var assembler = (MolecularAssemblerBlockEntity) helper.getBlockEntity(ASSEMBLER_POS);
+                    var held = GenericStack.unwrapItemStack(assembler.getInternalInventory().getStackInSlot(9));
+                    helper.check(held != null && held.what() == AEFluidKey.of(Fluids.WATER) && held.amount() == 1000,
+                            "blocked fluid return did not retain all 1000 mB in the assembler");
+                    var chest = (ChestBlockEntity) helper.getBlockEntity(chestPos);
+                    helper.check(chest.isEmpty(), "fluid return inserted a wrapper into an item-only chest");
+
+                    var provider = (PatternProviderBlockEntity) helper.getBlockEntity(providerPos);
+                    provider.getLogic().getReturnInv().setCapacity(AEKeyTypes.FLUIDS, 400);
+                })
+                .thenIdle(10)
+                .thenExecute(() -> {
+                    var provider = (PatternProviderBlockEntity) helper.getBlockEntity(providerPos);
+                    var returnInv = provider.getLogic().getReturnInv();
+                    var returned = returnInv.getStack(returnInv.size() - 1);
+                    helper.check(returned != null && returned.what() == AEFluidKey.of(Fluids.WATER)
+                            && returned.amount() == 400, "partial return did not insert exactly 400 mB of water");
+
+                    var assembler = (MolecularAssemblerBlockEntity) helper.getBlockEntity(ASSEMBLER_POS);
+                    var saved = assembler.saveWithoutMetadata();
+                    assembler.loadTag(saved);
+                    assembler.getTickingRequest(helper.getGridNode(ASSEMBLER_POS));
+                    var held = GenericStack.unwrapItemStack(assembler.getInternalInventory().getStackInSlot(9));
+                    helper.check(held != null && held.what() == AEFluidKey.of(Fluids.WATER) && held.amount() == 600,
+                            "partial return did not preserve the remaining 600 mB across save/load");
+                    returnInv.setCapacity(AEKeyTypes.FLUIDS, 1000);
+                })
+                .thenIdle(10)
+                .thenExecute(() -> {
+                    var provider = (PatternProviderBlockEntity) helper.getBlockEntity(providerPos);
+                    var returnInv = provider.getLogic().getReturnInv();
+                    var returned = returnInv.getStack(returnInv.size() - 1);
+                    helper.check(returned != null && returned.what() == AEFluidKey.of(Fluids.WATER)
+                            && returned.amount() == 1000, "retry did not return exactly 1000 mB of water in total");
+                    var chest = (ChestBlockEntity) helper.getBlockEntity(chestPos);
+                    helper.check(chest.isEmpty(), "fluid return inserted a wrapper into an item-only chest");
+                    var assembler = (MolecularAssemblerBlockEntity) helper.getBlockEntity(ASSEMBLER_POS);
+                    helper.check(assembler.getCurrentPattern() == null, "recovery kept the stale plan");
+                    helper.check(assembler.getInternalInventory().isEmpty(), "recovery left ingredients behind");
+                    helper.check(
+                            assembler.pushPattern(encodeLogToPlanks(assembler.getLevel()), logTable(), Direction.UP),
+                            "assembler refused a valid push after returning the fluid");
                 })
                 .thenSucceed());
     }
