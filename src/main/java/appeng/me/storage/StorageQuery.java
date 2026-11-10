@@ -18,11 +18,11 @@ import appeng.parts.storagebus.StorageBusPart;
 
 // 单次存储查询（列举库存 / 提取）的状态：同一份存储经多条路径到达时只计一次。
 // 网络存储的所有操作都在同一条逻辑线程上串行执行，因此查询状态直接用静态共享实例，不做任何同步。
-public final class StorageQuery {
+final class StorageQuery {
 
-    private static final StorageQuery INSTANCE = new StorageQuery();
-    private static int queryDepth;
-    private static long topology;
+    static final StorageQuery INSTANCE = new StorageQuery();
+    static int queryDepth;
+    static long topology;
 
     int readDepth;
     int extractDepth;

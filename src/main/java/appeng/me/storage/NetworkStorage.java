@@ -172,16 +172,32 @@ public final class NetworkStorage implements MEStorage {
 
     @Override
     public boolean supportsKeyType(AEKeyType<?> type) {
-        return getTypeMounts(type).storages.length > 0;
+        if (getInUse) {
+            return false;
+        }
+        getInUse = true;
+        try {
+            return getTypeMounts(type).storages.length > 0;
+        } finally {
+            getInUse = false;
+        }
     }
 
     @Override
     public int operationTime() {
-        var opt = 0;
-        for (var mountOperation : priorityInventory) {
-            opt += mountOperation.storage.operationTime();
+        if (getInUse) {
+            return 0;
         }
-        return opt;
+        getInUse = true;
+        try {
+            var opt = 0;
+            for (var mountOperation : priorityInventory) {
+                opt += mountOperation.storage.operationTime();
+            }
+            return opt;
+        } finally {
+            getInUse = false;
+        }
     }
 
     /**
@@ -466,6 +482,10 @@ public final class NetworkStorage implements MEStorage {
 
     public static void markTopologyChanged() {
         StorageQuery.topologyChanged();
+    }
+
+    public static long topologyVersion() {
+        return StorageQuery.topologyVersion();
     }
 
     private boolean sharedTopology() {
