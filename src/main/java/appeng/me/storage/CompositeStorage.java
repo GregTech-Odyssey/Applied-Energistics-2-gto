@@ -146,7 +146,9 @@ public class CompositeStorage implements KeyTypedStorage, ITickingMonitor {
         }
         if (others != null) {
             for (var other : others) {
-                max = Math.max(max, other.operationTime());
+                if (other != null) {
+                    max = Math.max(max, other.operationTime());
+                }
             }
         }
         return max;
