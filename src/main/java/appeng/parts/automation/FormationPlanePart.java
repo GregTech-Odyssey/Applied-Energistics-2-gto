@@ -277,6 +277,11 @@ public class FormationPlanePart extends UpgradeablePart implements IStorageProvi
         }
 
         @Override
+        public int operationTime() {
+            return 2;
+        }
+
+        @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             if (filter != null && !filter.matchesFilter(what, filterMode)) {
                 return 0;

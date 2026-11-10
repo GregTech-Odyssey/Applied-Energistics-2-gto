@@ -53,6 +53,11 @@ class CreativeCellInventory implements StorageCell {
     }
 
     @Override
+    public int operationTime() {
+        return 1;
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         return configured.contains(what) ? amount : 0;
     }

@@ -46,8 +46,12 @@ class CondenserMEStorage implements MEStorage {
     }
 
     @Override
+    public int operationTime() {
+        return 4;
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
-        MEStorage.checkPreconditions(what, amount, mode, source);
         if (mode == Actionable.MODULATE) {
             this.target.addPower(amount / what.getAmountPerOperation());
         }
@@ -56,7 +60,6 @@ class CondenserMEStorage implements MEStorage {
 
     @Override
     public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-        MEStorage.checkPreconditions(what, amount, mode, source);
         var slotItem = this.target.getOutputSlot().getStackInSlot(0);
 
         if (what instanceof AEItemKey itemKey && itemKey.matches(slotItem)) {

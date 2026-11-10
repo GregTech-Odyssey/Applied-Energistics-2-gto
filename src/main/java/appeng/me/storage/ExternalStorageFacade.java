@@ -41,6 +41,11 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
     }
 
+    @Override
+    public int operationTime() {
+        return getSlots() * 5;
+    }
+
     public abstract int getSlots();
 
     @Nullable
@@ -149,6 +154,11 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
         private DirectKeyFacade(DirectKeyHandler handler, AEKeyType keyType) {
             this.handler = handler;
             this.keyType = keyType;
+        }
+
+        @Override
+        public int operationTime() {
+            return handler.getKeySlots() * 2;
         }
 
         @Override

@@ -24,6 +24,7 @@
 package appeng.api.stacks;
 
 import java.text.NumberFormat;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import com.google.common.base.Preconditions;
@@ -47,10 +48,12 @@ import appeng.util.ReadableNumberConverter;
  */
 public abstract class AEKeyType<T extends AEKey> extends IdentityKey {
 
+    private static final AtomicInteger ID = new AtomicInteger(1);
     private final ResourceLocation id;
     private final Class<T> keyClass;
     private final AEKeyFilter filter;
     private final Component description;
+    public final int uid = ID.getAndIncrement();
 
     public AEKeyType(ResourceLocation id, Class<T> keyClass, Component description) {
         Preconditions.checkArgument(!keyClass.equals(AEKey.class), "Can't register a key type for AEKey itself");

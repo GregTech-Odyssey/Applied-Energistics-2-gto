@@ -107,7 +107,7 @@ public class CraftingService implements ICraftingService, IGridServiceProvider {
                 });
     }
 
-    private final Set<CraftingCPUCluster> craftingCPUClusters = new ReferenceOpenHashSet<>();
+    public final Set<CraftingCPUCluster> craftingCPUClusters = new ReferenceOpenHashSet<>();
     private final Map<IGridNode, StackWatcher<ICraftingWatcherNode>> craftingWatchers = new Reference2ObjectOpenHashMap<>();
     private final IGrid grid;
     private final NetworkCraftingProviders craftingProviders = new NetworkCraftingProviders();

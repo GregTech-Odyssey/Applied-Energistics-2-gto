@@ -387,6 +387,11 @@ public final class BasicCellInventory implements StorageCell {
     }
 
     @Override
+    public int operationTime() {
+        return 2;
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         if (amount == 0 || !keyType.contains(what)) {
             return 0;

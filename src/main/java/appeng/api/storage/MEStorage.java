@@ -66,6 +66,11 @@ public interface MEStorage {
         }
 
         @Override
+        public int operationTime() {
+            return 0;
+        }
+
+        @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             return amount;
         }
@@ -77,6 +82,11 @@ public interface MEStorage {
     };
 
     boolean supportsKeyType(AEKeyType<?> type);
+
+    /**
+     * 一次AEKeyMap.get() 记为 1
+     */
+    int operationTime();
 
     /**
      * Store new items, or simulate the addition of new items into the ME Inventory.

@@ -533,6 +533,11 @@ public class StorageBusPart extends UpgradeablePart
         }
 
         @Override
+        public int operationTime() {
+            return super.operationTime() + 1;
+        }
+
+        @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             checkTarget();
             return super.insert(what, amount, mode, source);

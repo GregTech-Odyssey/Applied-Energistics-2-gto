@@ -42,7 +42,7 @@ import appeng.api.storage.MEStorage;
 import appeng.core.AELog;
 import appeng.util.ConfigMenuInventory;
 
-public class GenericStackInv implements MEStorage, GenericInternalInventory {
+public class GenericStackInv implements GenericInternalInventory {
     protected final GenericStack[] stacks;
     protected final Runnable listener;
     protected boolean suppressOnChange;
@@ -142,9 +142,6 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
 
     @Override
     public long insert(int slot, AEKey what, long amount, Actionable mode) {
-        Objects.requireNonNull(what, "what");
-        Preconditions.checkArgument(amount >= 0, "amount >= 0");
-
         if (!canInsert() || !isAllowed(what)) {
             return 0;
         }
@@ -167,9 +164,6 @@ public class GenericStackInv implements MEStorage, GenericInternalInventory {
 
     @Override
     public long extract(int slot, AEKey what, long amount, Actionable mode) {
-        Objects.requireNonNull(what, "what");
-        Preconditions.checkArgument(amount >= 0, "amount >= 0");
-
         var currentWhat = getKey(slot);
         if (!canExtract() || currentWhat == null || currentWhat != what) {
             // Can't extract from empty slot or mismatched type

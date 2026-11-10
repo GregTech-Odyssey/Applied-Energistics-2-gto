@@ -46,6 +46,11 @@ public class NullInventory implements MEStorage {
     }
 
     @Override
+    public int operationTime() {
+        return 0;
+    }
+
+    @Override
     public boolean forEachKey(KeyVisitor visitor) {
         return false;
     }

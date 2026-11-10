@@ -69,6 +69,11 @@ public class DelegatingMEInventory implements MEStorage {
     }
 
     @Override
+    public int operationTime() {
+        return delegate.operationTime();
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         return delegate.insert(what, amount, mode, source);
     }

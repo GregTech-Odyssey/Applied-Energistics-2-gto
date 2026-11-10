@@ -136,6 +136,23 @@ public class CompositeStorage implements KeyTypedStorage, ITickingMonitor {
     }
 
     @Override
+    public int operationTime() {
+        int max = 0;
+        if (items != null) {
+            max = items.operationTime();
+        }
+        if (fluids != null) {
+            max = Math.max(max, fluids.operationTime());
+        }
+        if (others != null) {
+            for (var other : others) {
+                max = Math.max(max, other.operationTime());
+            }
+        }
+        return max;
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         var storage = storageFor(what);
         if (storage == null) {

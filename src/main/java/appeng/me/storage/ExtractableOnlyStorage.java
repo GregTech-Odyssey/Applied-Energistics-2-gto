@@ -31,6 +31,11 @@ public final class ExtractableOnlyStorage implements MEStorage {
     }
 
     @Override
+    public int operationTime() {
+        return storage.operationTime();
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         return storage.insert(what, amount, mode, source);
     }

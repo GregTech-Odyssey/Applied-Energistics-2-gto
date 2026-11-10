@@ -37,6 +37,12 @@ public final class SupplierStorage implements MEStorage {
     }
 
     @Override
+    public int operationTime() {
+        var delegate = supplier.get();
+        return delegate == null ? 0 : delegate.operationTime();
+    }
+
+    @Override
     public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
         var delegate = supplier.get();
         return delegate == null ? 0 : delegate.insert(what, amount, mode, source);

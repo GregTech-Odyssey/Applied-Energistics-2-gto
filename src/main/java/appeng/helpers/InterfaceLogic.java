@@ -617,6 +617,11 @@ public class InterfaceLogic
         }
 
         @Override
+        public int operationTime() {
+            return super.operationTime() + 2;
+        }
+
+        @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             // Prevents other interfaces from injecting their items into this interface when they push
             // their local inventory into the network. This prevents items from bouncing back and forth

@@ -28,7 +28,6 @@ import java.util.Objects;
 import net.minecraft.nbt.CompoundTag;
 
 import appeng.api.config.Actionable;
-import appeng.api.config.PowerMultiplier;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.networking.crafting.ICraftingRequester;
 import appeng.api.networking.energy.IEnergySource;
@@ -64,7 +63,7 @@ public final class StorageHelper {
      */
     public static long poweredExtraction(IEnergySource energy, MEStorage inv,
             AEKey request, long amount, IActionSource src) {
-        return poweredExtraction(energy, inv, request, amount, src, Actionable.MODULATE);
+        return inv.extract(request, amount, Actionable.MODULATE, src);
     }
 
     /**
@@ -79,15 +78,7 @@ public final class StorageHelper {
      */
     public static long poweredExtraction(IEnergySource energy, MEStorage inv, AEKey request, long amount,
             IActionSource src, Actionable mode) {
-        amount = inv.extract(request, amount, mode, src);
-        if (amount <= 0) {
-            return 0;
-        }
-        if (mode == Actionable.MODULATE) {
-            var energyFactor = Math.max(1.0, request.getAmountPerOperation());
-            energy.extractAEPower(amount / energyFactor, Actionable.MODULATE, PowerMultiplier.CONFIG);
-        }
-        return amount;
+        return inv.extract(request, amount, mode, src);
     }
 
     /**
@@ -101,7 +92,7 @@ public final class StorageHelper {
      */
     public static long poweredInsert(IEnergySource energy, MEStorage inv,
             AEKey input, long amount, IActionSource src) {
-        return poweredInsert(energy, inv, input, amount, src, Actionable.MODULATE);
+        return inv.insert(input, amount, Actionable.MODULATE, src);
     }
 
     /**
@@ -116,14 +107,6 @@ public final class StorageHelper {
      */
     public static long poweredInsert(IEnergySource energy, MEStorage inv, AEKey input, long amount, IActionSource src,
             Actionable mode) {
-        amount = inv.insert(input, amount, mode, src);
-        if (amount <= 0) {
-            return 0;
-        }
-        if (mode == Actionable.MODULATE) {
-            final double energyFactor = Math.max(1.0, input.getAmountPerOperation());
-            energy.extractAEPower(amount / energyFactor, Actionable.MODULATE, PowerMultiplier.CONFIG);
-        }
-        return amount;
+        return inv.insert(input, amount, mode, src);
     }
 }

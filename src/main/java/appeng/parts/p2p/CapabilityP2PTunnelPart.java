@@ -243,6 +243,20 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
     private class InputMEStorage implements MEStorage {
 
         @Override
+        public int operationTime() {
+            var opt = 0;
+            for (var target : CapabilityP2PTunnelPart.this.getOutputs()) {
+                try (var capabilityGuard = target.getAdjacentCapability()) {
+                    final var input = capabilityGuard.getStorage();
+                    if (input == null)
+                        continue;
+                    opt += input.operationTime();
+                }
+            }
+            return opt;
+        }
+
+        @Override
         public boolean supportsKeyType(AEKeyType<?> type) {
             return true;
         }
@@ -281,6 +295,20 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
 
         @org.jetbrains.annotations.Nullable
         private AvailableStacksCache cache;
+
+        @Override
+        public int operationTime() {
+            var opt = 0;
+            for (var target : CapabilityP2PTunnelPart.this.getInputs()) {
+                try (var capabilityGuard = target.getAdjacentCapability()) {
+                    final var input = capabilityGuard.getStorage();
+                    if (input == null)
+                        continue;
+                    opt += input.operationTime();
+                }
+            }
+            return opt;
+        }
 
         @Override
         public boolean supportsKeyType(AEKeyType<?> type) {

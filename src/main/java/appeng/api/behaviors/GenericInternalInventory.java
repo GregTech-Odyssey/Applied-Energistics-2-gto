@@ -20,6 +20,11 @@ public interface GenericInternalInventory extends IKeyInventory {
      */
     int size();
 
+    @Override
+    default int operationTime() {
+        return getKeySlots() * 2;
+    }
+
     @Nullable
     GenericStack getStack(int slot);
 

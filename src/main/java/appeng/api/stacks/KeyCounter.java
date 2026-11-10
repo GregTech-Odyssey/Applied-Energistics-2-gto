@@ -387,7 +387,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         if (map == null) {
             return false;
         }
-        return map.containsKey(key);
+        return map.contains(key);
     }
 
     public void ensureCapacity(int capacity) {
@@ -438,7 +438,7 @@ public final class KeyCounter implements Iterable<Reference2LongMap.Entry<AEKey>
         if (map == null) {
             this.map = map = new AEKeyLongMap<>();
         }
-        map.addTo(key, amount);
+        map.insert(key, amount);
         fuzzyUpdate = true;
         return false;
     }

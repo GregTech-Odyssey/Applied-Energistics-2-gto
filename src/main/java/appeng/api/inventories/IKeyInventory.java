@@ -11,6 +11,11 @@ import appeng.me.storage.ExternalStorageFacade;
 public interface IKeyInventory extends MEStorage, ExternalStorageFacade.DirectKeyHandler {
 
     @Override
+    default int operationTime() {
+        return getKeySlots();
+    }
+
+    @Override
     default long insertKey(AEKey what, long amount, Actionable mode) {
         return this.insert(what, amount, mode, IActionSource.empty());
     }

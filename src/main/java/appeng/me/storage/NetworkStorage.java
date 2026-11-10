@@ -25,12 +25,12 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.network.chat.Component;
 
+import it.unimi.dsi.fastutil.ints.Int2ObjectArrayMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
 import appeng.api.config.Actionable;
-import appeng.api.identity.IdentityKeyObjectMap;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.*;
 import appeng.api.storage.MEStorage;
@@ -97,7 +97,7 @@ public final class NetworkStorage implements MEStorage {
     // 避免每次 IO 都重扫挂载、重算令牌。挂载变化、子网挂载变化，以及存储自身支持类型变化（如储物总线换目标，
     // 见 StorageBusPart#updateTarget）都会推进拓扑版本；任何会让 supportsKeyType 或 getResourceIdentity 结果
     // 改变的实现都必须调用 markTopologyChanged()，否则这里会继续用旧列表。
-    private final IdentityKeyObjectMap<AEKeyType<?>, TypeMounts> storageByType = new IdentityKeyObjectMap<>();
+    private final Int2ObjectArrayMap<TypeMounts> storageByType = new Int2ObjectArrayMap<>();
     private long storageByTypeVersion = -1;
 
     public NetworkStorage() {
@@ -175,6 +175,15 @@ public final class NetworkStorage implements MEStorage {
         return getTypeMounts(type).storages.length > 0;
     }
 
+    @Override
+    public int operationTime() {
+        var opt = 0;
+        for (var mountOperation : priorityInventory) {
+            opt += mountOperation.storage.operationTime();
+        }
+        return opt;
+    }
+
     /**
      * 取该类型的挂载列表（优先级从高到低），结果按拓扑版本缓存，避免每次 IO 都重扫全部挂载。
      */
@@ -184,10 +193,10 @@ public final class NetworkStorage implements MEStorage {
             storageByTypeVersion = version;
             storageByType.clear();
         }
-        var mounts = storageByType.get(type);
+        var mounts = storageByType.get(type.uid);
         if (mounts == null) {
             mounts = scanTypeMounts(type);
-            storageByType.put(type, mounts);
+            storageByType.put(type.uid, mounts);
         }
         return mounts;
     }

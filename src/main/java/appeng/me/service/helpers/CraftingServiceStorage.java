@@ -47,6 +47,11 @@ public class CraftingServiceStorage implements IStorageProvider {
         }
 
         @Override
+        public int operationTime() {
+            return craftingService.craftingCPUClusters.size();
+        }
+
+        @Override
         public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
             // Item interception logic
             return craftingService.insertIntoCpus(what, amount, mode);
