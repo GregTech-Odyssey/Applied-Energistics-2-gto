@@ -235,7 +235,7 @@ public final class NetworkStorage implements MEStorage {
 
     @Override
     public long insert(AEKey what, long amount, Actionable type, IActionSource src) {
-        if (mountsInUse) {
+        if (what == null || mountsInUse) {
             return 0;
         }
         var storages = getTypeMounts(what.getType()).storages;
@@ -286,7 +286,7 @@ public final class NetworkStorage implements MEStorage {
 
     @Override
     public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
-        if (mountsInUse) {
+        if (what == null || mountsInUse) {
             return 0;
         }
         if (StorageQuery.owned() || (!networkLinks.isEmpty() && sharedTopology())) {

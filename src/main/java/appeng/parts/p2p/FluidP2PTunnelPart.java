@@ -27,9 +27,12 @@ import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
+import appeng.api.storage.MEStorage;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
+import appeng.me.storage.ExternalStorageFacade;
 
 public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPart, IFluidHandler> {
 
@@ -46,6 +49,16 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
         inputHandler = new InputFluidHandler();
         outputHandler = new OutputFluidHandler();
         emptyHandler = NULL_FLUID_HANDLER;
+    }
+
+    @Override
+    protected MEStorage wrapHandler(IFluidHandler handler) {
+        return ExternalStorageFacade.of(handler);
+    }
+
+    @Override
+    protected AEKeyType<?> getKeyType() {
+        return AEKeyTypes.FLUIDS;
     }
 
     @Override

@@ -27,9 +27,12 @@ import net.minecraftforge.items.ItemHandlerHelper;
 
 import appeng.api.parts.IPartItem;
 import appeng.api.parts.IPartModel;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.AEKeyTypes;
+import appeng.api.storage.MEStorage;
 import appeng.core.AppEng;
 import appeng.items.parts.PartModels;
+import appeng.me.storage.ExternalStorageFacade;
 
 public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart, IItemHandler> {
 
@@ -46,6 +49,16 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
         inputHandler = new InputItemHandler();
         outputHandler = new OutputItemHandler();
         emptyHandler = NULL_ITEM_HANDLER;
+    }
+
+    @Override
+    protected MEStorage wrapHandler(IItemHandler handler) {
+        return ExternalStorageFacade.of(handler);
+    }
+
+    @Override
+    protected AEKeyType<?> getKeyType() {
+        return AEKeyTypes.ITEMS;
     }
 
     @Override

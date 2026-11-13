@@ -73,13 +73,48 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                 return LazyOptional.of(() -> inputHandler).cast();
             }
         }
-        if (capabilityClass == Capabilities.STORAGE) {
+        if (capabilityClass == Capabilities.STORAGE && getKeyType() != null) {
             var storage = isOutput() ? outputStorage : inputStorage;
             if (storage != null) {
                 return LazyOptional.of(() -> storage).cast();
             }
         }
         return LazyOptional.empty();
+    }
+
+    @Nullable
+    protected MEStorage wrapHandler(A handler) {
+        return null;
+    }
+
+    @Nullable
+    protected AEKeyType<?> getKeyType() {
+        return null;
+    }
+
+    private P2PTunnelPart<?>[] inputTunnels() {
+        return getInputs();
+    }
+
+    private boolean forEachAdjacentKey(P2PTunnelPart<?>[] tunnels, KeyVisitor visitor) {
+        var type = getKeyType();
+        KeyVisitor typed = (key, amount) -> key.getType() == type && visitor.visit(key, amount);
+        for (var tunnel : tunnels) {
+            try (var capabilityGuard = ((P) tunnel).getAdjacentCapability()) {
+                var storage = capabilityGuard.getStorage();
+                if (storage != null && storage.forEachKey(typed)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void addAdjacentStacks(P2PTunnelPart<?>[] tunnels, KeyCounter out) {
+        forEachAdjacentKey(tunnels, (key, amount) -> {
+            out.add(key, amount);
+            return false;
+        });
     }
 
     /**
@@ -138,8 +173,13 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                     var te = self.getLevel().getBlockEntity(getFacingPos());
 
                     if (te != null) {
-                        return te.getCapability(Capabilities.STORAGE, getSide().getOpposite())
-                                .orElse(null);
+                        var side = getSide().getOpposite();
+                        var storage = te.getCapability(Capabilities.STORAGE, side).orElse(null);
+                        if (storage != null) {
+                            return storage;
+                        }
+                        var handler = te.getCapability(capability, side).orElse(null);
+                        return handler == null ? null : wrapHandler(handler);
                     }
                 }
 
@@ -258,7 +298,7 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
 
         @Override
         public boolean supportsKeyType(AEKeyType<?> type) {
-            return true;
+            return type == getKeyType();
         }
 
         @Override
@@ -266,16 +306,18 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
             long total = 0;
             var outputs = CapabilityP2PTunnelPart.this.getOutputs();
             final int outputTunnels = outputs.size();
-            if (outputTunnels == 0 || amount == 0) {
+            if (outputTunnels == 0 || amount == 0 || what.getType() != getKeyType()) {
                 return 0;
             }
             final long amountPerOutput = amount / outputTunnels;
-            long overflow = amountPerOutput == 0 ? amount : amount % amountPerOutput;
+            long overflow = amount - amountPerOutput * outputTunnels;
             for (var target : outputs) {
                 try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
                     final var output = capabilityGuard.getStorage();
-                    if (output == null)
+                    if (output == null) {
+                        overflow += amountPerOutput;
                         continue;
+                    }
                     final long toSend = amountPerOutput + overflow;
                     final long received = output.insert(what, toSend, mode, source);
                     overflow = toSend - received;
@@ -299,7 +341,8 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
         @Override
         public int operationTime() {
             var opt = 0;
-            for (var target : CapabilityP2PTunnelPart.this.getInputs()) {
+            for (var tunnel : inputTunnels()) {
+                var target = (P) tunnel;
                 try (var capabilityGuard = target.getAdjacentCapability()) {
                     final var input = capabilityGuard.getStorage();
                     if (input == null)
@@ -312,24 +355,27 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
 
         @Override
         public boolean supportsKeyType(AEKeyType<?> type) {
-            return true;
+            return type == getKeyType();
         }
 
         @Override
         public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
             long total = 0;
-            var inputs = CapabilityP2PTunnelPart.this.getInputs();
+            var inputs = inputTunnels();
             final int inputTunnels = inputs.length;
-            if (inputTunnels == 0 || amount == 0) {
+            if (inputTunnels == 0 || amount == 0 || what.getType() != getKeyType()) {
                 return 0;
             }
             final long amountPerOutput = amount / inputTunnels;
-            long overflow = amountPerOutput == 0 ? amount : amount % amountPerOutput;
-            for (var target : inputs) {
+            long overflow = amount - amountPerOutput * inputTunnels;
+            for (var tunnel : inputs) {
+                var target = (P) tunnel;
                 try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
                     final var input = capabilityGuard.getStorage();
-                    if (input == null)
+                    if (input == null) {
+                        overflow += amountPerOutput;
                         continue;
+                    }
                     final long toSend = amountPerOutput + overflow;
                     final long received = input.extract(what, toSend, mode, source);
                     overflow = toSend - received;
@@ -341,39 +387,12 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
 
         @Override
         public void getAvailableStacks(KeyCounter out) {
-            var inputs = CapabilityP2PTunnelPart.this.getInputs();
-            final int outputTunnels = inputs.length;
-            if (outputTunnels == 0) {
-                return;
-            }
-            for (var target : inputs) {
-                try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
-                    final var input = capabilityGuard.getStorage();
-                    if (input == null)
-                        continue;
-                    input.getAvailableStacks(out);
-                }
-            }
+            addAdjacentStacks(inputTunnels(), out);
         }
 
         @Override
         public boolean forEachKey(KeyVisitor visitor) {
-            var inputs = CapabilityP2PTunnelPart.this.getInputs();
-            final int outputTunnels = inputs.length;
-            if (outputTunnels == 0) {
-                return false;
-            }
-            for (var target : inputs) {
-                try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
-                    final var input = capabilityGuard.getStorage();
-                    if (input == null)
-                        continue;
-                    if (input.forEachKey(visitor)) {
-                        return true;
-                    }
-                }
-            }
-            return false;
+            return forEachAdjacentKey(inputTunnels(), visitor);
         }
 
         @Override
