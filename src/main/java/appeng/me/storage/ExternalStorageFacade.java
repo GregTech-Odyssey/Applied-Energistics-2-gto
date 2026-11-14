@@ -6,6 +6,9 @@ import javax.annotation.Nullable;
 
 import com.google.common.primitives.Ints;
 
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -131,13 +134,36 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
     public interface DirectKeyHandler {
 
         default int operationTime() {
-            var time = 0;
+            var time = 1;
             boolean isDirectKey = this.isDirectKey();
             for (int i = 0, s = this.getKeySlots(); i < s; i++) {
-                if (this.getAmountInSlot(i) > 0)
-                    time += isDirectKey ? this.getKeyInSlot(i).getTag() == null ? 2 : 8 : 1;
+                if (this.getAmountInSlot(i) > 0) {
+                    if (isDirectKey) {
+                        time++;
+                    } else {
+                        var key = this.getKeyInSlot(i);
+                        var tag = key == null ? null : key.getTag();
+                        time += tag == null ? 2 : 3 + size(tag);
+                    }
+                }
             }
-            return time;
+            return Math.max(time, getKeySlots() / 8);
+        }
+
+        private static int size(Tag tag) {
+            var size = 1;
+            if (tag instanceof CompoundTag compoundTag) {
+                for (var t : compoundTag.tags.entrySet()) {
+                    size += size(t.getValue()) + 1;
+                }
+                return Math.max(1, size / 2);
+            } else if (tag instanceof ListTag listTag) {
+                for (var t : listTag) {
+                    size += size(t);
+                }
+                return Math.max(1, size / 2);
+            }
+            return 1;
         }
 
         int getKeySlots();
