@@ -41,10 +41,6 @@ configurations {
         transitive = false
     }
     buildtoolsImplementation.extendsFrom(compileClasspath)
-    // Dependencies only used for the guide export, but not shipped
-    guideExportOnly
-    configurations.compileClasspath.extendsFrom(guideExportOnly)
-    configurations.runtimeClasspath.extendsFrom(guideExportOnly)
 }
 
 import com.diffplug.gradle.spotless.JsonExtension
@@ -60,11 +56,6 @@ dependencies {
     implementation("org.lwjgl:lwjgl-opengl:3.3.2")
 
     implementation("com.gto.fastcollection:FastCollection:26.8.7")
-
-    modImplementation("org.appliedenergistics:guideme:${guideme_version}")
-
-    // Used for the guide export
-    guideExportOnly("org.bytedeco:ffmpeg-platform:6.0-1.5.9")
 
     // compile against provided APIs
     modCompileOnly "mezz.jei:jei-${jei_minecraft_version}-common-api:${jei_version}"
@@ -267,9 +258,6 @@ ext.isBeta = project.version.contains("beta")
 
 test {
     useJUnitPlatform()
-
-    // Might not need this anymore...
-    systemProperty "guideme.ae2.guide.sources", file("guidebook").absolutePath
 }
 
 dependencies {
@@ -302,14 +290,11 @@ legacyForge {
             // property "mixin.debug.export", "true"
 
             additionalRuntimeClasspathConfiguration.extendsFrom configurations.shaded
-            additionalRuntimeClasspathConfiguration.extendsFrom configurations.guideExportOnly
 
             jvmArguments.addAll(
                     "--add-opens", "java.base/sun.security.util=ALL-UNNAMED",
                     "--add-opens", "java.base/java.util.jar=ALL-UNNAMED"
             )
-
-            systemProperty "guideme.ae2.guide.sources", file("guidebook").absolutePath
         }
         client {
             client()
@@ -319,11 +304,6 @@ legacyForge {
             programArguments.addAll(
                     "--username", "AE2Dev", "--quickPlaySingleplayer", "GametestWorld"
             )
-        }
-        guide {
-            client()
-
-            systemProperty('guideme.showOnStartup', 'ae2:guide')
         }
         server {
             server()
@@ -337,11 +317,6 @@ legacyForge {
                     '--output', file('src/generated/resources/').absolutePath,
                     '--existing', file('src/main/resources').absolutePath
             )
-        }
-        guideexport {
-            client()
-            systemProperty('appeng.runGuideExportAndExit', 'true')
-            systemProperty('appeng.guideExportFolder', file('build/guide').absolutePath)
         }
         // Use to run the tests
         gametest {
@@ -359,7 +334,6 @@ Map<String, String> expansionVariables = [
         "project_version"  : project.version,
         'minecraft_version': project.minecraft_version_range,
         'forge_version'    : project.forge_version_range,
-        'guideme_version'  : project.guideme_version_range,
         'jei_version'      : project.jei_version_range,
         'top_version'      : project.top_version_range,
         'jade_version'     : project.jade_version_range
@@ -396,9 +370,6 @@ mixin {
 }
 
 jar {
-    from('guidebook') {
-        into 'assets/ae2/ae2guide'
-    }
     manifest {
         attributes([
                 "MixinConfigs"          : "ae2.mixins.json"
@@ -523,5 +494,4 @@ gtoPublish {
     curseforgeProjectId   = '1756988'
     curseforgeJavaVersion = 'Java 21'
     curseforgeEnvironment = 'both'
-    curseforgeRelations   = [guideme: 'required']
 }

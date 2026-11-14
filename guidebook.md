@@ -1,5 +1,7 @@
 # Contributing to the Guidebook
 
+This fork no longer includes the in-game guide or guide export. The guidebook sources and the instructions below are retained as upstream reference; the guide run configurations are no longer available in this fork.
+
 The guidebook is written in Markdown. You can find the files in [the guidebook folder](./guidebook).
 
 To contribute, you need to:

@@ -29,13 +29,6 @@ description="A build of Applied Energistics 2 maintained for the GregTech Odysse
     side="BOTH"
 
 [[dependencies.ae2]]
-    modId="guideme"
-    mandatory=true
-    versionRange="${guideme_version}"
-    ordering="AFTER"
-    side="BOTH"
-
-[[dependencies.ae2]]
     modId="jei"
     mandatory=false
     versionRange="${jei_version}"

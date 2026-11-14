@@ -50,7 +50,6 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.entity.player.Inventory;
@@ -58,14 +57,9 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
-
-import guideme.indices.ItemIndex;
 
 import appeng.api.behaviors.ContainerItemStrategies;
 import appeng.api.behaviors.EmptyingAction;
-import appeng.api.implementations.menuobjects.ItemMenuHost;
-import appeng.api.parts.IPart;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
@@ -86,8 +80,6 @@ import appeng.client.gui.widgets.VerticalButtonBar;
 import appeng.client.guidebook.PageAnchor;
 import appeng.core.AEConfig;
 import appeng.core.AELog;
-import appeng.core.AppEng;
-import appeng.core.AppEngClient;
 import appeng.core.localization.ButtonToolTips;
 import appeng.core.localization.Tooltips;
 import appeng.core.sync.network.NetworkHandler;
@@ -154,9 +146,6 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         this.style = Objects.requireNonNull(style, "style");
         this.widgets = new WidgetContainer(style);
         this.widgets.add("verticalToolbar", this.verticalToolbar = new VerticalButtonBar());
-
-        // Add a help-button to the vertical button bar
-//        this.helpButton = addToLeftToolbar(new OpenGuideButton(btn -> openHelp()));
 
         if (style.getGeneratedBackground() != null) {
             this.imageWidth = style.getGeneratedBackground().getWidth();
@@ -255,7 +244,6 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
      */
     @MustBeInvokedByOverriders
     protected void updateBeforeRender() {
-//        helpButton.setVisibility(getHelpTopic() != null);
     }
 
     @Override
@@ -1084,51 +1072,9 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         }
     }
 
-    protected void openHelp() {
-        var topic = getHelpTopic();
-        if (topic != null) {
-            AppEng.instance().openGuideAtAnchor(topic);
-        } else {
-            LOG.warn("No topic assigned to screen {}, but button was clicked", this);
-        }
-    }
-
-    @org.jetbrains.annotations.Nullable
+    // Retained for addons that override this method.
+    @Nullable
     protected PageAnchor getHelpTopic() {
-        // Help topic may be overridden via screen style
-        String helpTopic = style.getHelpTopic();
-        if (helpTopic != null) {
-            var sep = helpTopic.indexOf('#');
-            String fragment = null;
-            if (sep != -1) {
-                fragment = helpTopic.substring(sep + 1);
-                helpTopic = helpTopic.substring(0, sep);
-            }
-            try {
-                return new PageAnchor(AppEng.makeId(helpTopic), fragment);
-            } catch (Exception e) {
-                LOG.warn("Invalid helpTopic for screen {}: {}", this, helpTopic);
-            }
-        }
-
-        // Try finding the help topic automatically via the guidebook item index
-        var guide = AppEngClient.instance().getGuide();
-        var itemIndex = guide.getIndex(ItemIndex.class);
-
-        Object target = getMenu().getTarget();
-        if (target instanceof BlockEntity be) {
-            var block = be.getBlockState().getBlock();
-            var blockId = BuiltInRegistries.BLOCK.getKey(block);
-            return PageAnchor.of(itemIndex.get(blockId));
-        } else if (target instanceof IPart part) {
-            var item = part.getPartItem().asItem();
-            var itemId = BuiltInRegistries.ITEM.getKey(item);
-            return PageAnchor.of(itemIndex.get(itemId));
-        } else if (target instanceof ItemMenuHost menuHost) {
-            var item = menuHost.getItemStack().getItem();
-            var itemId = BuiltInRegistries.ITEM.getKey(item);
-            return PageAnchor.of(itemIndex.get(itemId));
-        }
         return null;
     }
 
