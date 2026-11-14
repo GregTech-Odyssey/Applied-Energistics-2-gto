@@ -15,6 +15,12 @@ import appeng.api.stacks.GenericStack;
  */
 @ApiStatus.Experimental
 public interface GenericInternalInventory extends IKeyInventory {
+
+    @Override
+    default int operationTime() {
+        return size();
+    }
+
     /**
      * @return The number of slots in this inventory. Never changes.
      */

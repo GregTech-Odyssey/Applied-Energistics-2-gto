@@ -155,6 +155,11 @@ public abstract class AEKey extends IdentityKey {
      */
     public abstract AEKey dropSecondary();
 
+    @Nullable
+    public CompoundTag getTag() {
+        return null;
+    }
+
     /**
      * Serialized keys MUST NOT contain keys that start with <code>#</code>, because this prefix can be used to add
      * additional data into the same tag as the key.

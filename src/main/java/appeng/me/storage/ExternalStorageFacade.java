@@ -129,6 +129,17 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
     }
 
     public interface DirectKeyHandler {
+
+        default int operationTime() {
+            var time = 0;
+            boolean isDirectKey = this.isDirectKey();
+            for (int i = 0, s = this.getKeySlots(); i < s; i++) {
+                if (this.getAmountInSlot(i) > 0)
+                    time += isDirectKey ? this.getKeyInSlot(i).getTag() == null ? 2 : 8 : 1;
+            }
+            return time;
+        }
+
         int getKeySlots();
 
         boolean isDirectKey();
@@ -155,13 +166,7 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
         @Override
         public int operationTime() {
-            var time = 0;
-            var opt = handler.isDirectKey() ? 1 : 2;
-            for (int i = 0, s = handler.getKeySlots(); i < s; i++) {
-                if (handler.getAmountInSlot(i) > 0)
-                    time += opt;
-            }
-            return time;
+            return handler.operationTime();
         }
 
         @Override
