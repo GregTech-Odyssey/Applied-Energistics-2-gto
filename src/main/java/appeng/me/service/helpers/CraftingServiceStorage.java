@@ -48,7 +48,7 @@ public class CraftingServiceStorage implements IStorageProvider {
 
         @Override
         public int operationTime() {
-            return craftingService.craftingCPUClusters.size();
+            return craftingService.craftingCPUClusters.isEmpty() ? 0 : 1 + craftingService.getCpus().size();
         }
 
         @Override

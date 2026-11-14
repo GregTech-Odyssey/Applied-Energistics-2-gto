@@ -131,7 +131,7 @@ public class MEStorageMenu extends AEBaseMenu
      * @see #setViewFrozen(boolean)
      */
     @GuiSync(101)
-    public boolean viewFrozen = false;
+    public boolean viewFrozen = true;
 
     private IConfigManagerListener gui;
     private IConfigManager serverCM;

@@ -388,7 +388,7 @@ public final class BasicCellInventory implements StorageCell {
 
     @Override
     public int operationTime() {
-        return 2;
+        return partitionList.isEmpty() ? 1 : 2;
     }
 
     @Override

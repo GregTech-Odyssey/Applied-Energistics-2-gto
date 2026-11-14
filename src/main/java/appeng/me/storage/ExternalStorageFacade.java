@@ -41,11 +41,6 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
     }
 
-    @Override
-    public int operationTime() {
-        return getSlots() * 5;
-    }
-
     public abstract int getSlots();
 
     @Nullable
@@ -136,6 +131,8 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
     public interface DirectKeyHandler {
         int getKeySlots();
 
+        boolean isDirectKey();
+
         @Nullable
         AEKey getKeyInSlot(int slot);
 
@@ -158,7 +155,13 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
         @Override
         public int operationTime() {
-            return handler.getKeySlots() * 2;
+            var time = 0;
+            var opt = handler.isDirectKey() ? 1 : 2;
+            for (int i = 0, s = handler.getKeySlots(); i < s; i++) {
+                if (handler.getAmountInSlot(i) > 0)
+                    time += opt;
+            }
+            return time;
         }
 
         @Override
@@ -330,6 +333,17 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
         public ItemHandlerFacade(IItemHandler handler) {
             this.handler = handler;
+        }
+
+        @Override
+        public int operationTime() {
+            var time = 0;
+            for (int i = 0, s = handler.getSlots(); i < s; i++) {
+                var stack = handler.getStackInSlot(i);
+                if (!stack.isEmpty())
+                    time += stack.hasTag() ? 8 : 2;
+            }
+            return time;
         }
 
         @Override
@@ -548,6 +562,17 @@ public abstract class ExternalStorageFacade implements KeyTypedStorage {
 
         public FluidHandlerFacade(IFluidHandler handler) {
             this.handler = handler;
+        }
+
+        @Override
+        public int operationTime() {
+            var time = 0;
+            for (int i = 0, s = handler.getTanks(); i < s; i++) {
+                var stack = handler.getFluidInTank(i);
+                if (!stack.isEmpty())
+                    time += stack.hasTag() ? 8 : 2;
+            }
+            return time;
         }
 
         @Override

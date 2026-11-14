@@ -90,7 +90,7 @@ public class MEInventoryHandler extends DelegatingMEInventory {
 
     @Override
     public int operationTime() {
-        return super.operationTime() + 1;
+        return super.operationTime() + (partitionList.isEmpty() ? 0 : 1);
     }
 
     @Override

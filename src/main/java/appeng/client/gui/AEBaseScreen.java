@@ -33,8 +33,6 @@ import com.mojang.blaze3d.platform.InputConstants;
 import org.jetbrains.annotations.MustBeInvokedByOverriders;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -103,7 +101,6 @@ import com.gto.ae.hooks.gui.INoMouseRedirectionWidget;
 import com.gto.ae.hooks.gui.IPopulateScreenWidget;
 
 public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContainerScreen<T> {
-    private static final Logger LOG = LoggerFactory.getLogger(AEBaseScreen.class);
 
     private static final Point HIDDEN_SLOT_POS = new Point(-9999, -9999);
 

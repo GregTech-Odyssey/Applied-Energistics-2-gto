@@ -47,7 +47,7 @@ class CondenserMEStorage implements MEStorage {
 
     @Override
     public int operationTime() {
-        return 4;
+        return 2;
     }
 
     @Override
