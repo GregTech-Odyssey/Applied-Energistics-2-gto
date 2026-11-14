@@ -20,8 +20,6 @@ package appeng.client.gui.implementations;
 
 import java.util.OptionalInt;
 
-import org.jetbrains.annotations.Nullable;
-
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 
@@ -29,7 +27,6 @@ import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.NumberEntryType;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.NumberEntryWidget;
-import appeng.client.guidebook.PageAnchor;
 import appeng.menu.implementations.PriorityMenu;
 
 public class PriorityScreen extends AEBaseScreen<PriorityMenu> {
@@ -59,11 +56,4 @@ public class PriorityScreen extends AEBaseScreen<PriorityMenu> {
         }
     }
 
-    @Override
-    protected @Nullable PageAnchor getHelpTopic() {
-        // This screen is used as a sub-screen for the UI of many machines. We try to jump to the right
-        // subsection in those machines docs by linking to the "priority" anchor in those pages.
-        var topic = super.getHelpTopic();
-        return topic != null && topic.anchor() == null ? new PageAnchor(topic.pageId(), "priority") : null;
-    }
 }

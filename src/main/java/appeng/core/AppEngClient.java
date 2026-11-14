@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -50,17 +49,10 @@ import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.loading.FMLLoader;
-
-import guideme.Guide;
-import guideme.GuidesCommon;
-import guideme.compiler.TagCompiler;
-import guideme.scene.ImplicitAnnotationStrategy;
 
 import appeng.api.parts.CableRenderMode;
 import appeng.client.EffectType;
@@ -70,10 +62,6 @@ import appeng.client.gui.me.common.PendingCraftingJobs;
 import appeng.client.gui.me.common.PinnedKeys;
 import appeng.client.gui.style.StyleManager;
 import appeng.client.gui.widgets.SettingToggleButton;
-import appeng.client.guidebook.ConfigValueTagExtension;
-import appeng.client.guidebook.PageAnchor;
-import appeng.client.guidebook.PartAnnotationStrategy;
-import appeng.client.guidebook.command.GuidebookStructureCommands;
 import appeng.client.render.StorageCellClientTooltipComponent;
 import appeng.client.render.effects.EnergyParticleData;
 import appeng.client.render.effects.ParticleTypes;
@@ -98,7 +86,6 @@ import appeng.init.client.InitScreens;
 import appeng.init.client.InitStackRenderHandlers;
 import appeng.integration.modules.emi.AppEngEmiHooks;
 import appeng.items.storage.StorageCellTooltipComponent;
-import appeng.siteexport.AESiteExporter;
 import appeng.spatial.SpatialStorageDimensionIds;
 import appeng.spatial.SpatialStorageSkyProperties;
 import appeng.util.InteractionUtil;
@@ -112,7 +99,6 @@ import com.gto.ae.api.config.ButtonAppearance;
 @OnlyIn(Dist.CLIENT)
 public class AppEngClient extends AppEngBase {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppEngClient.class);
-    public static final ResourceLocation GUIDE_ID = AppEng.makeId("guide");
 
     private static AppEngClient INSTANCE;
 
@@ -121,8 +107,6 @@ public class AppEngClient extends AppEngBase {
      * changed.
      */
     private CableRenderMode prevCableRenderMode = CableRenderMode.STANDARD;
-
-    private final Guide guide;
 
     public AppEngClient() {
         InitBuiltInModels.init();
@@ -144,7 +128,6 @@ public class AppEngClient extends AppEngBase {
 
         BlockAttackHook.install();
         RenderBlockOutlineHook.install();
-        guide = createGuide();
 
         MinecraftForge.EVENT_BUS.addListener(EventPriority.LOWEST, (TickEvent.ClientTickEvent e) -> {
             if (e.phase == TickEvent.Phase.START) {
@@ -189,20 +172,6 @@ public class AppEngClient extends AppEngBase {
             }
             dispatcher.register(builder);
         });
-    }
-
-    private Guide createGuide() {
-        MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent evt) -> {
-            var server = evt.getServer();
-            var dispatcher = server.getCommands().getDispatcher();
-            GuidebookStructureCommands.register(dispatcher);
-        });
-
-        return Guide.builder(GUIDE_ID)
-                .folder("ae2guide")
-                .extension(ImplicitAnnotationStrategy.EXTENSION_POINT, new PartAnnotationStrategy())
-                .extension(TagCompiler.EXTENSION_POINT, new ConfigValueTagExtension())
-                .build();
     }
 
     private void tickPinnedKeys(Minecraft minecraft) {
@@ -280,12 +249,6 @@ public class AppEngClient extends AppEngBase {
         InitStackRenderHandlers.init();
         InitRenderTypes.init();
         PinnedKeys.reloadClientCache();
-
-        // Only activate the site exporter when we're not running a release version, since it'll
-        // replace blocks around spawn.
-        if (!FMLLoader.isProduction()) {
-            AESiteExporter.initialize();
-        }
     }
 
     @OnlyIn(Dist.CLIENT)
@@ -424,28 +387,5 @@ public class AppEngClient extends AppEngBase {
         }
 
         return this.getCableRenderModeForPlayer(mc.player);
-    }
-
-    @Override
-    public void openGuideAtPreviousPage(ResourceLocation initialPage) {
-        try {
-            GuidesCommon.openGuide(Minecraft.getInstance().player, GUIDE_ID);
-        } catch (Exception e) {
-            LOGGER.error("Failed to open guide.", e);
-        }
-    }
-
-    @Override
-    public void openGuideAtAnchor(PageAnchor anchor) {
-        try {
-            GuidesCommon.openGuide(Minecraft.getInstance().player, GUIDE_ID,
-                    new guideme.PageAnchor(anchor.pageId(), anchor.anchor()));
-        } catch (Exception e) {
-            LOGGER.error("Failed to open guide at {}.", anchor, e);
-        }
-    }
-
-    public Guide getGuide() {
-        return guide;
     }
 }
