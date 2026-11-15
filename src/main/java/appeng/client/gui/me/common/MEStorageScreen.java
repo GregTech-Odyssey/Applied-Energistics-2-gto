@@ -331,7 +331,10 @@ public class MEStorageScreen<C extends MEStorageMenu>
             // Sync the search text both ways but make the direction depend on which search has the focus
             if (config.isSyncWithExternalSearch()) {
                 if (searchField.isFocused()) {
-                    ItemListMod.setSearchText(searchField.getValue());
+                    var searchText = searchField.getValue();
+                    if (!Objects.equals(searchText, ItemListMod.getSearchText())) {
+                        ItemListMod.setSearchText(searchText);
+                    }
                 } else if (ItemListMod.hasSearchFocus()) {
                     var externalSearchText = ItemListMod.getSearchText();
                     if (!Objects.equals(externalSearchText, searchField.getValue())) {
