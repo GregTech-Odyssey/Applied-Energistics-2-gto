@@ -39,8 +39,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.locale.Language;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.resources.ResourceLocation;
@@ -57,7 +55,6 @@ import appeng.api.config.ShowPatternProviders;
 import appeng.api.config.TerminalStyle;
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.implementations.blockentities.PatternContainerGroup;
-import appeng.api.stacks.AEItemKey;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.style.PaletteColor;
 import appeng.client.gui.style.ScreenStyle;
@@ -583,25 +580,15 @@ public class PatternAccessTermScreen<C extends PatternAccessTermMenu> extends AE
             return false;
         }
 
-        final CompoundTag encodedValue = itemStack.getTag();
-
-        if (encodedValue == null) {
+        var pattern = PatternDetailsHelper.decodePattern(itemStack, minecraft.level, false);
+        if (pattern == null) {
             return false;
         }
 
-        // Potential later use to filter by input
-        // ListNBT inTag = encodedValue.getTagList( "in", 10 );
-        final ListTag outTag = encodedValue.getList("out", 10);
-
-        for (int i = 0; i < outTag.size(); i++) {
-
-            var parsedItemStack = ItemStack.of(outTag.getCompound(i));
-            var itemKey = AEItemKey.of(parsedItemStack);
-            if (itemKey != null) {
-                var displayName = itemKey.getDisplayName().getString().toLowerCase();
-                if (displayName.contains(searchTerm)) {
-                    return true;
-                }
+        for (var output : pattern.getOutputs()) {
+            var displayName = output.what().getDisplayName().getString().toLowerCase();
+            if (displayName.contains(searchTerm)) {
+                return true;
             }
         }
         return false;
