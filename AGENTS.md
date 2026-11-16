@@ -43,3 +43,4 @@
 - 只处理当前任务范围内的文件。本仓工作区常有并行、未提交的重构，动手前先看 `git status`。
 - 不要用 `git checkout --`、`git stash` 等会吞掉他人未提交改动的操作去「清理」无关文件；需要临时对照时先备份并按哈希校验还原。
 - 提交只带自己的路径（`git commit --only <paths>`）；推送前先 `git fetch` 对比远端差距。
+- **PR、issue、评论不靠提交仓库文件配图**：`gh` CLI 不能上传到 `user-attachments`，禁止为了配图把截图提交进仓库（如 `docs/images/`、`.github/assets/`），再用 `raw.githubusercontent.com` 或 `blob/...?raw=true` 链接引用。截图交给用户在网页上拖进 PR 或评论，或改用文字说明。
