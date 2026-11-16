@@ -23,7 +23,7 @@
 
 package appeng.api.networking.ticking;
 
-import appeng.core.settings.TickRates;
+import appeng.api.util.ITickRate;
 
 /**
  * Describes how your grid node ticking is executed.
@@ -51,7 +51,7 @@ public record TickingRequest(
                 getInitialTickDelay(minTickRate, maxTickRate));
     }
 
-    public TickingRequest(TickRates tickRates, boolean isSleeping, boolean canBeAlerted) {
+    public TickingRequest(ITickRate tickRates, boolean isSleeping, boolean canBeAlerted) {
         this(
                 tickRates.getMin(),
                 tickRates.getMax(),

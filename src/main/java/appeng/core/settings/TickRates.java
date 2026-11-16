@@ -18,7 +18,9 @@
 
 package appeng.core.settings;
 
-public enum TickRates {
+import appeng.api.util.ITickRate;
+
+public enum TickRates implements ITickRate {
 
     Interface(5, 120),
 

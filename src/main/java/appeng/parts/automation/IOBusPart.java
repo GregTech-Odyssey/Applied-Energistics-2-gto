@@ -48,9 +48,9 @@ import appeng.api.parts.IPartModel;
 import appeng.api.storage.AEKeyFilter;
 import appeng.api.util.AECableType;
 import appeng.api.util.IConfigManager;
+import appeng.api.util.ITickRate;
 import appeng.core.AppEng;
 import appeng.core.definitions.AEItems;
-import appeng.core.settings.TickRates;
 import appeng.helpers.IConfigInvHost;
 import appeng.items.parts.PartModels;
 import appeng.me.helpers.MachineSource;
@@ -84,7 +84,7 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
     // Filter derived from the config
     @Nullable
     private IPartitionList filter;
-    private final TickRates tickRates;
+    private final ITickRate tickRates;
     protected final IActionSource source;
     private boolean lastRedstone = false;
     private WorkingStatus lastWorkingStatus = WorkingStatus.IDLE;
@@ -94,7 +94,7 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
      */
     private boolean pendingPulse = false;
 
-    public IOBusPart(TickRates tickRates, @Nullable AEKeyFilter filter, IPartItem<?> partItem) {
+    public IOBusPart(ITickRate tickRates, @Nullable AEKeyFilter filter, IPartItem<?> partItem) {
         super(partItem);
         this.tickRates = tickRates;
         this.source = new MachineSource(this);
@@ -213,7 +213,7 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
         return getOperationsPerTick();
     }
 
-    public final TickRates getTickRates() {
+    public final ITickRate getTickRates() {
         return tickRates;
     }
 

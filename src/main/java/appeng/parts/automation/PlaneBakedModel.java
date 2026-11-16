@@ -20,7 +20,6 @@ package appeng.parts.automation;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -38,6 +37,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.IDynamicBakedModel;
 import net.minecraftforge.client.model.data.ModelData;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import appeng.client.render.cablebus.CubeBuilder;
 
 /**
@@ -54,7 +55,7 @@ public class PlaneBakedModel implements IDynamicBakedModel {
     PlaneBakedModel(TextureAtlasSprite frontTexture, TextureAtlasSprite sidesTexture, TextureAtlasSprite backTexture) {
         this.frontTexture = frontTexture;
 
-        quads = new HashMap<>(PlaneConnections.PERMUTATIONS.size());
+        quads = new Reference2ReferenceOpenHashMap<>(PlaneConnections.PERMUTATIONS.size());
         // Create all possible permutations (16)
         for (PlaneConnections permutation : PlaneConnections.PERMUTATIONS) {
             List<BakedQuad> quads = new ArrayList<>(4 * 6);

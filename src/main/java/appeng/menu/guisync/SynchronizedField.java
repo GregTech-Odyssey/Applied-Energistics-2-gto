@@ -31,6 +31,8 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 
+import it.unimi.dsi.fastutil.objects.Reference2ReferenceOpenHashMap;
+
 import appeng.api.stacks.GenericStack;
 
 /**
@@ -257,7 +259,7 @@ public abstract class SynchronizedField<T> {
     }
 
     private static class CustomField extends SynchronizedField<Object> {
-        private static final Map<Class<?>, Function<FriendlyByteBuf, Object>> factories = new HashMap<>();
+        private static final Reference2ReferenceOpenHashMap<Class<?>, Function<FriendlyByteBuf, Object>> factories = new Reference2ReferenceOpenHashMap<>();
         private final Class<?> fieldType;
 
         private CustomField(Object source, Field field, MethodHandle getter, MethodHandle setter) {

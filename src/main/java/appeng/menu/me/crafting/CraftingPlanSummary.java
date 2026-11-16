@@ -20,9 +20,7 @@ package appeng.menu.me.crafting;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
 
 import com.google.common.collect.ImmutableList;
 
@@ -33,6 +31,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyObjectMap;
 
 /**
  * A crafting plan intended to be sent to the client.
@@ -104,31 +103,25 @@ public class CraftingPlanSummary {
      * @param actionSource The action source used to determine the amount of items already stored.
      */
     public static CraftingPlanSummary fromJob(IGrid grid, IActionSource actionSource, ICraftingPlan job) {
-        var plan = new HashMap<AEKey, KeyStats>() {
-            private KeyStats mapping(AEKey key) {
-                Objects.requireNonNull(key, "Key may not be null");
-
-                return computeIfAbsent(key, k -> new KeyStats());
-            }
-        };
+        var plan = new AEKeyObjectMap<AEKey, KeyStats>();
 
         for (var used : job.usedItems()) {
-            plan.mapping(used.getKey()).stored += used.getLongValue();
+            plan.computeIfAbsent(used.getKey(), k -> new KeyStats()).stored += used.getLongValue();
         }
         for (var missing : job.missingItems()) {
-            plan.mapping(missing.getKey()).stored += missing.getLongValue();
+            plan.computeIfAbsent(missing.getKey(), k -> new KeyStats()).stored += missing.getLongValue();
         }
         for (var emitted : job.emittedItems()) {
             if (emitted.getLongValue() == 0) {
                 continue;
             }
-            var entry = plan.mapping(emitted.getKey());
+            var entry = plan.computeIfAbsent(emitted.getKey(), k -> new KeyStats());
             entry.emitting += emitted.getLongValue();
             entry.crafting += emitted.getLongValue();
         }
         for (var entry : job.patternTimes().entrySet()) {
             for (var out : entry.getKey().getOutputs()) {
-                plan.mapping(out.what()).crafting += out.amount() * entry.getValue();
+                plan.computeIfAbsent(out.what(), k -> new KeyStats()).crafting += out.amount() * entry.getValue();
             }
         }
 
@@ -137,7 +130,7 @@ public class CraftingPlanSummary {
         var storage = grid.getStorageService().getInventory();
         var crafting = grid.getCraftingService();
 
-        for (var out : plan.entrySet()) {
+        for (var out : plan) {
             long missingAmount;
             long storedAmount;
             if (job.simulation() && !crafting.canEmitFor(out.getKey())) {

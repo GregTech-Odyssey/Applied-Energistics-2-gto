@@ -90,19 +90,4 @@ public final class PlaneConnections {
         return (up ? BITMASK_UP : 0) + (right ? BITMASK_RIGHT : 0) + (left ? BITMASK_LEFT : 0)
                 + (down ? BITMASK_DOWN : 0);
     }
-
-    @Override
-    public boolean equals(Object o) {
-        // This class is final/has a private constructor, and is interned
-        return this == o;
-    }
-
-    @Override
-    public int hashCode() {
-        int result = this.up ? 1 : 0;
-        result = 31 * result + (this.right ? 1 : 0);
-        result = 31 * result + (this.down ? 1 : 0);
-        result = 31 * result + (this.left ? 1 : 0);
-        return result;
-    }
 }

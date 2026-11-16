@@ -182,7 +182,7 @@ public final class PinnedKeys {
 
         var toRemove = new ArrayList<AEKey>();
         boolean saveRequired = false;
-        for (var entry : pinned.entrySet()) {
+        for (var entry : pinned) {
             if (entry.getValue().canPrune) {
                 toRemove.add(entry.getKey());
                 saveRequired |= entry.getValue().reason.shouldPersistToClientCache();

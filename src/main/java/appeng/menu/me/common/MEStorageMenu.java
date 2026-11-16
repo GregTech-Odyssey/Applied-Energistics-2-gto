@@ -23,7 +23,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
 
@@ -175,7 +174,7 @@ public class MEStorageMenu extends AEBaseMenu
      * The last set of craftables sent to the client.
      */
     private Set<AEKey> previousCraftables = Collections.emptySet();
-    private KeyCounter previousAvailableStacks = new KeyCounter();
+    private KeyCounter previousAvailableStacks = null;
 
     private boolean firstOpen = true;
 
@@ -298,7 +297,7 @@ public class MEStorageMenu extends AEBaseMenu
 
                 // Changes caused by the player are synchronized right away, everything else at most once per second,
                 // and not at all while the contents are frozen
-                if (this.pendingInventoryUpdate == 1
+                if (previousAvailableStacks == null || this.pendingInventoryUpdate == 1
                         || (!this.viewFrozen && time - this.lastInventoryUpdateTime >= INVENTORY_UPDATE_INTERVAL)) {
                     this.pendingInventoryUpdate = 0;
                     this.lastInventoryUpdateTime = time;
@@ -837,7 +836,9 @@ public class MEStorageMenu extends AEBaseMenu
      * @return The stacks available in the storage as determined the last time this menu was ticked.
      */
     protected final KeyCounter getPreviousAvailableStacks() {
-        Preconditions.checkState(isServerSide());
+        if (previousAvailableStacks == null) {
+            return KeyCounter.empty();
+        }
         return previousAvailableStacks;
     }
 
