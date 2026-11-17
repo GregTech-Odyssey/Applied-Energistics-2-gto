@@ -146,10 +146,10 @@ public class MEStorageMenu extends AEBaseMenu
 
     /**
      * Set when the contents of this terminal have to be synchronized with the client right away, without waiting for
-     * {@link #INVENTORY_UPDATE_INTERVAL}, and even while they are frozen. This is the case right after (un-)freezing
-     * and whenever the player inserted or removed something.
+     * {@link #INVENTORY_UPDATE_INTERVAL}, and even while they are frozen. This is the case when opening, right after
+     * (un-)freezing and whenever the player inserted or removed something.
      */
-    private byte pendingInventoryUpdate;
+    private byte pendingInventoryUpdate = 1;
 
     /**
      * The game time of the last inventory synchronization, used to throttle the updates of unfrozen contents.
@@ -174,7 +174,7 @@ public class MEStorageMenu extends AEBaseMenu
      * The last set of craftables sent to the client.
      */
     private Set<AEKey> previousCraftables = Collections.emptySet();
-    private KeyCounter previousAvailableStacks = null;
+    private KeyCounter previousAvailableStacks = new KeyCounter();
 
     private boolean firstOpen = true;
 
@@ -297,7 +297,7 @@ public class MEStorageMenu extends AEBaseMenu
 
                 // Changes caused by the player are synchronized right away, everything else at most once per second,
                 // and not at all while the contents are frozen
-                if (previousAvailableStacks == null || this.pendingInventoryUpdate == 1
+                if (this.pendingInventoryUpdate == 1
                         || (!this.viewFrozen && time - this.lastInventoryUpdateTime >= INVENTORY_UPDATE_INTERVAL)) {
                     this.pendingInventoryUpdate = 0;
                     this.lastInventoryUpdateTime = time;
@@ -836,9 +836,6 @@ public class MEStorageMenu extends AEBaseMenu
      * @return The stacks available in the storage as determined the last time this menu was ticked.
      */
     protected final KeyCounter getPreviousAvailableStacks() {
-        if (previousAvailableStacks == null) {
-            return KeyCounter.empty();
-        }
         return previousAvailableStacks;
     }
 
