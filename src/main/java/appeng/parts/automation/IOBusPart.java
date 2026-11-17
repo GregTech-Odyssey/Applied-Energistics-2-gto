@@ -51,6 +51,7 @@ import appeng.api.util.IConfigManager;
 import appeng.api.util.ITickRate;
 import appeng.core.AppEng;
 import appeng.core.definitions.AEItems;
+import appeng.core.settings.TickRates;
 import appeng.helpers.IConfigInvHost;
 import appeng.items.parts.PartModels;
 import appeng.me.helpers.MachineSource;
@@ -103,6 +104,10 @@ public abstract class IOBusPart extends UpgradeablePart implements IGridTickable
 
         this.getConfigManager().registerSetting(Settings.REDSTONE_CONTROLLED, RedstoneMode.IGNORE);
         this.getConfigManager().registerSetting(Settings.FUZZY_MODE, FuzzyMode.IGNORE_ALL);
+    }
+
+    public IOBusPart(TickRates tickRates, @Nullable AEKeyFilter filter, IPartItem<?> partItem) {
+        this((ITickRate) tickRates, filter, partItem);
     }
 
     @Override
