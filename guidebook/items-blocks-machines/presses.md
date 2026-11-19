@@ -33,7 +33,8 @@ There are 5 different presses used in the <ItemLink id="inscriber" />.
 ## Processor Presses
 
 The Silicon, Logic, Calculation, and Engineering presses are used in the production of [processors](processors.md).
-These 4 presses are obtained by breaking a <ItemLink id="mysterious_cube" /> in a [meteorite](../ae2-mechanics/meteorites.md).
+These 4 presses can be uncovered by brushing <ItemLink id="suspicious_sky_stone" /> in Certus Quartz veins in the Ancient World.
+Each block yields one random item. Mysterious Cubes and new villager trades no longer provide these presses.
 They can also be duplicated in an <ItemLink id="inscriber" />.
 
 <Column>

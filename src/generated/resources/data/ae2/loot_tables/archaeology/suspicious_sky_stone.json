@@ -1,0 +1,39 @@
+{
+  "type": "minecraft:archaeology",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "ae2:calculation_processor_press"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ae2:engineering_processor_press"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ae2:logic_processor_press"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ae2:silicon_press"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ae2:fluix_upgrade_smithing_template"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ae2:certus_quartz_crystal"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "ae2:fluix_crystal"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ]
+}

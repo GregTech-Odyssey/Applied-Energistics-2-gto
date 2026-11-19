@@ -1,6 +1,15 @@
 package com.gto.ae.core.localization;
 
 public enum ExtendedLangs implements IExtendedLocalizationEnum {
+    CertusQuartzSource("开采赛特斯石英矿脉，或种植赛特斯石英母岩。", "Mine Certus Quartz veins or grow quartz on budding Certus Quartz."),
+    SuspiciousSkyStone("可疑的陨石", "Suspicious Sky Stone"),
+    MeteoritesDisabled("AE2 陨石已禁止自然生成", "Natural AE2 meteorite generation is disabled"),
+    ArchaeologySource("在远古世界的赛特斯石英矿脉中寻找可疑的陨石。",
+            "Find suspicious sky stone in Certus Quartz veins in the Ancient World."),
+    ArchaeologyLoot("用刷子清扫，每次随机获得一件物品。", "Brush it to uncover one random item."),
+    PressArchaeologySource("用刷子清扫可疑的陨石，寻找四种压印模板和福鲁伊克斯升级锻造模板。",
+            "Brush suspicious sky stone to find the four inscriber presses and the Fluix Upgrade Smithing Template."),
+    SkyStoneSource("在远古世界的陨石矿脉中开采。", "Mine Sky Stone veins in the Ancient World."),
     FacilityManagementShort("设施管理", "Facility Management"),
     WorkingStatus("工作状态：%s", "Working Status: %s"),
     WorkingStatusIdle("§a空闲§r", "§aIdle§r"),

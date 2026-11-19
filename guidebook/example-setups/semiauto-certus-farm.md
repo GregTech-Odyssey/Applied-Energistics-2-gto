@@ -9,7 +9,7 @@ navigation:
 # Semi-Auto Certus Farm
 
 Unfortunately, the [simple certus farm](simple-certus-farm.md) requires a <ItemLink id="flawless_budding_quartz" /> to work fully
-automatically. This requires either [Spatial IO](../ae2-mechanics/spatial-io.md) or building the farm at the [meteorite](../ae2-mechanics/meteorites.md).
+automatically. Natural AE2 meteorites are disabled. Check the available recipes before choosing a farm design.
 
 However, AE2 can place and break blocks, so it might just
 be possible to make your farm *replace the budding certus for you*. (You will have to periodically insert some
