@@ -208,17 +208,6 @@ public final class MeteoritePlacer {
     private void placeMeteorite() {
         // spawn meteor
         this.placeMeteoriteSkyStone();
-
-        // If the meteorite's center is within the BB of the current placer, place the chest
-        if (boundingBox.isInside(pos)) {
-            placeChest();
-        }
-    }
-
-    private void placeChest() {
-        if (AEConfig.instance().isSpawnPressesInMeteoritesEnabled()) {
-            this.putter.put(level, pos, AEBlocks.MYSTERIOUS_CUBE.block().defaultBlockState());
-        }
     }
 
     private void placeMeteoriteSkyStone() {

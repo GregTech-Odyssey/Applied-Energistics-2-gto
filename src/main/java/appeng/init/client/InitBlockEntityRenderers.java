@@ -20,6 +20,7 @@ package appeng.init.client;
 
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import net.minecraft.client.renderer.blockentity.BrushableBlockRenderer;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.api.distmarker.Dist;
@@ -45,6 +46,7 @@ public final class InitBlockEntityRenderers {
 
     public static void init() {
 
+        register(AEBlockEntities.SUSPICIOUS_SKY_STONE, BrushableBlockRenderer::new);
         register(AEBlockEntities.CRANK, CrankRenderer::new);
         register(AEBlockEntities.INSCRIBER, InscriberTESR::new);
         register(AEBlockEntities.SKY_CHEST, SkyChestTESR::new);

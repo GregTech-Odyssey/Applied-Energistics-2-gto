@@ -31,6 +31,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.entity.BlockEntityType.Builder;
+import net.minecraft.world.level.block.entity.BrushableBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import appeng.block.AEBaseEntityBlock;
@@ -73,6 +74,8 @@ import appeng.debug.CubeGeneratorBlockEntity;
 import appeng.debug.EnergyGeneratorBlockEntity;
 import appeng.debug.ItemGenBlockEntity;
 import appeng.debug.PhantomNodeBlockEntity;
+
+import com.gto.ae.block.SuspiciousSkyStoneBlock;
 
 @SuppressWarnings("unused")
 public final class AEBlockEntities {
@@ -171,6 +174,13 @@ public final class AEBlockEntities {
 
     public static final BlockEntityType<CrankBlockEntity> CRANK = create("crank", CrankBlockEntity.class,
             CrankBlockEntity::new, AEBlocks.CRANK);
+
+    public static final BlockEntityType<BrushableBlockEntity> SUSPICIOUS_SKY_STONE = Builder.<BrushableBlockEntity>of(
+            SuspiciousSkyStoneBlock.Entity::new, AEBlocks.SUSPICIOUS_SKY_STONE.block()).build(null);
+
+    static {
+        BLOCK_ENTITY_TYPES.put(AEBlocks.SUSPICIOUS_SKY_STONE.id(), SUSPICIOUS_SKY_STONE);
+    }
 
     private AEBlockEntities() {
     }

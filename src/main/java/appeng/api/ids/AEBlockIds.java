@@ -46,6 +46,7 @@ public final class AEBlockIds {
     public static final ResourceLocation LARGE_QUARTZ_BUD = id("large_quartz_bud");
     public static final ResourceLocation QUARTZ_CLUSTER = id("quartz_cluster");
 
+    public static final ResourceLocation SUSPICIOUS_SKY_STONE = id("suspicious_sky_stone");
     public static final ResourceLocation MYSTERIOUS_CUBE = id("mysterious_cube");
     public static final ResourceLocation NOT_SO_MYSTERIOUS_CUBE = id("not_so_mysterious_cube");
     public static final ResourceLocation QUARTZ_FIXTURE = id("quartz_fixture");

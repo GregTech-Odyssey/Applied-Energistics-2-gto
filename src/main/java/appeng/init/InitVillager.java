@@ -51,10 +51,6 @@ public class InitVillager {
         buyItems(3, AEItems.FLUIX_CRYSTAL, 5, 4, 14);
 
         sellItems(4, AEItems.MATTER_BALL, 5, 8, 12);
-        buyItems(4, AEItems.CALCULATION_PROCESSOR_PRESS, 10, 1, 20);
-        buyItems(4, AEItems.ENGINEERING_PROCESSOR_PRESS, 10, 1, 20);
-        buyItems(4, AEItems.LOGIC_PROCESSOR_PRESS, 10, 1, 20);
-        buyItems(4, AEItems.SILICON_PRESS, 10, 1, 20);
 
         buyItems(5, Items.SLIME_BALL, 8, 5, 12);
     }

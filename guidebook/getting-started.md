@@ -10,22 +10,19 @@ navigation:
 
 # Getting Started
 
-## Getting The Initial Materials)
+## Getting The Initial Materials
 
-<GameScene zoom="4" background="transparent">
-  <ImportStructure src="assets/assemblies/meteor_interior.snbt" />
-</GameScene>
+AE2 meteorites no longer generate naturally. Find Certus Quartz veins in the Ancient World instead.
+A few blocks in each vein are <ItemLink id="suspicious_sky_stone" />.
+Use a <ItemLink id="minecraft:brush" /> to uncover one random item from each block.
 
-To get started with Applied Energistics 2, one must first find a [meteorite](ae2-mechanics/meteorites.md). These are fairly common and tend to leave massive holes in the terrain, so you've probably encountered one in your travels.
-If you haven't, you can craft a <ItemLink id="meteorite_compass" />, which will point toward the nearest <ItemLink id="mysterious_cube" />.
+The seven equally likely finds are the Silicon, Logic, Calculation, and Engineering presses,
+a <ItemLink id="fluix_upgrade_smithing_template" />, a <ItemLink id="certus_quartz_crystal" />,
+and a <ItemLink id="fluix_crystal" />. The block becomes <ItemLink id="sky_stone_block" /> after brushing.
+Breaking it with a pickaxe yields no loot.
 
-Once you have found a meteorite, mine into its center. You will find certus quartz clusters, certus quartz buds, [budding certus blocks](items-blocks-machines/budding_certus.md) of various types, and a Mysterious Cube in the center.
-
-Mine the certus quartz clusters and any certus quartz blocks you find. You can also pick up the budding certus blocks, but without silk touch they will degrade by 1 tier.
-
-Do not break any flawless budding certus, as even with silk touch they will degrade to flawed budding certus, and it is impossible to repair them back to flawless.
-
-Also mine the Mysterious Cube in the center of the meteorite to gain all 4 inscriber presses.
+For bulk sky stone, mine the separate Sky Stone veins in the Ancient World.
+The <ItemLink id="meteorite_compass" /> does not locate these veins.
 
 ## Growing Certus Quartz
 
@@ -74,7 +71,7 @@ The <ItemLink id="charger" /> is required to produce <ItemLink id="charged_certu
 
 ## Inscribing Some Processors
 
-In your looting of a meteorite, you will have found four "presses" from breaking the Mysterious Cube. These are used in the <ItemLink id="inscriber" /> to make the three types of processor.
+The four presses found by brushing suspicious sky stone are used in the <ItemLink id="inscriber" /> to make the three types of processor.
 
 <ItemGrid>
   <ItemIcon id="silicon_press" />

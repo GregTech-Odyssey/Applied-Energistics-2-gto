@@ -20,7 +20,9 @@ package appeng.init.worldgen;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
+import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstapContext;
 import net.minecraft.world.level.levelgen.GenerationStep.Decoration;
@@ -30,6 +32,7 @@ import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.TerrainAdjustment;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadStructurePlacement;
 import net.minecraft.world.level.levelgen.structure.placement.RandomSpreadType;
+import net.minecraft.world.level.levelgen.structure.placement.StructurePlacement.FrequencyReductionMethod;
 
 import appeng.worldgen.meteorite.MeteoriteStructure;
 import appeng.worldgen.meteorite.MeteoriteStructurePiece;
@@ -59,7 +62,9 @@ public final class InitStructures {
 
         var structureSet = new StructureSet(
                 List.of(StructureSet.entry(meteorite)),
-                new RandomSpreadStructurePlacement(32, 8, RandomSpreadType.LINEAR, 124895654));
+                new RandomSpreadStructurePlacement(Vec3i.ZERO,
+                        FrequencyReductionMethod.DEFAULT,
+                        0, 124895654, Optional.empty(), 32, 8, RandomSpreadType.LINEAR));
 
         context.register(MeteoriteStructure.STRUCTURE_SET_KEY, structureSet);
     }
