@@ -162,6 +162,7 @@
   "ae2.gto_extension.open_gui_of_this_facility": "Open GUI of this facility",
   "ae2.gto_extension.open_gui_of_this_facility_tooltip": "Open the GUI of this facility to view its details or interact with it",
   "ae2.gto_extension.pattern_content_access_terminal": "Pattern Content Access Terminal",
+  "ae2.gto_extension.pattern_ingredients": "Ingredients:",
   "ae2.gto_extension.pick_craft_all_right": "Crafting started!",
   "ae2.gto_extension.pick_craft_error1": "An error occurred while calculating the crafting path.",
   "ae2.gto_extension.pick_craft_error2": "Insufficient materials/No available CPU to craft the desired item.",

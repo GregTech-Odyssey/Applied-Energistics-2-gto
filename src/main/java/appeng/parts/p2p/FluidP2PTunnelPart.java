@@ -68,6 +68,8 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
 
     private class InputFluidHandler implements IFluidHandler {
 
+        private int nextOutput;
+
         @Override
         public int getTanks() {
             return 1;
@@ -101,12 +103,18 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
             }
 
             final int amountPerOutput = amount / outputTunnels;
-            int overflow = amountPerOutput == 0 ? amount : amount % amountPerOutput;
+            final int extraAmount = amount % outputTunnels;
+            final int startingOutput = nextOutput % outputTunnels;
+            int overflow = 0;
 
-            for (FluidP2PTunnelPart target : outputs) {
+            for (int i = 0; i < outputTunnels; i++) {
+                final FluidP2PTunnelPart target = outputs.get((startingOutput + i) % outputTunnels);
                 try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
                     final IFluidHandler output = capabilityGuard.get();
-                    final int toSend = amountPerOutput + overflow;
+                    final int toSend = amountPerOutput + (i < extraAmount ? 1 : 0) + overflow;
+                    if (toSend == 0) {
+                        break;
+                    }
                     final FluidStack fillWithFluidStack = resource.copy();
                     fillWithFluidStack.setAmount(toSend);
 
@@ -118,6 +126,7 @@ public class FluidP2PTunnelPart extends CapabilityP2PTunnelPart<FluidP2PTunnelPa
             }
 
             if (action == FluidAction.EXECUTE) {
+                nextOutput = (startingOutput + extraAmount) % outputTunnels;
                 deductTransportCost(total, AEKeyTypes.FLUIDS);
             }
 

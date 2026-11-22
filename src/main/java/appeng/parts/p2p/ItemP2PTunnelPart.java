@@ -68,6 +68,8 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
 
     private class InputItemHandler implements IItemHandler {
 
+        private int nextOutput;
+
         @Override
         public int getSlots() {
             return 1;
@@ -91,15 +93,18 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
             }
 
             final int amountPerOutput = amount / outputTunnels;
-            int overflow = amountPerOutput == 0 ? amount : amount % amountPerOutput;
+            final int extraAmount = amount % outputTunnels;
+            final int startingOutput = nextOutput % outputTunnels;
+            int overflow = 0;
 
-            for (ItemP2PTunnelPart target : outputs) {
+            for (int i = 0; i < outputTunnels; i++) {
+                final ItemP2PTunnelPart target = outputs.get((startingOutput + i) % outputTunnels);
                 try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
                     final IItemHandler output = capabilityGuard.get();
-                    final int toSend = amountPerOutput + overflow;
+                    final int toSend = amountPerOutput + (i < extraAmount ? 1 : 0) + overflow;
 
                     if (toSend <= 0) {
-                        // Both overflow and amountPerOutput are 0, so they will be for further outputs as well.
+                        // No shares or rejected amounts remain for later outputs.
                         break;
                     }
 
@@ -117,6 +122,7 @@ public class ItemP2PTunnelPart extends CapabilityP2PTunnelPart<ItemP2PTunnelPart
             }
 
             if (!simulate) {
+                nextOutput = (startingOutput + extraAmount) % outputTunnels;
                 deductTransportCost(amount - remainder, AEKeyTypes.ITEMS);
             }
 

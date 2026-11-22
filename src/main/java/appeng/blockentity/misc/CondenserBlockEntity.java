@@ -171,7 +171,9 @@ public class CondenserBlockEntity extends AEBaseInvBlockEntity implements IConfi
 
     private void setStoredPower(double storedPower) {
         this.storedPower = storedPower;
-        this.setChanged();
+        if (level != null) {
+            level.blockEntityChanged(getBlockPos());
+        }
     }
 
     public MEStorage getMEStorage() {

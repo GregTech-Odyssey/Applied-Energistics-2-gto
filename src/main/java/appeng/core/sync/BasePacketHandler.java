@@ -93,7 +93,9 @@ public class BasePacketHandler {
         FACILITY_CLEAR(FacilityManagementPacket.class, FacilityManagementPacket::new),
         FACILITY_UPDATE(FacilityClearPacket.class, FacilityClearPacket::new),
 
-        CONFIG_BUTTON_DIRECT(ConfigButtonDirectPacket.class, ConfigButtonDirectPacket::new);
+        CONFIG_BUTTON_DIRECT(ConfigButtonDirectPacket.class, ConfigButtonDirectPacket::new),
+
+        SPATIAL_BLOCK_ENTITY(SpatialBlockEntityPacket.class, SpatialBlockEntityPacket::new);
 
         private final Function<FriendlyByteBuf, BasePacket> factory;
 

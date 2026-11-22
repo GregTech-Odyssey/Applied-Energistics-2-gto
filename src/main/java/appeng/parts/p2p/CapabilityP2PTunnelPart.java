@@ -282,6 +282,8 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
 
     private class InputMEStorage implements MEStorage {
 
+        private int nextOutput;
+
         @Override
         public int operationTime() {
             var opt = 0;
@@ -310,19 +312,28 @@ public abstract class CapabilityP2PTunnelPart<P extends CapabilityP2PTunnelPart<
                 return 0;
             }
             final long amountPerOutput = amount / outputTunnels;
-            long overflow = amount - amountPerOutput * outputTunnels;
-            for (var target : outputs) {
+            final int extraAmount = (int) (amount % outputTunnels);
+            final int startingOutput = nextOutput % outputTunnels;
+            long overflow = 0;
+            for (int i = 0; i < outputTunnels; i++) {
+                var target = outputs.get((startingOutput + i) % outputTunnels);
+                final long toSend = amountPerOutput + (i < extraAmount ? 1 : 0) + overflow;
+                if (toSend == 0) {
+                    break;
+                }
                 try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
                     final var output = capabilityGuard.getStorage();
                     if (output == null) {
-                        overflow += amountPerOutput;
+                        overflow = toSend;
                         continue;
                     }
-                    final long toSend = amountPerOutput + overflow;
                     final long received = output.insert(what, toSend, mode, source);
                     overflow = toSend - received;
                     total += received;
                 }
+            }
+            if (mode == Actionable.MODULATE) {
+                nextOutput = (startingOutput + extraAmount) % outputTunnels;
             }
             return total;
         }

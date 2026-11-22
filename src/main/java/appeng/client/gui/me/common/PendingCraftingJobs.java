@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.sounds.SoundEvents;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
@@ -72,6 +73,7 @@ public final class PendingCraftingJobs {
                     if (AEConfig.instance().isNotifyForFinishedCraftingJobs() || followJob) {
                         minecraft.player.displayClientMessage(
                                 FinishedJobNotification.create(what, requestedAmount, elapsedTimeNanos), false);
+                        minecraft.player.playSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 1.0F);
                     }
                 }
             }

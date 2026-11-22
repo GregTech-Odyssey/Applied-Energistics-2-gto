@@ -226,6 +226,7 @@ public class NetworkCraftingProviders {
                     .map(PatternInfo::pattern)
                     .distinct()
                     .toList();
+            needsSorting = false;
         }
 
         private List<IPatternDetails> getSortedPatterns() {

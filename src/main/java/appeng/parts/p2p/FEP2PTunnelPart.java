@@ -51,6 +51,9 @@ public class FEP2PTunnelPart extends CapabilityP2PTunnelPart<FEP2PTunnelPart, IE
     }
 
     private class InputEnergyStorage implements IEnergyStorage {
+
+        private int nextOutput;
+
         @Override
         public int extractEnergy(int maxExtract, boolean simulate) {
             return 0;
@@ -68,12 +71,18 @@ public class FEP2PTunnelPart extends CapabilityP2PTunnelPart<FEP2PTunnelPart, IE
             }
 
             final int amountPerOutput = maxReceive / outputTunnels;
-            int overflow = amountPerOutput == 0 ? maxReceive : maxReceive % amountPerOutput;
+            final int extraAmount = maxReceive % outputTunnels;
+            final int startingOutput = nextOutput % outputTunnels;
+            int overflow = 0;
 
-            for (FEP2PTunnelPart target : outputs) {
+            for (int i = 0; i < outputTunnels; i++) {
+                final FEP2PTunnelPart target = outputs.get((startingOutput + i) % outputTunnels);
                 try (CapabilityGuard capabilityGuard = target.getAdjacentCapability()) {
                     final IEnergyStorage output = capabilityGuard.get();
-                    final int toSend = amountPerOutput + overflow;
+                    final int toSend = amountPerOutput + (i < extraAmount ? 1 : 0) + overflow;
+                    if (toSend == 0) {
+                        break;
+                    }
                     final int received = output.receiveEnergy(toSend, simulate);
 
                     overflow = toSend - received;
@@ -82,6 +91,7 @@ public class FEP2PTunnelPart extends CapabilityP2PTunnelPart<FEP2PTunnelPart, IE
             }
 
             if (!simulate) {
+                nextOutput = (startingOutput + extraAmount) % outputTunnels;
                 deductEnergyCost(total, PowerUnits.FE);
             }
 

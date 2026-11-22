@@ -27,7 +27,6 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ThreadedLevelLightEngine;
 import net.minecraft.world.entity.ai.village.poi.PoiManager;
 import net.minecraft.world.entity.ai.village.poi.PoiType;
 import net.minecraft.world.level.block.Block;
@@ -37,20 +36,21 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.chunk.LevelChunkSection;
-import net.minecraft.world.level.lighting.LevelLightEngine;
 import net.minecraft.world.ticks.LevelChunkTicks;
 import net.minecraft.world.ticks.ScheduledTick;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 
 import appeng.api.ids.AETags;
 import appeng.api.movable.BlockEntityMoveStrategies;
 import appeng.api.movable.IBlockEntityMoveStrategy;
 import appeng.core.AELog;
 import appeng.core.definitions.AEBlocks;
+import appeng.core.sync.network.NetworkHandler;
+import appeng.core.sync.packets.SpatialBlockEntityPacket;
 import appeng.server.services.compass.CompassService;
-import appeng.util.Platform;
 
 public class CachedPlane {
     private final int x_size;
@@ -69,6 +69,7 @@ public class CachedPlane {
     private final List<BlockPos> updates = new ArrayList<>();
     private final BlockState matrixBlockState;
     private final List<PoiMoveRecord> poiMoveRecords = new ArrayList<>();
+    private final LongOpenHashSet changed = new LongOpenHashSet();
 
     public CachedPlane(ServerLevel level, int minX, int minY, int minZ, int maxX,
             int maxY, int maxZ) {
@@ -145,6 +146,8 @@ public class CachedPlane {
                             this.blockEntities.add(
                                     new BlockEntityMoveRecord(strategy, blockEntity, savedData, entry.getKey(), state));
 
+                            this.changed.add(entry.getKey().asLong());
+
                             // Set the state to AIR now since that prevents it from being resurrected recursively
                             section.setBlockState(sx, sy, sz, Blocks.AIR.defaultBlockState());
                             c.removeBlockEntity(entry.getKey());
@@ -216,19 +219,20 @@ public class CachedPlane {
                             var srcSection = srcCol.getSection(src_y);
                             var dstSection = dstCol.getSection(dst_y);
 
-                            var srcState = srcSection.getBlockState(srcCol.x, SectionPos.sectionRelative(src_y),
+                            var srcOld = srcSection.getBlockState(srcCol.x, SectionPos.sectionRelative(src_y),
                                     srcCol.z);
-                            if (srcState == CachedPlane.this.matrixBlockState) {
-                                srcState = Blocks.AIR.defaultBlockState();
-                            }
-                            var dstState = dstSection.getBlockState(dstCol.x, SectionPos.sectionRelative(dst_y),
+                            var dstOld = dstSection.getBlockState(dstCol.x, SectionPos.sectionRelative(dst_y),
                                     dstCol.z);
-                            if (dstState == CachedPlane.this.matrixBlockState) {
-                                dstState = Blocks.AIR.defaultBlockState();
+                            var srcNew = dstOld == matrixBlockState ? Blocks.AIR.defaultBlockState() : dstOld;
+                            var dstNew = srcOld == matrixBlockState ? Blocks.AIR.defaultBlockState() : srcOld;
+                            srcSection.setBlockState(srcCol.x, SectionPos.sectionRelative(src_y), srcCol.z, srcNew);
+                            dstSection.setBlockState(dstCol.x, SectionPos.sectionRelative(dst_y), dstCol.z, dstNew);
+                            if (srcNew != srcOld) {
+                                this.changed.add(BlockPos.asLong(this.x_offset + x, src_y, this.z_offset + z));
                             }
-
-                            srcSection.setBlockState(srcCol.x, SectionPos.sectionRelative(src_y), srcCol.z, dstState);
-                            dstSection.setBlockState(dstCol.x, SectionPos.sectionRelative(dst_y), dstCol.z, srcState);
+                            if (dstNew != dstOld) {
+                                dst.changed.add(BlockPos.asLong(dst.x_offset + x, dst_y, dst.z_offset + z));
+                            }
                         } else {
                             this.markForUpdate(this.x_offset + x, src_y, this.z_offset + z);
                             dst.markForUpdate(dst.x_offset + x, dst_y, dst.z_offset + z);
@@ -317,6 +321,8 @@ public class CachedPlane {
                     newPosition.getZ() & (LevelChunkSection.SECTION_WIDTH - 1),
                     moveRecord.state);
 
+            this.changed.add(newPosition.asLong());
+
             var strategy = moveRecord.strategy();
             boolean success;
             try {
@@ -360,36 +366,41 @@ public class CachedPlane {
     }
 
     private void updateChunks() {
-
-        LevelLightEngine lightManager = level.getLightEngine();
-
-        // update shit..
-        if (lightManager instanceof ThreadedLevelLightEngine serverLightManager) {
-            for (int x = 0; x < this.cx_size; x++) {
-                for (int z = 0; z < this.cz_size; z++) {
-                    final LevelChunk c = this.myChunks[x][z];
-                    serverLightManager.lightChunk(c, false);
-                    c.setUnsaved(true);
+        var chunkSource = level.getChunkSource();
+        var lightEngine = chunkSource.getLightEngine();
+        int minSection = SectionPos.blockToSectionCoord(y_offset);
+        int maxSection = SectionPos.blockToSectionCoord(y_offset + y_size - 1);
+        // Direct section writes bypass LevelChunk's lighting bookkeeping.
+        for (var row : myChunks) {
+            for (var chunk : row) {
+                for (int sectionY = minSection; sectionY <= maxSection; sectionY++) {
+                    var section = chunk.getSection(chunk.getSectionIndexFromSectionY(sectionY));
+                    lightEngine.updateSectionStatus(SectionPos.of(chunk.getPos(), sectionY), section.hasOnlyAir());
+                }
+                chunk.setUnsaved(true);
+                CompassService.updateArea(level, chunk);
+                var players = chunkSource.chunkMap.getPlayers(chunk.getPos(), false);
+                if (!players.isEmpty()) {
+                    for (var blockEntity : chunk.getBlockEntities().values()) {
+                        if (changed.contains(blockEntity.getBlockPos().asLong())) {
+                            var packet = new SpatialBlockEntityPacket(blockEntity);
+                            for (var player : players) {
+                                NetworkHandler.instance().sendTo(packet, player);
+                            }
+                        }
+                    }
                 }
             }
         }
-
-        // send shit...
-        for (int x = 0; x < this.cx_size; x++) {
-            for (int z = 0; z < this.cz_size; z++) {
-
-                final LevelChunk c = this.myChunks[x][z];
-
-                CompassService.updateArea(this.getLevel(), c);
-
-                var cdp = Platform.getFullChunkPacket(c);
-                level.getChunkSource().chunkMap.getPlayers(c.getPos(), false)
-                        .forEach(spe -> spe.connection.send(cdp));
-            }
+        var pos = new BlockPos.MutableBlockPos();
+        for (var it = changed.iterator(); it.hasNext();) {
+            pos.set(it.nextLong());
+            var chunk = level.getChunk(pos);
+            chunk.getSkyLightSources().update(chunk, SectionPos.sectionRelative(pos.getX()), pos.getY(),
+                    SectionPos.sectionRelative(pos.getZ()));
+            lightEngine.checkBlock(pos);
+            chunkSource.blockChanged(pos);
         }
-
-        // FIXME check if this makes any sense at all to send changes to players asap
-        level.getChunkSource().tick(() -> false, false);
     }
 
     List<BlockPos> getUpdates() {

@@ -21,6 +21,9 @@ package appeng.client.gui.me.items;
 import java.util.function.Consumer;
 
 import com.google.common.primitives.Longs;
+import com.mojang.blaze3d.platform.InputConstants;
+
+import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.ItemRenderer;
@@ -49,6 +52,9 @@ public class SetProcessingPatternAmountScreen<C extends PatternEncodingTermMenu>
 
     private final Consumer<GenericStack> setter;
 
+    @Nullable
+    private InputConstants.Key openingKey;
+
     public SetProcessingPatternAmountScreen(PatternEncodingTermScreen<C> parentScreen,
             GenericStack currentStack,
             Consumer<GenericStack> setter) {
@@ -56,6 +62,9 @@ public class SetProcessingPatternAmountScreen<C extends PatternEncodingTermMenu>
 
         this.currentStack = currentStack;
         this.setter = setter;
+
+        var pickKey = Minecraft.getInstance().options.keyPickItem.getKey();
+        openingKey = pickKey.getType() == InputConstants.Type.MOUSE ? null : pickKey;
 
         widgets.addButton("save", GuiText.Set.text(), this::confirm);
 
@@ -100,5 +109,27 @@ public class SetProcessingPatternAmountScreen<C extends PatternEncodingTermMenu>
 
     private long getMaxAmount() {
         return 999999 * (long) currentStack.what().getAmountPerUnit();
+    }
+
+    @Override
+    public boolean charTyped(char character, int modifiers) {
+        return openingKey != null || super.charTyped(character, modifiers);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (openingKey != null && openingKey.equals(InputConstants.getKey(keyCode, scanCode))) {
+            return true;
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean keyReleased(int keyCode, int scanCode, int modifiers) {
+        if (openingKey != null && openingKey.equals(InputConstants.getKey(keyCode, scanCode))) {
+            openingKey = null;
+            return true;
+        }
+        return super.keyReleased(keyCode, scanCode, modifiers);
     }
 }
