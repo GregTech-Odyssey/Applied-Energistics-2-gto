@@ -37,6 +37,7 @@ public class ChineseLocalizationProvider implements IAE2DataProvider {
         for (var entry : ExtendedLangs.values()) {
             translations.addProperty(entry.getTranslationKey(), entry.getChineseText());
         }
+        translations.addProperty("block.ae2.suspicious_sky_stone", ExtendedLangs.SuspiciousSkyStone.getChineseText());
         var path = generator.getPackOutput().getOutputFolder().resolve("assets/ae2/lang/zh_cn.json");
         return DataProvider.saveStable(cache, translations, path);
     }

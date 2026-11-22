@@ -446,10 +446,6 @@ public final class AEConfig {
         CLIENT.debugGuiOverlays.set(enable);
     }
 
-    public boolean isSpawnPressesInMeteoritesEnabled() {
-        return COMMON.spawnPressesInMeteorites.get();
-    }
-
     public boolean isSpawnFlawlessOnlyEnabled() {
         return COMMON.spawnFlawlessOnly.get();
     }
@@ -711,7 +707,6 @@ public final class AEConfig {
         public final IntegerOption chargedStaffBattery;
 
         // Meteors
-        public final BooleanOption spawnPressesInMeteorites;
         public final BooleanOption spawnFlawlessOnly;
 
         // Wireless
@@ -807,7 +802,6 @@ public final class AEConfig {
 
             ConfigSection worldGen = root.subsection("worldGen");
 
-            this.spawnPressesInMeteorites = worldGen.addBoolean("spawnPressesInMeteorites", true);
             this.spawnFlawlessOnly = worldGen.addBoolean("spawnFlawlessOnly", false);
 
             ConfigSection wireless = root.subsection("wireless");

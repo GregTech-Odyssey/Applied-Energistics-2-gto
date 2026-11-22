@@ -86,6 +86,8 @@ public class DecorationModelProvider extends AE2BlockStateProvider {
         wall(AEBlocks.QUARTZ_PILLAR_WALL, "block/quartz_pillar_side");
 
         simpleBlockAndItem(AEBlocks.SKY_STONE_BLOCK);
+        simpleBlockAndItem(AEBlocks.SUSPICIOUS_SKY_STONE,
+                models().getExistingFile(makeId("block/sky_stone_block")));
         stairsBlock(AEBlocks.SKY_STONE_STAIRS, AEBlocks.SKY_STONE_BLOCK);
         slabBlock(AEBlocks.SKY_STONE_SLAB, AEBlocks.SKY_STONE_BLOCK);
         wall(AEBlocks.SKY_STONE_WALL, "block/sky_stone_block");

@@ -7,18 +7,16 @@ navigation:
 
 # Meteorites
 
-<GameScene zoom="4" background="transparent">
-  <ImportStructure src="../assets/assemblies/meteor_interior.snbt" />
-</GameScene>
+AE2 meteorites no longer generate naturally. Existing meteorites remain in old worlds.
+Their <ItemLink id="mysterious_cube" /> no longer drops inscriber presses.
 
-Meteorites are the starting point for using AE2. They provide critical materials: [budding certus blocks](../items-blocks-machines/budding_certus.md)
-of various types and a <ItemLink id="mysterious_cube" /> in the center.
+## Ancient World Veins
 
-[Getting Started](../getting-started.md) will provide info on what to do once you find one.
+Find <ItemLink id="suspicious_sky_stone" /> in Certus Quartz veins in the Ancient World.
+Brush these blocks for inscriber presses, the Fluix Upgrade Smithing Template, Certus Quartz Crystals,
+or Fluix Crystals. Each block yields one item with equal chances.
 
-## Finding Meteorites
+Separate Sky Stone veins provide bulk <ItemLink id="sky_stone_block" />.
+The <ItemLink id="meteorite_compass" /> does not locate either vein.
 
-Meteorites are fairly common and leave massive holes in the ground, so you may have already found a few. if not, a
-<ItemLink id="meteorite_compass" /> will point toward the nearest mysterious cube.
-
-![Meteorite Crater](../assets/assemblies/meteorite-crater.png)
+See [Getting Started](../getting-started.md) for the new initial-material route.

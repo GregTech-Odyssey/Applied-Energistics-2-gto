@@ -45,7 +45,6 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer.Builder;
-import net.minecraft.world.level.storage.loot.entries.TagEntry;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.ApplyExplosionDecay;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
@@ -59,7 +58,8 @@ import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
 import appeng.core.definitions.BlockDefinition;
 import appeng.datagen.providers.IAE2DataProvider;
-import appeng.datagen.providers.tags.ConventionTags;
+
+import com.gto.ae.block.SuspiciousSkyStoneBlock;
 
 public class BlockDropProvider extends BlockLootSubProvider implements IAE2DataProvider {
     private final Map<Block, Function<Block, LootTable.Builder>> overrides = createOverrides();
@@ -68,7 +68,7 @@ public class BlockDropProvider extends BlockLootSubProvider implements IAE2DataP
     private ImmutableMap<Block, Function<Block, LootTable.Builder>> createOverrides() {
         return ImmutableMap.<Block, Function<Block, LootTable.Builder>>builder()
                 .put(AEBlocks.MATRIX_FRAME.block(), $ -> LootTable.lootTable())
-                .put(AEBlocks.MYSTERIOUS_CUBE.block(), BlockDropProvider::mysteriousCube)
+                .put(AEBlocks.SUSPICIOUS_SKY_STONE.block(), $ -> LootTable.lootTable())
                 // Flawless budding quartz always degrades by 1.
                 .put(AEBlocks.FLAWLESS_BUDDING_QUARTZ.block(), flawlessBuddingQuartz())
                 // Imperfect budding quartz degrades by 1 without silk touch, and does not degrade with silk touch.
@@ -120,6 +120,20 @@ public class BlockDropProvider extends BlockLootSubProvider implements IAE2DataP
                         .add(LootItem.lootTableItem(AEBlocks.SKY_STONE_BLOCK)))),
                 getPath(outputFolder, AppEng.makeId("chests/meteorite"))));
 
+        var archaeology = LootTable.lootTable().setParamSet(LootContextParamSets.ARCHAEOLOGY)
+                .withPool(LootPool.lootPool().setRolls(ConstantValue.exactly(1))
+                        .add(LootItem.lootTableItem(AEItems.CALCULATION_PROCESSOR_PRESS))
+                        .add(LootItem.lootTableItem(AEItems.ENGINEERING_PROCESSOR_PRESS))
+                        .add(LootItem.lootTableItem(AEItems.LOGIC_PROCESSOR_PRESS))
+                        .add(LootItem.lootTableItem(AEItems.SILICON_PRESS))
+                        .add(LootItem.lootTableItem(AEItems.FLUIX_UPGRADE_SMITHING_TEMPLATE))
+                        .add(LootItem.lootTableItem(AEItems.CERTUS_QUARTZ_CRYSTAL))
+                        .add(LootItem.lootTableItem(AEItems.FLUIX_CRYSTAL)))
+                .build();
+        futures.add(DataProvider.saveStable(cache, LootDataType.TABLE.parser().toJsonTree(archaeology),
+                outputFolder
+                        .resolve("data/ae2/loot_tables/" + SuspiciousSkyStoneBlock.LOOT_TABLE.getPath() + ".json")));
+
         return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
     }
 
@@ -149,11 +163,6 @@ public class BlockDropProvider extends BlockLootSubProvider implements IAE2DataP
                         .apply(SetItemCountFunction.setCount(ConstantValue.exactly(4)))
                         .apply(ApplyBonusCount.addUniformBonusCount(Enchantments.BLOCK_FORTUNE))
                         .apply(ApplyExplosionDecay.explosionDecay()));
-    }
-
-    private static LootTable.Builder mysteriousCube(Block block) {
-        return createSilkTouchDispatchTable(block, TagEntry.tagContents(ConventionTags.INSCRIBER_PRESSES)
-                .when(ExplosionCondition.survivesExplosion()));
     }
 
     private Path getPath(Path root, ResourceLocation id) {

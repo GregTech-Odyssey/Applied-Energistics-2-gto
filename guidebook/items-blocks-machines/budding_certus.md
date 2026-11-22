@@ -26,7 +26,7 @@ item_ids:
   <IsometricCamera yaw="195" pitch="30" />
 </GameScene>
 
-Certus quartz buds will sprout from budding certus blocks, similar to amethyst. These are found in [meteorites](../ae2-mechanics/meteorites.md).
+Certus quartz buds will sprout from budding certus blocks, similar to amethyst. Natural AE2 meteorites are disabled; see the recipes below to obtain budding blocks.
 There are 4 tiers of budding certus blocks: Flawless, Flawed, Chipped, and Damaged. They can be most easily identified
 with a mod like HWYLA, Jade, The One Probe, etc. (or the f3 screen)
 

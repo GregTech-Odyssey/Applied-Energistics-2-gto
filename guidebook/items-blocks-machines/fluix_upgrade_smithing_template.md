@@ -14,7 +14,8 @@ item_ids:
 
 # Fluix Smithing Template
 
-Unlike the vanilla smithing template, you can make this one from scratch.
+Brush <ItemLink id="suspicious_sky_stone" /> in Certus Quartz veins in the Ancient World to find this template.
+It is one of seven equally likely finds. Check the recipes below for crafting options.
 
 Required for [fluix tools](fluix_tools.md)
 

@@ -15,7 +15,7 @@ item_ids:
 
 <BlockImage id="sky_stone_block" scale="8" />
 
-The material [meteorites](../ae2-mechanics/meteorites.md) are made out of, used in the recipes of the <ItemLink id="sky_stone_tank" />, <ItemLink id="not_so_mysterious_cube" />,
+Mine Sky Stone veins in the Ancient World for this material, used in the recipes of the <ItemLink id="sky_stone_tank" />, <ItemLink id="not_so_mysterious_cube" />,
 <ItemLink id="cell_component_256k" />, and most importantly, the <ItemLink id="controller" />.
 
 ## Recipes

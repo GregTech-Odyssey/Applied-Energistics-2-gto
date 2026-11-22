@@ -35,7 +35,6 @@ import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
 import appeng.core.definitions.AEParts;
 import appeng.core.definitions.ItemDefinition;
-import appeng.core.localization.GuiText;
 import appeng.core.localization.ItemModText;
 import appeng.core.localization.LocalizationEnum;
 import appeng.integration.abstraction.ItemListMod;
@@ -47,6 +46,8 @@ import appeng.recipes.entropy.EntropyRecipe;
 import appeng.recipes.handlers.ChargerRecipe;
 import appeng.recipes.handlers.InscriberRecipe;
 import appeng.recipes.transform.TransformRecipe;
+
+import com.gto.ae.core.localization.ExtendedLangs;
 
 @EmiEntrypoint
 public class AppEngEmiPlugin implements EmiPlugin {
@@ -136,16 +137,23 @@ public class AppEngEmiPlugin implements EmiPlugin {
 
     private void registerDescriptions(EmiRegistry registry) {
 
-        addDescription(registry, AEItems.CERTUS_QUARTZ_CRYSTAL, GuiText.CertusQuartzObtain);
+        addDescription(registry, AEItems.CERTUS_QUARTZ_CRYSTAL, ExtendedLangs.CertusQuartzSource,
+                ExtendedLangs.ArchaeologySource, ExtendedLangs.ArchaeologyLoot);
 
-        if (AEConfig.instance().isSpawnPressesInMeteoritesEnabled()) {
-            addDescription(registry, AEItems.LOGIC_PROCESSOR_PRESS, GuiText.inWorldCraftingPresses);
-            addDescription(registry, AEItems.CALCULATION_PROCESSOR_PRESS,
-                    GuiText.inWorldCraftingPresses);
-            addDescription(registry, AEItems.ENGINEERING_PROCESSOR_PRESS,
-                    GuiText.inWorldCraftingPresses);
-            addDescription(registry, AEItems.SILICON_PRESS, GuiText.inWorldCraftingPresses);
-        }
+        addDescription(registry, AEItems.LOGIC_PROCESSOR_PRESS, ExtendedLangs.PressArchaeologySource,
+                ExtendedLangs.ArchaeologySource);
+        addDescription(registry, AEItems.CALCULATION_PROCESSOR_PRESS, ExtendedLangs.PressArchaeologySource,
+                ExtendedLangs.ArchaeologySource);
+        addDescription(registry, AEItems.ENGINEERING_PROCESSOR_PRESS, ExtendedLangs.PressArchaeologySource,
+                ExtendedLangs.ArchaeologySource);
+        addDescription(registry, AEItems.SILICON_PRESS, ExtendedLangs.PressArchaeologySource,
+                ExtendedLangs.ArchaeologySource);
+        addDescription(registry, AEItems.FLUIX_UPGRADE_SMITHING_TEMPLATE, ExtendedLangs.PressArchaeologySource,
+                ExtendedLangs.ArchaeologySource);
+        addDescription(registry, AEItems.FLUIX_CRYSTAL, ExtendedLangs.ArchaeologySource, ExtendedLangs.ArchaeologyLoot);
+        addDescription(registry, AEBlocks.SUSPICIOUS_SKY_STONE, ExtendedLangs.ArchaeologySource,
+                ExtendedLangs.ArchaeologyLoot);
+        addDescription(registry, AEBlocks.SKY_STONE_BLOCK, ExtendedLangs.SkyStoneSource);
 
         addDescription(registry, AEBlocks.CRANK, ItemModText.CRANK_DESCRIPTION);
 
