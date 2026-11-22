@@ -28,7 +28,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
-
+import com.gto.ae.block.SuspiciousSkyStoneBlock;
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -45,6 +45,7 @@ import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer.Builder;
+import net.minecraft.world.level.storage.loot.entries.TagEntry;
 import net.minecraft.world.level.storage.loot.functions.ApplyBonusCount;
 import net.minecraft.world.level.storage.loot.functions.ApplyExplosionDecay;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
@@ -58,8 +59,7 @@ import appeng.core.definitions.AEBlocks;
 import appeng.core.definitions.AEItems;
 import appeng.core.definitions.BlockDefinition;
 import appeng.datagen.providers.IAE2DataProvider;
-
-import com.gto.ae.block.SuspiciousSkyStoneBlock;
+import appeng.datagen.providers.tags.ConventionTags;
 
 public class BlockDropProvider extends BlockLootSubProvider implements IAE2DataProvider {
     private final Map<Block, Function<Block, LootTable.Builder>> overrides = createOverrides();
@@ -68,7 +68,7 @@ public class BlockDropProvider extends BlockLootSubProvider implements IAE2DataP
     private ImmutableMap<Block, Function<Block, LootTable.Builder>> createOverrides() {
         return ImmutableMap.<Block, Function<Block, LootTable.Builder>>builder()
                 .put(AEBlocks.MATRIX_FRAME.block(), $ -> LootTable.lootTable())
-                .put(AEBlocks.SUSPICIOUS_SKY_STONE.block(), $ -> LootTable.lootTable())
+                .put(AEBlocks.MYSTERIOUS_CUBE.block(), BlockDropProvider::mysteriousCube)
                 // Flawless budding quartz always degrades by 1.
                 .put(AEBlocks.FLAWLESS_BUDDING_QUARTZ.block(), flawlessBuddingQuartz())
                 // Imperfect budding quartz degrades by 1 without silk touch, and does not degrade with silk touch.
@@ -163,6 +163,11 @@ public class BlockDropProvider extends BlockLootSubProvider implements IAE2DataP
                         .apply(SetItemCountFunction.setCount(ConstantValue.exactly(4)))
                         .apply(ApplyBonusCount.addUniformBonusCount(Enchantments.BLOCK_FORTUNE))
                         .apply(ApplyExplosionDecay.explosionDecay()));
+    }
+
+    private static LootTable.Builder mysteriousCube(Block block) {
+        return createSilkTouchDispatchTable(block, TagEntry.tagContents(ConventionTags.INSCRIBER_PRESSES)
+                .when(ExplosionCondition.survivesExplosion()));
     }
 
     private Path getPath(Path root, ResourceLocation id) {
