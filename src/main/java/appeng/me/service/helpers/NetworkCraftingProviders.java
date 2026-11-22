@@ -35,6 +35,7 @@ import com.gto.fastcollection.fastutil.O2OOpenCacheHashMap;
  * Keeps track of the crafting patterns in the network, and related information.
  */
 public class NetworkCraftingProviders {
+
     private final Map<IGridNode, ProviderState> craftingProviders = new Reference2ObjectOpenHashMap<>();
     private final Object2ObjectOpenHashMap<IPatternDetails, CraftingProviderList> craftingMethods = new O2OOpenCacheHashMap<>();
     private final AEKeyObjectMap<AEKey, PatternsForKey> craftableItems = new AEKeyObjectMap<>();
@@ -151,7 +152,7 @@ public class NetworkCraftingProviders {
         }
     }
 
-    private static class ProviderState {
+    public static class ProviderState {
         private final ICraftingProvider provider;
         private final AEKeySet<AEKey> emitableItems;
         private final List<IPatternDetails> patterns;
@@ -207,6 +208,11 @@ public class NetworkCraftingProviders {
                 });
             }
         }
+
+        public List<IPatternDetails> getPatterns() {
+            return patterns;
+        }
+
     }
 
     private static class PatternsForKey {
@@ -242,5 +248,9 @@ public class NetworkCraftingProviders {
      */
     public long getLastModifiedOnTick() {
         return lastModifiedOnTick;
+    }
+
+    public Map<IGridNode, ProviderState> getCraftingProviders() {
+        return craftingProviders;
     }
 }
