@@ -28,7 +28,7 @@ import java.util.function.Function;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonElement;
-import com.gto.ae.block.SuspiciousSkyStoneBlock;
+
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -60,6 +60,8 @@ import appeng.core.definitions.AEItems;
 import appeng.core.definitions.BlockDefinition;
 import appeng.datagen.providers.IAE2DataProvider;
 import appeng.datagen.providers.tags.ConventionTags;
+
+import com.gto.ae.block.SuspiciousSkyStoneBlock;
 
 public class BlockDropProvider extends BlockLootSubProvider implements IAE2DataProvider {
     private final Map<Block, Function<Block, LootTable.Builder>> overrides = createOverrides();
