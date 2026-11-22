@@ -17,10 +17,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.phys.AABB;
-import net.minecraftforge.client.event.RecipesUpdatedEvent;
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 
@@ -114,7 +110,7 @@ public final class TransformLogic {
     static Set<Item> explosionCache = null;
     static Set<Item> anyFluidCache = null;
 
-    private static void clearCache() {
+    public static void clearCache() {
         fluidCache.clear();
         explosionCache = null;
         anyFluidCache = null;
@@ -176,21 +172,6 @@ public final class TransformLogic {
             explosionCache = ret;
         }
         return ret;
-    }
-
-    @SubscribeEvent
-    public static void onServerStarted(ServerStartedEvent e) {
-        clearCache();
-    }
-
-    @SubscribeEvent
-    public static void onReloadServerResources(AddReloadListenerEvent e) {
-        clearCache();
-    }
-
-    @SubscribeEvent
-    public static void onClientRecipesUpdated(RecipesUpdatedEvent e) {
-        clearCache();
     }
 
     private TransformLogic() {

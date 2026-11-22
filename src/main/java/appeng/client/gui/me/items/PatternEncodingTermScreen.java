@@ -29,6 +29,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
@@ -116,9 +117,20 @@ public class PatternEncodingTermScreen<C extends PatternEncodingTermMenu> extend
 
     @Override
     public boolean mouseClicked(double xCoord, double yCoord, int btn) {
-        // handler for middle mouse button crafting in survival mode
-        if (this.minecraft.options.keyPickItem.matchesMouse(btn)) {
-            var slot = this.findSlot(xCoord, yCoord);
+        // Open before vanilla starts dragging a carried stack; GTOCore also injects its destination panel here.
+        if (minecraft.options.keyPickItem.matchesMouse(btn)) {
+            var slot = findSlot(xCoord, yCoord);
+            if (menu.canModifyAmountForSlot(slot)) {
+                slotClicked(slot, slot.index, btn, ClickType.CLONE);
+                return true;
+            }
+        }
+        return super.mouseClicked(xCoord, yCoord, btn);
+    }
+
+    @Override
+    protected void slotClicked(Slot slot, int slotIdx, int mouseButton, ClickType clickType) {
+        if (clickType == ClickType.CLONE) {
             if (menu.canModifyAmountForSlot(slot)) {
                 var currentStack = GenericStack.fromItemStack(slot.getItem());
                 if (currentStack != null) {
@@ -126,19 +138,19 @@ public class PatternEncodingTermScreen<C extends PatternEncodingTermMenu> extend
                             this,
                             currentStack,
                             newStack -> NetworkHandler.instance().sendToServer(new InventoryActionPacket(
-                                    InventoryAction.SET_FILTER, slot.index,
+                                    InventoryAction.SET_FILTER, slotIdx,
                                     GenericStack.wrapInItemStack(newStack))));
                     switchToScreen(screen);
-                    return true;
+                    return;
                 }
             }
         }
 
-        return super.mouseClicked(xCoord, yCoord, btn);
+        super.slotClicked(slot, slotIdx, mouseButton, clickType);
     }
 
     /**
-     * When in processing mode, show a hint in the tooltip that middle-click will open the amount entry dialog.
+     * When in processing mode, show a hint that the pick-block binding opens the amount entry dialog.
      */
     @Override
     protected void renderTooltip(@NotNull GuiGraphics guiGraphics, int x, int y) {

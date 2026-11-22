@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.ComponentContents;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
@@ -42,6 +44,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AmountFormat;
 import appeng.api.stacks.GenericStack;
 import appeng.core.AppEng;
@@ -50,6 +53,8 @@ import appeng.core.localization.GuiText;
 import appeng.items.AEBaseItem;
 import appeng.items.misc.WrappedGenericStack;
 import appeng.util.InteractionUtil;
+
+import com.gto.ae.core.localization.ExtendedLangs;
 
 public abstract class EncodedPatternItem extends AEBaseItem {
     // rather simple client side caching.
@@ -157,23 +162,17 @@ public abstract class EncodedPatternItem extends AEBaseItem {
         var in = details.getInputs();
         var out = details.getOutputs();
 
-        var label = (isCrafting ? GuiText.Crafts.text() : GuiText.Produces.text()).copy()
-                .append(": ").withStyle(ChatFormatting.GRAY);
-        var and = Component.literal(" ").copy().append(GuiText.And.text())
-                .append(" ").withStyle(ChatFormatting.GRAY);
-        var with = GuiText.With.text().copy().append(": ").withStyle(ChatFormatting.GRAY);
-
-        boolean first = true;
+        lines.add((isCrafting ? GuiText.Crafts.text() : GuiText.Produces.text()).withStyle(ChatFormatting.AQUA));
         for (var anOut : out) {
             if (anOut == null) {
                 continue;
             }
 
-            lines.add(Component.empty().append(first ? label : and).append(getStackComponent(anOut)));
-            first = false;
+            lines.add(MutableComponent.create(new MaterialTooltip(anOut.what()))
+                    .append(getStackComponent(anOut, ChatFormatting.YELLOW)));
         }
 
-        first = true;
+        lines.add(ExtendedLangs.PatternIngredients.text().withStyle(ChatFormatting.GREEN));
         for (var anIn : in) {
             if (anIn == null) {
                 continue;
@@ -182,8 +181,8 @@ public abstract class EncodedPatternItem extends AEBaseItem {
             var primaryInputTemplate = anIn.getPossibleInputs()[0];
             var primaryInput = new GenericStack(primaryInputTemplate.what(),
                     primaryInputTemplate.amount() * anIn.getMultiplier());
-            lines.add(Component.empty().append(first ? with : and).append(getStackComponent(primaryInput)));
-            first = false;
+            lines.add(MutableComponent.create(new MaterialTooltip(primaryInput.what()))
+                    .append(getStackComponent(primaryInput, ChatFormatting.GREEN)));
         }
 
         if (isCrafting) {
@@ -194,10 +193,15 @@ public abstract class EncodedPatternItem extends AEBaseItem {
         }
     }
 
-    protected static Component getStackComponent(GenericStack stack) {
+    protected static Component getStackComponent(GenericStack stack, ChatFormatting color) {
         var amountInfo = stack.what().formatAmount(stack.amount(), AmountFormat.FULL);
         var displayName = stack.what().getDisplayName();
-        return Component.literal(amountInfo + " x ").append(displayName);
+        return Component.literal(amountInfo).withStyle(ChatFormatting.GRAY).append(" × ")
+                .append(displayName.copy().withStyle(color));
+    }
+
+    // Carries the icon key without changing the text used by tooltip search.
+    public record MaterialTooltip(AEKey what) implements ComponentContents {
     }
 
     /**

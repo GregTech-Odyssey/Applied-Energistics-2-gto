@@ -125,11 +125,12 @@ public final class AEItemKey extends AEKey {
         var stack = readOnlyStack;
         if (stack == null) {
             stack = new ItemStack(item, 1);
-            stack.setTag(internedTag);
+            // Item implementations may write NBT while reading the stack.
+            stack.setTag(copyTag());
             readOnlyStack = stack;
         } else if (stack.isEmpty()) {
             stack = new ItemStack(item, 1);
-            stack.setTag(internedTag);
+            stack.setTag(copyTag());
             readOnlyStack = stack;
             AELog.error("Something destroyed the read-only itemstack of {}", this);
         }
@@ -282,12 +283,7 @@ public final class AEItemKey extends AEKey {
     }
 
     private int computeMaxStackSize() {
-        if (internedTag == null) {
-            return Math.max(1, getReadOnlyStack().getMaxStackSize());
-        }
-        var probe = new ItemStack(item, 1);
-        probe.setTag(internedTag);
-        return Math.max(1, probe.getMaxStackSize());
+        return Math.max(1, getReadOnlyStack().getMaxStackSize());
     }
 
     @Override

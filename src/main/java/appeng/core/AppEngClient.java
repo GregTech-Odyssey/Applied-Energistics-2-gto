@@ -62,6 +62,7 @@ import appeng.client.gui.me.common.PendingCraftingJobs;
 import appeng.client.gui.me.common.PinnedKeys;
 import appeng.client.gui.style.StyleManager;
 import appeng.client.gui.widgets.SettingToggleButton;
+import appeng.client.render.PatternTooltipComponent;
 import appeng.client.render.StorageCellClientTooltipComponent;
 import appeng.client.render.effects.EnergyParticleData;
 import appeng.client.render.effects.ParticleTypes;
@@ -86,6 +87,7 @@ import appeng.init.client.InitScreens;
 import appeng.init.client.InitStackRenderHandlers;
 import appeng.integration.modules.emi.AppEngEmiHooks;
 import appeng.items.storage.StorageCellTooltipComponent;
+import appeng.recipes.transform.TransformLogic;
 import appeng.spatial.SpatialStorageDimensionIds;
 import appeng.spatial.SpatialStorageSkyProperties;
 import appeng.util.InteractionUtil;
@@ -116,6 +118,7 @@ public class AppEngClient extends AppEngBase {
         this.registerClientCommands();
 
         modEventBus.addListener(this::registerClientTooltipComponents);
+        MinecraftForge.EVENT_BUS.addListener(PatternTooltipComponent::gatherComponents);
         modEventBus.addListener(this::registerParticleFactories);
         modEventBus.addListener(this::modelRegistryEventAdditionalModels);
         modEventBus.addListener(this::modelRegistryEvent);
@@ -140,6 +143,7 @@ public class AppEngClient extends AppEngBase {
         INSTANCE = this;
 
         MinecraftForge.EVENT_BUS.addListener((ClientPlayerNetworkEvent.LoggingIn evt) -> {
+            TransformLogic.clearCache();
             PendingCraftingJobs.clearPendingJobs();
             PinnedKeys.reloadClientCache();
         });
@@ -213,6 +217,7 @@ public class AppEngClient extends AppEngBase {
 
     private void registerClientTooltipComponents(RegisterClientTooltipComponentFactoriesEvent event) {
         event.register(StorageCellTooltipComponent.class, StorageCellClientTooltipComponent::new);
+        event.register(PatternTooltipComponent.class, tooltip -> tooltip);
     }
 
     private void clientSetup(FMLClientSetupEvent event) {
