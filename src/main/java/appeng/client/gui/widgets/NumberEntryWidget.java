@@ -56,13 +56,13 @@ import appeng.core.localization.GuiText;
  */
 public class NumberEntryWidget implements ICompositeWidget {
 
-    private static final long[] STEPS_1000 = new long[] { 1, 10, 100, 1000 };
-    private static final long[] STEPS_64 = new long[] { 1, 16, 32, 64 };
+    private static final long[] STEPS = { 1, 10, 100, 1000 };
+    private static final long[] FACTORS = { 2, 3, 5, 10 };
     private static final Component PLUS = Component.literal("+");
-    private static final Component MINUS = Component.literal("-");
+    private static final Component MINUS = Component.literal("−");
+    private static final Component MULTIPLY = Component.literal("×");
+    private static final Component DIVIDE = Component.literal("÷");
     private static final int UNIT_PADDING = 3;
-    private final Component[] components1000;
-    private final Component[] components64;
     private final int errorTextColor;
     private final int normalTextColor;
 
@@ -116,27 +116,6 @@ public class NumberEntryWidget implements ICompositeWidget {
             }
         });
         validate();
-
-        components1000 = new Component[] {
-                makeLabel(PLUS, 0, true),
-                makeLabel(PLUS, 1, true),
-                makeLabel(PLUS, 2, true),
-                makeLabel(PLUS, 3, true),
-                makeLabel(MINUS, 0, true),
-                makeLabel(MINUS, 1, true),
-                makeLabel(MINUS, 2, true),
-                makeLabel(MINUS, 3, true),
-        };
-        components64 = new Component[] {
-                makeLabel(PLUS, 0, false),
-                makeLabel(PLUS, 1, false),
-                makeLabel(PLUS, 2, false),
-                makeLabel(PLUS, 3, false),
-                makeLabel(MINUS, 0, false),
-                makeLabel(MINUS, 1, false),
-                makeLabel(MINUS, 2, false),
-                makeLabel(MINUS, 3, false),
-        };
     }
 
     public void setOnConfirm(Runnable callback) {
@@ -212,26 +191,17 @@ public class NumberEntryWidget implements ICompositeWidget {
         int left = bounds.getX() + this.bounds.getX();
         int top = bounds.getY() + this.bounds.getY();
 
-        List<Button> buttons = new ArrayList<>(9);
-
-        buttons.add(
-                Button.builder(components1000[0], btn -> addQty(hasShiftOrControlDown() ? STEPS_64[0] : STEPS_1000[0]))
-                        .bounds(left, top, 22, 20).build());
-        buttons.add(
-                Button.builder(components1000[1], btn -> addQty(hasShiftOrControlDown() ? STEPS_64[1] : STEPS_1000[1]))
-                        .bounds(left + 28, top, 28, 20)
-                        .build());
-        buttons.add(
-                Button.builder(components1000[2], btn -> addQty(hasShiftOrControlDown() ? STEPS_64[2] : STEPS_1000[2]))
-                        .bounds(left + 62, top, 32, 20)
-                        .build());
-        buttons.add(
-                Button.builder(components1000[3], btn -> addQty(hasShiftOrControlDown() ? STEPS_64[3] : STEPS_1000[3]))
-                        .bounds(left + 100, top, 38, 20)
-                        .build());
+        var buttons = new ArrayList<Button>(11);
+        buttons.add(createStepButton(left, top, 22, 0, true));
+        buttons.add(createStepButton(left + 24, top, 28, 1, true));
+        buttons.add(createStepButton(left + 54, top, 32, 2, true));
+        buttons.add(createStepButton(left + 88, top, 38, 3, true));
+        buttons.add(Button.builder(Component.literal("C"), btn -> roundQty(RoundingMode.CEILING))
+                .bounds(left + 128, top, 12, 20).build());
 
         // Need to add these now for sensible tab-order
         buttons.forEach(addWidget);
+        int bottomStart = buttons.size();
 
         // Placing this here will give a sensible tab order
         this.currentScreenOrigin = Point.fromTopLeft(bounds);
@@ -239,19 +209,11 @@ public class NumberEntryWidget implements ICompositeWidget {
         screen.setInitialFocus(this.textField);
         addWidget.accept(this.textField);
 
-        buttons.add(Button
-                .builder(components1000[4], btn -> addQty(hasShiftOrControlDown() ? -STEPS_64[0] : -STEPS_1000[0]))
-                .bounds(left, top + 42, 22, 20)
-                .build());
-        buttons.add(Button
-                .builder(components1000[5], btn -> addQty(hasShiftOrControlDown() ? -STEPS_64[1] : -STEPS_1000[1]))
-                .bounds(left + 28, top + 42, 28, 20).build());
-        buttons.add(Button
-                .builder(components1000[6], btn -> addQty(hasShiftOrControlDown() ? -STEPS_64[2] : -STEPS_1000[2]))
-                .bounds(left + 62, top + 42, 32, 20).build());
-        buttons.add(Button
-                .builder(components1000[7], btn -> addQty(hasShiftOrControlDown() ? -STEPS_64[3] : -STEPS_1000[3]))
-                .bounds(left + 100, top + 42, 38, 20).build());
+        int bottom = top + 42;
+        buttons.add(createStepButton(left, bottom, 22, 0, false));
+        buttons.add(createStepButton(left + 24, bottom, 28, 1, false));
+        buttons.add(createStepButton(left + 54, bottom, 32, 2, false));
+        buttons.add(createStepButton(left + 88, bottom, 38, 3, false));
 
         // This element is not focusable
         if (!hideValidationIcon) {
@@ -260,9 +222,13 @@ public class NumberEntryWidget implements ICompositeWidget {
             this.validationIcon.setY(top + 27);
             buttons.add(this.validationIcon);
         }
+        buttons.add(Button.builder(Component.literal("F"), btn -> roundQty(RoundingMode.FLOOR))
+                .bounds(left + 128, bottom, 12, 20).build());
 
         // Add the rest to the tab order
-        buttons.subList(4, buttons.size()).forEach(addWidget);
+        for (int i = bottomStart; i < buttons.size(); i++) {
+            addWidget.accept(buttons.get(i));
+        }
 
         this.buttons = buttons;
 
@@ -271,16 +237,13 @@ public class NumberEntryWidget implements ICompositeWidget {
         this.validate();
     }
 
-    @Override
-    public void updateBeforeRender() {
-        Component[] messages = hasShiftOrControlDown() ? components64 : components1000;
-        for (int i = 0; i < 8; i++) {
-            buttons.get(i).setMessage(messages[i]);
-        }
-    }
-
-    private static boolean hasShiftOrControlDown() {
-        return Screen.hasShiftDown() || Screen.hasControlDown();
+    private Button createStepButton(int x, int y, int width, int index, boolean increase) {
+        long step = STEPS[index];
+        long factor = FACTORS[index];
+        return new ShiftActionButton(x, y, width, makeLabel(increase ? PLUS : MINUS, step),
+                makeLabel(increase ? MULTIPLY : DIVIDE, factor),
+                btn -> addQty(increase ? step : -step),
+                btn -> multiplyQty(increase ? factor : 1.0d / factor));
     }
 
     /**
@@ -355,6 +318,23 @@ public class NumberEntryWidget implements ICompositeWidget {
         setValueInternal(newValue);
     }
 
+    private void multiplyQty(double factor) {
+        var currentValue = getValueInternal().orElse(BigDecimal.ZERO);
+        var newValue = currentValue.multiply(BigDecimal.valueOf(factor));
+        var minimum = convertToInternalValue(minValue).setScale(0, RoundingMode.CEILING);
+        var maximum = convertToInternalValue(maxValue).setScale(0, RoundingMode.FLOOR);
+        if (newValue.compareTo(minimum) < 0) {
+            newValue = minimum;
+        } else if (newValue.compareTo(maximum) > 0) {
+            newValue = maximum;
+        }
+        setValueInternal(newValue);
+    }
+
+    private void roundQty(RoundingMode roundingMode) {
+        setValueInternal(getValueInternal().orElse(BigDecimal.ZERO).setScale(0, roundingMode));
+    }
+
     /**
      * Retrieves the numeric representation of the value entered by the user, if it is convertible.
      */
@@ -420,9 +400,8 @@ public class NumberEntryWidget implements ICompositeWidget {
         }
     }
 
-    private Component makeLabel(Component prefix, int amountIndex, boolean useDecimalSteps) {
-        return prefix.plainCopy()
-                .append(decimalFormat.format(useDecimalSteps ? STEPS_1000[amountIndex] : STEPS_64[amountIndex]));
+    private Component makeLabel(Component prefix, long amount) {
+        return prefix.plainCopy().append(decimalFormat.format(amount));
     }
 
     public void setHideValidationIcon(boolean hideValidationIcon) {
@@ -485,5 +464,34 @@ public class NumberEntryWidget implements ICompositeWidget {
             }
         }
         return false;
+    }
+
+    private static final class ShiftActionButton extends Button {
+        private final Component normalText;
+        private final Component shiftText;
+        private final OnPress shiftPress;
+
+        private ShiftActionButton(int x, int y, int width, Component normalText, Component shiftText,
+                OnPress normalPress, OnPress shiftPress) {
+            super(x, y, width, 20, normalText, normalPress, DEFAULT_NARRATION);
+            this.normalText = normalText;
+            this.shiftText = shiftText;
+            this.shiftPress = shiftPress;
+        }
+
+        @Override
+        public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+            setMessage(Screen.hasShiftDown() ? shiftText : normalText);
+            super.renderWidget(guiGraphics, mouseX, mouseY, partialTick);
+        }
+
+        @Override
+        public void onPress() {
+            if (Screen.hasShiftDown()) {
+                shiftPress.onPress(this);
+            } else {
+                super.onPress();
+            }
+        }
     }
 }
