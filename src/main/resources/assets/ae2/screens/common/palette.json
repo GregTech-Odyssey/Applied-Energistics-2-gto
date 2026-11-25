@@ -8,6 +8,10 @@
     "TEXTFIELD_SELECTION": "#FF0000FF",
     "TEXTFIELD_ERROR": "#FF1900",
     "TEXTFIELD_TEXT": "#f2f2f2",
-    "ERROR": "#CE2401"
+    "ERROR": "#CE2401",
+    "BUTTON_TEXT": "#f2f2f2",
+    "BUTTON_TEXT_HOVER": "#517497",
+    "BUTTON_TEXT_DISABLED": "#413f54",
+    "UPGRADES_BORDER": "#f2f2f2"
   }
 }

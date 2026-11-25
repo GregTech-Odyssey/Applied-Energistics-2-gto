@@ -146,7 +146,7 @@ public class ScreenStyle {
 
     public void validate() {
         for (PaletteColor value : PaletteColor.values()) {
-            if (!palette.containsKey(value)) {
+            if (!value.isOptional() && !palette.containsKey(value)) {
                 throw new RuntimeException("Palette is missing color " + value);
             }
         }
