@@ -42,6 +42,7 @@ public class WUTHandler {
      */
     public static final Map<String, WTDefinition> wirelessTerminals = new HashMap<>();
     public static final List<String> terminalNames = new ArrayList<>();
+    public static boolean hasBuiltInQuantumTerminal;
 
     /**
      * Get the current terminal from the provided item stack.
@@ -240,6 +241,9 @@ public class WUTHandler {
         wirelessTerminals.put(name, new WTDefinition(open, WTMenuHostFactory, menuType, item, wut,
                 TextConstants.formatTerminalName(itemID)));
         terminalNames.add(name);
+        if (item.hasBuiltInQuantumUpgrade()) {
+            hasBuiltInQuantumTerminal = true;
+        }
     }
 
     @Nullable

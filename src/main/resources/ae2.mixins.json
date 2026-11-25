@@ -28,8 +28,7 @@
     "TextureAtlasMixin",
     "VariantDeserializerMixin",
     "WrappedGenericStackTooltipModIdMixin",
-    "wtlib.MinecraftMixin",
-    "wtlib.RestockRenderMixin"
+    "wtlib.MinecraftMixin"
   ],
   "server": [],
   "injectors": {

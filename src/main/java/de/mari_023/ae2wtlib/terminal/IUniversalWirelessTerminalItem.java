@@ -59,4 +59,8 @@ public interface IUniversalWirelessTerminalItem {
 
     default void inventoryTick(ItemStack itemStack, Level level, Entity entity, int i, boolean bl) {
     }
+
+    default boolean hasBuiltInQuantumUpgrade() {
+        return false;
+    }
 }

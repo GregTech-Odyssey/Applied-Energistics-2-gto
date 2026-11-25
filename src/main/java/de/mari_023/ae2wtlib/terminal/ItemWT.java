@@ -14,6 +14,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
 import de.mari_023.ae2wtlib.AE2wtlib;
+import de.mari_023.ae2wtlib.wut.ItemWUT;
 import de.mari_023.ae2wtlib.wut.WUTHandler;
 
 import appeng.api.features.Locatables;
@@ -79,6 +80,17 @@ public abstract class ItemWT extends WirelessTerminalItem implements IUniversalW
     }
 
     private static boolean hasQuantumUpgrade(ItemStack stack, @Nullable IUpgradeInventory inventory) {
+        if (stack.getItem() instanceof IUniversalWirelessTerminalItem terminal && terminal.hasBuiltInQuantumUpgrade()) {
+            return true;
+        }
+        if (WUTHandler.hasBuiltInQuantumTerminal && stack.getItem() instanceof ItemWUT) {
+            for (var entry : WUTHandler.wirelessTerminals.entrySet()) {
+                if (entry.getValue().item().hasBuiltInQuantumUpgrade()
+                        && WUTHandler.hasTerminal(stack, entry.getKey())) {
+                    return true;
+                }
+            }
+        }
         if (inventory == null)
             inventory = UpgradeInventories.forItem(stack, WUTHandler.getUpgradeCardCount());
         return inventory.isInstalled(AE2wtlib.QUANTUM_BRIDGE_CARD);
