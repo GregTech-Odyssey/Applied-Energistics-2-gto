@@ -116,6 +116,7 @@ public final class StyleManager {
             document = combineLayers(layers);
         }
 
+        loadedFiles.remove(path);
         return document;
 
     }
