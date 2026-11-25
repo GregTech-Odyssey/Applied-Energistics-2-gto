@@ -18,6 +18,7 @@
 # include markdowns
 !*.md
 !LICENSE
+!LICENSE-ae2wtlib
 
 # include sourcecode
 !src/
