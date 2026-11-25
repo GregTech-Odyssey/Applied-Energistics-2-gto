@@ -96,6 +96,11 @@ public class ScreenStyle {
         return palette.get(color);
     }
 
+    public int getColorOrDefault(PaletteColor color, int defaultArgb) {
+        Color c = palette.get(color);
+        return c != null ? c.toARGB() : defaultArgb;
+    }
+
     public Map<String, SlotPosition> getSlots() {
         return slots;
     }
@@ -141,7 +146,7 @@ public class ScreenStyle {
 
     public void validate() {
         for (PaletteColor value : PaletteColor.values()) {
-            if (!palette.containsKey(value)) {
+            if (!value.isOptional() && !palette.containsKey(value)) {
                 throw new RuntimeException("Palette is missing color " + value);
             }
         }

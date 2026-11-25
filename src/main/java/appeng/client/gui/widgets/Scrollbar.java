@@ -301,12 +301,17 @@ public class Scrollbar implements IScrollSource, ICompositeWidget {
             232, 0,
             244, 0);
 
-    public static final Style SMALL = Style.create(
-            AppEng.makeId("textures/guis/pattern_modes.png"),
+    public static final Style BIG = Style.createSeparate(
+            AppEng.makeId("textures/gui/sprites/big_scroller.png"),
+            AppEng.makeId("textures/gui/sprites/big_scroller_disabled.png"),
+            12,
+            15);
+
+    public static final Style SMALL = Style.createSeparate(
+            AppEng.makeId("textures/gui/sprites/small_scroller.png"),
+            AppEng.makeId("textures/gui/sprites/small_scroller_disabled.png"),
             7,
-            15,
-            242, 0,
-            249, 0);
+            15);
 
     /**
      * @param handleWidth     Width of the scrollbar handle sprite in the source texture.
@@ -333,6 +338,19 @@ public class Scrollbar implements IScrollSource, ICompositeWidget {
                     texture,
                     Blitter.texture(texture).src(enabledSrcX, enabledSrcY, handleWidth, handleHeight),
                     Blitter.texture(texture).src(disabledSrcX, disabledSrcY, handleWidth, handleHeight));
+        }
+
+        public static Style createSeparate(
+                ResourceLocation enabledTexture,
+                ResourceLocation disabledTexture,
+                int handleWidth,
+                int handleHeight) {
+            return new Style(
+                    handleWidth,
+                    handleHeight,
+                    enabledTexture,
+                    Blitter.texture(enabledTexture, handleWidth, handleHeight).src(0, 0, handleWidth, handleHeight),
+                    Blitter.texture(disabledTexture, handleWidth, handleHeight).src(0, 0, handleWidth, handleHeight));
         }
     }
 

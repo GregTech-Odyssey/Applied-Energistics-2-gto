@@ -22,14 +22,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.resources.ResourceLocation;
 
 import appeng.client.Point;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.ICompositeWidget;
 import appeng.client.gui.Rects;
+import appeng.client.gui.style.Blitter;
+import appeng.core.AppEng;
 
 import com.gto.ae.client.gui.widgets.expandable.IExpandable;
 
@@ -38,8 +42,11 @@ import com.gto.ae.client.gui.widgets.expandable.IExpandable;
  */
 public class VerticalButtonBar implements ICompositeWidget {
 
+    private static final ResourceLocation VERTICAL_BUTTONS_BG = AppEng
+            .makeId("textures/gui/sprites/vertical_buttons_bg.png");
+
     // Vertical space between buttons
-    private static final int VERTICAL_SPACING = 4;
+    private static final int VERTICAL_SPACING = 6;
 
     // The margin between the right side of the buttons and the GUI
     private static final int MARGIN = 2;
@@ -137,5 +144,22 @@ public class VerticalButtonBar implements ICompositeWidget {
             }
             addWidget.accept(button);
         }
+    }
+
+    @Override
+    public void drawBackgroundLayer(GuiGraphics guiGraphics, Rect2i bounds, Point mouse) {
+        if (this.bounds.getWidth() <= 0 || this.bounds.getHeight() <= 0) {
+            return;
+        }
+        Blitter.blitNineSliced(
+                guiGraphics,
+                VERTICAL_BUTTONS_BG,
+                bounds.getX() + this.bounds.getX() - 2,
+                bounds.getY() + this.bounds.getY() - 1,
+                1,
+                this.bounds.getWidth() + 1,
+                this.bounds.getHeight() + 4,
+                0, 2, 0, 4,
+                21, 26);
     }
 }

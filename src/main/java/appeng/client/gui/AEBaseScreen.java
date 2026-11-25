@@ -142,7 +142,10 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
 
         this.style = Objects.requireNonNull(style, "style");
         this.widgets = new WidgetContainer(style);
-        this.widgets.add("verticalToolbar", this.verticalToolbar = new VerticalButtonBar());
+        this.verticalToolbar = new VerticalButtonBar();
+        if (shouldAddToolbar()) {
+            this.widgets.add("verticalToolbar", this.verticalToolbar);
+        }
 
         if (style.getGeneratedBackground() != null) {
             this.imageWidth = style.getGeneratedBackground().getWidth();
@@ -160,6 +163,10 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         positionSlots();
 
         widgets.populateScreen(this::populate, getBounds(true), this);
+    }
+
+    protected boolean shouldAddToolbar() {
+        return true;
     }
 
     private <W extends GuiEventListener & Renderable & NarratableEntry> void populate(W p_169406_) {
@@ -503,7 +510,7 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
         // If a slot is optional and doesn't currently render, we still need to provide a background for it
         if (alwaysDraw || slot.isRenderDisabled()) {
             // If the slot is disabled, shade the background overlay
-            float alpha = slot.isSlotEnabled() ? 1.0f : 0.4f;
+            float alpha = slot.isSlotEnabled() ? 1.0f : 0.2f;
 
             Point pos = slot.getBackgroundPos();
 
@@ -1029,8 +1036,12 @@ public abstract class AEBaseScreen<T extends AEBaseMenu> extends AbstractContain
             h = 16;
         }
 
-        // Same as the Vanilla method, just with dynamic width and height
-        guiGraphics.fillGradient(RenderType.guiOverlay(), x, y, x + w, y + h, 0x80ffffff, 0x80ffffff, z);
+        // Custom slot highlight effect (#7870 + #8053) rendered via ResizableSlotHighlightMixin before carried item
+        guiGraphics.hLine(x, x + w, y - 1, 0xFFdaffff);
+        guiGraphics.hLine(x - 1, x + w, y + h, 0xFFdaffff);
+        guiGraphics.vLine(x - 1, y - 2, y + h, 0xFFdaffff);
+        guiGraphics.vLine(x + w, y - 2, y + h, 0xFFdaffff);
+        guiGraphics.fillGradient(RenderType.guiOverlay(), x, y, x + w, y + h, 0x669cd3ff, 0x669cd3ff, z);
     }
 
     public final void switchToScreen(AEBaseScreen<?> screen) {

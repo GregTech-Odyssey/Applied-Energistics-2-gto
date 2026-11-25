@@ -12,10 +12,10 @@ import net.minecraft.core.RegistryAccess;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.StonecutterRecipe;
 
 import appeng.client.Point;
+import appeng.client.gui.Icon;
 import appeng.client.gui.Tooltip;
 import appeng.client.gui.WidgetContainer;
 import appeng.client.gui.style.Blitter;
@@ -27,19 +27,19 @@ import appeng.menu.SlotSemantics;
  * Implements the panel for encoding stonecutting recipes.
  */
 public final class StonecuttingEncodingPanel extends EncodingModePanel {
-    private static final Blitter BG = Blitter.texture("guis/pattern_modes.png").src(0, 141, 126, 68);
+    private static final Blitter BG = Blitter.texture("guis/pattern_modes.png").src(0, 140, 124, 66);
     private static final Blitter BG_SLOT = BG
             .copy()
-            .src(126, 141, 16, 18);
+            .src(124, 140, 20, 22);
     private static final Blitter BG_SLOT_SELECTED = BG
             .copy()
-            .src(126, 159, 16, 18);
+            .src(124, 162, 20, 22);
     private static final Blitter BG_SLOT_HOVER = BG
             .copy()
-            .src(126, 177, 16, 18);
+            .src(124, 184, 20, 22);
 
     private static final int COLS = 4;
-    private static final int ROWS = 3;
+    private static final int ROWS = 2;
 
     private final Scrollbar scrollbar;
 
@@ -59,10 +59,8 @@ public final class StonecuttingEncodingPanel extends EncodingModePanel {
 
     @Override
     public void drawBackgroundLayer(GuiGraphics guiGraphics, Rect2i bounds, Point mouse) {
-        BG.dest(bounds.getX() + 9, bounds.getY() + bounds.getHeight() - 164).blit(guiGraphics);
-
+        BG.dest(bounds.getX() + 8, bounds.getY() + bounds.getHeight() - 165).blit(guiGraphics);
         drawRecipes(guiGraphics, bounds, mouse);
-
     }
 
     private RegistryAccess getRegistryAccess() {
@@ -92,10 +90,15 @@ public final class StonecuttingEncodingPanel extends EncodingModePanel {
 
             var renderX = bounds.getX() + slotBounds.getX();
             var renderY = bounds.getY() + slotBounds.getY();
-            blitter.dest(renderX, renderY - 1).blit(guiGraphics);
+            blitter.dest(renderX, renderY).blit(guiGraphics);
             ItemStack resultItem = recipe.getResultItem(getRegistryAccess());
-            guiGraphics.renderItem(resultItem, renderX, renderY);
-            guiGraphics.renderItemDecorations(Minecraft.getInstance().font, resultItem, renderX, renderY);
+            if (selected || mouse.isIn(slotBounds)) {
+                guiGraphics.renderItem(resultItem, renderX + 2, renderY + 3);
+                guiGraphics.renderItemDecorations(Minecraft.getInstance().font, resultItem, renderX + 2, renderY + 3);
+            } else {
+                guiGraphics.renderItem(resultItem, renderX + 2, renderY + 2);
+                guiGraphics.renderItemDecorations(Minecraft.getInstance().font, resultItem, renderX + 2, renderY + 2);
+            }
         }
     }
 
@@ -145,8 +148,8 @@ public final class StonecuttingEncodingPanel extends EncodingModePanel {
     private Rect2i getRecipeBounds(int index) {
         var col = index % COLS;
         var row = index / COLS;
-        int slotX = x + 44 + col * BG_SLOT.getSrcWidth();
-        int slotY = y + 8 + row * BG_SLOT.getSrcHeight();
+        int slotX = x + 26 + col * BG_SLOT.getSrcWidth();
+        int slotY = y + 12 + row * BG_SLOT.getSrcHeight();
         return new Rect2i(slotX, slotY, BG_SLOT.getSrcWidth(), BG_SLOT.getSrcHeight());
     }
 
@@ -156,8 +159,8 @@ public final class StonecuttingEncodingPanel extends EncodingModePanel {
     }
 
     @Override
-    public ItemStack getTabIconItem() {
-        return new ItemStack(Items.STONECUTTER);
+    Icon getIcon() {
+        return Icon.TAB_STONECUTTING;
     }
 
     @Override

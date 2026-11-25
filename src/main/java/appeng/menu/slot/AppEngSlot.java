@@ -230,7 +230,7 @@ public class AppEngSlot extends Slot implements IDecoratedSlot {
 
     @Override
     public float getOpacityOfIcon() {
-        return 0.4f;
+        return 1f;
     }
 
     @Override

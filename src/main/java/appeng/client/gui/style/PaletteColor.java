@@ -26,5 +26,23 @@ public enum PaletteColor {
     TEXTFIELD_SELECTION,
     TEXTFIELD_ERROR,
     TEXTFIELD_TEXT,
-    ERROR
+    ERROR,
+    BUTTON_TEXT(true),
+    BUTTON_TEXT_HOVER(true),
+    BUTTON_TEXT_DISABLED(true),
+    UPGRADES_BORDER(true);
+
+    private final boolean optional;
+
+    PaletteColor() {
+        this(false);
+    }
+
+    PaletteColor(boolean optional) {
+        this.optional = optional;
+    }
+
+    public boolean isOptional() {
+        return optional;
+    }
 }

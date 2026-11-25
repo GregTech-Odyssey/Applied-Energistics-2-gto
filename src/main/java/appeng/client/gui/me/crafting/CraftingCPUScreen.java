@@ -96,7 +96,7 @@ public class CraftingCPUScreen<T extends CraftingCPUMenu> extends AEBaseScreen<T
 
         this.table = new CraftingStatusTableRenderer(this, 9, 19);
 
-        this.scrollbar = widgets.addScrollBar("scrollbar");
+        this.scrollbar = widgets.addScrollBar("scrollbar", Scrollbar.BIG);
 
         this.dialogTitle = new CraftingScreenTitle(Minecraft.getInstance().font,
                 style.getColor(PaletteColor.DEFAULT_TEXT_COLOR).toARGB());

@@ -33,14 +33,21 @@ import com.gto.ae.hooks.gui.IActionItems;
 import com.gto.ae.hooks.gui.IIcon;
 
 public enum ActionItems implements IActionItems {
-    WRENCH(Icon.WRENCH, ButtonToolTips.PartitionStorage, ButtonToolTips.PartitionStorageHint),
+    COG(Icon.COG, ButtonToolTips.PartitionStorage, ButtonToolTips.PartitionStorageHint),
+    /** Retained for 1.20.1 addon binary compatibility (e.g. ExtendedAE). */
+    WRENCH(Icon.COG, ButtonToolTips.PartitionStorage, ButtonToolTips.PartitionStorageHint),
     CLOSE(Icon.CLEAR, ButtonToolTips.Clear, ButtonToolTips.ClearSettings),
+    S_CLOSE(Icon.S_CLEAR, ButtonToolTips.Clear, ButtonToolTips.ClearSettings),
     STASH(Icon.ARROW_UP, ButtonToolTips.Stash, ButtonToolTips.StashDesc),
+    S_STASH(Icon.S_ARROW_UP, ButtonToolTips.Stash, ButtonToolTips.StashDesc),
     STASH_TO_PLAYER_INV(Icon.ARROW_DOWN, ButtonToolTips.StashToPlayer, ButtonToolTips.StashToPlayerDesc),
+    S_STASH_TO_PLAYER_INV(Icon.S_ARROW_DOWN, ButtonToolTips.StashToPlayer, ButtonToolTips.StashToPlayerDesc),
     ENCODE(Icon.WHITE_ARROW_DOWN, ButtonToolTips.Encode, ButtonToolTips.EncodeDescription),
     CYCLE_PROCESSING_OUTPUT(Icon.SCHEDULING_DEFAULT, ButtonToolTips.CycleProcessingOutput,
             ButtonToolTips.CycleProcessingOutputTooltip),
-    TERMINAL_SETTINGS(Icon.WRENCH, ButtonToolTips.TerminalSettings, null),
+    S_CYCLE_PROCESSING_OUTPUT(Icon.S_CYCLE, ButtonToolTips.CycleProcessingOutput,
+            ButtonToolTips.CycleProcessingOutputTooltip),
+    TERMINAL_SETTINGS(Icon.COG, ButtonToolTips.TerminalSettings, null),
 
     ENCODING_TO_INVENTORY(IconsExtended.ENCODING_TO_INVENTORY, ExtendedLangs.ShiftEncodingDesc,
             ExtendedLangs.ShiftEncodingClearDesc);

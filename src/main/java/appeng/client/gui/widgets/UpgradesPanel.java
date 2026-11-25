@@ -39,6 +39,7 @@ import appeng.client.gui.ICompositeWidget;
 import appeng.client.gui.Rects;
 import appeng.client.gui.Tooltip;
 import appeng.client.gui.style.Blitter;
+import appeng.client.gui.style.PaletteColor;
 import appeng.menu.slot.AppEngSlot;
 
 /**
@@ -47,8 +48,9 @@ import appeng.menu.slot.AppEngSlot;
 public final class UpgradesPanel implements ICompositeWidget {
 
     private static final int SLOT_SIZE = 18;
-    private static final int PADDING = 7;
+    private static final int PADDING = 5;
     private static final int MAX_ROWS = 8;
+    private static final int DEFAULT_BORDER_COLOR = 0xFFf2f2f2;
 
     private static final Blitter BACKGROUND = Blitter.texture("guis/extra_panels.png", 128, 128);
     private static final Blitter INNER_CORNER = BACKGROUND.copy().src(12, 33, SLOT_SIZE, SLOT_SIZE);
@@ -61,6 +63,7 @@ public final class UpgradesPanel implements ICompositeWidget {
     // Relative to current screen origin (not window)
     private int x;
     private int y;
+    private int borderColor = DEFAULT_BORDER_COLOR;
 
     private final Supplier<List<Component>> tooltipSupplier;
 
@@ -106,11 +109,12 @@ public final class UpgradesPanel implements ICompositeWidget {
     @Override
     public void populateScreen(Consumer<AbstractWidget> addWidget, Rect2i bounds, AEBaseScreen<?> screen) {
         this.screenOrigin = Point.fromTopLeft(bounds);
+        this.borderColor = screen.getStyle().getColorOrDefault(PaletteColor.UPGRADES_BORDER, DEFAULT_BORDER_COLOR);
     }
 
     @Override
     public void updateBeforeRender() {
-        int slotOriginX = this.x + PADDING;
+        int slotOriginX = this.x;
         int slotOriginY = this.y + PADDING;
         int visibleIndex = 0;
 
@@ -162,6 +166,13 @@ public final class UpgradesPanel implements ICompositeWidget {
                 INNER_CORNER.dest(x, y + SLOT_SIZE).blit(guiGraphics);
             }
         }
+        int borderRows = Math.min(MAX_ROWS, slotCount);
+        int borderCols = (slotCount + MAX_ROWS - 1) / MAX_ROWS;
+        int borderRightX = slotOriginX + (borderCols - 1) * SLOT_SIZE + 12;
+        guiGraphics.hLine(slotOriginX - 4, borderRightX - 1, slotOriginY, borderColor);
+        guiGraphics.hLine(slotOriginX - 4, borderRightX - 1, slotOriginY + (SLOT_SIZE * borderRows) - 1, borderColor);
+        guiGraphics.vLine(slotOriginX - 5, slotOriginY - 1, slotOriginY + (SLOT_SIZE * borderRows), borderColor);
+        guiGraphics.vLine(borderRightX, slotOriginY - 1, slotOriginY + (SLOT_SIZE * borderRows), borderColor);
     }
 
     @Override
@@ -236,7 +247,7 @@ public final class UpgradesPanel implements ICompositeWidget {
             srcHeight += PADDING;
         }
         if (borderBottom) {
-            srcHeight += PADDING;
+            srcHeight += PADDING + 2;
         }
 
         BACKGROUND.src(srcX, srcY, srcWidth, srcHeight)
