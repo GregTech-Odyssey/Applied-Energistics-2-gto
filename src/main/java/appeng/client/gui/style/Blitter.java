@@ -272,9 +272,6 @@ public final class Blitter {
     public static void blitNineSliced(GuiGraphics guiGraphics, ResourceLocation texture,
             int x, int y, int z, int width, int height,
             int left, int top, int right, int bottom, int texW, int texH) {
-        if (width <= 0 || height <= 0 || texW <= 0 || texH <= 0) {
-            return;
-        }
         int l = Math.min(left, width / 2);
         int r = Math.min(right, width - l);
         int t = Math.min(top, height / 2);
@@ -283,16 +280,6 @@ public final class Blitter {
         int midDstH = height - t - b;
         int midSrcW = texW - left - right;
         int midSrcH = texH - top - bottom;
-
-        int[] dstX = { x, x + l, x + l + midDstW };
-        int[] dstW = { l, midDstW, r };
-        int[] srcX = { 0, left, texW - r };
-        int[] srcW = { l, midSrcW, r };
-
-        int[] dstY = { y, y + t, y + t + midDstH };
-        int[] dstH = { t, midDstH, b };
-        int[] srcY = { 0, top, texH - b };
-        int[] srcH = { t, midSrcH, b };
 
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         RenderSystem.setShaderTexture(0, texture);
@@ -306,25 +293,27 @@ public final class Blitter {
         float invH = 1.0F / texH;
 
         for (int row = 0; row < 3; row++) {
-            int dh = dstH[row];
-            int sh = srcH[row];
+            int dh = row == 0 ? t : row == 1 ? midDstH : b;
+            int sh = row == 0 ? t : row == 1 ? midSrcH : b;
             if (dh <= 0 || sh <= 0) {
                 continue;
             }
-            float y1 = dstY[row];
+            int sy = row == 0 ? 0 : row == 1 ? top : texH - b;
+            float y1 = row == 0 ? y : row == 1 ? y + t : y + t + midDstH;
             float y2 = y1 + dh;
-            float v1 = srcY[row] * invH;
-            float v2 = (srcY[row] + sh) * invH;
+            float v1 = sy * invH;
+            float v2 = (sy + sh) * invH;
             for (int col = 0; col < 3; col++) {
-                int dw = dstW[col];
-                int sw = srcW[col];
+                int dw = col == 0 ? l : col == 1 ? midDstW : r;
+                int sw = col == 0 ? l : col == 1 ? midSrcW : r;
                 if (dw <= 0 || sw <= 0) {
                     continue;
                 }
-                float x1 = dstX[col];
+                int sx = col == 0 ? 0 : col == 1 ? left : texW - r;
+                float x1 = col == 0 ? x : col == 1 ? x + l : x + l + midDstW;
                 float x2 = x1 + dw;
-                float u1 = srcX[col] * invW;
-                float u2 = (srcX[col] + sw) * invW;
+                float u1 = sx * invW;
+                float u2 = (sx + sw) * invW;
                 buffer.vertex(matrix, x1, y2, z).uv(u1, v2).color(255, 255, 255, 255).endVertex();
                 buffer.vertex(matrix, x2, y2, z).uv(u2, v2).color(255, 255, 255, 255).endVertex();
                 buffer.vertex(matrix, x2, y1, z).uv(u2, v1).color(255, 255, 255, 255).endVertex();
