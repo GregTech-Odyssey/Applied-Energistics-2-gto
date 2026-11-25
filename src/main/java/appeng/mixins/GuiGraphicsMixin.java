@@ -23,12 +23,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 
+import de.mari_023.ae2wtlib.AE2wtlibTags;
+import de.mari_023.ae2wtlib.terminal.ItemWT;
+import de.mari_023.ae2wtlib.wct.CraftingTerminalHandler;
+
 import appeng.hooks.GuiGraphicsHooks;
+import appeng.util.ReadableNumberConverter;
 
 /**
  * This mixin specifically targets rendering of items in the user interface to allow us to customize _only_ the UI
@@ -45,5 +52,21 @@ public abstract class GuiGraphicsMixin {
         if (GuiGraphicsHooks.onRenderGuiItem(self, livingEntity, level, stack, x, y, seed, z)) {
             ci.cancel();
         }
+    }
+
+    @Inject(method = "renderItemDecorations(Lnet/minecraft/client/gui/Font;Lnet/minecraft/world/item/ItemStack;II)V", at = @At(value = "HEAD"), cancellable = true)
+    private void renderRestockOverlay(Font font, ItemStack stack, int x, int y, CallbackInfo ci) {
+        var player = Minecraft.getInstance().player;
+        if (player == null || player.isCreative()) {
+            return;
+        }
+        CraftingTerminalHandler handler = CraftingTerminalHandler.getCraftingTerminalHandler(player);
+        if (stack.getCount() == 1 || !handler.isRestockable(stack)
+                || !ItemWT.getBoolean(handler.getCraftingTerminal(), AE2wtlibTags.RESTOCK) || !handler.inRange()) {
+            return;
+        }
+        ((GuiGraphics) (Object) this).renderItemDecorations(font, stack, x, y,
+                ReadableNumberConverter.format(handler.getAccessibleAmount(stack), 3));
+        ci.cancel();
     }
 }

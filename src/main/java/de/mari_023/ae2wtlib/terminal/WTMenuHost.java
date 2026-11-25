@@ -32,13 +32,15 @@ import appeng.menu.ISubMenu;
 import appeng.util.inv.AppEngInternalInventory;
 import appeng.util.inv.InternalInventoryHost;
 
+import com.gto.ae.hooks.WirelessSignalHooks;
+
 public abstract class WTMenuHost extends WirelessTerminalMenuHost
         implements InternalInventoryHost, ISegmentedInventory {
 
     private final AppEngInternalInventory singularityInventory = new AppEngInternalInventory(this, 1);
     private final AppEngInternalInventory viewCellInventory;
     private boolean rangeCheck;
-    private final IGrid targetGrid;
+    private IGrid targetGrid;
     private IActionHost quantumBridge;
     private IUpgradeInventory upgradeInventory;
     public static final ResourceLocation INV_SINGULARITY = new ResourceLocation(AE2wtlib.MOD_NAME, "singularity");
@@ -76,9 +78,10 @@ public abstract class WTMenuHost extends WirelessTerminalMenuHost
     @Nullable
     @Override
     public IGridNode getActionableNode() {
-        if (isQuantumLinked() && !getPlayer().level().isClientSide())
-            return quantumBridge.getActionableNode();
-        return super.getActionableNode();
+        IGridNode node = isQuantumLinked() && !getPlayer().level().isClientSide()
+                ? quantumBridge.getActionableNode()
+                : super.getActionableNode();
+        return WirelessSignalHooks.get().isBlocked(getPlayer().level(), node) ? null : node;
     }
 
     @Nullable
@@ -96,6 +99,7 @@ public abstract class WTMenuHost extends WirelessTerminalMenuHost
     }
 
     public boolean isQuantumLinked() {
+        targetGrid = refreshSignalGrid();
         long frequency = ItemWT.getQEFrequency(getItemStack(), singularityInventory);
         if (quantumBridge == null) {
             quantumBridge = ItemWT.getQuantumBridge(getItemStack(), getPlayer().level(), singularityInventory,
@@ -113,9 +117,10 @@ public abstract class WTMenuHost extends WirelessTerminalMenuHost
             } else if (ItemWT.findQuantumBridge(getPlayer().level(), frequency) == null)
                 return false;
         }
-        if (quantumBridge.getActionableNode() == null)
+        var node = quantumBridge.getActionableNode();
+        if (node == null || WirelessSignalHooks.get().isBlocked(getPlayer().level(), node))
             return false;
-        return (quantumBridge.getActionableNode().getGrid() == targetGrid && targetGrid != null)
+        return node.getGrid() == targetGrid && targetGrid != null
                 && targetGrid.getEnergyService().isNetworkPowered();
     }
 

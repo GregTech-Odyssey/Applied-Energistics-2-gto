@@ -20,6 +20,8 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.menu.locator.MenuLocator;
 
+import com.gto.ae.hooks.WirelessSignalHooks;
+
 public class CraftingTerminalHandler {
 
     private static final WeakHashMap<Player, CraftingTerminalHandler> players = new WeakHashMap<>();
@@ -103,18 +105,33 @@ public class CraftingTerminalHandler {
     }
 
     @Nullable
+    public WTMenuHost getCachedMenuHost() {
+        return menuHost;
+    }
+
+    @Nullable
     public IGrid getTargetGrid() {
         final IGridNode n = menuHost.getActionableNode();
 
         if (n == null)
             return null;
-        return menuHost.getActionableNode().getGrid();
+        var grid = n.getGrid();
+        if (!player.isCreative() && WirelessSignalHooks.get().isGridBlocked(player.level(), grid))
+            return null;
+        return grid;
     }
 
     public boolean inRange() {
         if (getMenuHost() == null)
             return false;
-        return getMenuHost().rangeCheck();
+        if (!getMenuHost().rangeCheck())
+            return false;
+        if (!player.isCreative() && menuHost != null) {
+            var node = menuHost.getActionableNode();
+            if (node == null || WirelessSignalHooks.get().isBlocked(player.level(), node))
+                return false;
+        }
+        return true;
     }
 
     public long getAccessibleAmount(ItemStack stack) {
