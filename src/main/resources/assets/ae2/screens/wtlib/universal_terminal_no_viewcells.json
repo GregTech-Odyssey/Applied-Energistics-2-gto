@@ -1,11 +1,5 @@
 {
   "$schema": "../schema.json",
-  "slots": {
-    "AE2WTLIB_SINGULARITY": {
-      "right": 1,
-      "top": 6
-    }
-  },
   "images": {
     "singularityBackground": {
       "texture": "guis/extra_panels.png",
@@ -15,14 +9,10 @@
     }
   },
   "widgets": {
-    "singularityBackground": {
+    "upgrades": {
+      "$comment": "Combined upgrade and singularity panel",
       "right": 2,
       "top": 0
-    },
-    "upgrades": {
-      "$comment": "The upgrade panel found on some screens",
-      "right": 2,
-      "top": 31
     }
   }
 }
