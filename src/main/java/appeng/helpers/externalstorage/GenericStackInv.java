@@ -149,8 +149,9 @@ public class GenericStackInv implements GenericInternalInventory {
         var currentWhat = getKey(slot);
         var currentAmount = getAmount(slot);
         if (currentWhat == null || currentWhat == what) {
-            var newAmount = Math.min(currentAmount + amount, getMaxAmount(what));
-            if (newAmount > currentAmount) {
+            var toInsert = Math.min(amount, getMaxAmount(what) - currentAmount);
+            if (toInsert > 0) {
+                var newAmount = currentAmount + toInsert;
                 if (mode == Actionable.MODULATE) {
                     setStack(slot, new GenericStack(what, newAmount));
                     // Ensure setStack didn't screw us over

@@ -50,6 +50,7 @@ import appeng.api.parts.IPartItem;
 import appeng.api.parts.SelectedPart;
 import appeng.api.storage.MEStorage;
 import appeng.api.storage.MEStorageHost;
+import appeng.api.storage.StorageAccess;
 import appeng.api.util.AECableType;
 import appeng.api.util.AEColor;
 import appeng.api.util.DimensionalBlockPos;
@@ -340,6 +341,15 @@ public class CableBusBlockEntity extends AEBaseBlockEntity implements AEMultiBlo
     public MEStorage getMEStorage(@Nullable Direction side) {
         if (this.getPart(side) instanceof MEStorageHost host) {
             return host.getMEStorage(side);
+        }
+        return getCapability(Capabilities.STORAGE, side).orElse(null);
+    }
+
+    @Nullable
+    @Override
+    public MEStorage getMEStorage(@Nullable Direction side, StorageAccess access) {
+        if (this.getPart(side) instanceof MEStorageHost host) {
+            return host.getMEStorage(side, access);
         }
         return getCapability(Capabilities.STORAGE, side).orElse(null);
     }

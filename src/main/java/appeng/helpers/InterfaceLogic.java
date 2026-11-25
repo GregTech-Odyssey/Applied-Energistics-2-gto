@@ -50,6 +50,7 @@ import appeng.api.networking.ticking.IGridTickable;
 import appeng.api.networking.ticking.TickRateModulation;
 import appeng.api.networking.ticking.TickingRequest;
 import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 import appeng.api.storage.MEStorage;
 import appeng.api.storage.StorageHelper;
@@ -80,6 +81,8 @@ public class InterfaceLogic
         IStatusTracked {
     @Nullable
     private InterfaceInventory localInvHandler;
+    @Nullable
+    private InterfaceInsertInventory insertInvHandler;
     @Nullable
     private MEStorage networkStorage;
 
@@ -296,6 +299,17 @@ public class InterfaceLogic
         }
 
         return networkStorage;
+    }
+
+    /**
+     * Returns an ME storage view for external {@link appeng.api.storage.StorageAccess#INSERT} targets: unconfigured
+     * active interfaces push directly into network storage and fall back to local storage.
+     */
+    public MEStorage getInsertInventory() {
+        if (insertInvHandler == null) {
+            insertInvHandler = new InterfaceInsertInventory();
+        }
+        return insertInvHandler;
     }
 
     /**
@@ -648,6 +662,76 @@ public class InterfaceLogic
             var extracted = super.extract(what, amount, mode, source);
             throughputCounter.remove(what, extracted);
             return extracted;
+        }
+
+        @Override
+        public Component getDescription() {
+            return host.getMainMenuIcon().getHoverName();
+        }
+    }
+
+    /**
+     * 外部单向写入视图：未配置备货槽且接口活跃时优先直插网络以保持高吞吐，网络无法接纳或接口离线/无频道时 回退写入本地缓存槽；{@link #extract} 仅响应模拟调用以支持目标库存计数，不开放真实抽取。
+     */
+    private class InterfaceInsertInventory implements MEStorage {
+        @Override
+        public boolean supportsKeyType(AEKeyType<?> type) {
+            return true;
+        }
+
+        @Override
+        public int operationTime() {
+            if (!hasConfig && mainNode.isActive() && networkStorage != null) {
+                return networkStorage.operationTime() + 1;
+            }
+            return storage.operationTime() + 2;
+        }
+
+        @Override
+        public long insert(AEKey what, long amount, Actionable mode, IActionSource source) {
+            if (amount <= 0) {
+                return 0;
+            }
+            if (getRequestInterfacePriority(source).isPresent() && isSameGrid(source)) {
+                return 0;
+            }
+
+            long inserted = 0;
+            if (!hasConfig && mainNode.isActive()) {
+                var net = networkStorage;
+                if (net != null) {
+                    inserted = net.insert(what, amount, mode, interfaceRequestSource);
+                }
+            }
+
+            long remaining = amount - inserted;
+            if (remaining > 0) {
+                inserted += storage.insert(what, remaining, mode, source);
+            }
+
+            if (mode == Actionable.MODULATE && inserted > 0) {
+                throughputCounter.add(what, inserted);
+            }
+            return inserted;
+        }
+
+        @Override
+        public long extract(AEKey what, long amount, Actionable mode, IActionSource source) {
+            if (amount <= 0 || mode != Actionable.SIMULATE) {
+                return 0;
+            }
+
+            long total = 0;
+            if (!hasConfig && mainNode.isActive()) {
+                var net = networkStorage;
+                if (net != null) {
+                    total = net.extract(what, amount, Actionable.SIMULATE, source);
+                }
+            }
+            if (total < amount) {
+                total += storage.extract(what, amount - total, Actionable.SIMULATE, source);
+            }
+            return total;
         }
 
         @Override
