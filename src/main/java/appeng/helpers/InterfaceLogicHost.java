@@ -30,6 +30,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import appeng.api.networking.crafting.ICraftingLink;
 import appeng.api.storage.MEStorage;
 import appeng.api.storage.MEStorageHost;
+import appeng.api.storage.StorageAccess;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableObject;
 import appeng.api.util.IConfigManager;
@@ -68,6 +69,14 @@ public interface InterfaceLogicHost extends IConfigurableObject,
     @Override
     default MEStorage getMEStorage(@Nullable Direction side) {
         return getInterfaceLogic().getInventory();
+    }
+
+    @Nullable
+    @Override
+    default MEStorage getMEStorage(@Nullable Direction side, StorageAccess access) {
+        return access == StorageAccess.INSERT
+                ? getInterfaceLogic().getInsertInventory()
+                : getInterfaceLogic().getInventory();
     }
 
     @Override

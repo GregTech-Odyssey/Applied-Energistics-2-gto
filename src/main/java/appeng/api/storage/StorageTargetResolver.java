@@ -137,7 +137,7 @@ public final class StorageTargetResolver {
     @Nullable
     private Tier hostTier(MEStorageHost host, @Nullable Direction side, @Nullable AEKeyType type,
             StorageAccess access) {
-        var tier = storageTier(host.getMEStorage(side), type, access);
+        var tier = storageTier(host.getMEStorage(side, access), type, access);
         var epoch = host.storageEpoch();
         if (epoch < 0) {
             forgetEpoch();
