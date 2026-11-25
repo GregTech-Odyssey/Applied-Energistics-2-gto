@@ -72,7 +72,7 @@ import appeng.util.inv.PlayerInternalInventory;
 
 public class MemoryCardItem extends AEBaseItem implements IMemoryCard, DyeableLeatherItem {
 
-    private static final int DEFAULT_BASE_COLOR = 0xDDDDDD;
+    private static final int DEFAULT_BASE_COLOR = 0x9cd3ff;
 
     private static final AEColor[] DEFAULT_COLOR_CODE = new AEColor[] { AEColor.TRANSPARENT, AEColor.TRANSPARENT,
             AEColor.TRANSPARENT, AEColor.TRANSPARENT, AEColor.TRANSPARENT, AEColor.TRANSPARENT, AEColor.TRANSPARENT,

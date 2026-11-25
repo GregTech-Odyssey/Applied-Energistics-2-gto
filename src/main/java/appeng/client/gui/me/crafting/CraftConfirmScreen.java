@@ -87,7 +87,7 @@ public class CraftConfirmScreen extends AEBaseScreen<CraftConfirmMenu> implement
         byteFormat.setMaximumFractionDigits(1);
         byteFormat.setRoundingMode(RoundingMode.DOWN);
 
-        this.scrollbar = widgets.addScrollBar("scrollbar");
+        this.scrollbar = widgets.addScrollBar("scrollbar", Scrollbar.BIG);
 
         this.dialogTitle = new CraftingScreenTitle(Minecraft.getInstance().font,
                 style.getColor(PaletteColor.DEFAULT_TEXT_COLOR).toARGB());

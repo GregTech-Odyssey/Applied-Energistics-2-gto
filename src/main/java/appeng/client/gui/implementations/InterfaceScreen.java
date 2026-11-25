@@ -91,7 +91,7 @@ public class InterfaceScreen<C extends InterfaceMenu> extends UpgradeableScreen<
 
         @Override
         protected @Nullable IIcon getIIcon() {
-            return isHoveredOrFocused() ? Icon.WRENCH : Icon.WRENCH_DISABLED;
+            return isHoveredOrFocused() ? Icon.COG : Icon.COG_DISABLED;
         }
     }
 }

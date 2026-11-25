@@ -98,7 +98,7 @@ public class FacilityManagementScreen<C extends FacilityManagementMenu> extends 
     public FacilityManagementScreen(C menu, Inventory playerInventory,
             Component title, ScreenStyle style) {
         super(menu, playerInventory, title, style);
-        this.scrollbar = widgets.addScrollBar("scrollbar");
+        this.scrollbar = widgets.addScrollBar("scrollbar", Scrollbar.BIG);
         this.imageWidth = GUI_WIDTH;
 
         // Add a terminalstyle button

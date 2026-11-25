@@ -96,6 +96,11 @@ public class ScreenStyle {
         return palette.get(color);
     }
 
+    public int getColorOrDefault(PaletteColor color, int defaultArgb) {
+        Color c = palette.get(color);
+        return c != null ? c.toARGB() : defaultArgb;
+    }
+
     public Map<String, SlotPosition> getSlots() {
         return slots;
     }

@@ -69,6 +69,7 @@ public final class Blitter {
     private Rect2i destRect = Rects.ZERO;
     private boolean blending = true;
     private TextureTransform transform = TextureTransform.NONE;
+    private int zOffset;
 
     Blitter(ResourceLocation texture, int referenceWidth, int referenceHeight) {
         this.texture = texture;
@@ -128,6 +129,9 @@ public final class Blitter {
         result.g = g;
         result.b = b;
         result.a = a;
+        result.blending = blending;
+        result.transform = transform;
+        result.zOffset = zOffset;
         return result;
     }
 
@@ -257,6 +261,79 @@ public final class Blitter {
         return color(r, g, b);
     }
 
+    public Blitter zOffset(int offset) {
+        this.zOffset = offset;
+        return this;
+    }
+
+    /**
+     * Nine-slice blit supporting arbitrary texture dimensions and explicit z-offset on MC 1.20.1.
+     */
+    public static void blitNineSliced(GuiGraphics guiGraphics, ResourceLocation texture,
+            int x, int y, int z, int width, int height,
+            int left, int top, int right, int bottom, int texW, int texH) {
+        if (width <= 0 || height <= 0 || texW <= 0 || texH <= 0) {
+            return;
+        }
+        int l = Math.min(left, width / 2);
+        int r = Math.min(right, width - l);
+        int t = Math.min(top, height / 2);
+        int b = Math.min(bottom, height - t);
+        int midDstW = width - l - r;
+        int midDstH = height - t - b;
+        int midSrcW = texW - left - right;
+        int midSrcH = texH - top - bottom;
+
+        int[] dstX = { x, x + l, x + l + midDstW };
+        int[] dstW = { l, midDstW, r };
+        int[] srcX = { 0, left, texW - r };
+        int[] srcW = { l, midSrcW, r };
+
+        int[] dstY = { y, y + t, y + t + midDstH };
+        int[] dstH = { t, midDstH, b };
+        int[] srcY = { 0, top, texH - b };
+        int[] srcH = { t, midSrcH, b };
+
+        RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
+        RenderSystem.setShaderTexture(0, texture);
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
+        Matrix4f matrix = guiGraphics.pose().last().pose();
+        BufferBuilder buffer = Tesselator.getInstance().getBuilder();
+        buffer.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
+        float invW = 1.0F / texW;
+        float invH = 1.0F / texH;
+
+        for (int row = 0; row < 3; row++) {
+            int dh = dstH[row];
+            int sh = srcH[row];
+            if (dh <= 0 || sh <= 0) {
+                continue;
+            }
+            float y1 = dstY[row];
+            float y2 = y1 + dh;
+            float v1 = srcY[row] * invH;
+            float v2 = (srcY[row] + sh) * invH;
+            for (int col = 0; col < 3; col++) {
+                int dw = dstW[col];
+                int sw = srcW[col];
+                if (dw <= 0 || sw <= 0) {
+                    continue;
+                }
+                float x1 = dstX[col];
+                float x2 = x1 + dw;
+                float u1 = srcX[col] * invW;
+                float u2 = (srcX[col] + sw) * invW;
+                buffer.vertex(matrix, x1, y2, z).uv(u1, v2).color(255, 255, 255, 255).endVertex();
+                buffer.vertex(matrix, x2, y2, z).uv(u2, v2).color(255, 255, 255, 255).endVertex();
+                buffer.vertex(matrix, x2, y1, z).uv(u2, v1).color(255, 255, 255, 255).endVertex();
+                buffer.vertex(matrix, x1, y1, z).uv(u1, v1).color(255, 255, 255, 255).endVertex();
+            }
+        }
+        BufferUploader.drawWithShader(buffer.end());
+    }
+
     public void blit(GuiGraphics guiGraphics) {
         RenderSystem.setShader(GameRenderer::getPositionTexColorShader);
         RenderSystem.setShaderTexture(0, this.texture);
@@ -304,19 +381,19 @@ public final class Blitter {
 
         BufferBuilder bufferbuilder = Tesselator.getInstance().getBuilder();
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX_COLOR);
-        bufferbuilder.vertex(matrix, x1, y2, 0)
+        bufferbuilder.vertex(matrix, x1, y2, zOffset)
                 .uv(minU, maxV)
                 .color(r, g, b, a)
                 .endVertex();
-        bufferbuilder.vertex(matrix, x2, y2, 0)
+        bufferbuilder.vertex(matrix, x2, y2, zOffset)
                 .uv(maxU, maxV)
                 .color(r, g, b, a)
                 .endVertex();
-        bufferbuilder.vertex(matrix, x2, y1, 0)
+        bufferbuilder.vertex(matrix, x2, y1, zOffset)
                 .uv(maxU, minV)
                 .color(r, g, b, a)
                 .endVertex();
-        bufferbuilder.vertex(matrix, x1, y1, 0)
+        bufferbuilder.vertex(matrix, x1, y1, zOffset)
                 .uv(minU, minV)
                 .color(r, g, b, a)
                 .endVertex();

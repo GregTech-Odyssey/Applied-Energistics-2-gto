@@ -196,8 +196,8 @@ public class NumberEntryWidget implements ICompositeWidget {
         buttons.add(createStepButton(left + 24, top, 28, 1, true));
         buttons.add(createStepButton(left + 54, top, 32, 2, true));
         buttons.add(createStepButton(left + 88, top, 38, 3, true));
-        buttons.add(Button.builder(Component.literal("C"), btn -> roundQty(RoundingMode.CEILING))
-                .bounds(left + 128, top, 12, 20).build());
+        buttons.add(new AE2Button(left + 128, top, 12, 20, Component.literal("C"),
+                btn -> roundQty(RoundingMode.CEILING)));
 
         // Need to add these now for sensible tab-order
         buttons.forEach(addWidget);
@@ -222,8 +222,8 @@ public class NumberEntryWidget implements ICompositeWidget {
             this.validationIcon.setY(top + 27);
             buttons.add(this.validationIcon);
         }
-        buttons.add(Button.builder(Component.literal("F"), btn -> roundQty(RoundingMode.FLOOR))
-                .bounds(left + 128, bottom, 12, 20).build());
+        buttons.add(new AE2Button(left + 128, bottom, 12, 20, Component.literal("F"),
+                btn -> roundQty(RoundingMode.FLOOR)));
 
         // Add the rest to the tab order
         for (int i = bottomStart; i < buttons.size(); i++) {
@@ -466,14 +466,14 @@ public class NumberEntryWidget implements ICompositeWidget {
         return false;
     }
 
-    private static final class ShiftActionButton extends Button {
+    private static final class ShiftActionButton extends AE2Button {
         private final Component normalText;
         private final Component shiftText;
         private final OnPress shiftPress;
 
         private ShiftActionButton(int x, int y, int width, Component normalText, Component shiftText,
                 OnPress normalPress, OnPress shiftPress) {
-            super(x, y, width, 20, normalText, normalPress, DEFAULT_NARRATION);
+            super(x, y, width, 20, normalText, normalPress);
             this.normalText = normalText;
             this.shiftText = shiftText;
             this.shiftPress = shiftPress;

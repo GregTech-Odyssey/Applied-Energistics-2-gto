@@ -50,7 +50,7 @@ public class CraftingStatusScreen extends CraftingCPUScreen<CraftingStatusMenu> 
 
         AESubScreen.addBackButton(menu, "back", widgets);
 
-        this.selectCpuScrollbar = widgets.addScrollBar("selectCpuScrollbar");
+        this.selectCpuScrollbar = widgets.addScrollBar("selectCpuScrollbar", Scrollbar.BIG);
         this.selectCpuList = new CPUSelectionList(menu, selectCpuScrollbar, style);
         widgets.add("selectCpuList", selectCpuList);
         this.addToLeftToolbar(new SettingToggleButton<>(

@@ -119,7 +119,7 @@ public class MEStorageScreen<C extends MEStorageMenu>
         this.searchField = widgets.addTextField("search");
         this.searchField.setPlaceholder(GuiText.SearchPlaceholder.text());
 
-        this.scrollbar = widgets.addScrollBar("scrollbar");
+        this.scrollbar = widgets.addScrollBar("scrollbar", Scrollbar.BIG);
         this.repo = new Repo(scrollbar, this);
         this.repo.setShowManualPinnedRow(config.isShowManualPinnedRow());
         menu.setClientRepo(this.repo);
@@ -144,7 +144,6 @@ public class MEStorageScreen<C extends MEStorageMenu>
         if (this.style.isSupportsAutoCrafting()) {
             this.craftingStatusBtn = new TabButton(Icon.CRAFT_HAMMER,
                     GuiText.CraftingStatus.text(), btn -> showCraftingStatus());
-            this.craftingStatusBtn.setStyle(TabButton.Style.CORNER);
             this.widgets.add("craftingStatus", this.craftingStatusBtn);
         }
 
@@ -370,8 +369,8 @@ public class MEStorageScreen<C extends MEStorageMenu>
         if (this.craftingStatusBtn != null && menu.activeCraftingJobs != -1) {
             // The stack size renderer expects a 16x16 slot, while the button is normally
             // bigger
-            int x = this.craftingStatusBtn.getX() + (this.craftingStatusBtn.getWidth() - 16) / 2;
-            int y = this.craftingStatusBtn.getY() + (this.craftingStatusBtn.getHeight() - 16) / 2;
+            int x = this.craftingStatusBtn.getX() + (this.craftingStatusBtn.getWidth() - 18) / 2;
+            int y = this.craftingStatusBtn.getY() + (this.craftingStatusBtn.getHeight() - 18) / 2;
 
             StackSizeRenderer.renderSizeLabel(guiGraphics, font, x - this.leftPos, y - this.topPos,
                     String.valueOf(menu.activeCraftingJobs));
