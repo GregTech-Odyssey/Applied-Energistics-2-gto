@@ -7,14 +7,17 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.toasts.Toast;
 import net.minecraft.client.gui.components.toasts.ToastComponent;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import appeng.api.client.AEKeyRendering;
 import appeng.api.stacks.AEKey;
+import appeng.core.AppEng;
 
 public class ContentToast implements Toast {
+    private static final ResourceLocation TOAST_TEXTURE = AppEng.makeId("textures/guis/toast.png");
     private static final long TIME_VISIBLE = 2500;
     private static final int TITLE_COLOR = 0xFF500050;
     private static final int TEXT_COLOR = 0xFF000000;
@@ -66,13 +69,13 @@ public class ContentToast implements Toast {
         var font = minecraft.font;
 
         // stretch the middle
-        guiGraphics.blit(TEXTURE, 0, 0, 0, 32, this.width(), 8);
+        guiGraphics.blit(TOAST_TEXTURE, 0, 0, 0, 0, this.width(), 8, 160, 32);
         int middleHeight = height - 16;
         for (var middleY = 0; middleY < middleHeight; middleY += 16) {
             var tileHeight = Math.min(middleHeight - middleY, 16);
-            guiGraphics.blit(TEXTURE, 0, 8 + middleY, 0, 32 + 8, this.width(), tileHeight);
+            guiGraphics.blit(TOAST_TEXTURE, 0, 8 + middleY, 0, 8, this.width(), tileHeight, 160, 32);
         }
-        guiGraphics.blit(TEXTURE, 0, height - 8, 0, 32 + 32 - 8, this.width(), 8);
+        guiGraphics.blit(TOAST_TEXTURE, 0, height - 8, 0, 24, this.width(), 8, 160, 32);
         guiGraphics.drawString(toastComponent.getMinecraft().font, getTitle(), 30, 7,
                 TITLE_COLOR, false);
         var lineY = 18;
