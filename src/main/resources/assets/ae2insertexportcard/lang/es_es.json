@@ -1,0 +1,7 @@
+{
+  "itemGroup.ae2insertexportcard": "AE2 Insert Export Card",
+  "item.ae2insertexportcard.insert_card": "Tarjeta de importación",
+  "item.ae2insertexportcard.export_card": "Tarjeta de exportación",
+  "gui.ae2insertexportcard.whitelist": "Lista blanca",
+  "gui.ae2insertexportcard.blacklist": "Lista negra"
+}

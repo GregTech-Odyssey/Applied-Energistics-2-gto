@@ -19,6 +19,7 @@
 !*.md
 !LICENSE
 !LICENSE-ae2wtlib
+!LICENSE-ae2insertexportcard
 
 # include sourcecode
 !src/

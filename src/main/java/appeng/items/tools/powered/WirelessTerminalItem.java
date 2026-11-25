@@ -19,9 +19,11 @@
 package appeng.items.tools.powered;
 
 import java.util.List;
+import java.util.concurrent.Future;
 import java.util.function.DoubleSupplier;
 
 import com.mojang.datafixers.util.Pair;
+import com.ultramega.ae2insertexportcard.item.InsertExportCardTicker;
 
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -38,6 +40,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
@@ -58,6 +61,7 @@ import appeng.api.implementations.blockentities.IWirelessAccessPoint;
 import appeng.api.implementations.menuobjects.IMenuItem;
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.networking.IGrid;
+import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableItem;
 import appeng.api.upgrades.UpgradeInventories;
@@ -81,6 +85,9 @@ public class WirelessTerminalItem extends AEBasePoweredItem implements IMenuItem
     public static final IGridLinkableHandler LINKABLE_HANDLER = new LinkableHandler();
 
     private static final String TAG_ACCESS_POINT_POS = "accessPoint";
+
+    @Nullable
+    private Future<ICraftingPlan> insertExportCraftingJob;
 
     public WirelessTerminalItem(DoubleSupplier powerCapacity, Item.Properties props) {
         super(powerCapacity, props);
@@ -281,6 +288,13 @@ public class WirelessTerminalItem extends AEBasePoweredItem implements IMenuItem
     @Override
     public IUpgradeInventory getUpgrades(ItemStack stack) {
         return UpgradeInventories.forItem(stack, 2, this::onUpgradesChanged);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected);
+        insertExportCraftingJob = InsertExportCardTicker.tick(this, stack, level, entity, slotId,
+                insertExportCraftingJob);
     }
 
     private void onUpgradesChanged(ItemStack stack, IUpgradeInventory upgrades) {

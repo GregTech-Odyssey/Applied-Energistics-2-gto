@@ -22,6 +22,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import com.ultramega.ae2insertexportcard.AE2InsertExportCard;
+import com.ultramega.ae2insertexportcard.registry.ModItems;
+import com.ultramega.ae2insertexportcard.screen.UpgradeItemButton;
+import com.ultramega.ae2insertexportcard.util.UpgradeType;
+
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
@@ -29,6 +34,7 @@ import org.lwjgl.glfw.GLFW;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
@@ -74,6 +80,7 @@ import appeng.menu.SlotSemantics;
 import appeng.menu.me.common.GridInventoryEntry;
 import appeng.menu.me.common.MEStorageMenu;
 import appeng.menu.me.crafting.CraftingStatusMenu;
+import appeng.menu.me.items.CraftingTermMenu;
 import appeng.util.IConfigManagerListener;
 import appeng.util.Platform;
 import appeng.util.prioritylist.IPartitionList;
@@ -104,6 +111,10 @@ public class MEStorageScreen<C extends MEStorageMenu>
     private final SettingToggleButton<SortDir> sortDirToggle;
     private final ToggleButton manualPinnedRowToggle;
     private final ToggleButton freezeUpdatesToggle;
+    @Nullable
+    private UpgradeItemButton insertCardButton;
+    @Nullable
+    private UpgradeItemButton exportCardButton;
     private int currentMouseX = 0;
     private int currentMouseY = 0;
     private final Scrollbar scrollbar;
@@ -233,6 +244,20 @@ public class MEStorageScreen<C extends MEStorageMenu>
         if (!menu.isReturnedFromSubScreen() && config.isUseExternalSearch() && config.isClearExternalSearchOnOpen()) {
             ItemListMod.setSearchText("");
         }
+
+        if (menu.getType().equals(MEStorageMenu.WIRELESS_TYPE) || menu instanceof CraftingTermMenu) {
+            this.insertCardButton = new UpgradeItemButton(
+                    btn -> menu.ae2InsertExportCard$openMenu(UpgradeType.INSERT),
+                    new ResourceLocation(AE2InsertExportCard.MOD_ID, "textures/item/insert_card.png"));
+            this.insertCardButton.setMessage(Component.translatable(ModItems.INSERT_CARD.get().getDescriptionId()));
+            this.addToLeftToolbar(this.insertCardButton);
+
+            this.exportCardButton = new UpgradeItemButton(
+                    btn -> menu.ae2InsertExportCard$openMenu(UpgradeType.EXPORT),
+                    new ResourceLocation(AE2InsertExportCard.MOD_ID, "textures/item/export_card.png"));
+            this.exportCardButton.setMessage(Component.translatable(ModItems.EXPORT_CARD.get().getDescriptionId()));
+            this.addToLeftToolbar(this.exportCardButton);
+        }
     }
 
     private void showSettings() {
@@ -312,6 +337,11 @@ public class MEStorageScreen<C extends MEStorageMenu>
         } else if (this.menu.getTarget() instanceof IMEChest) {
             // ME Chest uses Item Terminals, but overrides the title
             setTextContent(TEXT_ID_DIALOG_TITLE, GuiText.Chest.text());
+        }
+
+        if (this.insertCardButton != null) {
+            this.insertCardButton.setVisibility(menu.getHost().getInstalledUpgrades(ModItems.INSERT_CARD.get()) > 0);
+            this.exportCardButton.setVisibility(menu.getHost().getInstalledUpgrades(ModItems.EXPORT_CARD.get()) > 0);
         }
     }
 

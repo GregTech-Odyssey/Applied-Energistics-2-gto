@@ -1,0 +1,7 @@
+{
+  "itemGroup.ae2insertexportcard": "Застосована енергетика 2 : Картки вставки та експорту",
+  "item.ae2insertexportcard.insert_card": "Картка вставки",
+  "item.ae2insertexportcard.export_card": "Картка експорту",
+  "gui.ae2insertexportcard.whitelist": "Білий список",
+  "gui.ae2insertexportcard.blacklist": "Чорний список"
+}

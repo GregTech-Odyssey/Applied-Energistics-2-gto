@@ -281,6 +281,9 @@ legacyForge {
         ae2wtlib {
             sourceSet sourceSets.main
         }
+        ae2insertexportcard {
+            sourceSet sourceSets.main
+        }
     }
 
     runs {
@@ -371,6 +374,7 @@ mixin {
 
 jar {
     from("LICENSE-ae2wtlib")
+    from("LICENSE-ae2insertexportcard")
     manifest {
         attributes([
                 "MixinConfigs"          : "ae2.mixins.json"
@@ -395,7 +399,7 @@ artifacts {
 spotless {
 
     java {
-        target('src/*/java/appeng/**/*.java', 'src/*/java/com/gto/ae/**/*.java', 'src/*/java/de/mari_023/ae2wtlib/**/*.java')
+        target('src/*/java/appeng/**/*.java', 'src/*/java/com/gto/ae/**/*.java', 'src/*/java/de/mari_023/ae2wtlib/**/*.java', 'src/*/java/com/ultramega/ae2insertexportcard/**/*.java')
 
         endWithNewline()
         indentWithSpaces()
