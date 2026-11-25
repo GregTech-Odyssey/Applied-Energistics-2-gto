@@ -14,7 +14,6 @@ import de.mari_023.ae2wtlib.wut.IUniversalTerminalCapable;
 
 import appeng.client.gui.me.items.CraftingTermScreen;
 import appeng.client.gui.style.ScreenStyle;
-import appeng.client.gui.widgets.BackgroundPanel;
 
 public class WCTScreen extends CraftingTermScreen<WCTMenu> implements IUniversalTerminalCapable {
 
@@ -39,7 +38,6 @@ public class WCTScreen extends CraftingTermScreen<WCTMenu> implements IUniversal
         trashButton.setMessage(TextConstants.TRASH);
 
         widgets.add("player", new PlayerEntityWidget(Objects.requireNonNull(Minecraft.getInstance().player)));
-        widgets.add("singularityBackground", new BackgroundPanel(style.getImage("singularityBackground")));
     }
 
     private void setMagnetModeText() {
