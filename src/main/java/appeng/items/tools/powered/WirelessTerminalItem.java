@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.function.DoubleSupplier;
 
 import com.mojang.datafixers.util.Pair;
+import com.ultramega.ae2insertexportcard.item.InsertExportCardTicker;
 
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -38,6 +39,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.Item;
@@ -281,6 +283,12 @@ public class WirelessTerminalItem extends AEBasePoweredItem implements IMenuItem
     @Override
     public IUpgradeInventory getUpgrades(ItemStack stack) {
         return UpgradeInventories.forItem(stack, 2, this::onUpgradesChanged);
+    }
+
+    @Override
+    public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
+        super.inventoryTick(stack, level, entity, slotId, isSelected);
+        InsertExportCardTicker.tick(this, stack, level, entity, slotId);
     }
 
     private void onUpgradesChanged(ItemStack stack, IUpgradeInventory upgrades) {

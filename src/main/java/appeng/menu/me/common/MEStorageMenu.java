@@ -25,6 +25,9 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Ints;
+import com.ultramega.ae2insertexportcard.container.UpgradeContainerMenu;
+import com.ultramega.ae2insertexportcard.util.UpgradeInterface;
+import com.ultramega.ae2insertexportcard.util.UpgradeType;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -68,11 +71,13 @@ import appeng.helpers.InventoryAction;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.helpers.ChannelPowerSrc;
 import appeng.menu.AEBaseMenu;
+import appeng.menu.MenuOpener;
 import appeng.menu.SlotSemantics;
 import appeng.menu.ToolboxMenu;
 import appeng.menu.guisync.GuiSync;
 import appeng.menu.implementations.MenuTypeBuilder;
 import appeng.menu.me.crafting.CraftAmountMenu;
+import appeng.menu.me.items.CraftingTermMenu;
 import appeng.menu.slot.AppEngSlot;
 import appeng.menu.slot.RestrictedInputSlot;
 import appeng.util.ConfigManager;
@@ -86,7 +91,7 @@ import com.gto.ae.hooks.gui.menu.IRepoMenu;
  */
 public class MEStorageMenu extends AEBaseMenu
         implements IConfigManagerListener, IConfigurableObject, IMEInteractionHandler,
-        IRepoMenu {
+        IRepoMenu, UpgradeInterface {
 
     public static final MenuType<MEStorageMenu> TYPE = MenuTypeBuilder
             .<MEStorageMenu, ITerminalHost>create(MEStorageMenu::new, ITerminalHost.class)
@@ -104,6 +109,8 @@ public class MEStorageMenu extends AEBaseMenu
             .build("wirelessterm");
 
     private static final String ACTION_SET_VIEW_FROZEN = "set_view_frozen";
+    private static final String ACTION_INSERT_MENU = "insertMenu";
+    private static final String ACTION_EXPORT_MENU = "exportMenu";
 
     /**
      * The number of ticks between two inventory synchronizations. Changes caused by the player are always synchronized
@@ -243,6 +250,22 @@ public class MEStorageMenu extends AEBaseMenu
         if (bindInventory) {
             this.createPlayerInventorySlots(ip);
         }
+
+        if (menuType.equals(WIRELESS_TYPE) || this instanceof CraftingTermMenu) {
+            registerClientAction(ACTION_INSERT_MENU, () -> ae2InsertExportCard$openMenu(UpgradeType.INSERT));
+            registerClientAction(ACTION_EXPORT_MENU, () -> ae2InsertExportCard$openMenu(UpgradeType.EXPORT));
+        }
+    }
+
+    @Override
+    public void ae2InsertExportCard$openMenu(UpgradeType type) {
+        if (isClientSide()) {
+            sendClientAction(type == UpgradeType.INSERT ? ACTION_INSERT_MENU : ACTION_EXPORT_MENU);
+            return;
+        }
+        MenuOpener.open(
+                type == UpgradeType.INSERT ? UpgradeContainerMenu.TYPE_INSERT : UpgradeContainerMenu.TYPE_EXPORT,
+                getPlayer(), getLocator());
     }
 
     public ToolboxMenu getToolbox() {

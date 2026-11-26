@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": ["ERE", "XRA", "CRC"],
+  "key": {
+    "X": { "item": "ae2:import_bus" },
+    "R": { "item": "minecraft:redstone_block" },
+    "A": { "item": "ae2:advanced_card" },
+    "C": { "item": "ae2:calculation_processor" },
+    "E": { "item": "ae2:engineering_processor" }
+  },
+  "result": {
+    "item": "ae2insertexportcard:insert_card",
+    "count": 1
+  }
+}
