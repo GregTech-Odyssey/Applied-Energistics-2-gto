@@ -1,5 +1,8 @@
 package com.ultramega.ae2insertexportcard.item;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
@@ -42,25 +45,35 @@ import appeng.me.helpers.PlayerSource;
 import appeng.util.ConfigInventory;
 
 public final class InsertExportCardTicker {
+    private static final String NBT_CRAFTING_CONTEXT = "InsertExportCraftingContext";
+    private static final Map<CraftingJobKey, Future<ICraftingPlan>> CRAFTING_JOBS = new HashMap<>();
+
+    record CraftingJobKey(UUID playerId, UUID terminalId, int slotId) {
+    }
 
     private InsertExportCardTicker() {
     }
 
-    @Nullable
-    public static Future<ICraftingPlan> tick(WirelessTerminalItem terminalItem, ItemStack stack, Level level,
-            Entity entity, int slotId, @Nullable Future<ICraftingPlan> craftingJob) {
+    public static void clearCraftingJobs(UUID playerId) {
+        CRAFTING_JOBS.keySet().removeIf(key -> key.playerId().equals(playerId));
+    }
+
+    public static void tick(WirelessTerminalItem terminalItem, ItemStack stack, Level level, Entity entity,
+            int slotId) {
         if (level.isClientSide() || !(entity instanceof ServerPlayer player)) {
-            return craftingJob;
+            return;
         }
         CompoundTag rootTag = stack.getTag();
         if (rootTag == null || !rootTag.contains("upgrades", Tag.TAG_LIST)) {
-            return craftingJob;
+            return;
         }
 
         ListTag tagList = rootTag.getList("upgrades", Tag.TAG_COMPOUND);
         if (tagList.isEmpty()) {
-            return craftingJob;
+            return;
         }
+        CraftingJobKey craftingJobKey = null;
+        Future<ICraftingPlan> craftingJob = null;
 
         // 仅在存在输入/输出卡时才解析网络、宿主与范围检查，避免普通无线终端每 tick 产生额外开销。
         IGrid grid = null;
@@ -87,19 +100,19 @@ public final class InsertExportCardTicker {
                 resolved = true;
                 grid = terminalItem.getLinkedGrid(stack, level, player);
                 if (grid == null || grid.getStorageService() == null) {
-                    return craftingJob;
+                    return;
                 }
                 if (!(terminalItem.getMenuHost(player, slotId, stack,
                         null) instanceof WirelessTerminalMenuHost menuHost)
                         || !menuHost.rangeCheck()) {
-                    return craftingJob;
+                    return;
                 }
                 host = menuHost;
             }
 
             var node = host.getActionableNode();
             if (node == null) {
-                return craftingJob;
+                return;
             }
 
             int upgradeSlot = entry.getInt("Slot");
@@ -110,6 +123,14 @@ public final class InsertExportCardTicker {
             boolean speedInstalled = upgrades.isInstalled(AEItems.SPEED_CARD);
             boolean craftingInstalled = upgrades.isInstalled(AEItems.CRAFTING_CARD);
             FuzzyMode fuzzyMode = parseFuzzyMode(upgrade.getOrCreateTag().getString("fuzzy_mode"));
+            if (isExportUpgrade && craftingInstalled) {
+                UUID terminalId = rootTag.hasUUID(NBT_CRAFTING_CONTEXT)
+                        ? rootTag.getUUID(NBT_CRAFTING_CONTEXT)
+                        : UUID.randomUUID();
+                rootTag.putUUID(NBT_CRAFTING_CONTEXT, terminalId);
+                craftingJobKey = new CraftingJobKey(player.getUUID(), terminalId, slotId);
+                craftingJob = CRAFTING_JOBS.get(craftingJobKey);
+            }
 
             ConfigInventory filterConfig = ConfigInventory.configTypes(18, null);
             filterConfig.readFromChildTag(cardTag, "filterConfig");
@@ -140,10 +161,10 @@ public final class InsertExportCardTicker {
                         continue;
                     }
 
-                    // Import Fluids
+                    // Import fluids matching the configured filter.
                     for (int index = 0; index < filterConfig.size(); index++) {
                         GenericStack filter = filterConfig.getStack(index);
-                        if (filter != null && filter.what() instanceof AEFluidKey) {
+                        if (filter != null && filter.what() instanceof AEFluidKey filterFluid) {
                             var fluidCap = itemInInventory.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
                             if (fluidCap.isPresent()) {
                                 var fluidItem = fluidCap.orElseThrow(IllegalStateException::new);
@@ -151,13 +172,22 @@ public final class InsertExportCardTicker {
                                         IFluidHandler.FluidAction.SIMULATE);
                                 if (!fluidStack.isEmpty()) {
                                     AEFluidKey aeFluidKey = AEFluidKey.of(fluidStack);
-                                    if (aeFluidKey != null) {
+                                    if (aeFluidKey != null && matchesFluidFilter(filterFluid, aeFluidKey,
+                                            fuzzyInstalled, fuzzyMode)) {
                                         long amount = StorageHelper.poweredInsert(powerSrc, storage, aeFluidKey,
                                                 fluidStack.getAmount(), source, Actionable.SIMULATE);
                                         if (amount > 0) {
-                                            fluidItem.drain((int) amount, IFluidHandler.FluidAction.EXECUTE);
-                                            StorageHelper.poweredInsert(powerSrc, storage, aeFluidKey, amount, source,
-                                                    Actionable.MODULATE);
+                                            FluidStack drained = fluidItem.drain((int) amount,
+                                                    IFluidHandler.FluidAction.EXECUTE);
+                                            if (!drained.isEmpty()) {
+                                                long inserted = StorageHelper.poweredInsert(powerSrc, storage,
+                                                        aeFluidKey, drained.getAmount(), source, Actionable.MODULATE);
+                                                if (inserted < drained.getAmount()) {
+                                                    fluidItem.fill(aeFluidKey.toStack(
+                                                            drained.getAmount() - (int) inserted),
+                                                            IFluidHandler.FluidAction.EXECUTE);
+                                                }
+                                            }
                                             player.containerMenu.broadcastChanges();
                                         }
                                     }
@@ -172,9 +202,9 @@ public final class InsertExportCardTicker {
                         long amount = StorageHelper.poweredInsert(powerSrc, storage, what, itemInInventory.getCount(),
                                 source, Actionable.SIMULATE);
                         if (amount > 0) {
-                            StorageHelper.poweredInsert(powerSrc, storage, what, itemInInventory.getCount(), source,
+                            long inserted = StorageHelper.poweredInsert(powerSrc, storage, what, amount, source,
                                     Actionable.MODULATE);
-                            player.getInventory().setItem(j, ItemStack.EMPTY);
+                            itemInInventory.shrink(importedItemCount(itemInInventory.getCount(), inserted));
                             player.containerMenu.broadcastChanges();
                         }
                     }
@@ -248,7 +278,13 @@ public final class InsertExportCardTicker {
                 }
             }
         }
-        return craftingJob;
+        if (craftingJobKey != null) {
+            if (craftingJob == null) {
+                CRAFTING_JOBS.remove(craftingJobKey);
+            } else {
+                CRAFTING_JOBS.put(craftingJobKey, craftingJob);
+            }
+        }
     }
 
     private static FuzzyMode parseFuzzyMode(String name) {
@@ -272,6 +308,14 @@ public final class InsertExportCardTicker {
             }
         }
         return false;
+    }
+
+    static int importedItemCount(int count, long inserted) {
+        return (int) Math.min(count, inserted);
+    }
+
+    static boolean matchesFluidFilter(AEKey filter, AEKey fluid, boolean fuzzyInstalled, FuzzyMode fuzzyMode) {
+        return fuzzyInstalled ? filter.fuzzyEquals(fluid, fuzzyMode) : filter.equals(fluid);
     }
 
     @Nullable

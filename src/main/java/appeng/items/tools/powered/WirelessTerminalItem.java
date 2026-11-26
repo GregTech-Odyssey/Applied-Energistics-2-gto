@@ -19,7 +19,6 @@
 package appeng.items.tools.powered;
 
 import java.util.List;
-import java.util.concurrent.Future;
 import java.util.function.DoubleSupplier;
 
 import com.mojang.datafixers.util.Pair;
@@ -61,7 +60,6 @@ import appeng.api.implementations.blockentities.IWirelessAccessPoint;
 import appeng.api.implementations.menuobjects.IMenuItem;
 import appeng.api.implementations.menuobjects.ItemMenuHost;
 import appeng.api.networking.IGrid;
-import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.upgrades.IUpgradeInventory;
 import appeng.api.upgrades.IUpgradeableItem;
 import appeng.api.upgrades.UpgradeInventories;
@@ -85,9 +83,6 @@ public class WirelessTerminalItem extends AEBasePoweredItem implements IMenuItem
     public static final IGridLinkableHandler LINKABLE_HANDLER = new LinkableHandler();
 
     private static final String TAG_ACCESS_POINT_POS = "accessPoint";
-
-    @Nullable
-    private Future<ICraftingPlan> insertExportCraftingJob;
 
     public WirelessTerminalItem(DoubleSupplier powerCapacity, Item.Properties props) {
         super(powerCapacity, props);
@@ -293,8 +288,7 @@ public class WirelessTerminalItem extends AEBasePoweredItem implements IMenuItem
     @Override
     public void inventoryTick(ItemStack stack, Level level, Entity entity, int slotId, boolean isSelected) {
         super.inventoryTick(stack, level, entity, slotId, isSelected);
-        insertExportCraftingJob = InsertExportCardTicker.tick(this, stack, level, entity, slotId,
-                insertExportCraftingJob);
+        InsertExportCardTicker.tick(this, stack, level, entity, slotId);
     }
 
     private void onUpgradesChanged(ItemStack stack, IUpgradeInventory upgrades) {

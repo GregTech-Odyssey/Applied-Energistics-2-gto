@@ -1,11 +1,14 @@
 package com.ultramega.ae2insertexportcard;
 
+import com.ultramega.ae2insertexportcard.item.InsertExportCardTicker;
 import com.ultramega.ae2insertexportcard.network.NetworkHandler;
 import com.ultramega.ae2insertexportcard.registry.ClientEventHandler;
 import com.ultramega.ae2insertexportcard.registry.ModItems;
 import com.ultramega.ae2insertexportcard.registry.RegistryHandler;
 
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
@@ -30,6 +33,8 @@ public class AE2InsertExportCard {
         RegistryHandler.init();
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::setup);
+        MinecraftForge.EVENT_BUS.addListener((PlayerEvent.PlayerLoggedOutEvent event) -> InsertExportCardTicker
+                .clearCraftingJobs(event.getEntity().getUUID()));
     }
 
     private void setup(FMLCommonSetupEvent event) {
