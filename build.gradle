@@ -112,12 +112,9 @@ dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 
     modImplementation("curse.maven:glodium-957920:5006780")
-    modImplementation("curse.maven:applied-energistics-2-wireless-terminals-459929:7251206")
     modImplementation("curse.maven:merequester-688367:5689932")
 
-    modRuntimeOnly("top.theillusivec4.curios:curios-forge:5.14.1+${project.minecraft_version}")
-    modRuntimeOnly("curse.maven:cloth-config-348521:5729105")
-    modRuntimeOnly("dev.architectury:architectury-forge:9.2.14")
+    modImplementation("top.theillusivec4.curios:curios-forge:5.14.1+${project.minecraft_version}")
 
 }
 archivesBaseName = artifact_basename
@@ -281,6 +278,9 @@ legacyForge {
         ae2 {
             sourceSet sourceSets.main
         }
+        ae2wtlib {
+            sourceSet sourceSets.main
+        }
     }
 
     runs {
@@ -370,6 +370,7 @@ mixin {
 }
 
 jar {
+    from("LICENSE-ae2wtlib")
     manifest {
         attributes([
                 "MixinConfigs"          : "ae2.mixins.json"
@@ -394,7 +395,7 @@ artifacts {
 spotless {
 
     java {
-        target('src/*/java/appeng/**/*.java', 'src/*/java/com/gto/ae/**/*.java')
+        target('src/*/java/appeng/**/*.java', 'src/*/java/com/gto/ae/**/*.java', 'src/*/java/de/mari_023/ae2wtlib/**/*.java')
 
         endWithNewline()
         indentWithSpaces()

@@ -27,7 +27,8 @@
     "ResizableSlotHighlightMixin",
     "TextureAtlasMixin",
     "VariantDeserializerMixin",
-    "WrappedGenericStackTooltipModIdMixin"
+    "WrappedGenericStackTooltipModIdMixin",
+    "wtlib.MinecraftMixin"
   ],
   "server": [],
   "injectors": {

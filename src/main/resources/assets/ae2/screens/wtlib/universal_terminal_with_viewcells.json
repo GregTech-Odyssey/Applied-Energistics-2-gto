@@ -1,0 +1,15 @@
+{
+  "$schema": "../schema.json",
+  "includes": ["universal_terminal_no_viewcells.json"],
+  "widgets": {
+    "viewCells": {
+      "right": 2,
+      "top": 0
+    },
+    "upgrades": {
+      "$comment": "Combined upgrade, singularity, and view cell panel",
+      "right": 2,
+      "top": 0
+    }
+  }
+}

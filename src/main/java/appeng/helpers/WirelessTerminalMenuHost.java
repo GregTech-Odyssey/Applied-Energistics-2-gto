@@ -44,12 +44,15 @@ import appeng.core.localization.PlayerMessages;
 import appeng.items.tools.powered.WirelessTerminalItem;
 import appeng.menu.ISubMenu;
 
+import com.gto.ae.hooks.WirelessSignalHooks;
+
 public class WirelessTerminalMenuHost extends ItemMenuHost implements IPortableTerminal, IActionHost {
 
     private final WirelessTerminalItem terminal;
     private final BiConsumer<Player, ISubMenu> returnToMainMenu;
-    private final IGrid targetGrid;
+    private IGrid targetGrid;
     private IStorageService sg;
+    private long signalRevision = Long.MIN_VALUE;
     @Nullable
     private IWirelessAccessPoint myWap;
     /**
@@ -72,13 +75,31 @@ public class WirelessTerminalMenuHost extends ItemMenuHost implements IPortableT
         }
     }
 
+    @Nullable
+    protected IGrid refreshSignalGrid() {
+        long revision = WirelessSignalHooks.get().revision(getPlayer().level());
+        if (!isClientSide() && (signalRevision != revision || targetGrid == null || targetGrid.isEmpty())) {
+            signalRevision = revision;
+            targetGrid = terminal.getLinkedGrid(getItemStack(), getPlayer().level(), null);
+            sg = targetGrid == null ? null : targetGrid.getStorageService();
+        }
+        return targetGrid;
+    }
+
     @Override
     public MEStorage getInventory() {
+        refreshSignalGrid();
+        if (WirelessSignalHooks.get().isGridBlocked(getPlayer().level(), targetGrid)) {
+            return null;
+        }
         return this.sg != null ? this.sg.getInventory() : null;
     }
 
     @Override
     public double extractAEPower(double amt, Actionable mode, PowerMultiplier usePowerMultiplier) {
+        if (!rangeCheck()) {
+            return 0.0;
+        }
         if (this.terminal != null) {
             final double extracted = Math.min(amt, this.terminal.getAECurrentPower(getItemStack()));
 
@@ -100,12 +121,17 @@ public class WirelessTerminalMenuHost extends ItemMenuHost implements IPortableT
     public IGridNode getActionableNode() {
         this.rangeCheck();
         if (this.myWap != null) {
-            return this.myWap.getActionableNode();
+            var node = this.myWap.getActionableNode();
+            if (WirelessSignalHooks.get().isBlocked(getPlayer().level(), node)) {
+                return null;
+            }
+            return node;
         }
         return null;
     }
 
     public boolean rangeCheck() {
+        refreshSignalGrid();
         this.currentDistanceFromGrid = Double.MAX_VALUE;
 
         if (this.targetGrid != null) {
@@ -137,6 +163,9 @@ public class WirelessTerminalMenuHost extends ItemMenuHost implements IPortableT
      * @return square distance to WAP if the WAP can be used, or {@link Double#MAX_VALUE} if it cannot be used.
      */
     protected double getWapSqDistance(IWirelessAccessPoint wap) {
+        if (WirelessSignalHooks.get().isBlocked(getPlayer().level(), wap.getActionableNode())) {
+            return Double.MAX_VALUE;
+        }
         double rangeLimit = wap.getRange();
         rangeLimit *= rangeLimit;
 
@@ -158,9 +187,10 @@ public class WirelessTerminalMenuHost extends ItemMenuHost implements IPortableT
 
     @Override
     public boolean onBroadcastChanges(AbstractContainerMenu menu) {
-        return super.onBroadcastChanges(menu)
-                && checkWirelessRange(menu)
-                && drainPower();
+        if (super.onBroadcastChanges(menu) && checkWirelessRange(menu)) {
+            drainPower();
+        }
+        return true;
     }
 
     /**

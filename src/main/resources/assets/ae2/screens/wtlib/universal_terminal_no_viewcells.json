@@ -1,0 +1,18 @@
+{
+  "$schema": "../schema.json",
+  "images": {
+    "singularityBackground": {
+      "texture": "guis/extra_panels.png",
+      "textureWidth": 128,
+      "textureHeight": 128,
+      "srcRect": [0, 0, 23, 30]
+    }
+  },
+  "widgets": {
+    "upgrades": {
+      "$comment": "Combined upgrade and singularity panel",
+      "right": 2,
+      "top": 0
+    }
+  }
+}

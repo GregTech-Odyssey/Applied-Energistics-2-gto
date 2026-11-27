@@ -19,7 +19,6 @@
 package appeng.client.gui.me.common;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,6 +33,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+
+import de.mari_023.ae2wtlib.AE2wtlibSlotSemantics;
 
 import appeng.api.config.ActionItems;
 import appeng.api.config.Setting;
@@ -55,13 +56,14 @@ import appeng.client.gui.style.TerminalStyle;
 import appeng.client.gui.widgets.AETextField;
 import appeng.client.gui.widgets.ActionButton;
 import appeng.client.gui.widgets.ISortSource;
+import appeng.client.gui.widgets.ScrollableUpgradesPanel;
 import appeng.client.gui.widgets.Scrollbar;
 import appeng.client.gui.widgets.SettingToggleButton;
 import appeng.client.gui.widgets.TabButton;
 import appeng.client.gui.widgets.ToggleButton;
 import appeng.client.gui.widgets.ToolboxPanel;
-import appeng.client.gui.widgets.UpgradesPanel;
 import appeng.core.AEConfig;
+import appeng.core.definitions.AEItems;
 import appeng.core.localization.GuiText;
 import appeng.core.sync.network.NetworkHandler;
 import appeng.core.sync.packets.ConfigValuePacket;
@@ -136,9 +138,27 @@ public class MEStorageScreen<C extends MEStorageMenu>
 
         List<Slot> viewCellSlots = menu.getSlots(SlotSemantics.VIEW_CELL);
         this.supportsViewCells = !viewCellSlots.isEmpty();
+
+        List<ScrollableUpgradesPanel.SlotGroup> sideGroups = new ArrayList<>(3);
+        List<Slot> upgradeSlots = menu.getSlots(SlotSemantics.UPGRADE);
+        if (!upgradeSlots.isEmpty()) {
+            sideGroups.add(ScrollableUpgradesPanel.SlotGroup.ofUpgrades(upgradeSlots, menu.getHost()));
+        }
+        List<Slot> singularitySlots = menu.getSlots(AE2wtlibSlotSemantics.SINGULARITY);
+        if (!singularitySlots.isEmpty()) {
+            sideGroups.add(new ScrollableUpgradesPanel.SlotGroup(
+                    singularitySlots,
+                    ScrollableUpgradesPanel.constantTooltip(
+                            AEItems.QUANTUM_ENTANGLED_SINGULARITY.asItem().getDescription())));
+        }
         if (this.supportsViewCells) {
-            List<Component> tooltip = Collections.singletonList(GuiText.TerminalViewCellsTooltip.text());
-            this.widgets.add("viewCells", new UpgradesPanel(viewCellSlots, () -> tooltip));
+            sideGroups.add(new ScrollableUpgradesPanel.SlotGroup(
+                    viewCellSlots,
+                    ScrollableUpgradesPanel.constantTooltip(GuiText.TerminalViewCellsTooltip.text())));
+        }
+        if (!sideGroups.isEmpty()) {
+            String panelId = style.getWidget("viewCells") != null ? "viewCells" : "upgrades";
+            this.widgets.add(panelId, new ScrollableUpgradesPanel(sideGroups));
         }
 
         if (this.style.isSupportsAutoCrafting()) {
@@ -197,9 +217,6 @@ public class MEStorageScreen<C extends MEStorageMenu>
         this.addToLeftToolbar(
                 new SettingToggleButton<>(Settings.TERMINAL_STYLE, terminalStyle, this::toggleTerminalStyle));
 
-        this.widgets.add("upgrades", new UpgradesPanel(
-                menu.getSlots(SlotSemantics.UPGRADE),
-                menu.getHost()));
         if (menu.getToolbox().isPresent()) {
             this.widgets.add("toolbox", new ToolboxPanel(style, menu.getToolbox().getName()));
         }

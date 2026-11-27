@@ -6,7 +6,7 @@ displayURL="https://github.com/GregTech-Odyssey/Applied-Energistics-2-gto"
 logoFile="logo.png"
 #credits="Thanks for this example mod goes to Java"
 authors="TeamAppliedEnergistics"
-license="See GitHub repository for details"
+license="LGPL-3.0 (AE2) / MIT (AE2WTLib) - see GitHub repository for details"
 
 [[mods]]
 modId="ae2"
@@ -53,5 +53,40 @@ description="A build of Applied Energistics 2 maintained for the GregTech Odysse
     modId="emi"
     mandatory=true
     versionRange="[1.1.26,)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[mods]]
+modId="ae2wtlib"
+version="15.3.3-gto"
+displayName="AE2WTLib (Merged into AE2 GTO)"
+authors="mari_023, Ridanisaurus, DomamaN202"
+description="Adds wireless versions of AE2 terminals with infinite range capabilities. Merged into Applied Energistics 2 GTO Edition under the MIT license."
+
+[[dependencies.ae2wtlib]]
+    modId="forge"
+    mandatory=true
+    versionRange="${forge_version}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.ae2wtlib]]
+    modId="minecraft"
+    mandatory=true
+    versionRange="${minecraft_version}"
+    ordering="NONE"
+    side="BOTH"
+
+[[dependencies.ae2wtlib]]
+    modId="ae2"
+    mandatory=true
+    versionRange="[15.0.0,16.0.0)"
+    ordering="AFTER"
+    side="BOTH"
+
+[[dependencies.ae2wtlib]]
+    modId="curios"
+    mandatory=true
+    versionRange="*"
     ordering="AFTER"
     side="BOTH"
